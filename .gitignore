@@ -1,0 +1,67 @@
+# ==============================
+# SIMPLAIN — .gitignore chuan cho ca nhom
+# Quy tac: chi ignore file may tao ra, KHONG ignore ma nguon
+# ==============================
+
+# --- Maven / Java ---
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# --- Spring Boot ---
+spring-shell.log
+
+# --- Nhat ky / He dieu hanh ---
+*.log
+*.tmp
+*.bak
+*.swp
+*~.nib
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# --- Eclipse / STS ---
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# --- NetBeans ---
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# --- VS Code ---
+.vscode/*
+
+# --- Bien moi truong / Bi mat (TUYET DOI khong commit) ---
+.env
+.env.*
+!.env.mau
+application-local.properties
+application-secret.properties
+
+# --- Opencode / AI ---
+.opencode/

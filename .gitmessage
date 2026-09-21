@@ -1,0 +1,19 @@
+# Mau thong diep commit — ca nhom copy theo form nay
+# Cach dung:
+#   git config commit.template .gitmessage
+# Sau do moi lan `git commit` se tu hien mau nay.
+#
+# QUY TAC (xem QUY-DINH-NHANH-VA-COMMIT.md):
+#   <loai>(<pham-vi>): <mo-ta-ngan-gon-tieng-viet>
+#
+# Loai hop le:
+#   tinh-nang | sua-loi | tai-lieu | kiem-thu | tai-cau-truc | dinh-dang | cau-hinh | hoan-lai
+
+# VI DU (xoa cac dong vi du nay khi viet commit that):
+# tinh-nang(hello): them API POST /api/hello
+# sua-loi(hello): xu ly ten trong khi goi API
+# tai-lieu(chung): bo sung huong dan test API bang Swagger
+
+# --- Viet commit cua ban o duoi dong nay ---
+
+<loai>(<pham-vi>): <mo-ta-ngan-gon>
