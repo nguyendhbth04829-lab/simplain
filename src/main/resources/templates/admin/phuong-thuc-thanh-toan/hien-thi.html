@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cấu hình Thanh toán | Simplain Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.8rem; margin-top: 0.25rem; display: block; }
+        /* Công tắc bo tròn */
+        .toggle { width: 46px; height: 24px; border-radius: 9999px; background: #e5e7eb; position: relative; transition: .2s; display: inline-block; border: 1px solid #d1d5db; }
+        .toggle.on { background: #000; border-color: #000; }
+        .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:9999px; background:#fff; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.3); }
+        .toggle.on::after { left: 24px; }
+    </style>
+</head>
+<body class="bg-[#f2f3f5] text-[#1a1d28]">
+
+<!-- Header Simplain, style tối giản học theo Coolmate -->
+<header class="bg-black text-white sticky top-0 z-10 border-b-2 border-black">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+            <span class="font-extrabold text-xl tracking-tight">SIMPLAIN<span class="text-xs align-top ml-1 font-medium text-gray-400">ADMIN</span></span>
+            <nav class="hidden md:flex gap-6 text-sm text-gray-300">
+                <a href="#" class="hover:text-white">Sản phẩm</a>
+                <a href="#" class="hover:text-white">Đơn hàng</a>
+                <a href="/admin/phuong-thuc-thanh-toan/hien-thi" class="text-white font-semibold border-b-2 border-white pb-0.5">Thanh toán</a>
+                <a href="#" class="hover:text-white">Khách hàng</a>
+            </nav>
+        </div>
+        <span class="text-xs bg-white/10 px-3 py-1.5 rounded-none border border-white/20">US18 • Trí • Mod 4</span>
+    </div>
+</header>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-2 mb-6">
+        <div>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Simplain / Cấu hình / Thanh toán</p>
+            <h1 class="text-3xl font-extrabold tracking-tight">Cổng thanh toán</h1>
+            <p class="text-sm text-gray-500 mt-1">Bật/tắt COD, VNPay, MoMo. Cổng tắt sẽ ẩn ở trang Checkout (US19).</p>
+        </div>
+        <form id="formTimKiem" action="/admin/phuong-thuc-thanh-toan/hien-thi" method="get" class="flex flex-wrap items-stretch">
+            <input type="hidden" name="kichHoat" th:value="${kichHoat}">
+            <input id="oTimKiem" type="text" name="ten" th:value="${ten}" placeholder="Tìm mã, tên... gõ là lọc ngay"
+                   class="border border-gray-300 border-r-0 px-4 py-2 text-sm w-56 outline-none focus:border-black bg-white rounded-l-lg rounded-r-none">
+            <select name="trucTuyen" onchange="this.form.submit()" class="border border-gray-300 border-r-0 px-2 py-2 text-sm outline-none bg-white rounded-none cursor-pointer">
+                <option value="" th:selected="${trucTuyen == null}">Loại: Tất cả</option>
+                <option value="true" th:selected="${trucTuyen == true}">Trực tuyến</option>
+                <option value="false" th:selected="${trucTuyen == false}">Tiền mặt</option>
+            </select>
+            <button class="bg-black text-white text-sm font-semibold px-5 py-2 hover:bg-gray-800 rounded-r-lg rounded-l-none border border-black">Tìm</button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <!-- Form thêm mới -->
+        <div class="bg-white p-6 border border-gray-200 shadow-sm rounded-none">
+            <h3 class="font-bold text-lg mb-1">Thêm cổng mới</h3>
+            <p class="text-xs text-gray-400 mb-4">Mã ví dụ: COD, VNPAY, MOMO</p>
+            <form th:object="${phuongThuc}" action="/admin/phuong-thuc-thanh-toan/add" method="post" class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Mã phương thức *</label>
+                    <input type="text" th:field="*{maPhuongThuc}" placeholder="VNPAY"
+                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black uppercase rounded-lg">
+                    <span class="error" th:if="${#fields.hasErrors('maPhuongThuc')}" th:errors="*{maPhuongThuc}"></span>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tên hiển thị *</label>
+                    <input type="text" th:field="*{tenPhuongThuc}" placeholder="Thanh toán VNPay QR"
+                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
+                    <span class="error" th:if="${#fields.hasErrors('tenPhuongThuc')}" th:errors="*{tenPhuongThuc}"></span>
+                </div>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" th:field="*{laTrucTuyen}" class="w-4 h-4 accent-black rounded-none"> Trực tuyến
+                    </label>
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 accent-black rounded-none"> Kích hoạt
+                    </label>
+                </div>
+                <button class="w-full bg-black text-white font-bold py-3 text-sm hover:bg-gray-800 transition rounded-lg">+ THÊM CỔNG</button>
+            </form>
+            <div class="mt-4 text-xs text-gray-500 bg-gray-50 p-3 leading-relaxed border border-gray-200 rounded-lg">
+                Tự test: 1. Thêm VNPAY → 2. Gạt tắt/mở ở bảng → 3. F5 kiểm tra badge → 4. Thử trùng mã COD xem báo lỗi.
+            </div>
+        </div>
+
+        <!-- Danh sách -->
+        <div class="lg:col-span-2">
+            <!-- Tabs trạng thái -->
+            <div class="flex gap-0 mb-4 border border-gray-200 bg-white rounded-none w-fit">
+                <a th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(ten=${ten}, trucTuyen=${trucTuyen})}"
+                   th:class="${kichHoat == null} ? 'px-5 py-2 text-sm font-bold bg-black text-white' : 'px-5 py-2 text-sm font-semibold text-gray-500 hover:text-black'">Tất cả</a>
+                <a th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(ten=${ten}, trucTuyen=${trucTuyen}, kichHoat=true)}"
+                   th:class="${kichHoat == true} ? 'px-5 py-2 text-sm font-bold bg-black text-white border-l border-gray-200' : 'px-5 py-2 text-sm font-semibold text-gray-500 hover:text-black border-l border-gray-200'">Đang bật</a>
+                <a th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(ten=${ten}, trucTuyen=${trucTuyen}, kichHoat=false)}"
+                   th:class="${kichHoat == false} ? 'px-5 py-2 text-sm font-bold bg-black text-white border-l border-gray-200' : 'px-5 py-2 text-sm font-semibold text-gray-500 hover:text-black border-l border-gray-200'">Đã tắt</a>
+            </div>
+            <div class="space-y-4" id="danhSach">
+            <div th:each="pt : ${listPhuongThuc}" class="pt-card bg-white border border-gray-200 p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition rounded-none border-l-4"
+                  th:classappend="${pt.kichHoat} ? 'border-l-black' : 'border-l-red-500'"
+                  th:data-ma="${pt.maPhuongThuc}" th:data-ten="${pt.tenPhuongThuc}"
+                  th:data-kichhoat="${pt.kichHoat}" th:data-tructuyen="${pt.laTrucTuyen}">
+                <div class="w-12 h-12 flex items-center justify-center font-extrabold text-sm shrink-0 rounded-lg border"
+                     th:classappend="${pt.maPhuongThuc == 'COD'} ? 'bg-orange-100 text-orange-700 border-orange-200' : (${pt.maPhuongThuc == 'VNPAY_QR'} ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-pink-100 text-pink-700 border-pink-200')"
+                     th:text="${pt.maPhuongThuc != null && pt.maPhuongThuc.length() >= 2 ? pt.maPhuongThuc.substring(0,2) : 'TT'}">CO</div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-bold truncate" th:text="${pt.tenPhuongThuc}">Thanh toán COD</div>
+                    <div class="flex flex-wrap gap-2 mt-1.5">
+                        <span class="text-[11px] font-mono bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${pt.maPhuongThuc}">COD</span>
+                        <span th:if="${pt.laTrucTuyen}" class="text-[11px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">Trực tuyến • QR</span>
+                        <span th:unless="${pt.laTrucTuyen}" class="text-[11px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border">Tiền mặt</span>
+                        <span th:if="${pt.kichHoat}" class="text-[11px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">Đang bật</span>
+                        <span th:unless="${pt.kichHoat}" class="text-[11px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full border border-red-200">Đang tắt</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 h-6">
+                    <a th:href="@{|/admin/phuong-thuc-thanh-toan/doi-trang-thai?id=${pt.id}|}"
+                       th:class="${pt.kichHoat} ? 'toggle on' : 'toggle'" title="Bật/tắt nhanh"></a>
+                    <a th:href="@{|/admin/phuong-thuc-thanh-toan/view?id=${pt.id}|}" class="text-xs font-semibold border border-black px-3 h-6 leading-6 rounded-full hover:bg-black hover:text-white transition">Sửa</a>
+                </div>
+            </div>
+            <div th:if="${listPhuongThuc.empty}" class="bg-white border border-dashed border-gray-300 p-10 text-center text-gray-400 text-sm rounded-none">
+                Chưa có cổng nào. Thêm COD / VNPAY / MOMO ở form bên trái để test.
+            </div>
+
+            <div class="flex items-center justify-center gap-3 pt-2" th:if="${totalPages > 1}">
+                <a th:if="${page > 0}" th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(page=${page - 1}, ten=${ten}, kichHoat=${kichHoat}, trucTuyen=${trucTuyen})}" class="bg-white border border-black px-4 py-2 rounded-full text-sm font-semibold hover:bg-black hover:text-white">← Trước</a>
+                <span class="text-sm font-semibold" th:text="${'Trang ' + (page + 1) + ' / ' + totalPages}"></span>
+                <a th:if="${page < totalPages - 1}" th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(page=${page + 1}, ten=${ten}, kichHoat=${kichHoat}, trucTuyen=${trucTuyen})}" class="bg-white border border-black px-4 py-2 rounded-full text-sm font-semibold hover:bg-black hover:text-white">Sau →</a>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Tìm live: gõ đâu lọc đấy ngay trên trang, không cần nhấn Tìm.
+    // Tìm cả mã + tên (gõ "cod" hay "tiền mặt" đều ra).
+    (function () {
+        var o = document.getElementById('oTimKiem');
+        if (!o) return;
+        o.addEventListener('input', function () {
+            var tuKhoa = o.value.toLowerCase().trim();
+            document.querySelectorAll('.pt-card').forEach(function (card) {
+                var ma = (card.getAttribute('data-ma') || '').toLowerCase();
+                var ten = (card.getAttribute('data-ten') || '').toLowerCase();
+                var hop = tuKhoa === '' || ma.includes(tuKhoa) || ten.includes(tuKhoa);
+                card.style.display = hop ? '' : 'none';
+            });
+        });
+    })();
+</script>
+</body>
+</html>
