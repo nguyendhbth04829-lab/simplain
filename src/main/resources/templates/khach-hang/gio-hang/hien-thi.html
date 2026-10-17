@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng | Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f2f3f5] text-[#1a1d28]">
+
+<!-- Header Simplain, style tối giản học theo Coolmate -->
+<header class="bg-black text-white sticky top-0 z-10 border-b-2 border-black">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+            <span class="font-extrabold text-xl tracking-tight">SIMPLAIN<span class="text-xs align-top ml-1 font-medium text-gray-400">SHOP</span></span>
+            <nav class="hidden md:flex gap-6 text-sm text-gray-300">
+                <a href="#" class="hover:text-white">Sản phẩm</a>
+                <a href="/gio-hang/hien-thi" class="text-white font-semibold border-b-2 border-white pb-0.5">Giỏ hàng</a>
+                <a href="#" class="hover:text-white">Đơn hàng</a>
+                <a href="/admin/phuong-thuc-thanh-toan/hien-thi" class="hover:text-white">Thanh toán</a>
+            </nav>
+        </div>
+        <span class="text-xs bg-white/10 px-3 py-1.5 rounded-none border border-white/20">US17 • Trí • Mod 4</span>
+    </div>
+</header>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-2 mb-6">
+        <div>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Simplain / Khách hàng / Giỏ hàng</p>
+            <h1 class="text-3xl font-extrabold tracking-tight">Giỏ hàng của bạn</h1>
+            <p class="text-sm text-gray-500 mt-1">Mua lẻ hoặc bó combo theo token. Đổi <code class="bg-gray-100 px-1 rounded">khachHangId</code> trên URL để test giỏ của khách khác.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold bg-black text-white px-3 py-1.5 rounded-full">Khách #<span th:text="${khachHangId}">1</span></span>
+            <span class="text-xs font-semibold bg-white border border-black px-3 py-1.5 rounded-full"><span th:text="${tongSoLuong}">0</span> món trong giỏ</span>
+        </div>
+    </div>
+
+    <!-- Thông báo lỗi từ server (thêm món sai ID kho...) -->
+    <div th:if="${loi != null}" class="mb-6 bg-white border-l-4 border-red-500 border border-gray-200 p-4 text-sm text-red-600 rounded-none">
+        <span class="font-bold">Lỗi:</span> <span th:text="${loi}">Lỗi</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <!-- Form thêm món -->
+        <div class="bg-white p-6 border border-gray-200 shadow-sm rounded-none">
+            <h3 class="font-bold text-lg mb-1">Thêm món vào giỏ</h3>
+            <p class="text-xs text-gray-400 mb-4">Biến thể ID của Mod 2, combo ID của US28. Trùng món sẽ cộng dồn số lượng.</p>
+            <form action="/gio-hang/them" method="post" class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Khách hàng ID *</label>
+                    <input type="number" name="khachHangId" th:value="${khachHangId}" min="1" required
+                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Biến thể ID *</label>
+                    <input type="number" name="maBienTheId" placeholder="101" min="1" required
+                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Combo ID (tùy chọn)</label>
+                    <input type="number" name="maComboId" placeholder="5" min="1"
+                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Token nhóm combo (tùy chọn)</label>
+                    <div class="mt-1 flex items-stretch">
+                        <input id="oToken" type="text" name="nhomComboToken" placeholder="A1B2C3D4" maxlength="8"
+                               class="border border-gray-300 border-r-0 px-3 py-2.5 text-sm outline-none focus:border-black font-mono uppercase flex-1 rounded-l-lg rounded-r-none min-w-0">
+                        <button type="button" id="btnSinhToken"
+                                class="bg-gray-100 border border-gray-300 text-xs font-bold px-3 hover:bg-black hover:text-white hover:border-black transition rounded-r-lg rounded-l-none whitespace-nowrap">SINH TOKEN</button>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-1">Món có cùng token + combo sẽ gộp thành 1 bó, xóa cả bó một lần.</p>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Số lượng *</label>
+                    <input type="number" name="soLuong" value="1" min="1" required
+                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
+                </div>
+                <button class="w-full bg-black text-white font-bold py-3 text-sm hover:bg-gray-800 transition rounded-lg">+ THÊM MÓN</button>
+            </form>
+            <div class="mt-4 text-xs text-gray-500 bg-gray-50 p-3 leading-relaxed border border-gray-200 rounded-lg">
+                Tự test: 1. Thêm biến thể 101 → 2. Thêm lại 101 xem cộng dồn → 3. Nhấn − đến 0 xem dòng tự xóa → 4. Thêm 2 món cùng token rồi xóa nhóm.
+            </div>
+        </div>
+
+        <!-- Danh sách giỏ hàng -->
+        <div class="lg:col-span-2 space-y-6">
+            <div th:if="${loi != null}" class="hidden"></div>
+
+            <!-- Mua lẻ -->
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <h2 class="font-bold text-lg">Mua lẻ</h2>
+                    <span class="text-[11px] font-semibold bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${monLe.size()} + ' dòng'">0 dòng</span>
+                </div>
+                <div class="space-y-3">
+                    <div th:each="dong : ${monLe}" class="bg-white border border-gray-200 p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition rounded-none border-l-4 border-l-black">
+                        <div class="w-12 h-12 flex items-center justify-center font-extrabold text-sm shrink-0 rounded-lg bg-gray-100 border border-gray-200"
+                             th:text="${'#' + dong.maBienTheId}">#1</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold" th:text="${'Biến thể #' + dong.maBienTheId}">Biến thể #101</div>
+                            <div class="flex flex-wrap gap-2 mt-1.5">
+                                <span class="text-[11px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border">Mua lẻ</span>
+                                <span class="text-[11px] font-mono bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${'Thêm: ' + dong.ngayThem.toString().substring(0, 16).replace('T', ' ')}">Thêm: 01/01 10:00</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}"
+                               class="w-8 h-8 flex items-center justify-center border border-gray-300 font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">−</a>
+                            <form th:action="@{/gio-hang/sua-so-luong}" method="post" class="flex">
+                                <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                                <input type="hidden" name="idDong" th:value="${dong.id}">
+                                <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0"
+                                       class="w-14 h-8 text-center text-sm font-semibold border border-gray-300 outline-none focus:border-black rounded-lg">
+                            </form>
+                            <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}"
+                               class="w-8 h-8 flex items-center justify-center border border-gray-300 font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">+</a>
+                        </div>
+                        <div class="shrink-0 h-6">
+                            <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}"
+                               class="text-xs font-semibold border border-red-500 text-red-600 px-3 h-6 leading-6 rounded-full hover:bg-red-500 hover:text-white transition">Xóa</a>
+                        </div>
+                    </div>
+                    <div th:if="${monLe.empty}" class="bg-white border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm rounded-none">
+                        Chưa có món mua lẻ. Thêm qua form bên trái (để trống token).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combo theo token -->
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    <h2 class="font-bold text-lg">Bó combo</h2>
+                    <span class="text-[11px] font-semibold bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${nhomCombo.size()} + ' bó'">0 bó</span>
+                </div>
+                <div class="space-y-4">
+                    <div th:each="nhom : ${nhomCombo}" class="bg-white border border-gray-200 shadow-sm hover:shadow-md transition rounded-none">
+                        <div class="flex items-center justify-between gap-4 p-4 border-b border-gray-100 bg-gray-50">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-mono font-bold bg-black text-white px-2.5 py-1 rounded-full" th:text="${nhom.key}">TOKEN</span>
+                                <span class="text-xs text-gray-500" th:text="${nhom.value.size()} + ' món • combo #' + ${nhom.value[0].maComboId}">1 món</span>
+                            </div>
+                            <a th:href="@{|/gio-hang/xoa-nhom?khachHangId=${khachHangId}&maGioHangId=${gio.id}&token=${nhom.key}|}"
+                               class="text-xs font-semibold border border-red-500 text-red-600 px-3 h-6 leading-6 rounded-full hover:bg-red-500 hover:text-white transition">Xóa cả bó</a>
+                        </div>
+                        <div th:each="dong : ${nhom.value}" class="flex items-center gap-4 p-4">
+                            <div class="w-10 h-10 flex items-center justify-center font-extrabold text-xs shrink-0 rounded-lg bg-gray-100 border border-gray-200"
+                                 th:text="${'#' + dong.maBienTheId}">#1</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-sm" th:text="${'Biến thể #' + dong.maBienTheId}">Biến thể #999</div>
+                                <span class="text-[11px] text-gray-400 font-mono" th:text="${'Thêm: ' + dong.ngayThem.toString().substring(0, 16).replace('T', ' ')}">Thêm: 01/01 10:00</span>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}"
+                                   class="w-7 h-7 flex items-center justify-center border border-gray-300 text-sm font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">−</a>
+                                <form th:action="@{/gio-hang/sua-so-luong}" method="post" class="flex">
+                                    <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                                    <input type="hidden" name="idDong" th:value="${dong.id}">
+                                    <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0"
+                                           class="w-12 h-7 text-center text-xs font-semibold border border-gray-300 outline-none focus:border-black rounded-lg">
+                                </form>
+                                <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}"
+                                   class="w-7 h-7 flex items-center justify-center border border-gray-300 text-sm font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">+</a>
+                            </div>
+                            <div class="shrink-0 h-6">
+                                <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}"
+                                   class="text-xs font-semibold border border-red-500 text-red-600 px-3 h-6 leading-6 rounded-full hover:bg-red-500 hover:text-white transition">Xóa</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${nhomCombo.empty}" class="bg-white border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm rounded-none">
+                        Chưa có bó combo. Thêm món với token (nút SINH TOKEN) để nhóm.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Giỏ trống hoàn toàn -->
+            <div th:if="${monLe.empty and nhomCombo.empty}" class="bg-white border border-dashed border-gray-300 p-10 text-center rounded-none">
+                <p class="text-sm text-gray-400">Giỏ hàng trống. Thêm món ở form bên trái để bắt đầu test US17.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Nút sinh token: điền token server sinh sẵn vào ô nhập, tiện test bó combo.
+    (function () {
+        var btn = document.getElementById('btnSinhToken');
+        var o = document.getElementById('oToken');
+        if (!btn || !o) return;
+        btn.addEventListener('click', function () {
+            o.value = /*[[${tokenMoi}]]*/ '';
+            o.focus();
+        });
+    })();
+</script>
+</body>
+</html>
