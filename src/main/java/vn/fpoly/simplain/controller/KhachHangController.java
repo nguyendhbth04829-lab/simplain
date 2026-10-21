@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Controller phục vụ giao diện Web Thymeleaf xem/cập nhật hồ sơ và đổi mật khẩu
+ */
 package vn.fpoly.simplain.controller;
 
 import jakarta.validation.Valid;

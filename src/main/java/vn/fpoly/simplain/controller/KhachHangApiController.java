@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - REST API xem hồ sơ, cập nhật thông tin cá nhân và đổi mật khẩu
+ */
 package vn.fpoly.simplain.controller;
 
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - DTO yêu cầu đổi mật khẩu tài khoản khách hàng
+ */
 package vn.fpoly.simplain.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Kiểm thử tầng giao diện Web KhachHangController
+ */
 package vn.fpoly.simplain.controller;
 
 import org.junit.jupiter.api.BeforeEach;

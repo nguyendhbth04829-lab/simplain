@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Ngoại lệ không tìm thấy tài nguyên (HTTP 404)
+ */
 package vn.fpoly.simplain.exception;
 
 import org.springframework.http.HttpStatus;

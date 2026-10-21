@@ -1,3 +1,8 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Quản lý hồ sơ khách hàng
+ * Giao diện Spring Data JPA truy vấn dữ liệu bảng khach_hang
+ */
 package vn.fpoly.simplain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,3 +1,8 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Quản lý hồ sơ khách hàng và Đổi mật khẩu
+ * Thực thể ánh xạ trực tiếp bảng khach_hang trong CSDL Simpl4
+ */
 package vn.fpoly.simplain.entity;
 
 import jakarta.persistence.Column;

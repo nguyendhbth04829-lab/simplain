@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Kiểm thử tiện ích băm mật khẩu
+ */
 package vn.fpoly.simplain.util;
 
 import org.junit.jupiter.api.BeforeEach;

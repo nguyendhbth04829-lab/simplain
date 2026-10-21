@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Ngoại lệ xung đột dữ liệu trùng lặp (HTTP 409)
+ */
 package vn.fpoly.simplain.exception;
 
 import org.springframework.http.HttpStatus;

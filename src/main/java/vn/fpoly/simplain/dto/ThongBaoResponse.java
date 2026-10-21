@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - DTO thông điệp kết quả thao tác
+ */
 package vn.fpoly.simplain.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;

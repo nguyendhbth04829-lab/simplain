@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Ngoại lệ dữ liệu không hợp lệ (HTTP 400)
+ */
 package vn.fpoly.simplain.exception;
 
 import org.springframework.http.HttpStatus;

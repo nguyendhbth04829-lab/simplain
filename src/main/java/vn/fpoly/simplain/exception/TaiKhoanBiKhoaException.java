@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Ngoại lệ tài khoản bị khóa (HTTP 403)
+ */
 package vn.fpoly.simplain.exception;
 
 import org.springframework.http.HttpStatus;

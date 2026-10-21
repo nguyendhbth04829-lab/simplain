@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Ngoại lệ chưa đăng nhập hoặc thiếu định danh (HTTP 401)
+ */
 package vn.fpoly.simplain.exception;
 
 import org.springframework.http.HttpStatus;

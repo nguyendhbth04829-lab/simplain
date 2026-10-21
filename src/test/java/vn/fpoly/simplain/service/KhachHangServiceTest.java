@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Kiểm thử tầng nghiệp vụ KhachHangService
+ */
 package vn.fpoly.simplain.service;
 
 import org.junit.jupiter.api.BeforeEach;

@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Kiểm thử tầng REST API KhachHangApiController
+ */
 package vn.fpoly.simplain.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

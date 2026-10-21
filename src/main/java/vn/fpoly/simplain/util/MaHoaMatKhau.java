@@ -1,3 +1,7 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Tiện ích băm và xác thực mật khẩu chuẩn SHA-256
+ */
 package vn.fpoly.simplain.util;
 
 import org.springframework.stereotype.Component;
