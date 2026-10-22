@@ -6,10 +6,15 @@ import vn.fpoly.simplain.entity.ChiTietGioHang;
 import vn.fpoly.simplain.entity.GioHang;
 import vn.fpoly.simplain.repository.ChiTietGioHangRepository;
 import vn.fpoly.simplain.repository.GioHangRepository;
+import vn.fpoly.simplain.repository.ThongTinSanPhamGioHang;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 /**
@@ -45,6 +50,33 @@ public class GioHangService {
 
     public List<ChiTietGioHang> layChiTiet(Long maGioHangId) {
         return chiTietGioHangRepository.findByMaGioHangIdOrderByNgayThemDesc(maGioHangId);
+    }
+
+    /** Trả về thông tin sản phẩm thật, tra cứu theo các ID biến thể trong giỏ. */
+    public Map<Long, ThongTinSanPhamGioHang> layThongTinSanPham(List<ChiTietGioHang> chiTiet) {
+        List<Long> maBienTheIds = chiTiet.stream()
+                .map(ChiTietGioHang::getMaBienTheId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (maBienTheIds.isEmpty()) {
+            return Map.of();
+        }
+        return chiTietGioHangRepository.timThongTinSanPhamTrongGio(maBienTheIds).stream()
+                .collect(Collectors.toMap(ThongTinSanPhamGioHang::getMaBienTheId, Function.identity()));
+    }
+
+    public BigDecimal tinhTongTienHang(List<ChiTietGioHang> chiTiet,
+                                      Map<Long, ThongTinSanPhamGioHang> sanPhamTheoBienThe) {
+        return chiTiet.stream()
+                .map(dong -> {
+                    ThongTinSanPhamGioHang sanPham = sanPhamTheoBienThe.get(dong.getMaBienTheId());
+                    if (sanPham == null || sanPham.getGiaBan() == null || dong.getSoLuong() == null) {
+                        return BigDecimal.ZERO;
+                    }
+                    return sanPham.getGiaBan().multiply(BigDecimal.valueOf(dong.getSoLuong()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**

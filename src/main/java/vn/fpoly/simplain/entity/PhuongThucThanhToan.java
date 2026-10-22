@@ -29,6 +29,9 @@ public class PhuongThucThanhToan {
     @Column(name = "ten_phuong_thuc", nullable = false, length = 100)
     private String tenPhuongThuc;
 
+    @Column(name = "hinh_anh_url", length = 500)
+    private String hinhAnhUrl;
+
     @Column(name = "la_truc_tuyen")
     private Boolean laTrucTuyen = false;
 

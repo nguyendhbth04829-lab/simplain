@@ -8,195 +8,255 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        input[type="radio"] { accent-color: #111827; }
     </style>
 </head>
-<body class="bg-[#f2f3f5] text-[#1a1d28]">
-
-<!-- Header Simplain, style tối giản học theo Coolmate -->
-<header class="bg-black text-white sticky top-0 z-10 border-b-2 border-black">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-8">
-            <span class="font-extrabold text-xl tracking-tight">SIMPLAIN<span class="text-xs align-top ml-1 font-medium text-gray-400">SHOP</span></span>
-            <nav class="hidden md:flex gap-6 text-sm text-gray-300">
-                <a href="#" class="hover:text-white">Sản phẩm</a>
-                <a href="/gio-hang/hien-thi" class="text-white font-semibold border-b-2 border-white pb-0.5">Giỏ hàng</a>
-                <a href="#" class="hover:text-white">Đơn hàng</a>
-                <a href="/admin/phuong-thuc-thanh-toan/hien-thi" class="hover:text-white">Thanh toán</a>
-            </nav>
+<body class="bg-[#f5f5f5] text-[#171717]">
+<header class="bg-black text-white">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+        <a href="/" class="text-xl font-extrabold tracking-tight">SIMPLAIN<span class="ml-1 text-xs font-medium text-gray-400">SHOP</span></a>
+        <div class="flex items-center gap-3 text-xs">
+            <span class="rounded-full border border-white/25 px-3 py-1.5">Khách #<span th:text="${khachHangId}">1</span></span>
+            <a href="/admin/phuong-thuc-thanh-toan/hien-thi" class="hidden text-gray-300 hover:text-white sm:inline">Quản lý thanh toán</a>
         </div>
-        <span class="text-xs bg-white/10 px-3 py-1.5 rounded-none border border-white/20">US17 • Trí • Mod 4</span>
     </div>
 </header>
 
-<div class="max-w-7xl mx-auto px-6 py-8">
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-2 mb-6">
-        <div>
-            <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Simplain / Khách hàng / Giỏ hàng</p>
-            <h1 class="text-3xl font-extrabold tracking-tight">Giỏ hàng của bạn</h1>
-            <p class="text-sm text-gray-500 mt-1">Mua lẻ hoặc bó combo theo token. Đổi <code class="bg-gray-100 px-1 rounded">khachHangId</code> trên URL để test giỏ của khách khác.</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold bg-black text-white px-3 py-1.5 rounded-full">Khách #<span th:text="${khachHangId}">1</span></span>
-            <span class="text-xs font-semibold bg-white border border-black px-3 py-1.5 rounded-full"><span th:text="${tongSoLuong}">0</span> món trong giỏ</span>
-        </div>
+<main class="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+    <div class="mb-7">
+        <p class="text-xs font-semibold uppercase tracking-[.18em] text-gray-400">Simplain / Khách hàng / Giỏ hàng</p>
+        <h1 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Giỏ hàng của bạn</h1>
+        <p class="mt-2 text-sm text-gray-500">Kiểm tra sản phẩm, nhập thông tin giao hàng và hoàn tất đơn hàng.</p>
     </div>
 
-    <!-- Thông báo lỗi từ server (thêm món sai ID kho...) -->
-    <div th:if="${loi != null}" class="mb-6 bg-white border-l-4 border-red-500 border border-gray-200 p-4 text-sm text-red-600 rounded-none">
-        <span class="font-bold">Lỗi:</span> <span th:text="${loi}">Lỗi</span>
+    <div th:if="${loi != null}" class="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <span class="font-bold">Không thể cập nhật giỏ hàng:</span> <span th:text="${loi}">Lỗi</span>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <!-- Form thêm món -->
-        <div class="bg-white p-6 border border-gray-200 shadow-sm rounded-none">
-            <h3 class="font-bold text-lg mb-1">Thêm món vào giỏ</h3>
-            <p class="text-xs text-gray-400 mb-4">Biến thể ID của Mod 2, combo ID của US28. Trùng món sẽ cộng dồn số lượng.</p>
-            <form action="/gio-hang/them" method="post" class="space-y-4">
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Khách hàng ID *</label>
-                    <input type="number" name="khachHangId" th:value="${khachHangId}" min="1" required
-                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Biến thể ID *</label>
-                    <input type="number" name="maBienTheId" placeholder="101" min="1" required
-                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Combo ID (tùy chọn)</label>
-                    <input type="number" name="maComboId" placeholder="5" min="1"
-                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Token nhóm combo (tùy chọn)</label>
-                    <div class="mt-1 flex items-stretch">
-                        <input id="oToken" type="text" name="nhomComboToken" placeholder="A1B2C3D4" maxlength="8"
-                               class="border border-gray-300 border-r-0 px-3 py-2.5 text-sm outline-none focus:border-black font-mono uppercase flex-1 rounded-l-lg rounded-r-none min-w-0">
-                        <button type="button" id="btnSinhToken"
-                                class="bg-gray-100 border border-gray-300 text-xs font-bold px-3 hover:bg-black hover:text-white hover:border-black transition rounded-r-lg rounded-l-none whitespace-nowrap">SINH TOKEN</button>
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_370px]">
+        <div class="space-y-5">
+            <!-- Mặt hàng trong giỏ -->
+            <section class="border border-gray-200 bg-white">
+                <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+                    <div>
+                        <h2 class="text-lg font-bold">Mặt hàng</h2>
+                        <p class="mt-1 text-xs text-gray-500"><span th:text="${tongSoLuong}">0</span> sản phẩm trong giỏ</p>
                     </div>
-                    <p class="text-[11px] text-gray-400 mt-1">Món có cùng token + combo sẽ gộp thành 1 bó, xóa cả bó một lần.</p>
+                    <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold" th:text="${monLe.size() + nhomCombo.size()} + ' mục'"></span>
                 </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">Số lượng *</label>
-                    <input type="number" name="soLuong" value="1" min="1" required
-                           class="mt-1 w-full border border-gray-300 p-2.5 text-sm outline-none focus:border-black rounded-lg">
+
+                <div class="p-5">
+                    <div th:if="${monLe.empty and nhomCombo.empty}" class="border border-dashed border-gray-300 px-5 py-12 text-center">
+                        <div class="text-3xl">🛍️</div>
+                        <p class="mt-3 font-semibold">Giỏ hàng đang trống</p>
+                        <p class="mt-1 text-sm text-gray-500">Thêm sản phẩm để tiếp tục đặt hàng.</p>
+                    </div>
+
+                    <div th:if="${!monLe.empty}" class="space-y-3">
+                        <article th:each="dong : ${monLe}" class="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 p-4">
+                            <div class="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                <img th:src="${sanPhamTheoBienThe[dong.maBienTheId] != null and !#strings.isEmpty(sanPhamTheoBienThe[dong.maBienTheId].hinhAnhUrl) ? sanPhamTheoBienThe[dong.maBienTheId].hinhAnhUrl : '/images/product-placeholder.svg'}" onerror="this.onerror=null;this.src='/images/product-placeholder.svg'" th:alt="${'Ảnh sản phẩm biến thể #' + dong.maBienTheId}" class="h-full w-full object-cover">
+                            </div>
+                            <div class="min-w-[130px] flex-1">
+                                <h3 class="font-semibold" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? sanPhamTheoBienThe[dong.maBienTheId].tenSanPham : 'Không tìm thấy sản phẩm #' + dong.maBienTheId}">Sản phẩm</h3>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Biến thể #<span th:text="${dong.maBienTheId}">101</span>
+                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenMau != null}" th:text="${' · ' + sanPhamTheoBienThe[dong.maBienTheId].tenMau}"></span>
+                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc != null}" th:text="${' · Size ' + sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc}"></span>
+                                </p>
+                                <span class="mt-2 inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">Mua lẻ</span>
+                            </div>
+                            <div class="text-right sm:ml-auto">
+                                <p class="text-sm font-semibold text-gray-700" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? #numbers.formatDecimal(sanPhamTheoBienThe[dong.maBienTheId].giaBan, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa có giá'}">Giá</p>
+                                <p class="mt-1 text-[11px] text-gray-400" th:if="${sanPhamTheoBienThe[dong.maBienTheId] == null}">Biến thể không có trong danh mục</p>
+                            </div>
+                            <div class="flex w-full items-center justify-between border-t border-gray-100 pt-3 sm:w-auto sm:justify-start sm:border-0 sm:pt-0">
+                                <div class="flex items-center gap-2">
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}" aria-label="Giảm số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">−</a>
+                                    <form th:action="@{/gio-hang/sua-so-luong}" method="post">
+                                        <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                                        <input type="hidden" name="idDong" th:value="${dong.id}">
+                                        <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0" aria-label="Số lượng" class="h-8 w-14 rounded-lg border border-gray-300 text-center text-sm" onchange="this.form.submit()">
+                                    </form>
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}" aria-label="Tăng số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">+</a>
+                                </div>
+                                <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}" class="ml-4 rounded-full px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Xóa</a>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div th:each="nhom : ${nhomCombo}" class="mt-4 overflow-hidden rounded-xl border border-gray-200">
+                        <div class="flex flex-wrap items-center justify-between gap-2 bg-gray-50 px-4 py-3">
+                            <div>
+                                <span class="text-sm font-bold" th:text="${'Combo #' + nhom.value[0].maComboId}">Combo</span>
+                                <span class="ml-2 rounded-full bg-white px-2.5 py-1 font-mono text-[10px] text-gray-500" th:text="${nhom.key}">TOKEN</span>
+                            </div>
+                            <a th:href="@{|/gio-hang/xoa-nhom?khachHangId=${khachHangId}&maGioHangId=${gio.id}&token=${nhom.key}|}" class="text-xs font-semibold text-red-600 hover:underline">Xóa cả combo</a>
+                        </div>
+                        <article th:each="dong : ${nhom.value}" class="mx-3 my-2 flex flex-wrap items-center gap-4 rounded-lg border border-gray-100 p-4">
+                            <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                <img th:src="${sanPhamTheoBienThe[dong.maBienTheId] != null and !#strings.isEmpty(sanPhamTheoBienThe[dong.maBienTheId].hinhAnhUrl) ? sanPhamTheoBienThe[dong.maBienTheId].hinhAnhUrl : '/images/product-placeholder.svg'}" onerror="this.onerror=null;this.src='/images/product-placeholder.svg'" th:alt="${'Ảnh sản phẩm biến thể #' + dong.maBienTheId}" class="h-full w-full object-cover">
+                            </div>
+                            <div class="min-w-[120px] flex-1">
+                                <h3 class="text-sm font-semibold" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? sanPhamTheoBienThe[dong.maBienTheId].tenSanPham : 'Không tìm thấy sản phẩm #' + dong.maBienTheId}">Sản phẩm</h3>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Thuộc combo · biến thể #<span th:text="${dong.maBienTheId}">101</span>
+                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenMau != null}" th:text="${' · ' + sanPhamTheoBienThe[dong.maBienTheId].tenMau}"></span>
+                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc != null}" th:text="${' · Size ' + sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc}"></span>
+                                </p>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-700" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? #numbers.formatDecimal(sanPhamTheoBienThe[dong.maBienTheId].giaBan, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa có giá'}">Giá</p>
+                            <div class="flex w-full items-center justify-between border-t border-gray-100 pt-3 sm:w-auto sm:justify-start sm:border-0 sm:pt-0">
+                                <div class="flex items-center gap-2">
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}" aria-label="Giảm số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">−</a>
+                                    <form th:action="@{/gio-hang/sua-so-luong}" method="post">
+                                        <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                                        <input type="hidden" name="idDong" th:value="${dong.id}">
+                                        <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0" aria-label="Số lượng" class="h-8 w-14 rounded-lg border border-gray-300 text-center text-sm" onchange="this.form.submit()">
+                                    </form>
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}" aria-label="Tăng số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">+</a>
+                                </div>
+                                <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}" class="ml-4 rounded-full px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Xóa</a>
+                            </div>
+                        </article>
+                    </div>
                 </div>
-                <button class="w-full bg-black text-white font-bold py-3 text-sm hover:bg-gray-800 transition rounded-lg">+ THÊM MÓN</button>
-            </form>
-            <div class="mt-4 text-xs text-gray-500 bg-gray-50 p-3 leading-relaxed border border-gray-200 rounded-lg">
-                Tự test: 1. Thêm biến thể 101 → 2. Thêm lại 101 xem cộng dồn → 3. Nhấn − đến 0 xem dòng tự xóa → 4. Thêm 2 món cùng token rồi xóa nhóm.
-            </div>
+            </section>
+
+            <!-- Địa chỉ nhận hàng -->
+            <section class="border border-gray-200 bg-white p-5 sm:p-6">
+                <div class="mb-5 flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">01 · Giao hàng</p>
+                        <h2 class="mt-1 text-lg font-bold">Địa chỉ nhận hàng</h2>
+                    </div>
+                    <span class="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold text-gray-600">Thông tin đặt hàng</span>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="text-xs font-semibold text-gray-600">Họ và tên người nhận
+                        <input id="tenNguoiNhan" type="text" required placeholder="Nguyễn Văn An" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black">
+                    </label>
+                    <label class="text-xs font-semibold text-gray-600">Số điện thoại
+                        <input id="soDienThoai" type="tel" required placeholder="090 123 4567" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black">
+                    </label>
+                    <label class="text-xs font-semibold text-gray-600 sm:col-span-2">Địa chỉ cụ thể
+                        <input id="diaChi" type="text" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black">
+                    </label>
+                    <label class="text-xs font-semibold text-gray-600 sm:col-span-2">Ghi chú cho người giao hàng <span class="font-normal text-gray-400">(không bắt buộc)</span>
+                        <textarea rows="2" placeholder="Ví dụ: gọi trước khi giao" class="mt-1.5 w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black"></textarea>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Khu vực tiện ích test, không chiếm chỗ trong luồng đặt hàng -->
+            <details class="border border-dashed border-gray-300 bg-white">
+                <summary class="cursor-pointer px-5 py-4 text-sm font-semibold text-gray-600">Công cụ test giỏ hàng (chỉ dùng nội bộ)</summary>
+                <div class="border-t border-gray-200 p-5">
+                    <p class="mb-4 text-xs text-gray-500">Nhập ID biến thể / combo để kiểm tra thêm món, cộng dồn và gom nhóm combo.</p>
+                    <form action="/gio-hang/them" method="post" class="grid gap-3 sm:grid-cols-2">
+                        <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                        <label class="text-xs font-semibold text-gray-600">Biến thể ID *<input type="number" name="maBienTheId" placeholder="101" min="1" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal"></label>
+                        <label class="text-xs font-semibold text-gray-600">Combo ID<input type="number" name="maComboId" placeholder="5" min="1" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal"></label>
+                        <label class="text-xs font-semibold text-gray-600">Token nhóm combo
+                            <span class="mt-1 flex"><input id="oToken" type="text" name="nhomComboToken" maxlength="8" placeholder="Để trống nếu mua lẻ" class="min-w-0 flex-1 rounded-l-lg border border-gray-300 px-3 py-2.5 text-sm font-normal uppercase"><button type="button" id="btnSinhToken" class="rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 px-3 text-xs font-bold">SINH</button></span>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-600">Số lượng<input type="number" name="soLuong" value="1" min="1" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal"></label>
+                        <button class="rounded-lg bg-black px-4 py-3 text-sm font-bold text-white hover:bg-gray-800 sm:col-span-2">+ THÊM MÓN TEST</button>
+                    </form>
+                </div>
+            </details>
         </div>
 
-        <!-- Danh sách giỏ hàng -->
-        <div class="lg:col-span-2 space-y-6">
-            <div th:if="${loi != null}" class="hidden"></div>
+        <div class="space-y-5">
+            <!-- Phương thức thanh toán -->
+            <section class="border border-gray-200 bg-white p-5 sm:p-6">
+                <div class="mb-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">02 · Thanh toán</p>
+                    <h2 class="mt-1 text-lg font-bold">Chọn phương thức thanh toán</h2>
+                </div>
+                <div th:if="${!danhSachPhuongThucThanhToan.empty}" class="space-y-3">
+                    <label th:each="phuongThuc, iter : ${danhSachPhuongThucThanhToan}" class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 p-4 hover:border-gray-500">
+                        <input type="radio" name="phuongThucThanhToan" th:value="${phuongThuc.maPhuongThuc}" th:checked="${iter.index == 0}">
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-semibold" th:text="${phuongThuc.tenPhuongThuc}">Tên phương thức</span>
+                            <span class="mt-1 block text-xs text-gray-500" th:text="${phuongThuc.laTrucTuyen} ? 'Thanh toán trực tuyến' : 'Thanh toán khi nhận hàng'">Loại thanh toán</span>
+                        </span>
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white p-1">
+                            <img th:src="${#strings.isEmpty(phuongThuc.hinhAnhUrl) ? '/images/payment/' + phuongThuc.maPhuongThuc + '.svg' : phuongThuc.hinhAnhUrl}" th:alt="${'Logo ' + phuongThuc.tenPhuongThuc}" onerror="this.onerror=null;this.src='/images/payment-placeholder.svg'" class="h-full w-full object-contain">
+                        </span>
+                    </label>
+                </div>
+                <div th:if="${danhSachPhuongThucThanhToan.empty}" class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+                    Hiện chưa có phương thức thanh toán nào đang được bật.
+                </div>
+                <p class="mt-3 text-xs text-gray-400">Danh sách và URL logo lấy từ bảng phương thức thanh toán. Khi chưa có URL, hệ thống tìm logo tại <code>/images/payment/&lt;mã-phương-thức&gt;.svg</code>.</p>
+            </section>
 
-            <!-- Mua lẻ -->
-            <div>
-                <div class="flex items-center gap-3 mb-3">
-                    <h2 class="font-bold text-lg">Mua lẻ</h2>
-                    <span class="text-[11px] font-semibold bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${monLe.size()} + ' dòng'">0 dòng</span>
+            <!-- Coupon -->
+            <section class="border border-gray-200 bg-white p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">03 · Ưu đãi</p>
+                <h2 class="mt-1 text-lg font-bold">Mã giảm giá</h2>
+                <div class="mt-4 flex gap-2">
+                    <input id="maGiamGia" type="text" placeholder="Nhập mã ưu đãi" class="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm uppercase outline-none focus:border-black">
+                    <button id="apDungMa" type="button" class="rounded-lg border border-black px-5 text-sm font-bold hover:bg-black hover:text-white">Áp dụng</button>
                 </div>
-                <div class="space-y-3">
-                    <div th:each="dong : ${monLe}" class="bg-white border border-gray-200 p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition rounded-none border-l-4 border-l-black">
-                        <div class="w-12 h-12 flex items-center justify-center font-extrabold text-sm shrink-0 rounded-lg bg-gray-100 border border-gray-200"
-                             th:text="${'#' + dong.maBienTheId}">#1</div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-bold" th:text="${'Biến thể #' + dong.maBienTheId}">Biến thể #101</div>
-                            <div class="flex flex-wrap gap-2 mt-1.5">
-                                <span class="text-[11px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border">Mua lẻ</span>
-                                <span class="text-[11px] font-mono bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${'Thêm: ' + dong.ngayThem.toString().substring(0, 16).replace('T', ' ')}">Thêm: 01/01 10:00</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}"
-                               class="w-8 h-8 flex items-center justify-center border border-gray-300 font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">−</a>
-                            <form th:action="@{/gio-hang/sua-so-luong}" method="post" class="flex">
-                                <input type="hidden" name="khachHangId" th:value="${khachHangId}">
-                                <input type="hidden" name="idDong" th:value="${dong.id}">
-                                <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0"
-                                       class="w-14 h-8 text-center text-sm font-semibold border border-gray-300 outline-none focus:border-black rounded-lg">
-                            </form>
-                            <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}"
-                               class="w-8 h-8 flex items-center justify-center border border-gray-300 font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">+</a>
-                        </div>
-                        <div class="shrink-0 h-6">
-                            <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}"
-                               class="text-xs font-semibold border border-red-500 text-red-600 px-3 h-6 leading-6 rounded-full hover:bg-red-500 hover:text-white transition">Xóa</a>
-                        </div>
-                    </div>
-                    <div th:if="${monLe.empty}" class="bg-white border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm rounded-none">
-                        Chưa có món mua lẻ. Thêm qua form bên trái (để trống token).
-                    </div>
-                </div>
-            </div>
+                <p id="thongBaoMa" class="mt-2 text-xs text-gray-500">Mã giảm giá sẽ được kiểm tra khi kết nối chức năng checkout.</p>
+            </section>
 
-            <!-- Combo theo token -->
-            <div>
-                <div class="flex items-center gap-3 mb-3">
-                    <h2 class="font-bold text-lg">Bó combo</h2>
-                    <span class="text-[11px] font-semibold bg-gray-100 px-2 py-0.5 rounded-full border" th:text="${nhomCombo.size()} + ' bó'">0 bó</span>
-                </div>
-                <div class="space-y-4">
-                    <div th:each="nhom : ${nhomCombo}" class="bg-white border border-gray-200 shadow-sm hover:shadow-md transition rounded-none">
-                        <div class="flex items-center justify-between gap-4 p-4 border-b border-gray-100 bg-gray-50">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] font-mono font-bold bg-black text-white px-2.5 py-1 rounded-full" th:text="${nhom.key}">TOKEN</span>
-                                <span class="text-xs text-gray-500" th:text="${nhom.value.size()} + ' món • combo #' + ${nhom.value[0].maComboId}">1 món</span>
-                            </div>
-                            <a th:href="@{|/gio-hang/xoa-nhom?khachHangId=${khachHangId}&maGioHangId=${gio.id}&token=${nhom.key}|}"
-                               class="text-xs font-semibold border border-red-500 text-red-600 px-3 h-6 leading-6 rounded-full hover:bg-red-500 hover:text-white transition">Xóa cả bó</a>
-                        </div>
-                        <div th:each="dong : ${nhom.value}" class="flex items-center gap-4 p-4">
-                            <div class="w-10 h-10 flex items-center justify-center font-extrabold text-xs shrink-0 rounded-lg bg-gray-100 border border-gray-200"
-                                 th:text="${'#' + dong.maBienTheId}">#1</div>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-bold text-sm" th:text="${'Biến thể #' + dong.maBienTheId}">Biến thể #999</div>
-                                <span class="text-[11px] text-gray-400 font-mono" th:text="${'Thêm: ' + dong.ngayThem.toString().substring(0, 16).replace('T', ' ')}">Thêm: 01/01 10:00</span>
-                            </div>
-                            <div class="flex items-center gap-2 shrink-0">
-                                <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}"
-                                   class="w-7 h-7 flex items-center justify-center border border-gray-300 text-sm font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">−</a>
-                                <form th:action="@{/gio-hang/sua-so-luong}" method="post" class="flex">
-                                    <input type="hidden" name="khachHangId" th:value="${khachHangId}">
-                                    <input type="hidden" name="idDong" th:value="${dong.id}">
-                                    <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0"
-                                           class="w-12 h-7 text-center text-xs font-semibold border border-gray-300 outline-none focus:border-black rounded-lg">
-                                </form>
-                                <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}"
-                                   class="w-7 h-7 flex items-center justify-center border border-gray-300 text-sm font-bold rounded-lg hover:bg-black hover:text-white hover:border-black transition">+</a>
-                            </div>
-                            <div class="shrink-0 h-6">
-                                <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}"
-                                   class="text-xs font-semibold border border-red-500 text-red-600 px-3 h-6 leading-6 rounded-full hover:bg-red-500 hover:text-white transition">Xóa</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div th:if="${nhomCombo.empty}" class="bg-white border border-dashed border-gray-300 p-8 text-center text-gray-400 text-sm rounded-none">
-                        Chưa có bó combo. Thêm món với token (nút SINH TOKEN) để nhóm.
-                    </div>
-                </div>
+        <!-- Tóm tắt đơn hàng -->
+        <aside class="border border-gray-200 bg-white p-5 lg:sticky lg:top-6 sm:p-6">
+            <h2 class="text-lg font-bold">Tóm tắt đơn hàng</h2>
+            <div class="mt-5 space-y-3 border-b border-gray-200 pb-5 text-sm">
+                <div class="flex justify-between gap-4 text-gray-600"><span>Tạm tính (<span th:text="${tongSoLuong}">0</span> sản phẩm)</span><span class="font-medium text-gray-900" th:text="${#numbers.formatDecimal(tongTienHang, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+                <div class="flex justify-between gap-4 text-gray-600"><span>Phí vận chuyển</span><span class="font-medium text-gray-900">Tính khi xác nhận</span></div>
+                <div class="flex justify-between gap-4 text-gray-600"><span>Giảm giá</span><span class="font-medium text-gray-900">—</span></div>
             </div>
-
-            <!-- Giỏ trống hoàn toàn -->
-            <div th:if="${monLe.empty and nhomCombo.empty}" class="bg-white border border-dashed border-gray-300 p-10 text-center rounded-none">
-                <p class="text-sm text-gray-400">Giỏ hàng trống. Thêm món ở form bên trái để bắt đầu test US17.</p>
+            <div class="flex items-end justify-between gap-3 py-5">
+                <div><p class="font-bold">Tạm tính đơn hàng</p><p class="mt-1 text-[11px] leading-relaxed text-gray-500">Chưa bao gồm phí vận chuyển và giảm giá.</p></div>
+                <span class="whitespace-nowrap text-xl font-extrabold" th:text="${#numbers.formatDecimal(tongTienHang, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span>
             </div>
+            <button id="datHang" type="button" class="w-full rounded-lg bg-black px-4 py-3.5 text-sm font-bold text-white transition hover:bg-gray-800">TIẾP TỤC ĐẶT HÀNG</button>
+            <p id="thongBaoDatHang" class="mt-3 hidden border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800"></p>
+            <div class="mt-5 space-y-2 border-t border-gray-100 pt-4 text-xs text-gray-500">
+                <p>✓ Thông tin giao hàng được dùng cho đơn này</p>
+                <p>✓ Có thể cập nhật số lượng trước khi đặt</p>
+                <p class="leading-relaxed">Đơn hàng chưa được gửi đi: chức năng tạo đơn, tính giá và áp mã cần nối với backend checkout.</p>
+            </div>
+        </aside>
         </div>
     </div>
-</div>
+</main>
 
 <script th:inline="javascript">
-    // Nút sinh token: điền token server sinh sẵn vào ô nhập, tiện test bó combo.
     (function () {
-        var btn = document.getElementById('btnSinhToken');
-        var o = document.getElementById('oToken');
-        if (!btn || !o) return;
-        btn.addEventListener('click', function () {
-            o.value = /*[[${tokenMoi}]]*/ '';
-            o.focus();
+        const btnToken = document.getElementById('btnSinhToken');
+        const inputToken = document.getElementById('oToken');
+        if (btnToken && inputToken) {
+            btnToken.addEventListener('click', function () {
+                inputToken.value = /*[[${tokenMoi}]]*/ '';
+            });
+        }
+
+        const applyButton = document.getElementById('apDungMa');
+        applyButton.addEventListener('click', function () {
+            const code = document.getElementById('maGiamGia').value.trim();
+            const message = document.getElementById('thongBaoMa');
+            message.textContent = code
+                ? 'Đã nhận mã ' + code.toUpperCase() + '. Mã sẽ được xác thực khi chức năng checkout được tích hợp.'
+                : 'Vui lòng nhập mã giảm giá.';
+            message.className = 'mt-2 text-xs ' + (code ? 'text-gray-500' : 'text-red-600');
+        });
+
+        document.getElementById('datHang').addEventListener('click', function () {
+            const notice = document.getElementById('thongBaoDatHang');
+            const requiredFields = ['tenNguoiNhan', 'soDienThoai', 'diaChi'];
+            const missing = requiredFields.some(function (id) {
+                return !document.getElementById(id).value.trim();
+            });
+            notice.classList.remove('hidden');
+            notice.textContent = missing
+                ? 'Vui lòng nhập tên người nhận, số điện thoại và địa chỉ giao hàng.'
+                : 'Thông tin đã được nhập. Chức năng tạo đơn chưa được kết nối với backend checkout nên đơn chưa được gửi.';
         });
     })();
 </script>

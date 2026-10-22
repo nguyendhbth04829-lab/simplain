@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.fpoly.simplain.entity.ChiTietGioHang;
 import vn.fpoly.simplain.entity.GioHang;
 import vn.fpoly.simplain.service.GioHangService;
+import vn.fpoly.simplain.service.PhuongThucThanhToanService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -23,9 +24,12 @@ import java.util.Map;
 public class GioHangController {
 
     private final GioHangService gioHangService;
+    private final PhuongThucThanhToanService phuongThucThanhToanService;
 
-    public GioHangController(GioHangService gioHangService) {
+    public GioHangController(GioHangService gioHangService,
+                             PhuongThucThanhToanService phuongThucThanhToanService) {
         this.gioHangService = gioHangService;
+        this.phuongThucThanhToanService = phuongThucThanhToanService;
     }
 
     @GetMapping("/hien-thi")
@@ -46,9 +50,13 @@ public class GioHangController {
         model.addAttribute("gio", gio);
         model.addAttribute("monLe", monLe);
         model.addAttribute("nhomCombo", nhomCombo);
+        var sanPhamTheoBienThe = gioHangService.layThongTinSanPham(chiTiet);
+        model.addAttribute("sanPhamTheoBienThe", sanPhamTheoBienThe);
+        model.addAttribute("tongTienHang", gioHangService.tinhTongTienHang(chiTiet, sanPhamTheoBienThe));
         model.addAttribute("khachHangId", khachHangId);
         model.addAttribute("tokenMoi", gioHangService.sinhToken());
         model.addAttribute("tongSoLuong", chiTiet.stream().mapToInt(c -> c.getSoLuong() == null ? 0 : c.getSoLuong()).sum());
+        model.addAttribute("danhSachPhuongThucThanhToan", phuongThucThanhToanService.layDanhSachDangKichHoat());
         model.addAttribute("loi", loi);
         return "khach-hang/gio-hang/hien-thi";
     }

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import vn.fpoly.simplain.entity.PhuongThucThanhToan;
 import vn.fpoly.simplain.repository.PhuongThucThanhToanRepository;
 
+import java.util.List;
+
 /**
  * Xử lý logic phương thức thanh toán.
  * Controller chỉ gọi sang đây, không gọi Repository trực tiếp.
@@ -79,5 +81,10 @@ public class PhuongThucThanhToanService {
 
     public PhuongThucThanhToan timTheoId(Long id) {
         return phuongThucThanhToanRepository.findById(id).orElse(null);
+    }
+
+    /** Lấy các phương thức đang bật để khách chọn khi thanh toán. */
+    public List<PhuongThucThanhToan> layDanhSachDangKichHoat() {
+        return phuongThucThanhToanRepository.findByKichHoatTrue();
     }
 }
