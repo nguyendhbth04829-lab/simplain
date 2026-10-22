@@ -6,6 +6,12 @@ import java.math.BigDecimal;
 public interface ThongTinSanPhamGioHang {
     Long getMaBienTheId();
 
+    Long getMaSanPhamId();
+
+    Long getMaMauSacId();
+
+    Long getMaKichThuocId();
+
     String getTenSanPham();
 
     String getTenMau();
@@ -15,6 +21,8 @@ public interface ThongTinSanPhamGioHang {
     BigDecimal getGiaBan();
 
     BigDecimal getGiaGoc();
+
+    Integer getSoLuongTonKho();
 
     String getHinhAnhUrl();
 }

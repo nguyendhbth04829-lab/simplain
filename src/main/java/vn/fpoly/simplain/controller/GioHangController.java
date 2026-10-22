@@ -5,10 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import vn.fpoly.simplain.entity.ChiTietGioHang;
 import vn.fpoly.simplain.entity.GioHang;
 import vn.fpoly.simplain.service.GioHangService;
 import vn.fpoly.simplain.service.PhuongThucThanhToanService;
+import vn.fpoly.simplain.service.CheckoutService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -25,11 +27,14 @@ public class GioHangController {
 
     private final GioHangService gioHangService;
     private final PhuongThucThanhToanService phuongThucThanhToanService;
+    private final CheckoutService checkoutService;
 
     public GioHangController(GioHangService gioHangService,
-                             PhuongThucThanhToanService phuongThucThanhToanService) {
+                             PhuongThucThanhToanService phuongThucThanhToanService,
+                             CheckoutService checkoutService) {
         this.gioHangService = gioHangService;
         this.phuongThucThanhToanService = phuongThucThanhToanService;
+        this.checkoutService = checkoutService;
     }
 
     @GetMapping("/hien-thi")
@@ -54,9 +59,13 @@ public class GioHangController {
         model.addAttribute("sanPhamTheoBienThe", sanPhamTheoBienThe);
         model.addAttribute("tongTienHang", gioHangService.tinhTongTienHang(chiTiet, sanPhamTheoBienThe));
         model.addAttribute("khachHangId", khachHangId);
-        model.addAttribute("tokenMoi", gioHangService.sinhToken());
         model.addAttribute("tongSoLuong", chiTiet.stream().mapToInt(c -> c.getSoLuong() == null ? 0 : c.getSoLuong()).sum());
         model.addAttribute("danhSachPhuongThucThanhToan", phuongThucThanhToanService.layDanhSachDangKichHoat());
+        model.addAttribute("danhSachDiaChi", checkoutService.layDiaChi(khachHangId));
+        model.addAttribute("bienTheLuaChonTheoSanPham", gioHangService.layBienTheLuaChonTheoSanPham());
+        model.addAttribute("danhSachVoucher", checkoutService.layVoucherChuaDung(khachHangId));
+        model.addAttribute("soDuCoolcash", checkoutService.laySoDuCoolcash(khachHangId));
+        model.addAttribute("phiVanChuyen", checkoutService.getPhiVanChuyen());
         model.addAttribute("loi", loi);
         return "khach-hang/gio-hang/hien-thi";
     }
@@ -80,6 +89,19 @@ public class GioHangController {
                              @RequestParam Long idDong,
                              @RequestParam int soLuong) {
         gioHangService.suaSoLuong(idDong, soLuong);
+        return "redirect:/gio-hang/hien-thi?khachHangId=" + khachHangId;
+    }
+
+    @PostMapping("/doi-bien-the")
+    public String doiBienThe(@RequestParam(defaultValue = "1") Long khachHangId,
+                             @RequestParam Long idDong,
+                             @RequestParam Long maBienTheId,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            gioHangService.doiBienThe(khachHangId, idDong, maBienTheId);
+        } catch (IllegalArgumentException loi) {
+            redirectAttributes.addFlashAttribute("loi", loi.getMessage());
+        }
         return "redirect:/gio-hang/hien-thi?khachHangId=" + khachHangId;
     }
 

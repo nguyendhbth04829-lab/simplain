@@ -33,6 +33,8 @@ public interface PhuongThucThanhToanRepository extends JpaRepository<PhuongThucT
 
     List<PhuongThucThanhToan> findByKichHoatTrue();
 
+    java.util.Optional<PhuongThucThanhToan> findByMaPhuongThucAndKichHoatTrue(String maPhuongThuc);
+
     boolean existsByMaPhuongThuc(String maPhuongThuc);
 
     boolean existsByMaPhuongThucAndIdNot(String maPhuongThuc, Long id);

@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.fpoly.simplain.entity.ChiTietGioHang;
 import vn.fpoly.simplain.entity.GioHang;
 import vn.fpoly.simplain.repository.ChiTietGioHangRepository;
+import vn.fpoly.simplain.repository.GoiComboCheckoutRepository;
 import vn.fpoly.simplain.repository.GioHangRepository;
 import vn.fpoly.simplain.repository.ThongTinSanPhamGioHang;
 
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,11 +28,14 @@ public class GioHangService {
 
     private final GioHangRepository gioHangRepository;
     private final ChiTietGioHangRepository chiTietGioHangRepository;
+    private final GoiComboCheckoutRepository goiComboCheckoutRepository;
 
     public GioHangService(GioHangRepository gioHangRepository,
-                          ChiTietGioHangRepository chiTietGioHangRepository) {
+                          ChiTietGioHangRepository chiTietGioHangRepository,
+                          GoiComboCheckoutRepository goiComboCheckoutRepository) {
         this.gioHangRepository = gioHangRepository;
         this.chiTietGioHangRepository = chiTietGioHangRepository;
+        this.goiComboCheckoutRepository = goiComboCheckoutRepository;
     }
 
     /**
@@ -52,6 +57,49 @@ public class GioHangService {
         return chiTietGioHangRepository.findByMaGioHangIdOrderByNgayThemDesc(maGioHangId);
     }
 
+    public Map<Long, List<ThongTinSanPhamGioHang>> layBienTheLuaChonTheoSanPham() {
+        return chiTietGioHangRepository.timTatCaBienTheDangKinhDoanh().stream()
+                .collect(Collectors.groupingBy(ThongTinSanPhamGioHang::getMaSanPhamId,
+                        LinkedHashMap::new, Collectors.toList()));
+    }
+
+    @Transactional
+    public void doiBienThe(Long maKhachHangId, Long idDong, Long maBienTheMoiId) {
+        GioHang gio = gioHangRepository.findByMaKhachHangId(maKhachHangId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giỏ hàng."));
+        ChiTietGioHang dong = chiTietGioHangRepository.findByIdAndMaGioHangId(idDong, gio.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Dòng hàng không thuộc giỏ này."));
+
+        Map<Long, ThongTinSanPhamGioHang> bienTheConHang = chiTietGioHangRepository.timBienTheConHang().stream()
+                .collect(Collectors.toMap(ThongTinSanPhamGioHang::getMaBienTheId, Function.identity()));
+        ThongTinSanPhamGioHang bienTheMoi = bienTheConHang.get(maBienTheMoiId);
+        ThongTinSanPhamGioHang bienTheCu = layThongTinSanPham(List.of(dong)).get(dong.getMaBienTheId());
+        if (bienTheMoi == null || bienTheCu == null) {
+            throw new IllegalArgumentException("Biến thể đã chọn không còn khả dụng.");
+        }
+        if (!Objects.equals(bienTheCu.getMaSanPhamId(), bienTheMoi.getMaSanPhamId())) {
+            throw new IllegalArgumentException("Chỉ có thể đổi màu hoặc kích thước của cùng một sản phẩm.");
+        }
+        if (Objects.equals(dong.getMaBienTheId(), maBienTheMoiId)) return;
+
+        ChiTietGioHang dongTrung = chiTietGioHangRepository
+                .findByMaGioHangIdAndMaBienTheId(gio.getId(), maBienTheMoiId).stream()
+                .filter(khac -> !Objects.equals(khac.getId(), dong.getId()))
+                .filter(khac -> Objects.equals(khac.getMaComboId(), dong.getMaComboId()))
+                .filter(khac -> Objects.equals(khac.getNhomComboToken(), dong.getNhomComboToken()))
+                .findFirst().orElse(null);
+        if (dongTrung != null) {
+            dongTrung.setSoLuong((dongTrung.getSoLuong() == null ? 0 : dongTrung.getSoLuong())
+                    + (dong.getSoLuong() == null ? 0 : dong.getSoLuong()));
+            chiTietGioHangRepository.save(dongTrung);
+            chiTietGioHangRepository.delete(dong);
+        } else {
+            dong.setMaBienTheId(maBienTheMoiId);
+            chiTietGioHangRepository.save(dong);
+        }
+        chamGio(gio);
+    }
+
     /** Trả về thông tin sản phẩm thật, tra cứu theo các ID biến thể trong giỏ. */
     public Map<Long, ThongTinSanPhamGioHang> layThongTinSanPham(List<ChiTietGioHang> chiTiet) {
         List<Long> maBienTheIds = chiTiet.stream()
@@ -68,15 +116,47 @@ public class GioHangService {
 
     public BigDecimal tinhTongTienHang(List<ChiTietGioHang> chiTiet,
                                       Map<Long, ThongTinSanPhamGioHang> sanPhamTheoBienThe) {
-        return chiTiet.stream()
-                .map(dong -> {
+        List<Long> comboIds = chiTiet.stream()
+                .filter(dong -> dong.getNhomComboToken() != null && dong.getMaComboId() != null)
+                .map(ChiTietGioHang::getMaComboId)
+                .distinct()
+                .toList();
+        Map<Long, BigDecimal> giaCombo = goiComboCheckoutRepository.layGiaCombo(comboIds);
+        Map<String, List<ChiTietGioHang>> nhomCombo = new LinkedHashMap<>();
+        BigDecimal tong = BigDecimal.ZERO;
+
+        for (ChiTietGioHang dong : chiTiet) {
+            if (dong.getNhomComboToken() != null && dong.getMaComboId() != null
+                    && giaCombo.containsKey(dong.getMaComboId())) {
+                String key = dong.getMaComboId() + ":" + dong.getNhomComboToken();
+                nhomCombo.computeIfAbsent(key, ignored -> new java.util.ArrayList<>()).add(dong);
+                continue;
+            }
+            tong = tong.add(tinhThanhTienLe(dong, sanPhamTheoBienThe));
+        }
+
+        for (List<ChiTietGioHang> nhom : nhomCombo.values()) {
+            ChiTietGioHang dongDau = nhom.get(0);
+            tong = tong.add(giaCombo.get(dongDau.getMaComboId()));
+            // Một token đại diện một gói combo; số lượng tăng thêm của từng dòng tính theo giá biến thể.
+            for (ChiTietGioHang dong : nhom) {
+                int soLuongThem = Math.max(0, (dong.getSoLuong() == null ? 1 : dong.getSoLuong()) - 1);
+                if (soLuongThem > 0) {
                     ThongTinSanPhamGioHang sanPham = sanPhamTheoBienThe.get(dong.getMaBienTheId());
-                    if (sanPham == null || sanPham.getGiaBan() == null || dong.getSoLuong() == null) {
-                        return BigDecimal.ZERO;
+                    if (sanPham != null && sanPham.getGiaBan() != null) {
+                        tong = tong.add(sanPham.getGiaBan().multiply(BigDecimal.valueOf(soLuongThem)));
                     }
-                    return sanPham.getGiaBan().multiply(BigDecimal.valueOf(dong.getSoLuong()));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                }
+            }
+        }
+        return tong;
+    }
+
+    private BigDecimal tinhThanhTienLe(ChiTietGioHang dong,
+                                       Map<Long, ThongTinSanPhamGioHang> sanPhamTheoBienThe) {
+        ThongTinSanPhamGioHang sanPham = sanPhamTheoBienThe.get(dong.getMaBienTheId());
+        if (sanPham == null || sanPham.getGiaBan() == null || dong.getSoLuong() == null) return BigDecimal.ZERO;
+        return sanPham.getGiaBan().multiply(BigDecimal.valueOf(dong.getSoLuong()));
     }
 
     /**

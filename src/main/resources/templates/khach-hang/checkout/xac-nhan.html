@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận checkout | Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-[#f5f5f5] text-[#171717]">
+<header class="bg-black text-white">
+    <div class="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 lg:px-8">
+        <a href="/" class="text-xl font-extrabold tracking-tight">SIMPLAIN<span class="ml-1 text-xs font-medium text-gray-400">SHOP</span></a>
+        <span class="text-xs text-gray-300">US19 · Checkout</span>
+    </div>
+</header>
+<main class="mx-auto max-w-5xl px-5 py-8 lg:px-8">
+    <div class="mb-6 border border-green-200 bg-green-50 p-5">
+        <p class="text-xs font-bold uppercase tracking-wider text-green-700">Checkout đã được xác nhận</p>
+        <h1 class="mt-1 text-2xl font-extrabold">Thông tin thanh toán đã sẵn sàng</h1>
+        <p class="mt-2 text-sm text-green-800">US19 đã xác thực địa chỉ, phương thức thanh toán và tính tổng tiền. Chưa tạo đơn hàng hoặc trừ tồn kho; dữ liệu này là đầu vào cho US21.</p>
+    </div>
+
+    <div class="grid items-start gap-5 md:grid-cols-2">
+        <section class="border border-gray-200 bg-white p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Thông tin nhận hàng</p>
+            <h2 class="mt-2 font-bold" th:text="${ketQua.diaChi.tenNguoiNhan}">Tên người nhận</h2>
+            <p class="mt-1 text-sm text-gray-600" th:text="${ketQua.diaChi.soDienThoai}">Số điện thoại</p>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600" th:text="${ketQua.diaChi.diaChiChiTiet + ', ' + ketQua.diaChi.phuongXa + ', ' + ketQua.diaChi.quanHuyen + ', ' + ketQua.diaChi.tinhThanh}">Địa chỉ</p>
+            <div class="mt-5 border-t border-gray-100 pt-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Thanh toán</p>
+                <p class="mt-2 font-semibold" th:text="${ketQua.phuongThucThanhToan.tenPhuongThuc}">Phương thức</p>
+                <p class="mt-1 text-xs text-gray-500" th:text="${ketQua.phuongThucThanhToan.maPhuongThuc}">COD</p>
+            </div>
+        </section>
+
+        <section class="border border-gray-200 bg-white p-5">
+            <h2 class="font-bold">Tổng kết checkout</h2>
+            <div class="mt-4 space-y-3 border-b border-gray-200 pb-4 text-sm">
+                <div class="flex justify-between gap-3"><span class="text-gray-600">Mặt hàng (<span th:text="${ketQua.tongSoLuong}">0</span>)</span><span th:text="${#numbers.formatDecimal(ketQua.tongTienHang, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+                <div class="flex justify-between gap-3"><span class="text-gray-600" th:text="${ketQua.maGiamGia != null ? 'Voucher ' + ketQua.maGiamGia : 'Voucher'}">Voucher</span><span th:text="${'-' + #numbers.formatDecimal(ketQua.tienGiamGia, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+                <div class="flex justify-between gap-3"><span class="text-gray-600">Simcash sử dụng</span><span th:text="${'-' + #numbers.formatDecimal(ketQua.tienCoolcashDung, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+                <div class="flex justify-between gap-3"><span class="text-gray-600">Phí vận chuyển</span><span th:text="${#numbers.formatDecimal(ketQua.phiVanChuyen, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+            </div>
+            <div class="flex justify-between gap-3 pt-4 text-lg font-extrabold"><span>Tổng thanh toán</span><span th:text="${#numbers.formatDecimal(ketQua.tongThanhToan, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+            <p class="mt-3 text-[11px] text-gray-500">Công thức: hàng − voucher − Simcash + phí vận chuyển.</p>
+        </section>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border border-gray-200 bg-white p-4">
+        <p class="text-xs leading-relaxed text-gray-500">Mã khách hàng: <span class="font-semibold" th:text="${ketQua.maKhachHangId}">1</span>. Chưa phát sinh mã đơn hàng; Mod 5/US21 sẽ tiếp nhận dữ liệu checkout để tạo đơn và xử lý tồn kho.</p>
+        <a th:href="@{|/gio-hang/hien-thi?khachHangId=${ketQua.maKhachHangId}|}" class="rounded-lg bg-black px-4 py-2.5 text-sm font-bold text-white hover:bg-gray-800">QUAY LẠI GIỎ HÀNG</a>
+    </div>
+</main>
+</body>
+</html>

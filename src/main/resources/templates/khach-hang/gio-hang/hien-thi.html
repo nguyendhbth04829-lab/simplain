@@ -9,6 +9,22 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         input[type="radio"] { accent-color: #111827; }
+        .coupon-carousel { scrollbar-width: none; -ms-overflow-style: none; }
+        .coupon-carousel::-webkit-scrollbar { display: none; width: 0; height: 0; }
+        .coupon-ticket { position: relative; flex: 0 0 100%; display: grid; grid-template-columns: 72px minmax(0, 1fr); min-height: 136px; border: 1px solid #d1d5db; background: #f3f4f6; }
+        .coupon-ticket::before, .coupon-ticket::after { content: ""; position: absolute; z-index: 2; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); border: 1px solid #d1d5db; border-radius: 50%; background: #fff; }
+        .coupon-ticket::before { left: -11px; }
+        .coupon-ticket::after { right: -11px; }
+        .coupon-ticket__stub { display: flex; align-items: center; justify-content: center; border-right: 1px dashed #9ca3af; color: #111827; font-size: 10px; font-weight: 800; letter-spacing: .12em; writing-mode: vertical-rl; transform: rotate(180deg); }
+        @media (min-width: 640px) { .coupon-ticket { flex-basis: 100%; } }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .quantity-control { display: inline-flex; height: 40px; align-items: center; overflow: hidden; border: 1px solid #d1d5db; border-radius: 9999px; background: #fff; }
+        .quantity-step { display: flex; width: 42px; height: 100%; align-items: center; justify-content: center; font-size: 20px; color: #333; transition: background .15s; }
+        .quantity-step:hover { background: #f3f4f6; }
+        .quantity-value { width: 52px; height: 100%; border: 0; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-radius: 0; text-align: center; outline: none; }
+        .variant-select { min-width: 0; width: 50%; border: 1px solid #d1d5db; border-radius: 9999px; background: #fff; padding: 6px 10px; font-size: 11px; outline: none; }
+        .variant-select:disabled, .variant-select option:disabled { color: #9ca3af; background-color: #f3f4f6; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-[#f5f5f5] text-[#171717]">
@@ -32,6 +48,7 @@
     <div th:if="${loi != null}" class="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <span class="font-bold">Không thể cập nhật giỏ hàng:</span> <span th:text="${loi}">Lỗi</span>
     </div>
+    <div th:if="${checkoutError != null}" class="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" th:text="${checkoutError}"></div>
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_370px]">
         <div class="space-y-5">
@@ -61,9 +78,22 @@
                                 <h3 class="font-semibold" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? sanPhamTheoBienThe[dong.maBienTheId].tenSanPham : 'Không tìm thấy sản phẩm #' + dong.maBienTheId}">Sản phẩm</h3>
                                 <p class="mt-1 text-xs text-gray-500">
                                     Biến thể #<span th:text="${dong.maBienTheId}">101</span>
-                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenMau != null}" th:text="${' · ' + sanPhamTheoBienThe[dong.maBienTheId].tenMau}"></span>
-                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc != null}" th:text="${' · Size ' + sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc}"></span>
                                 </p>
+                                <form th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null}" th:action="@{/gio-hang/doi-bien-the}" method="post" class="variant-picker mt-2 flex max-w-64 gap-2" th:attr="data-current-variant=${dong.maBienTheId}">
+                                    <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                                    <input type="hidden" name="idDong" th:value="${dong.id}">
+                                    <input type="hidden" name="maBienTheId" class="variant-id" th:value="${dong.maBienTheId}">
+                                    <select class="variant-select variant-color" aria-label="Màu sắc" disabled><option value="">Màu sắc</option></select>
+                                    <select class="variant-select variant-size" aria-label="Kích thước" disabled><option value="">Kích thước</option></select>
+                                    <div class="variant-data hidden" aria-hidden="true">
+                                        <span th:each="variant : ${bienTheLuaChonTheoSanPham[sanPhamTheoBienThe[dong.maBienTheId].maSanPhamId]}"
+                                              th:attr="data-id=${variant.maBienTheId},data-color-id=${variant.maMauSacId},data-color=${variant.tenMau},data-size-id=${variant.maKichThuocId},data-size=${variant.tenKichThuoc},data-stock=${variant.soLuongTonKho}"></span>
+                                    </div>
+                                </form>
+                                <div th:if="${sanPhamTheoBienThe[dong.maBienTheId] == null}" class="mt-2 flex max-w-64 gap-2">
+                                    <select class="variant-select" aria-label="Màu sắc" disabled><option>Màu sắc</option></select>
+                                    <select class="variant-select" aria-label="Kích thước" disabled><option>Kích thước</option></select>
+                                </div>
                                 <span class="mt-2 inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">Mua lẻ</span>
                             </div>
                             <div class="text-right sm:ml-auto">
@@ -71,14 +101,14 @@
                                 <p class="mt-1 text-[11px] text-gray-400" th:if="${sanPhamTheoBienThe[dong.maBienTheId] == null}">Biến thể không có trong danh mục</p>
                             </div>
                             <div class="flex w-full items-center justify-between border-t border-gray-100 pt-3 sm:w-auto sm:justify-start sm:border-0 sm:pt-0">
-                                <div class="flex items-center gap-2">
-                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}" aria-label="Giảm số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">−</a>
-                                    <form th:action="@{/gio-hang/sua-so-luong}" method="post">
+                                <div class="quantity-control">
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}" aria-label="Giảm số lượng" class="quantity-step">−</a>
+                                    <form th:action="@{/gio-hang/sua-so-luong}" method="post" class="h-full">
                                         <input type="hidden" name="khachHangId" th:value="${khachHangId}">
                                         <input type="hidden" name="idDong" th:value="${dong.id}">
-                                        <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0" aria-label="Số lượng" class="h-8 w-14 rounded-lg border border-gray-300 text-center text-sm" onchange="this.form.submit()">
+                                        <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0" aria-label="Số lượng" class="quantity-value text-sm" onchange="this.form.submit()">
                                     </form>
-                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}" aria-label="Tăng số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">+</a>
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}" aria-label="Tăng số lượng" class="quantity-step">+</a>
                                 </div>
                                 <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}" class="ml-4 rounded-full px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Xóa</a>
                             </div>
@@ -99,22 +129,33 @@
                             </div>
                             <div class="min-w-[120px] flex-1">
                                 <h3 class="text-sm font-semibold" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? sanPhamTheoBienThe[dong.maBienTheId].tenSanPham : 'Không tìm thấy sản phẩm #' + dong.maBienTheId}">Sản phẩm</h3>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    Thuộc combo · biến thể #<span th:text="${dong.maBienTheId}">101</span>
-                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenMau != null}" th:text="${' · ' + sanPhamTheoBienThe[dong.maBienTheId].tenMau}"></span>
-                                    <span th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null and sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc != null}" th:text="${' · Size ' + sanPhamTheoBienThe[dong.maBienTheId].tenKichThuoc}"></span>
-                                </p>
+                                <p class="mt-1 text-xs text-gray-500">Thuộc combo · biến thể #<span th:text="${dong.maBienTheId}">101</span></p>
+                                <form th:if="${sanPhamTheoBienThe[dong.maBienTheId] != null}" th:action="@{/gio-hang/doi-bien-the}" method="post" class="variant-picker mt-2 flex max-w-64 gap-2" th:attr="data-current-variant=${dong.maBienTheId}">
+                                    <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+                                    <input type="hidden" name="idDong" th:value="${dong.id}">
+                                    <input type="hidden" name="maBienTheId" class="variant-id" th:value="${dong.maBienTheId}">
+                                    <select class="variant-select variant-color" aria-label="Màu sắc" disabled><option value="">Màu sắc</option></select>
+                                    <select class="variant-select variant-size" aria-label="Kích thước" disabled><option value="">Kích thước</option></select>
+                                    <div class="variant-data hidden" aria-hidden="true">
+                                        <span th:each="variant : ${bienTheLuaChonTheoSanPham[sanPhamTheoBienThe[dong.maBienTheId].maSanPhamId]}"
+                                              th:attr="data-id=${variant.maBienTheId},data-color-id=${variant.maMauSacId},data-color=${variant.tenMau},data-size-id=${variant.maKichThuocId},data-size=${variant.tenKichThuoc},data-stock=${variant.soLuongTonKho}"></span>
+                                    </div>
+                                </form>
+                                <div th:if="${sanPhamTheoBienThe[dong.maBienTheId] == null}" class="mt-2 flex max-w-64 gap-2">
+                                    <select class="variant-select" aria-label="Màu sắc" disabled><option>Màu sắc</option></select>
+                                    <select class="variant-select" aria-label="Kích thước" disabled><option>Kích thước</option></select>
+                                </div>
                             </div>
                             <p class="text-sm font-semibold text-gray-700" th:text="${sanPhamTheoBienThe[dong.maBienTheId] != null ? #numbers.formatDecimal(sanPhamTheoBienThe[dong.maBienTheId].giaBan, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Chưa có giá'}">Giá</p>
                             <div class="flex w-full items-center justify-between border-t border-gray-100 pt-3 sm:w-auto sm:justify-start sm:border-0 sm:pt-0">
-                                <div class="flex items-center gap-2">
-                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}" aria-label="Giảm số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">−</a>
-                                    <form th:action="@{/gio-hang/sua-so-luong}" method="post">
+                                <div class="quantity-control">
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=-1|}" aria-label="Giảm số lượng" class="quantity-step">−</a>
+                                    <form th:action="@{/gio-hang/sua-so-luong}" method="post" class="h-full">
                                         <input type="hidden" name="khachHangId" th:value="${khachHangId}">
                                         <input type="hidden" name="idDong" th:value="${dong.id}">
-                                        <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0" aria-label="Số lượng" class="h-8 w-14 rounded-lg border border-gray-300 text-center text-sm" onchange="this.form.submit()">
+                                        <input type="number" name="soLuong" th:value="${dong.soLuong}" min="0" aria-label="Số lượng" class="quantity-value text-sm" onchange="this.form.submit()">
                                     </form>
-                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}" aria-label="Tăng số lượng" class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100">+</a>
+                                    <a th:href="@{|/gio-hang/doi-so-luong?khachHangId=${khachHangId}&idDong=${dong.id}&delta=1|}" aria-label="Tăng số lượng" class="quantity-step">+</a>
                                 </div>
                                 <a th:href="@{|/gio-hang/xoa-dong?khachHangId=${khachHangId}&idDong=${dong.id}|}" class="ml-4 rounded-full px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Xóa</a>
                             </div>
@@ -132,39 +173,21 @@
                     </div>
                     <span class="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold text-gray-600">Thông tin đặt hàng</span>
                 </div>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="text-xs font-semibold text-gray-600">Họ và tên người nhận
-                        <input id="tenNguoiNhan" type="text" required placeholder="Nguyễn Văn An" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black">
+                <div th:if="${!danhSachDiaChi.empty}" class="space-y-3">
+                    <label th:each="diaChi, iter : ${danhSachDiaChi}" class="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4 hover:border-gray-500">
+                        <input type="radio" name="diaChiId" form="checkoutForm" th:value="${diaChi.id}" th:checked="${iter.index == 0}" required>
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-semibold" th:text="${diaChi.tenNguoiNhan + ' · ' + diaChi.soDienThoai}">Người nhận</span>
+                            <span class="mt-1 block text-xs text-gray-500" th:text="${diaChi.diaChiChiTiet + ', ' + diaChi.phuongXa + ', ' + diaChi.quanHuyen + ', ' + diaChi.tinhThanh}">Địa chỉ</span>
+                        </span>
+                        <span th:if="${diaChi.laMacDinh}" class="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold">MẶC ĐỊNH</span>
                     </label>
-                    <label class="text-xs font-semibold text-gray-600">Số điện thoại
-                        <input id="soDienThoai" type="tel" required placeholder="090 123 4567" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black">
-                    </label>
-                    <label class="text-xs font-semibold text-gray-600 sm:col-span-2">Địa chỉ cụ thể
-                        <input id="diaChi" type="text" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black">
-                    </label>
-                    <label class="text-xs font-semibold text-gray-600 sm:col-span-2">Ghi chú cho người giao hàng <span class="font-normal text-gray-400">(không bắt buộc)</span>
-                        <textarea rows="2" placeholder="Ví dụ: gọi trước khi giao" class="mt-1.5 w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-black"></textarea>
-                    </label>
+                </div>
+                <div th:if="${danhSachDiaChi.empty}" class="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+                    Tài khoản chưa có địa chỉ giao hàng đã lưu. Hãy thêm địa chỉ trong sổ địa chỉ trước khi xác nhận.
                 </div>
             </section>
 
-            <!-- Khu vực tiện ích test, không chiếm chỗ trong luồng đặt hàng -->
-            <details class="border border-dashed border-gray-300 bg-white">
-                <summary class="cursor-pointer px-5 py-4 text-sm font-semibold text-gray-600">Công cụ test giỏ hàng (chỉ dùng nội bộ)</summary>
-                <div class="border-t border-gray-200 p-5">
-                    <p class="mb-4 text-xs text-gray-500">Nhập ID biến thể / combo để kiểm tra thêm món, cộng dồn và gom nhóm combo.</p>
-                    <form action="/gio-hang/them" method="post" class="grid gap-3 sm:grid-cols-2">
-                        <input type="hidden" name="khachHangId" th:value="${khachHangId}">
-                        <label class="text-xs font-semibold text-gray-600">Biến thể ID *<input type="number" name="maBienTheId" placeholder="101" min="1" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal"></label>
-                        <label class="text-xs font-semibold text-gray-600">Combo ID<input type="number" name="maComboId" placeholder="5" min="1" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal"></label>
-                        <label class="text-xs font-semibold text-gray-600">Token nhóm combo
-                            <span class="mt-1 flex"><input id="oToken" type="text" name="nhomComboToken" maxlength="8" placeholder="Để trống nếu mua lẻ" class="min-w-0 flex-1 rounded-l-lg border border-gray-300 px-3 py-2.5 text-sm font-normal uppercase"><button type="button" id="btnSinhToken" class="rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 px-3 text-xs font-bold">SINH</button></span>
-                        </label>
-                        <label class="text-xs font-semibold text-gray-600">Số lượng<input type="number" name="soLuong" value="1" min="1" required class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-normal"></label>
-                        <button class="rounded-lg bg-black px-4 py-3 text-sm font-bold text-white hover:bg-gray-800 sm:col-span-2">+ THÊM MÓN TEST</button>
-                    </form>
-                </div>
-            </details>
         </div>
 
         <div class="space-y-5">
@@ -176,7 +199,7 @@
                 </div>
                 <div th:if="${!danhSachPhuongThucThanhToan.empty}" class="space-y-3">
                     <label th:each="phuongThuc, iter : ${danhSachPhuongThucThanhToan}" class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 p-4 hover:border-gray-500">
-                        <input type="radio" name="phuongThucThanhToan" th:value="${phuongThuc.maPhuongThuc}" th:checked="${iter.index == 0}">
+                        <input type="radio" name="maPhuongThuc" form="checkoutForm" th:value="${phuongThuc.maPhuongThuc}" th:checked="${iter.index == 0}" required>
                         <span class="min-w-0 flex-1">
                             <span class="block text-sm font-semibold" th:text="${phuongThuc.tenPhuongThuc}">Tên phương thức</span>
                             <span class="mt-1 block text-xs text-gray-500" th:text="${phuongThuc.laTrucTuyen} ? 'Thanh toán trực tuyến' : 'Thanh toán khi nhận hàng'">Loại thanh toán</span>
@@ -196,11 +219,49 @@
             <section class="border border-gray-200 bg-white p-5 sm:p-6">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">03 · Ưu đãi</p>
                 <h2 class="mt-1 text-lg font-bold">Mã giảm giá</h2>
-                <div class="mt-4 flex gap-2">
-                    <input id="maGiamGia" type="text" placeholder="Nhập mã ưu đãi" class="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm uppercase outline-none focus:border-black">
-                    <button id="apDungMa" type="button" class="rounded-lg border border-black px-5 text-sm font-bold hover:bg-black hover:text-white">Áp dụng</button>
+                <div class="mt-4">
+                    <div class="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-gray-600">
+                        <span>Voucher của bạn · <span th:text="${danhSachVoucher.size()}">0</span> mã khả dụng</span>
+                        <span th:if="${danhSachVoucher.size() > 1}" class="flex gap-1">
+                            <button id="prevVoucher" type="button" aria-label="Voucher trước" class="h-7 w-7 border border-gray-300 text-base hover:border-black">‹</button>
+                            <button id="nextVoucher" type="button" aria-label="Voucher tiếp theo" class="h-7 w-7 border border-gray-300 text-base hover:border-black">›</button>
+                        </span>
+                    </div>
+                    <div id="couponCarousel" th:if="${!danhSachVoucher.empty}" class="coupon-carousel flex snap-x snap-mandatory gap-3 overflow-x-auto py-2">
+                        <article th:each="voucher : ${danhSachVoucher}" class="coupon-ticket snap-start">
+                            <div class="coupon-ticket__stub">SIMPLAIN</div>
+                            <div class="flex min-w-0 flex-col justify-between p-3 pl-4">
+                                <div>
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-extrabold" th:text="${voucher.maCode}">CODE</p>
+                                            <p class="mt-0.5 text-xs text-gray-700" th:text="${voucher.tenVoucher}">Ưu đãi</p>
+                                        </div>
+                                        <button type="button" th:attr="data-ma-code=${voucher.maCode}" class="chonVoucher shrink-0 border border-black px-2.5 py-1 text-[10px] font-bold hover:bg-black hover:text-white">CHỌN</button>
+                                    </div>
+                                    <p class="mt-2 text-xs font-semibold" th:text="${voucher.loaiGiamGia == 'PERCENT' ? #numbers.formatDecimal(voucher.giaTriGiam, 0, 'COMMA', 0, 'POINT') + '% GIẢM' : #numbers.formatDecimal(voucher.giaTriGiam, 0, 'COMMA', 0, 'POINT') + ' đ GIẢM'}">Giảm giá</p>
+                                    <p class="mt-1 text-[10px] text-gray-500" th:text="${'Đơn tối thiểu ' + #numbers.formatDecimal(voucher.giaTriDonToiThieu, 0, 'COMMA', 0, 'POINT') + ' đ'}">Điều kiện</p>
+                                </div>
+                                <p class="mt-2 border-t border-dashed border-gray-400 pt-1.5 text-[10px] text-gray-500" th:text="${'HSD: ' + #temporals.format(voucher.ngayKetThuc, 'dd/MM/yyyy')}">Hạn dùng</p>
+                            </div>
+                        </article>
+                    </div>
+                    <p th:if="${danhSachVoucher.empty}" class="px-3 py-3 text-xs text-gray-500">Bạn chưa có voucher nào còn hiệu lực. Có thể nhập mã đã thu thập ở dưới.</p>
                 </div>
-                <p id="thongBaoMa" class="mt-2 text-xs text-gray-500">Mã giảm giá sẽ được kiểm tra khi kết nối chức năng checkout.</p>
+                <div class="mt-4 flex items-center gap-2">
+                    <input id="maGiamGia" name="maGiamGia" form="checkoutForm" type="text" placeholder="Nhập mã giảm giá" class="min-w-0 flex-1 rounded-full border border-gray-300 px-5 py-2.5 text-sm uppercase outline-none focus:border-black">
+                    <button id="apDungVoucher" type="button" class="shrink-0 rounded-full bg-black px-5 py-2.5 text-xs font-bold text-white hover:bg-gray-800">ÁP DỤNG</button>
+                </div>
+                <p id="thongBaoVoucher" class="mt-2 text-xs text-gray-500">Chọn vé hoặc nhập mã; điều kiện cuối cùng được xác nhận khi checkout.</p>
+            </section>
+
+            <section class="border border-gray-200 bg-white p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">04 · Điểm thưởng</p>
+                <h2 class="mt-1 text-lg font-bold">Dùng Simcash</h2>
+                <p class="mt-2 text-xs text-gray-500">Số dư hiện tại: <span class="font-semibold text-gray-800" th:text="${#numbers.formatDecimal(soDuCoolcash, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></p>
+                <label class="mt-3 block text-xs font-semibold text-gray-600">Số tiền Simcash muốn dùng
+                    <input id="simcashInput" name="tienCoolcashDung" form="checkoutForm" type="number" min="0" step="1" value="0" th:max="${soDuCoolcash}" class="mt-1.5 w-full rounded-full border border-gray-300 px-5 py-2.5 text-sm font-normal outline-none focus:border-black">
+                </label>
             </section>
 
         <!-- Tóm tắt đơn hàng -->
@@ -208,19 +269,21 @@
             <h2 class="text-lg font-bold">Tóm tắt đơn hàng</h2>
             <div class="mt-5 space-y-3 border-b border-gray-200 pb-5 text-sm">
                 <div class="flex justify-between gap-4 text-gray-600"><span>Tạm tính (<span th:text="${tongSoLuong}">0</span> sản phẩm)</span><span class="font-medium text-gray-900" th:text="${#numbers.formatDecimal(tongTienHang, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
-                <div class="flex justify-between gap-4 text-gray-600"><span>Phí vận chuyển</span><span class="font-medium text-gray-900">Tính khi xác nhận</span></div>
-                <div class="flex justify-between gap-4 text-gray-600"><span>Giảm giá</span><span class="font-medium text-gray-900">—</span></div>
+                <div class="flex justify-between gap-4 text-gray-600"><span>Phí vận chuyển</span><span class="font-medium text-gray-900" th:text="${#numbers.formatDecimal(phiVanChuyen, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span></div>
+                <div class="flex justify-between gap-4 text-gray-600"><span>Voucher / Simcash</span><span class="font-medium text-gray-900">Tính khi xác nhận</span></div>
             </div>
             <div class="flex items-end justify-between gap-3 py-5">
-                <div><p class="font-bold">Tạm tính đơn hàng</p><p class="mt-1 text-[11px] leading-relaxed text-gray-500">Chưa bao gồm phí vận chuyển và giảm giá.</p></div>
+                <div><p class="font-bold">Tạm tính đơn hàng</p><p class="mt-1 text-[11px] leading-relaxed text-gray-500">Tổng cuối cùng được tính khi xác nhận checkout.</p></div>
                 <span class="whitespace-nowrap text-xl font-extrabold" th:text="${#numbers.formatDecimal(tongTienHang, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</span>
             </div>
-            <button id="datHang" type="button" class="w-full rounded-lg bg-black px-4 py-3.5 text-sm font-bold text-white transition hover:bg-gray-800">TIẾP TỤC ĐẶT HÀNG</button>
-            <p id="thongBaoDatHang" class="mt-3 hidden border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800"></p>
+            <form id="checkoutForm" action="/checkout/xac-nhan" method="post">
+                <input type="hidden" name="khachHangId" th:value="${khachHangId}">
+            </form>
+            <button type="submit" form="checkoutForm" th:disabled="${danhSachDiaChi.empty or danhSachPhuongThucThanhToan.empty or tongSoLuong == 0}" class="w-full rounded-lg bg-black px-4 py-3.5 text-sm font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400">XÁC NHẬN CHECKOUT</button>
             <div class="mt-5 space-y-2 border-t border-gray-100 pt-4 text-xs text-gray-500">
-                <p>✓ Thông tin giao hàng được dùng cho đơn này</p>
-                <p>✓ Có thể cập nhật số lượng trước khi đặt</p>
-                <p class="leading-relaxed">Đơn hàng chưa được gửi đi: chức năng tạo đơn, tính giá và áp mã cần nối với backend checkout.</p>
+                <p>✓ Xác nhận địa chỉ và phương thức thanh toán</p>
+                <p>✓ Tính hàng − voucher − Simcash + phí giao hàng</p>
+                <p class="leading-relaxed">Bước này xác nhận/tính checkout; việc tạo đơn và trừ tồn kho do US21 xử lý.</p>
             </div>
         </aside>
         </div>
@@ -229,35 +292,150 @@
 
 <script th:inline="javascript">
     (function () {
-        const btnToken = document.getElementById('btnSinhToken');
-        const inputToken = document.getElementById('oToken');
-        if (btnToken && inputToken) {
-            btnToken.addEventListener('click', function () {
-                inputToken.value = /*[[${tokenMoi}]]*/ '';
+        document.querySelectorAll('.chonVoucher').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const input = document.getElementById('maGiamGia');
+                input.value = button.dataset.maCode || '';
+                input.focus();
             });
+        });
+
+        const couponCarousel = document.getElementById('couponCarousel');
+        const prevVoucher = document.getElementById('prevVoucher');
+        const nextVoucher = document.getElementById('nextVoucher');
+        if (couponCarousel && prevVoucher && nextVoucher) {
+            const scrollVoucher = function (direction) {
+                couponCarousel.scrollBy({left: direction * couponCarousel.clientWidth, behavior: 'smooth'});
+            };
+            prevVoucher.addEventListener('click', function () { scrollVoucher(-1); });
+            nextVoucher.addEventListener('click', function () { scrollVoucher(1); });
         }
 
-        const applyButton = document.getElementById('apDungMa');
-        applyButton.addEventListener('click', function () {
-            const code = document.getElementById('maGiamGia').value.trim();
-            const message = document.getElementById('thongBaoMa');
-            message.textContent = code
-                ? 'Đã nhận mã ' + code.toUpperCase() + '. Mã sẽ được xác thực khi chức năng checkout được tích hợp.'
-                : 'Vui lòng nhập mã giảm giá.';
-            message.className = 'mt-2 text-xs ' + (code ? 'text-gray-500' : 'text-red-600');
+        document.querySelectorAll('input[type="number"]').forEach(function (input) {
+            input.addEventListener('wheel', function (event) {
+                event.preventDefault();
+                input.blur();
+            }, {passive: false});
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') event.preventDefault();
+            });
         });
 
-        document.getElementById('datHang').addEventListener('click', function () {
-            const notice = document.getElementById('thongBaoDatHang');
-            const requiredFields = ['tenNguoiNhan', 'soDienThoai', 'diaChi'];
-            const missing = requiredFields.some(function (id) {
-                return !document.getElementById(id).value.trim();
+        document.querySelectorAll('.variant-picker').forEach(function (form) {
+            const colorSelect = form.querySelector('.variant-color');
+            const sizeSelect = form.querySelector('.variant-size');
+            const idInput = form.querySelector('.variant-id');
+            const variants = Array.from(form.querySelectorAll('.variant-data span')).map(function (item) {
+                return {
+                    id: item.dataset.id,
+                    colorId: item.dataset.colorId,
+                    color: item.dataset.color || 'Không rõ màu',
+                    sizeId: item.dataset.sizeId,
+                    size: item.dataset.size || 'Không rõ size',
+                    stock: Number(item.dataset.stock || 0)
+                };
             });
-            notice.classList.remove('hidden');
-            notice.textContent = missing
-                ? 'Vui lòng nhập tên người nhận, số điện thoại và địa chỉ giao hàng.'
-                : 'Thông tin đã được nhập. Chức năng tạo đơn chưa được kết nối với backend checkout nên đơn chưa được gửi.';
+            const current = variants.find(function (item) { return item.id === form.dataset.currentVariant; });
+            if (!current) return;
+
+            const colors = new Map();
+            const sizes = new Map();
+            variants.forEach(function (item) {
+                if (!colors.has(item.colorId)) colors.set(item.colorId, item.color);
+                if (!sizes.has(item.sizeId)) sizes.set(item.sizeId, item.size);
+            });
+
+            colorSelect.replaceChildren();
+            colors.forEach(function (label, id) {
+                const available = variants.some(function (item) { return item.colorId === id && item.stock > 0; });
+                const option = new Option(label, id);
+                option.disabled = !available;
+                colorSelect.add(option);
+            });
+
+            function refreshSizes(selectedSizeId) {
+                const colorId = colorSelect.value;
+                sizeSelect.replaceChildren();
+                sizes.forEach(function (label, id) {
+                    const hasStock = variants.some(function (item) {
+                        return item.colorId === colorId && item.sizeId === id && item.stock > 0;
+                    });
+                    const option = new Option(label, id);
+                    option.disabled = !hasStock;
+                    sizeSelect.add(option);
+                });
+                const preferred = Array.from(sizeSelect.options).find(function (option) {
+                    return option.value === selectedSizeId && !option.disabled;
+                });
+                const firstAvailable = Array.from(sizeSelect.options).find(function (option) { return !option.disabled; });
+                if (preferred) sizeSelect.value = preferred.value;
+                else if (firstAvailable) sizeSelect.value = firstAvailable.value;
+                else sizeSelect.selectedIndex = 0;
+                return Boolean(firstAvailable);
+            }
+
+            colorSelect.value = current.colorId;
+            const availableSizes = refreshSizes(current.sizeId);
+            const availableColors = Array.from(colorSelect.options).filter(function (option) { return !option.disabled; });
+            colorSelect.disabled = availableColors.length <= 1;
+            sizeSelect.disabled = !availableSizes || Array.from(sizeSelect.options).filter(function (option) { return !option.disabled; }).length <= 1;
+
+            function submitSelectedVariant() {
+                const selected = variants.find(function (item) {
+                    return item.colorId === colorSelect.value && item.sizeId === sizeSelect.value && item.stock > 0;
+                });
+                if (!selected) return;
+                idInput.value = selected.id;
+                form.requestSubmit();
+            }
+
+            colorSelect.addEventListener('change', function () {
+                if (!refreshSizes(current.sizeId)) return;
+                submitSelectedVariant();
+            });
+            sizeSelect.addEventListener('change', submitSelectedVariant);
         });
+
+        document.querySelectorAll('[form="checkoutForm"]').forEach(function (field) {
+            field.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') event.preventDefault();
+            });
+        });
+
+        const simcashInput = document.getElementById('simcashInput');
+        if (simcashInput) {
+            const clampSimcash = function () {
+                const max = Number(simcashInput.max || 0);
+                const value = Number(simcashInput.value || 0);
+                if (value < 0) simcashInput.value = '0';
+                else if (value > max) simcashInput.value = String(max);
+            };
+            simcashInput.addEventListener('input', clampSimcash);
+            simcashInput.addEventListener('change', clampSimcash);
+        }
+
+        document.getElementById('apDungVoucher').addEventListener('click', async function () {
+            const input = document.getElementById('maGiamGia');
+            const message = document.getElementById('thongBaoVoucher');
+            const code = input.value.trim();
+            if (!code) {
+                message.textContent = 'Nhập hoặc chọn một mã giảm giá trước.';
+                message.className = 'mt-2 text-xs text-red-600';
+                return;
+            }
+            message.textContent = 'Đang kiểm tra mã...';
+            try {
+                const body = new URLSearchParams({maKhachHangId: /*[[${khachHangId}]]*/ '1', maCode: code});
+                const response = await fetch('/checkout/ap-dung-voucher', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}, body: body});
+                const result = await response.json();
+                message.textContent = result.thongBao;
+                message.className = 'mt-2 text-xs ' + (result.hopLe ? 'font-semibold text-green-700' : 'text-red-600');
+            } catch (error) {
+                message.textContent = 'Không thể kiểm tra mã lúc này. Thử lại khi xác nhận checkout.';
+                message.className = 'mt-2 text-xs text-red-600';
+            }
+        });
+
     })();
 </script>
 </body>
