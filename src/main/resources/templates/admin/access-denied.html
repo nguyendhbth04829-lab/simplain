@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">403 — Quyền Truy Cập Bị Từ Chối — Simplain CMS</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+
+    <!-- CSS Giao diện Từ chối Truy cập phong cách Coolmate nhúng trực tiếp, không dùng JS -->
+    <style>
+        :root {
+            --cm-black: #111827;
+            --cm-dark-hover: #1f2937;
+            --cm-blue: #2f5acf;
+            --cm-blue-light: #eff6ff;
+            --cm-bg: #f9fafb;
+            --cm-card-bg: #ffffff;
+            --cm-border: #e5e7eb;
+            --cm-text-primary: #111827;
+            --cm-text-secondary: #4b5563;
+            --cm-text-muted: #9ca3af;
+            --cm-danger: #ef4444;
+            --cm-danger-bg: #fef2f2;
+            --cm-warning: #f59e0b;
+            --cm-warning-bg: #fffbeb;
+            --cm-radius: 12px;
+            --cm-radius-lg: 16px;
+            --cm-radius-full: 9999px;
+            --cm-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --cm-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            --cm-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--cm-font);
+            background-color: var(--cm-bg);
+            color: var(--cm-text-primary);
+            line-height: 1.5;
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar trái Coolmate Dark */
+        .cms-sidebar {
+            width: 260px;
+            background-color: var(--cm-black);
+            color: #ffffff;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #2f5acf, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        .sidebar-brand-text h2 {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+        .sidebar-brand-text span {
+            font-size: 11px;
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            padding: 20px 14px;
+            flex-grow: 1;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #6b7280;
+            font-weight: 700;
+            padding: 12px 12px 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            color: #d1d5db;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            transition: all 0.15s;
+        }
+
+        .nav-item:hover {
+            background-color: #1f2937;
+            color: #ffffff;
+        }
+
+        .nav-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(239, 68, 68, 0.08);
+            color: #f87171;
+            border: 1px dashed rgba(239, 68, 68, 0.3);
+        }
+
+        .nav-badge-lock {
+            margin-left: auto;
+            font-size: 10px;
+            background: #ef4444;
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #1f2937;
+        }
+
+        .btn-cms-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 11px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-cms-logout:hover {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        /* Khu vực Nội dung chính */
+        .cms-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Topbar */
+        .cms-topbar {
+            height: 70px;
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--cm-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .topbar-title h1 {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--cm-black);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-role-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--cm-radius-full);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .role-admin { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .role-cskh { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .role-banhang { background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
+
+        .user-meta-info {
+            text-align: right;
+        }
+
+        .user-meta-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--cm-black);
+        }
+
+        .user-meta-code {
+            font-size: 12px;
+            color: var(--cm-text-muted);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--cm-black);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        /* Content Body */
+        .cms-content {
+            padding: 48px 32px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .access-denied-card {
+            background-color: var(--cm-card-bg);
+            border-radius: var(--cm-radius-lg);
+            border: 1px solid var(--cm-border);
+            box-shadow: var(--cm-shadow-lg);
+            max-width: 680px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .lock-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background: #fef2f2;
+            border: 2px solid #fee2e2;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+        }
+
+        .badge-403 {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            background: #fef2f2;
+            color: #dc2626;
+            border-radius: var(--cm-radius-full);
+            margin-bottom: 12px;
+        }
+
+        .card-heading {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--cm-black);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .card-subheading {
+            font-size: 15px;
+            color: var(--cm-text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        /* Bảng đối chiếu quyền hạn */
+        .role-comparison-box {
+            background-color: #f9fafb;
+            border: 1px solid var(--cm-border);
+            border-radius: var(--cm-radius);
+            padding: 20px;
+            margin-bottom: 28px;
+            text-align: left;
+        }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e5e7eb;
+            font-size: 14px;
+        }
+
+        .comparison-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .comparison-row:first-child {
+            padding-top: 0;
+        }
+
+        .comparison-label {
+            color: var(--cm-text-secondary);
+            font-weight: 600;
+        }
+
+        .comparison-value {
+            font-weight: 700;
+            color: var(--cm-black);
+        }
+
+        .badge-req-admin {
+            background: #111827;
+            color: #ffffff;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-current-role {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .badge-status-denied {
+            background: #fef2f2;
+            color: #dc2626;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 800;
+        }
+
+        /* Hộp hướng dẫn xử lý */
+        .instruction-box {
+            background: #eff6ff;
+            border-left: 4px solid var(--cm-blue);
+            padding: 14px 16px;
+            border-radius: 0 var(--cm-radius) var(--cm-radius) 0;
+            text-align: left;
+            margin-bottom: 32px;
+            font-size: 13.5px;
+            color: #1e3a8a;
+            line-height: 1.5;
+        }
+
+        .instruction-box strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        /* Nút hành động */
+        .action-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn-action-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--cm-black);
+            color: #ffffff;
+            padding: 13px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-action-primary:hover {
+            background: var(--cm-dark-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-action-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #ffffff;
+            color: var(--cm-text-primary);
+            border: 1.5px solid var(--cm-border);
+            padding: 13px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-action-secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .cms-sidebar {
+                width: 100%;
+            }
+            .access-denied-card {
+                padding: 24px;
+            }
+            .action-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Trái Phong cách Coolmate -->
+    <aside class="cms-sidebar">
+        <div>
+            <!-- Brand Logo -->
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-icon">S</div>
+                <div class="sidebar-brand-text">
+                    <h2>SIMPLAIN CMS</h2>
+                    <span>Coolmate Operations</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Quản trị Hệ thống</div>
+                <div class="nav-item disabled">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Dashboard Tổng quan
+                    <span class="nav-badge-lock">KHÓA</span>
+                </div>
+
+                <!-- Phân hệ theo vai trò CSKH nếu là CSKH -->
+                <div th:if="${staff != null && staff.maVaiTro == 'CSKH'}">
+                    <div class="nav-section-title">Chăm Sóc Khách Hàng</div>
+                    <a href="#" class="nav-item">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        Duyệt Yêu Cầu Đổi Trả
+                    </a>
+                    <a href="#" class="nav-item">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Hội Viên CoolClub
+                    </a>
+                </div>
+
+                <!-- Phân hệ theo vai trò BÁN HÀNG nếu là BÁN HÀNG -->
+                <div th:if="${staff != null && staff.maVaiTro == 'BAN_HANG'}">
+                    <div class="nav-section-title">Bán Hàng POS</div>
+                    <a href="#" class="nav-item">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Thu Ngân Quầy POS
+                    </a>
+                </div>
+
+                <div class="nav-section-title">Cửa hàng & Tài liệu</div>
+                <a th:href="@{/auth/login}" class="nav-item">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Cửa Hàng Khách Hàng
+                </a>
+                <a th:href="@{/docs}" target="_blank" class="nav-item">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Tài Liệu Swagger API
+                </a>
+            </nav>
+        </div>
+
+        <!-- Nút Đăng xuất -->
+        <div class="sidebar-footer">
+            <a th:href="@{/admin/logout}" class="btn-cms-logout">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                ĐĂNG XUẤT CMS
+            </a>
+        </div>
+    </aside>
+
+    <!-- Khu vực Nội dung chính -->
+    <main class="cms-main">
+        <!-- Topbar -->
+        <header class="cms-topbar">
+            <div class="topbar-title">
+                <h1>
+                    <span>Quyền Hạn Hạn Chế</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #ef4444; background: #fef2f2; padding: 3px 10px; border-radius: var(--cm-radius-full);">403 Forbidden</span>
+                </h1>
+            </div>
+
+            <div class="topbar-user" th:if="${staff != null}">
+                <span class="user-role-badge"
+                      th:classappend="${staff.maVaiTro == 'CSKH' ? 'role-cskh' : 'role-banhang'}"
+                      th:text="${staff.tenVaiTro}">
+                    Nhân viên
+                </span>
+
+                <div class="user-meta-info">
+                    <div class="user-meta-name" th:text="${staff.hoTen}">Họ Tên Nhân Viên</div>
+                    <div class="user-meta-code" th:text="${staff.maNhanVien} + ' • ' + ${staff.tenDangNhap}">NV...</div>
+                </div>
+
+                <div class="user-avatar" th:text="${#strings.substring(staff.hoTen, 0, 1)}">N</div>
+            </div>
+        </header>
+
+        <!-- Thân trang Từ chối Truy cập -->
+        <div class="cms-content">
+            <div class="access-denied-card">
+                <!-- Icon Khóa -->
+                <div class="lock-icon-wrapper">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+
+                <span class="badge-403">403 ACCESS DENIED</span>
+                <h1 class="card-heading">Chỉ Quản Trị Viên (Admin) Mới Có Quyền Xem Dashboard</h1>
+                <p class="card-subheading" th:text="${deniedReason != null ? deniedReason : 'Chỉ có tài khoản Quản trị viên (ADMIN) mới có quyền truy cập Bảng điều khiển Dashboard tổng quan và Báo cáo tài chính doanh thu hệ thống.'}">
+                    Chức năng thống kê Dashboard tổng quan, doanh thu và phân tích đơn hàng chỉ được phân quyền dành riêng cho Quản trị viên (ADMIN).
+                </p>
+
+                <!-- Bảng Đối chiếu phân quyền -->
+                <div class="role-comparison-box" th:if="${staff != null}">
+                    <div class="comparison-row">
+                        <span class="comparison-label">Tài khoản đang đăng nhập:</span>
+                        <span class="comparison-value" th:text="${staff.hoTen} + ' (' + ${staff.tenDangNhap} + ')'">Nguyễn Văn A (nv01)</span>
+                    </div>
+                    <div class="comparison-row">
+                        <span class="comparison-label">Mã nhân viên:</span>
+                        <span class="comparison-value" th:text="${staff.maNhanVien}">NV002</span>
+                    </div>
+                    <div class="comparison-row">
+                        <span class="comparison-label">Vai trò hiện tại:</span>
+                        <span class="badge-current-role" th:text="${staff.tenVaiTro} + ' (' + ${staff.maVaiTro} + ')'">Chăm sóc khách hàng (CSKH)</span>
+                    </div>
+                    <div class="comparison-row">
+                        <span class="comparison-label">Vai trò yêu cầu:</span>
+                        <span class="badge-req-admin">QUẢN TRỊ VIÊN (ADMIN)</span>
+                    </div>
+                    <div class="comparison-row">
+                        <span class="comparison-label">Trạng thái phân quyền:</span>
+                        <span class="badge-status-denied">TỪ CHỐI TRUY CẬP</span>
+                    </div>
+                </div>
+
+                <!-- Hướng dẫn -->
+                <div class="instruction-box">
+                    <strong>💡 Hướng dẫn dành cho nhân viên:</strong>
+                    Nếu bạn là Quản trị viên hệ thống hoặc cần xem số liệu thống kê doanh số, vui lòng đăng xuất và đăng nhập bằng tài khoản Quản trị viên (ví dụ tài khoản: <code>superadmin</code> / mật khẩu: <code>Admin@123</code>).
+                </div>
+
+                <!-- Nút Hành động Coolmate -->
+                <div class="action-group">
+                    <a th:href="@{/admin/logout}" class="btn-action-primary">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        ĐĂNG XUẤT & ĐỔI TÀI KHOẢN ADMIN
+                    </a>
+                    <a th:href="@{/auth/login}" class="btn-action-secondary">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        VỀ TRANG KHÁCH HÀNG
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
