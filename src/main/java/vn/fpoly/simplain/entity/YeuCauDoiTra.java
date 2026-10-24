@@ -65,6 +65,9 @@ public class YeuCauDoiTra {
     @Column(name = "nguoi_duyet_id")
     private Long nguoiDuyetId;
 
+    @Column(name = "ghi_chu_kiem_dinh", length = 500)
+    private String ghiChuKiemDinh;
+
     @Column(name = "ngay_tao")
     private LocalDateTime ngayTao;
 
