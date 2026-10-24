@@ -1,119 +1,340 @@
+<!-- 
+    Tác giả: Gia Minh & Nhóm Simplain
+    Chức năng: Quản lý Bộ Sưu Tập Thời Trang (Phiên bản Đột Phá 2026)
+-->
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý Bộ sưu tập</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Bộ Sưu Tập • Simplain Admin</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .error { color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem; display: block; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .error { color: #e11d48; font-size: 0.8125rem; margin-top: 0.35rem; display: block; font-weight: 500; }
+        .table-row-hover:hover {
+            background-color: #fafafa;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
-    
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h2 class="text-3xl font-bold text-gray-900 mb-8 uppercase tracking-wide">Quản lý Bộ sưu tập</h2>
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Form thêm mới -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit">
-            <h3 class="text-xl font-semibold mb-4 border-b pb-2">Thêm Mới</h3>
-            <form th:object="${boSuuTap}" action="/admin/bo-suu-tap/add" method="post" enctype="multipart/form-data" class="space-y-4">
+<!-- 1. Header Admin cao cấp -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">ADMINISTRATOR PORTAL</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-zinc-900 text-white">
+                    <i class="fa-solid fa-layer-group text-zinc-400"></i> Quản Lý Bộ Sưu Tập
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <a href="/" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-store text-zinc-500"></i>
+                    <span>Về Cửa Hàng</span>
+                </a>
+                <a href="/admin/danh-muc/hien-thi" class="text-xs font-bold text-zinc-600 hover:text-black px-3.5 py-2 rounded-xl hover:bg-zinc-100 transition hidden sm:inline">
+                    Quản Lý Danh Mục
+                </a>
+                <a href="/docs" target="_blank" class="text-xs font-bold bg-zinc-950 text-white px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5">
+                    <span>Swagger Docs</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+    
+    <!-- Breadcrumb & Tiêu đề chính -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-zinc-200 gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                <span>Hệ Thống Quản Trị</span>
+                <span>/</span>
+                <span class="text-zinc-900">Bộ Sưu Tập Thời Trang</span>
+            </div>
+            <h2 class="text-3xl font-black uppercase tracking-tight text-zinc-950">
+                Quản Lý Bộ Sưu Tập (Lookbook)
+            </h2>
+            <p class="text-xs text-zinc-500 mt-1">Thiết lập các chiến dịch thời trang, lookbook xuân hè/thu đông và banner truyền thông</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span class="px-4 py-2 rounded-2xl bg-white border border-zinc-200/80 text-xs font-bold text-zinc-700 shadow-xs flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Hệ thống sẵn sàng</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Bố cục 2 Cột: Form Thêm Mới (Cột trái) & Danh Sách Bảng (Cột phải) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- CỘT TRÁI (4 Cột): Form Thêm Mới Bộ Sưu Tập -->
+        <section class="lg:col-span-4 bg-white border border-zinc-200/80 rounded-3xl p-7 shadow-xs">
+            <div class="flex items-center gap-2.5 pb-4 border-b border-zinc-100 mb-6">
+                <div class="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-900 flex items-center justify-center text-sm font-bold">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <h3 class="text-base font-black uppercase tracking-tight text-zinc-950">Thêm Bộ Sưu Tập Mới</h3>
+            </div>
+
+            <form th:object="${boSuuTap}" action="/admin/bo-suu-tap/add" method="post" enctype="multipart/form-data" class="space-y-5">
+                
+                <!-- Tên bộ sưu tập -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Tên bộ sưu tập</label>
-                    <input type="text" th:field="*{tenBoSuuTap}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm p-2 border outline-none transition">
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Tên bộ sưu tập <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" th:field="*{tenBoSuuTap}" id="inputTenBST" oninput="tuDongTaoSlug(this.value)"
+                               placeholder="Ví dụ: Summer Minimalist 2026" 
+                               class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                        <i class="fa-solid fa-tag absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                    </div>
                     <span class="error" th:if="${#fields.hasErrors('tenBoSuuTap')}" th:errors="*{tenBoSuuTap}"></span>
                 </div>
 
+                <!-- Đường dẫn slug -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Đường dẫn slug</label>
-                    <input type="text" th:field="*{duongDanSlug}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm p-2 border outline-none transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                            Đường dẫn Slug <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-[10px] text-zinc-400 font-mono">Tự động sinh</span>
+                    </div>
+                    <div class="relative">
+                        <input type="text" th:field="*{duongDanSlug}" id="inputSlug"
+                               placeholder="summer-minimalist-2026" 
+                               class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-mono font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                        <i class="fa-solid fa-link absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                    </div>
                     <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
                 </div>
 
+                <!-- Tải ảnh Banner -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Hình Banner</label>
-                    <input type="file" name="fileBanner" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-black hover:file:bg-gray-200 cursor-pointer border p-1 rounded-md">
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Hình ảnh Banner Lookbook
+                    </label>
+                    
+                    <!-- Khung xem trước ảnh tải lên -->
+                    <div id="khungXemTruocBanner" class="hidden mb-3 h-32 rounded-2xl overflow-hidden bg-zinc-100 border border-zinc-200 relative group">
+                        <img id="anhXemTruocBanner" src="" class="w-full h-full object-cover">
+                    </div>
+
+                    <label class="border-2 border-dashed border-zinc-300 hover:border-black rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition bg-zinc-50/50 hover:bg-zinc-50">
+                        <i class="fa-solid fa-cloud-arrow-up text-zinc-400 text-2xl mb-1.5"></i>
+                        <span class="text-xs font-bold text-zinc-700">Bấm để tải tệp ảnh lên</span>
+                        <span class="text-[10px] text-zinc-400 mt-0.5">Hỗ trợ PNG, JPG, WebP tối đa 5MB</span>
+                        <input type="file" name="fileBanner" accept="image/*" onchange="xemTruocFile(this)" class="hidden">
+                    </label>
                 </div>
 
+                <!-- Trạng thái hoạt động -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" th:field="*{kichHoat}" value="true" class="text-black focus:ring-black w-4 h-4">
-                            <span class="ml-2 text-sm text-gray-600">Hoạt động</span>
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Trạng thái hiển thị
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2.5 p-3 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                            <input type="radio" th:field="*{kichHoat}" value="true" class="text-black focus:ring-black">
+                            <span class="flex items-center gap-1.5 text-emerald-700">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Hoạt động
+                            </span>
                         </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" th:field="*{kichHoat}" value="false" class="text-black focus:ring-black w-4 h-4">
-                            <span class="ml-2 text-sm text-gray-600">Ngừng</span>
+                        <label class="flex items-center gap-2.5 p-3 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                            <input type="radio" th:field="*{kichHoat}" value="false" class="text-black focus:ring-black">
+                            <span class="flex items-center gap-1.5 text-zinc-500">
+                                <span class="w-2 h-2 rounded-full bg-zinc-400"></span> Tạm ẩn
+                            </span>
                         </label>
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-black text-white font-medium py-2.5 px-4 rounded hover:bg-gray-800 transition duration-150 mt-4">THÊM MỚI</button>
+                <!-- Nút Submit Thêm mới -->
+                <button type="submit" 
+                        class="w-full py-3.5 rounded-xl bg-black text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition shadow-md flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tạo Bộ Sưu Tập Mới</span>
+                </button>
             </form>
-        </div>
+        </section>
 
-        <!-- Bảng hiển thị -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 border-b pb-4 gap-4">
-                <h3 class="text-xl font-semibold">Danh Sách</h3>
-                <!-- Form tìm kiếm -->
-                <form action="/admin/bo-suu-tap/hien-thi" method="get" class="flex w-full sm:w-auto">
-                    <input type="text" name="ten" th:value="${ten}" placeholder="Tìm kiếm bộ sưu tập..." class="rounded-l-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm p-2 border flex-grow outline-none">
-                    <button type="submit" class="bg-gray-100 border border-l-0 border-gray-300 text-black px-4 py-2 rounded-r-md hover:bg-gray-200 transition duration-150 font-medium">Tìm</button>
+        <!-- CỘT PHẢI (8 Cột): Danh Sách Bộ Sưu Tập Hiện Có -->
+        <section class="lg:col-span-8 bg-white border border-zinc-200/80 rounded-3xl p-7 shadow-xs space-y-6">
+            
+            <!-- Thanh tìm kiếm & đếm số lượng -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pb-4 border-b border-zinc-100">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-base font-black uppercase tracking-tight text-zinc-950">Danh Sách Hiện Có</h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-zinc-100 text-zinc-700" th:text="${listBoSuuTap.size() + ' mục'}"></span>
+                </div>
+
+                <!-- Form tìm kiếm chuẩn Spring MVC Controller -->
+                <form action="/admin/bo-suu-tap/hien-thi" method="get" class="flex w-full sm:w-80">
+                    <div class="relative w-full">
+                        <input type="text" name="ten" th:value="${ten}" placeholder="Tìm theo tên bộ sưu tập..." 
+                               class="w-full rounded-xl border border-zinc-300 py-2.5 pl-10 pr-20 text-xs font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition bg-zinc-50/50">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-zinc-400 text-xs"></i>
+                        <button type="submit" 
+                                class="absolute right-1 top-1 bottom-1 px-3 rounded-lg bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                            Tìm
+                        </button>
+                    </div>
                 </form>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bộ Sưu Tập</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Banner</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-                    </tr>
+            <!-- Bảng dữ liệu thiết kế cao cấp -->
+            <div class="overflow-x-auto rounded-2xl border border-zinc-200/80">
+                <table class="min-w-full divide-y divide-zinc-200 text-sm">
+                    <thead class="bg-zinc-50">
+                        <tr class="text-left text-[11px] font-black uppercase tracking-wider text-zinc-400">
+                            <th class="py-3.5 px-4">Bộ Sưu Tập</th>
+                            <th class="py-3.5 px-4">Banner Lookbook</th>
+                            <th class="py-3.5 px-4">Trạng Thái</th>
+                            <th class="py-3.5 px-4 text-right">Thao Tác</th>
+                        </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                    <tr th:each="bst : ${listBoSuuTap}" class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900" th:text="${bst.tenBoSuuTap}"></div>
-                            <div class="text-xs text-gray-500 mt-1" th:text="'Slug: ' + ${bst.duongDanSlug}"></div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <img th:if="${bst.hinhBannerUrl != null and bst.hinhBannerUrl != ''}" 
-                                 th:src="${bst.hinhBannerUrl}" alt="Banner" class="h-16 w-32 object-cover rounded shadow-sm border border-gray-200">
-                            <span th:unless="${bst.hinhBannerUrl != null and bst.hinhBannerUrl != ''}" class="text-xs text-gray-400 italic">Chưa có ảnh</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span th:if="${bst.kichHoat}" class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Hoạt động</span>
-                            <span th:unless="${bst.kichHoat}" class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Đã ẩn</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a th:href="@{|/admin/bo-suu-tap/view?id=${bst.id}|}" class="text-blue-600 hover:text-blue-900 mr-3">Sửa</a>
-                            <a th:href="@{|/admin/bo-suu-tap/delete?id=${bst.id}|}" onclick="return confirm('Bạn có chắc muốn xoá?');" class="text-red-600 hover:text-red-900">Xoá</a>
-                        </td>
-                    </tr>
-                    <tr th:if="${listBoSuuTap.empty}">
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">Không tìm thấy dữ liệu.</td>
-                    </tr>
+                    <tbody class="divide-y divide-zinc-100 bg-white">
+                        <tr th:each="bst : ${listBoSuuTap}" class="table-row-hover transition">
+                            
+                            <!-- Tên & Slug -->
+                            <td class="py-4 px-4">
+                                <div class="font-bold text-zinc-950 text-sm" th:text="${bst.tenBoSuuTap}"></div>
+                                <div class="text-[11px] text-zinc-400 font-mono mt-0.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-link text-[10px]"></i>
+                                    <span th:text="${bst.duongDanSlug}"></span>
+                                </div>
+                            </td>
+
+                            <!-- Hình Banner -->
+                            <td class="py-4 px-4">
+                                <div th:if="${bst.hinhBannerUrl != null and bst.hinhBannerUrl != ''}" 
+                                     class="h-14 w-28 rounded-xl overflow-hidden border border-zinc-200 bg-zinc-100 shadow-2xs group relative">
+                                    <img th:src="${bst.hinhBannerUrl}" alt="Banner" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                </div>
+                                <span th:unless="${bst.hinhBannerUrl != null and bst.hinhBannerUrl != ''}" 
+                                      class="text-xs text-zinc-400 italic">Chưa có banner</span>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td class="py-4 px-4">
+                                <span th:if="${bst.kichHoat}" 
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động
+                                </span>
+                                <span th:unless="${bst.kichHoat}" 
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span> Đã ẩn
+                                </span>
+                            </td>
+
+                            <!-- Nút thao tác Sửa / Xóa -->
+                            <td class="py-4 px-4 text-right">
+                                <div class="inline-flex items-center gap-2">
+                                    <a th:href="@{|/admin/bo-suu-tap/view?id=${bst.id}|}" 
+                                       title="Chỉnh sửa bộ sưu tập"
+                                       class="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs transition">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                    <a th:href="@{|/admin/bo-suu-tap/delete?id=${bst.id}|}" 
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa bộ sưu tập này?');"
+                                       title="Xóa bộ sưu tập"
+                                       class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Bảng rỗng -->
+                        <tr th:if="${listBoSuuTap == null or listBoSuuTap.empty}">
+                            <td colspan="4" class="py-12 px-4 text-center text-xs text-zinc-400">
+                                <i class="fa-solid fa-folder-open text-2xl block mb-2 text-zinc-300"></i>
+                                Không tìm thấy bộ sưu tập nào phù hợp.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Phân trang -->
-            <div class="mt-6 flex items-center justify-between" th:if="${totalPages > 1}">
-                <a th:if="${page > 0}" th:href="@{|/admin/bo-suu-tap/hien-thi?page=${page - 1}&ten=${ten != null ? ten : ''}|}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 text-sm font-medium transition">Trước</a>
-                <span th:if="${page == 0}" class="bg-gray-50 border border-gray-200 text-gray-400 px-4 py-2 rounded-md cursor-not-allowed text-sm font-medium">Trước</span>
-                
-                <span class="text-sm text-gray-700 font-medium" th:text="${'Trang ' + (page + 1) + ' / ' + totalPages}"></span>
-                
-                <a th:if="${page < totalPages - 1}" th:href="@{|/admin/bo-suu-tap/hien-thi?page=${page + 1}&ten=${ten != null ? ten : ''}|}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 text-sm font-medium transition">Sau</a>
-                <span th:if="${page >= totalPages - 1}" class="bg-gray-50 border border-gray-200 text-gray-400 px-4 py-2 rounded-md cursor-not-allowed text-sm font-medium">Sau</span>
+            <!-- Phân trang thông minh -->
+            <div class="flex items-center justify-between pt-2" th:if="${totalPages > 1}">
+                <a th:if="${page > 0}" 
+                   th:href="@{|/admin/bo-suu-tap/hien-thi?page=${page - 1}&ten=${ten != null ? ten : ''}|}" 
+                   class="px-4 py-2 rounded-xl border border-zinc-300 hover:border-black text-xs font-bold transition">
+                    ← Trang Trước
+                </a>
+                <span th:if="${page == 0}" class="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-300 text-xs font-bold cursor-not-allowed">
+                    ← Trang Trước
+                </span>
+
+                <span class="text-xs font-bold text-zinc-600 font-mono" 
+                      th:text="${'Trang ' + (page + 1) + ' / ' + totalPages}"></span>
+
+                <a th:if="${page < totalPages - 1}" 
+                   th:href="@{|/admin/bo-suu-tap/hien-thi?page=${page + 1}&ten=${ten != null ? ten : ''}|}" 
+                   class="px-4 py-2 rounded-xl border border-zinc-300 hover:border-black text-xs font-bold transition">
+                    Trang Sau →
+                </a>
+                <span th:if="${page >= totalPages - 1}" class="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-300 text-xs font-bold cursor-not-allowed">
+                    Trang Sau →
+                </span>
             </div>
-        </div>
+
+        </section>
+
     </div>
-</div>
+</main>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-10 text-center text-xs text-zinc-400 mt-16">
+    <p>© 2026 Simplain Menswear Administrator. Hệ thống điều hành thương mại điện tử.</p>
+</footer>
+
+<script>
+    function tuDongTaoSlug(ten) {
+        if (!ten) return;
+        const slug = ten.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim().replace(/\s+/g, '-');
+        document.getElementById('inputSlug').value = slug;
+    }
+
+    function xemTruocFile(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('anhXemTruocBanner').src = e.target.result;
+                document.getElementById('khungXemTruocBanner').classList.remove('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
 
 </body>
 </html>

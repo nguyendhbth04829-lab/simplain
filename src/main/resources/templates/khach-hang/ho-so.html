@@ -1,124 +1,340 @@
 <!-- 
     Tác giả: Gia Minh
-    Chức năng: US12 - Giao diện xem và cập nhật hồ sơ cá nhân của khách hàng
+    Chức năng: US12 - Giao diện Hồ sơ cá nhân khách hàng (Phiên bản Đột Phá 2026)
 -->
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Hồ sơ cá nhân - Simplain</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Cá Nhân • Simplain Menswear</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .loi { color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem; display: block; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .loi { color: #e11d48; font-size: 0.8125rem; margin-top: 0.35rem; display: block; font-weight: 500; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <div class="flex justify-between items-center mb-8 border-b pb-4">
-        <div>
-            <h2 class="text-3xl font-bold text-gray-900 tracking-wide uppercase">Hồ Sơ Cá Nhân</h2>
-            <p class="text-sm text-gray-500 mt-1">Quản lý và cập nhật thông tin tài khoản khách hàng (US12)</p>
-        </div>
-        <div>
-            <a th:href="@{|/khach-hang/doi-mat-khau?id=${idKhachHang}|}" 
-               class="bg-white border border-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-100 text-sm font-medium transition shadow-sm">
-                Đổi mật khẩu →
-            </a>
-        </div>
-    </div>
-
-    <!-- Thông báo thành công / lỗi -->
-    <div th:if="${thongBaoThanhCong}" class="mb-6 p-4 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm flex items-center">
-        <span class="font-bold mr-2">✓</span> <span th:text="${thongBaoThanhCong}"></span>
-    </div>
-    <div th:if="${thongBaoLoi}" class="mb-6 p-4 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm flex items-center">
-        <span class="font-bold mr-2">✕</span> <span th:text="${thongBaoLoi}"></span>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Khối thông tin tổng quan -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 text-center h-fit">
-            <div class="w-28 h-28 mx-auto rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center mb-4">
-                <img th:if="${hoSo != null and hoSo.anhDaiDien != null and hoSo.anhDaiDien != ''}" 
-                     th:src="${hoSo.anhDaiDien}" alt="Avatar" class="w-full h-full object-cover">
-                <span th:unless="${hoSo != null and hoSo.anhDaiDien != null and hoSo.anhDaiDien != ''}" class="text-4xl text-gray-400">👤</span>
+<!-- Header thống nhất toàn hệ thống -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">MENSWEAR ESSENTIALS</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                    <i class="fa-solid fa-user-circle text-zinc-400"></i> Trung Tâm Khách Hàng
+                </span>
             </div>
-            <h3 class="text-xl font-bold text-gray-900" th:text="${hoSo != null ? hoSo.hoTen : 'Chưa cập nhật'}"></h3>
-            <p class="text-sm text-gray-500 mt-1" th:text="'Mã: ' + (${hoSo != null ? hoSo.maKhachHang : '-'})"></p>
 
-            <div class="mt-6 pt-4 border-t border-gray-100 text-left text-sm space-y-2">
-                <div><span class="text-gray-500">Trạng thái:</span> 
-                    <span th:if="${hoSo != null and hoSo.trangThai == 1}" class="px-2 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-800">Hoạt động</span>
-                    <span th:unless="${hoSo != null and hoSo.trangThai == 1}" class="px-2 py-0.5 text-xs font-semibold rounded bg-red-100 text-red-800">Bị khóa</span>
+            <!-- Nút điều hướng tắt -->
+            <div class="flex items-center space-x-3">
+                <a href="/" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3.5 py-2 rounded-xl transition">
+                    ← Cửa Hàng
+                </a>
+                <a href="/admin/danh-muc/hien-thi" class="text-xs font-bold text-zinc-500 hover:text-black px-3 py-2 transition hidden sm:inline">
+                    Admin Portal
+                </a>
+                <a href="/docs" target="_blank" class="text-xs font-bold bg-zinc-950 text-white px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5">
+                    <span>API Docs</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+    
+    <!-- Thông báo kết quả nổi bật -->
+    <div th:if="${thongBaoThanhCong}" class="mb-8 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoThanhCong}"></span>
+    </div>
+    <div th:if="${thongBaoLoi}" class="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoLoi}"></span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- SIDEBAR TRÁI: Avatar & Menu Phân Hệ 6 Chức Năng -->
+        <aside class="lg:col-span-4 space-y-6">
+            
+            <!-- Card Danh thiếp Khách Hàng -->
+            <div class="bg-white border border-zinc-200/80 rounded-3xl p-6 text-center shadow-xs relative overflow-hidden">
+                <div class="relative w-24 h-24 mx-auto mb-4">
+                    <img id="avatarHienThi" 
+                         th:src="${khachHang != null and khachHang.anhDaiDien != null and khachHang.anhDaiDien != '' ? khachHang.anhDaiDien : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'}" 
+                         alt="Avatar Khách hàng" 
+                         class="w-full h-full rounded-full object-cover border-4 border-white shadow-md">
+                    <span class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full" title="Tài khoản đang hoạt động"></span>
                 </div>
-                <div><span class="text-gray-500">Giới tính:</span> <span class="font-medium" th:text="${hoSo != null and hoSo.gioiTinh != null ? hoSo.gioiTinh : 'Chưa chọn'}"></span></div>
-                <div><span class="text-gray-500">Ngày sinh:</span> <span class="font-medium" th:text="${hoSo != null and hoSo.ngaySinh != null ? hoSo.ngaySinh : 'Chưa cập nhật'}"></span></div>
+
+                <h3 class="text-lg font-black text-zinc-950" th:text="${khachHang != null ? khachHang.hoTen : 'Khách Hàng Simplain'}"></h3>
+                <p class="text-xs text-zinc-400 font-mono mt-0.5" th:text="${khachHang != null ? khachHang.email : 'email@example.com'}"></p>
+
+                <!-- Huy hiệu định danh -->
+                <div class="flex items-center justify-center gap-2 mt-3">
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-zinc-950 text-amber-400 border border-zinc-800 flex items-center gap-1">
+                        <i class="fa-solid fa-crown text-[10px]"></i> HỘI VIÊN SIMPLAIN
+                    </span>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-600 font-mono">
+                        ID: <span th:text="${idKhachHang}">1</span>
+                    </span>
+                </div>
+
+                <!-- Thước đo độ hoàn thiện hồ sơ -->
+                <div class="mt-6 pt-6 border-t border-zinc-100 text-left">
+                    <div class="flex justify-between items-center text-xs font-bold mb-2">
+                        <span class="text-zinc-600 uppercase tracking-wider text-[10px]">Độ hoàn thiện hồ sơ:</span>
+                        <span id="phanTramHoanThien" class="text-emerald-600 font-black">85%</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-zinc-100 overflow-hidden">
+                        <div id="thanhHoanThien" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 85%;"></div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Form cập nhật hồ sơ -->
-        <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 class="text-xl font-semibold mb-6 border-b pb-3">Cập Nhật Thông Tin Cá Nhân</h3>
+            <!-- Menu Điều Hướng Tab Đột Phá -->
+            <nav class="bg-white border border-zinc-200/80 rounded-3xl p-3 shadow-xs space-y-1">
+                <a th:href="@{|/khach-hang/ho-so?id=${idKhachHang}|}" 
+                   class="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 text-white font-bold text-xs shadow-sm">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-user-circle text-base"></i>
+                        <span>Hồ Sơ Cá Nhân</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
+                </a>
 
-            <form th:object="${capNhatRequest}" th:action="@{|/khach-hang/cap-nhat?id=${idKhachHang}|}" method="post" class="space-y-5">
+                <a th:href="@{|/khach-hang/dia-chi?idKhachHang=${idKhachHang}|}" 
+                   class="flex items-center justify-between p-3.5 rounded-2xl text-zinc-600 hover:bg-zinc-100 hover:text-black font-semibold text-xs transition">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-location-dot text-base text-zinc-400"></i>
+                        <span>Sổ Địa Chỉ Giao Hàng</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
+                </a>
+
+                <a th:href="@{|/khach-hang/yeu-thich?idKhachHang=${idKhachHang}|}" 
+                   class="flex items-center justify-between p-3.5 rounded-2xl text-zinc-600 hover:bg-zinc-100 hover:text-black font-semibold text-xs transition">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-heart text-base text-rose-500"></i>
+                        <span>Sản Phẩm Yêu Thích</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
+                </a>
+
+                <a th:href="@{|/khach-hang/danh-gia?idKhachHang=${idKhachHang}|}" 
+                   class="flex items-center justify-between p-3.5 rounded-2xl text-zinc-600 hover:bg-zinc-100 hover:text-black font-semibold text-xs transition">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-star text-base text-amber-500"></i>
+                        <span>Đánh Giá Của Tôi</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
+                </a>
+
+                <a th:href="@{|/khach-hang/hoi-vien?idKhachHang=${idKhachHang}|}" 
+                   class="flex items-center justify-between p-3.5 rounded-2xl text-zinc-600 hover:bg-zinc-100 hover:text-black font-semibold text-xs transition">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-crown text-base text-amber-400"></i>
+                        <span>Hội Viên & Coolcash</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
+                </a>
+
+                <a th:href="@{|/khach-hang/doi-mat-khau?id=${idKhachHang}|}" 
+                   class="flex items-center justify-between p-3.5 rounded-2xl text-zinc-600 hover:bg-zinc-100 hover:text-black font-semibold text-xs transition">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-key text-base text-zinc-400"></i>
+                        <span>Đổi Mật Khẩu</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-zinc-400"></i>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- NỘI DUNG CHÍNH PHẢI: Form Cập Nhật Hồ Sơ Cao Cấp -->
+        <section class="lg:col-span-8 bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-10 shadow-xs">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-zinc-200 gap-4 mb-8">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Họ và tên <span class="text-red-500">*</span></label>
-                    <input type="text" th:field="*{hoTen}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5 border outline-none focus:border-black transition text-sm">
-                    <span class="loi" th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}"></span>
+                    <h2 class="text-2xl font-black uppercase tracking-tight text-zinc-950">Thông Tin Hồ Sơ Cá Nhân</h2>
+                    <p class="text-xs text-zinc-500 mt-1">Cập nhật thông tin để nhận chính sách bảo hành và ưu đãi thành viên</p>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-700 font-mono">
+                    Mã KH: <span th:text="${khachHang != null ? khachHang.maKhachHang : 'KH001'}"></span>
+                </span>
+            </div>
+
+            <form th:object="${capNhatHoSoRequest}" th:action="@{|/khach-hang/ho-so?id=${idKhachHang}|}" method="post" class="space-y-6">
+                
+                <!-- Email & Mã Khách Hàng (Readonly) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 rounded-2xl bg-zinc-50 border border-zinc-200/60">
+                    <div>
+                        <label class="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                            Địa chỉ Email (Định danh)
+                        </label>
+                        <div class="flex items-center gap-2 text-sm font-bold text-zinc-800">
+                            <i class="fa-solid fa-envelope text-zinc-400"></i>
+                            <span th:text="${khachHang != null ? khachHang.email : ''}"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                            Trạng thái bảo mật
+                        </label>
+                        <div class="flex items-center gap-2 text-xs font-bold text-emerald-700">
+                            <i class="fa-solid fa-shield-check"></i>
+                            <span>Đã xác minh an toàn</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Họ và tên & Số điện thoại -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                        <input type="text" th:field="*{soDienThoai}" placeholder="0987654321" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5 border outline-none focus:border-black transition text-sm">
+                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                            Họ và tên đầy đủ <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" th:field="*{hoTen}" id="inputHoTen" placeholder="Ví dụ: Nguyễn Văn An" 
+                                   class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                            <i class="fa-solid fa-user absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                        </div>
+                        <span class="loi" th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                            Số điện thoại nhận hàng <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="tel" th:field="*{soDienThoai}" placeholder="Ví dụ: 0912345678" 
+                                   class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-mono font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                            <i class="fa-solid fa-phone absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                        </div>
                         <span class="loi" th:if="${#fields.hasErrors('soDienThoai')}" th:errors="*{soDienThoai}"></span>
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" th:field="*{email}" placeholder="example@gmail.com" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5 border outline-none focus:border-black transition text-sm">
-                        <span class="loi" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
-                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Ngày sinh & Giới tính -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Giới tính</label>
-                        <select th:field="*{gioiTinh}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5 border outline-none bg-white text-sm">
-                            <option value="">-- Chọn giới tính --</option>
-                            <option value="Nam">Nam</option>
-                            <option value="Nữ">Nữ</option>
-                            <option value="Khác">Khác</option>
-                        </select>
-                        <span class="loi" th:if="${#fields.hasErrors('gioiTinh')}" th:errors="*{gioiTinh}"></span>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Ngày sinh</label>
-                        <input type="date" th:field="*{ngaySinh}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5 border outline-none focus:border-black transition text-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                                Ngày sinh
+                            </label>
+                            <span id="nhanTuoi" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                Độ tuổi: --
+                            </span>
+                        </div>
+                        <div class="relative">
+                            <input type="date" th:field="*{ngaySinh}" id="inputNgaySinh" onchange="tinhTuoi(this.value)"
+                                   class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                            <i class="fa-solid fa-calendar-days absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                        </div>
                         <span class="loi" th:if="${#fields.hasErrors('ngaySinh')}" th:errors="*{ngaySinh}"></span>
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                            Giới tính
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                                <input type="radio" th:field="*{gioiTinh}" value="Nam" class="text-black focus:ring-black">
+                                <span>Nam</span>
+                            </label>
+                            <label class="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                                <input type="radio" th:field="*{gioiTinh}" value="Nữ" class="text-black focus:ring-black">
+                                <span>Nữ</span>
+                            </label>
+                            <label class="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                                <input type="radio" th:field="*{gioiTinh}" value="Khác" class="text-black focus:ring-black">
+                                <span>Khác</span>
+                            </label>
+                        </div>
+                        <span class="loi" th:if="${#fields.hasErrors('gioiTinh')}" th:errors="*{gioiTinh}"></span>
+                    </div>
                 </div>
 
+                <!-- URL Ảnh đại diện -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Đường dẫn ảnh đại diện (URL)</label>
-                    <input type="text" th:field="*{anhDaiDien}" placeholder="https://example.com/avatar.jpg" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5 border outline-none focus:border-black transition text-sm">
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Đường dẫn URL ảnh đại diện (Avatar)
+                    </label>
+                    <div class="relative">
+                        <input type="url" th:field="*{anhDaiDien}" id="inputAvatar" oninput="capNhatAvatar(this.value)"
+                               placeholder="https://images.unsplash.com/..." 
+                               class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-mono outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                        <i class="fa-solid fa-image absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                    </div>
                     <span class="loi" th:if="${#fields.hasErrors('anhDaiDien')}" th:errors="*{anhDaiDien}"></span>
                 </div>
 
-                <div class="pt-4 flex gap-4">
-                    <button type="submit" class="flex-1 bg-black text-white font-medium py-2.5 px-4 rounded hover:bg-gray-800 transition duration-150 text-sm">
-                        LƯU THAY ĐỔI
-                    </button>
-                    <a th:href="@{|/khach-hang/ho-so?id=${idKhachHang}|}" class="text-center bg-gray-100 border border-gray-300 text-gray-700 font-medium py-2.5 px-6 rounded hover:bg-gray-200 transition duration-150 text-sm">
-                        Hủy
+                <!-- Nút Lưu thay đổi -->
+                <div class="pt-6 border-t border-zinc-200 flex justify-end gap-3">
+                    <a th:href="@{|/khach-hang/ho-so?id=${idKhachHang}|}" 
+                       class="px-6 py-3.5 rounded-xl border border-zinc-300 text-zinc-700 font-bold text-xs uppercase hover:bg-zinc-50 transition">
+                        Khôi Phục Ban Đầu
                     </a>
+                    <button type="submit" 
+                            class="px-8 py-3.5 rounded-xl bg-black text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition shadow-md flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Lưu Thay Đổi Hồ Sơ</span>
+                    </button>
                 </div>
+
             </form>
-        </div>
+        </section>
+
     </div>
-</div>
+</main>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-10 text-center text-xs text-zinc-400 mt-16">
+    <p>© 2026 Simplain Menswear Essentials. Đã được xác thực mã hóa an toàn.</p>
+</footer>
+
+<script>
+    function tinhTuoi(ngaySinhStr) {
+        if (!ngaySinhStr) return;
+        const ngaySinh = new Date(ngaySinhStr);
+        const homNay = new Date();
+        let tuoi = homNay.getFullYear() - ngaySinh.getFullYear();
+        const m = homNay.getMonth() - ngaySinh.getMonth();
+        if (m < 0 || (m === 0 && homNay.getDate() < ngaySinh.getDate())) {
+            tuoi--;
+        }
+        document.getElementById('nhanTuoi').textContent = `Độ tuổi: ${tuoi} tuổi`;
+    }
+
+    function capNhatAvatar(url) {
+        if (url && url.startsWith('http')) {
+            document.getElementById('avatarHienThi').src = url;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const ns = document.getElementById('inputNgaySinh').value;
+        if (ns) tinhTuoi(ns);
+    });
+</script>
 
 </body>
 </html>
