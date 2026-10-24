@@ -63,5 +63,11 @@ build/
 application-local.properties
 application-secret.properties
 
+# --- Local database data ---
+data/
+*.mv.db
+*.trace.db
+
 # --- Opencode / AI ---
 .opencode/
+.agents/

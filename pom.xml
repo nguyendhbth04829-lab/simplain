@@ -44,6 +44,26 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Spring Data JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- H2 Database (Chạy nhẹ trực tiếp trên Linux / test không cần cài đặt) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Microsoft SQL Server JDBC Driver (dùng khi chạy với SQL Server thật) -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Tai lieu API kieu FastAPI docs: Swagger UI + OpenAPI -->
         <dependency>
             <groupId>org.springdoc</groupId>
