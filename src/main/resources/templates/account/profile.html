@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Tài khoản của tôi — Simplain x Coolmate</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👔</text></svg>">
+
+    <!-- CSS Phong cách Coolmate nhúng trực tiếp vào HTML -->
+    <style>
+        :root {
+            --cm-black: #111827;
+            --cm-dark-hover: #1f2937;
+            --cm-blue: #2f5acf;
+            --cm-bg: #f9fafb;
+            --cm-border: #e5e7eb;
+            --cm-text-primary: #111827;
+            --cm-text-secondary: #4b5563;
+            --cm-text-muted: #9ca3af;
+            --cm-radius: 12px;
+            --cm-radius-lg: 20px;
+            --cm-radius-full: 9999px;
+            --cm-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --cm-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+            --cm-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--cm-font);
+            background-color: var(--cm-bg);
+            color: var(--cm-text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .announcement-bar {
+            background-color: var(--cm-black);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            padding: 8px 16px;
+            letter-spacing: 0.3px;
+        }
+
+        .announcement-bar span {
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
+        .header-nav {
+            background: #ffffff;
+            border-bottom: 1px solid var(--cm-border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--cm-black);
+        }
+
+        .brand-logo h1 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-tag {
+            background: #eff6ff;
+            color: var(--cm-blue);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: var(--cm-radius-full);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--cm-text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--cm-black);
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: var(--cm-radius-full);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .account-container {
+            max-width: 1100px;
+            margin: 40px auto 60px;
+            padding: 0 20px;
+        }
+
+        .account-header-card {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            color: #ffffff;
+            border-radius: var(--cm-radius-lg);
+            padding: 32px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--cm-shadow-lg);
+        }
+
+        .account-user-meta {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .account-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 3px solid #3b82f6;
+            object-fit: cover;
+        }
+
+        .account-info h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .account-info p {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .badge-member-rank {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--cm-radius-full);
+            margin-top: 6px;
+        }
+
+        .account-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .dashboard-card {
+            background: #ffffff;
+            border: 1px solid var(--cm-border);
+            border-radius: var(--cm-radius);
+            padding: 26px;
+            box-shadow: var(--cm-shadow);
+        }
+
+        .dashboard-card h3 {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--cm-border);
+            padding-bottom: 12px;
+        }
+
+        .info-item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #f3f4f6;
+            font-size: 13px;
+        }
+
+        .info-item-row .label {
+            color: var(--cm-text-muted);
+            font-weight: 500;
+        }
+
+        .info-item-row .val {
+            font-weight: 700;
+            color: var(--cm-black);
+        }
+
+        @media (max-width: 860px) {
+            .account-grid {
+                grid-template-columns: 1fr;
+            }
+            .account-header-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Announcement Bar -->
+    <div class="announcement-bar">
+        Simplain Club: Tích điểm CoolCash 5% • <span>Đổi trả 60 ngày miễn phí tận nhà</span> • Hỗ trợ 24/7
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="nav-container">
+            <a th:href="@{/account}" class="brand-logo">
+                <h1>SIMPLAIN</h1>
+                <span class="brand-tag">CoolClub</span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="#">NAM GIỚI</a></li>
+                <li><a href="#">ÁO THUN</a></li>
+                <li><a href="#">ĐỒ LÓT</a></li>
+                <li><a th:href="@{/account}" class="active">TÀI KHOẢN</a></li>
+                <li><a th:href="@{/docs}" target="_blank">SWAGGER API</a></li>
+            </ul>
+
+            <div>
+                <a th:href="@{/auth/logout}" class="btn-logout" id="btnLogout">
+                    Đăng xuất
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="account-container" id="accountDashboard">
+        <!-- Header Profile Card -->
+        <div class="account-header-card">
+            <div class="account-user-meta">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80" alt="Avatar" class="account-avatar">
+                <div class="account-info">
+                    <h2>Xin chào, <span id="displayUserName" th:text="${user != null ? user.hoTen : 'Khách hàng'}">Khách hàng</span>!</h2>
+                    <p>Mã thành viên: <strong id="displayUserCode" style="color: #60a5fa;" th:text="${user != null ? user.maKhachHang : 'KH...'}">KH...</strong></p>
+                    <span class="badge-member-rank">★ HỘI VIÊN SIMPLAIN COOLCLUB</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="account-grid">
+            <!-- Thẻ 1: Thông tin tài khoản -->
+            <div class="dashboard-card">
+                <h3>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Thông tin tài khoản
+                </h3>
+                <div class="info-item-row">
+                    <span class="label">Mã khách hàng:</span>
+                    <span class="val" id="profileMaKhachHang" th:text="${user != null ? user.maKhachHang : '---'}">---</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Họ và tên:</span>
+                    <span class="val" id="profileHoTen" th:text="${user != null ? user.hoTen : '---'}">---</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Địa chỉ Email:</span>
+                    <span class="val" id="profileEmail" th:text="${user != null ? user.email : '---'}">---</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Số điện thoại:</span>
+                    <span class="val" id="profileSoDienThoai" th:text="${user != null ? user.soDienThoai : '---'}">---</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Trạng thái tài khoản:</span>
+                    <span class="val" id="profileTrangThai" th:text="${user != null && user.trangThai == 1 ? 'Hoạt động (Active) ✅' : 'Tạm khóa ❌'}">---</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Ngày tham gia:</span>
+                    <span class="val" id="profileNgayTao" th:text="${user != null && user.ngayTao != null ? #temporals.format(user.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">---</span>
+                </div>
+            </div>
+
+            <!-- Thẻ 2: Đặc quyền thành viên -->
+            <div class="dashboard-card">
+                <h3>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Ví CoolCash & Đặc quyền
+                </h3>
+                <div class="info-item-row">
+                    <span class="label">Số dư hoàn tiền CoolCash:</span>
+                    <span class="val" style="color: var(--cm-blue); font-size: 16px;">50.000 đ</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Hạn mức hoàn tiền:</span>
+                    <span class="val">5% cho mọi đơn hàng</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Chính sách đổi trả:</span>
+                    <span class="val">60 ngày miễn phí tận nơi</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Bảo mật mật khẩu:</span>
+                    <span class="val" style="color: #10b981;">BCrypt (12 rounds) an toàn</span>
+                </div>
+                <div class="info-item-row">
+                    <span class="label">Giao hàng hỏa tốc:</span>
+                    <span class="val">Ưu tiên xử lý trong 2h</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

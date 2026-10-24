@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Đăng nhập — Simplain x Coolmate</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👔</text></svg>">
+
+    <!-- CSS Phong cách Coolmate nhúng trực tiếp vào HTML -->
+    <style>
+        :root {
+            --cm-black: #111827;
+            --cm-dark-hover: #1f2937;
+            --cm-blue: #2f5acf;
+            --cm-bg: #f9fafb;
+            --cm-card-bg: #ffffff;
+            --cm-border: #e5e7eb;
+            --cm-text-primary: #111827;
+            --cm-text-secondary: #4b5563;
+            --cm-text-muted: #9ca3af;
+            --cm-danger: #ef4444;
+            --cm-success: #10b981;
+            --cm-radius: 12px;
+            --cm-radius-lg: 20px;
+            --cm-radius-full: 9999px;
+            --cm-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --cm-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--cm-font);
+            background-color: var(--cm-bg);
+            color: var(--cm-text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Announcement Bar */
+        .announcement-bar {
+            background-color: var(--cm-black);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            padding: 8px 16px;
+            letter-spacing: 0.3px;
+        }
+
+        .announcement-bar span {
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
+        /* Header Navigation */
+        .header-nav {
+            background: #ffffff;
+            border-bottom: 1px solid var(--cm-border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--cm-black);
+        }
+
+        .brand-logo h1 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-tag {
+            background: #eff6ff;
+            color: var(--cm-blue);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: var(--cm-radius-full);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--cm-text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--cm-black);
+        }
+
+        .btn-header-account {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cm-black);
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: var(--cm-radius-full);
+            border: 1px solid var(--cm-border);
+            transition: all 0.2s;
+        }
+
+        .btn-header-account:hover {
+            background: var(--cm-bg);
+            border-color: var(--cm-black);
+        }
+
+        /* Main Container */
+        .main-wrapper {
+            max-width: 1100px;
+            margin: 40px auto 60px;
+            padding: 0 20px;
+        }
+
+        .auth-card-split {
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            background: var(--cm-card-bg);
+            border-radius: var(--cm-radius-lg);
+            box-shadow: var(--cm-shadow-lg);
+            border: 1px solid var(--cm-border);
+            overflow: hidden;
+        }
+
+        /* Left Side: Hero Banner */
+        .auth-hero-banner {
+            background: linear-gradient(145deg, #111827 0%, #1f2937 100%);
+            color: #ffffff;
+            padding: 48px 36px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.12);
+            color: #93c5fd;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: var(--cm-radius-full);
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 14px;
+        }
+
+        .hero-desc {
+            color: #d1d5db;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .perks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 40px;
+        }
+
+        .perk-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .perk-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(47, 90, 207, 0.2);
+            border: 1px solid rgba(47, 90, 207, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #93c5fd;
+        }
+
+        .perk-info h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .perk-info p {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .hero-testimonial {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--cm-radius);
+            padding: 16px;
+            font-size: 13px;
+            color: #e5e7eb;
+        }
+
+        .hero-testimonial .stars {
+            color: #fbbf24;
+            margin-bottom: 6px;
+        }
+
+        /* Right Side: Form */
+        .auth-form-side {
+            padding: 44px 40px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: #f3f4f6;
+            padding: 4px;
+            border-radius: var(--cm-radius-full);
+            margin-bottom: 28px;
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            border-radius: var(--cm-radius-full);
+            cursor: pointer;
+            color: var(--cm-text-secondary);
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .auth-tab-btn.active {
+            background: #ffffff;
+            color: var(--cm-black);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-header {
+            margin-bottom: 24px;
+        }
+
+        .form-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--cm-black);
+            margin-bottom: 6px;
+        }
+
+        .form-header p {
+            font-size: 13px;
+            color: var(--cm-text-secondary);
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--cm-text-primary);
+            margin-bottom: 6px;
+        }
+
+        .form-label .required-star {
+            color: var(--cm-danger);
+            margin-left: 2px;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--cm-text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            font-size: 14px;
+            font-family: inherit;
+            border: 1.5px solid var(--cm-border);
+            border-radius: var(--cm-radius);
+            background: #ffffff;
+            color: var(--cm-black);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--cm-black);
+            box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+        }
+
+        .form-input.is-invalid {
+            border-color: var(--cm-danger);
+            background-color: #fffafb;
+        }
+
+        .form-input.is-valid {
+            border-color: var(--cm-success);
+        }
+
+        .btn-toggle-pwd {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--cm-text-muted);
+            display: flex;
+            align-items: center;
+            padding: 4px;
+        }
+
+        .btn-toggle-pwd:hover {
+            color: var(--cm-black);
+        }
+
+        .field-error-msg {
+            display: block;
+            font-size: 12px;
+            color: var(--cm-danger);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--cm-text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--cm-black);
+            cursor: pointer;
+        }
+
+        .link-muted {
+            color: var(--cm-text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-muted:hover {
+            color: var(--cm-blue);
+            text-decoration: underline;
+        }
+
+        .btn-submit-coolmate {
+            width: 100%;
+            background: var(--cm-black);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--cm-radius);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-submit-coolmate:hover {
+            background: var(--cm-dark-hover);
+        }
+
+        .btn-submit-coolmate:active {
+            transform: scale(0.99);
+        }
+
+        .alert-box {
+            display: block;
+            padding: 12px 16px;
+            border-radius: var(--cm-radius);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--cm-black);
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: var(--cm-radius);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.toast-danger {
+            border-left: 4px solid var(--cm-danger);
+        }
+
+        @media (max-width: 860px) {
+            .auth-card-split {
+                grid-template-columns: 1fr;
+            }
+            .auth-hero-banner {
+                display: none;
+            }
+            .auth-form-side {
+                padding: 32px 20px;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Announcement Bar -->
+    <div class="announcement-bar">
+        Freeship toàn quốc đơn từ 200k • <span>Đổi trả 60 ngày miễn phí tận nơi</span> • Hotline: 1900.27.27.37
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="nav-container">
+            <a th:href="@{/auth/login}" class="brand-logo">
+                <h1>SIMPLAIN</h1>
+                <span class="brand-tag">Coolmate Style</span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="#" class="active">NAM GIỚI</a></li>
+                <li><a href="#">ÁO THUN</a></li>
+                <li><a href="#">ĐỒ LÓT</a></li>
+                <li><a href="#">THỂ THAO</a></li>
+                <li><a th:href="@{/docs}" target="_blank">SWAGGER API</a></li>
+            </ul>
+
+            <div>
+                <a th:href="@{/admin/login}" class="btn-header-account" style="color: var(--cm-blue); border-color: #bfdbfe; background: #eff6ff;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span>Cổng CMS Nhân Viên</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Thân trang chính -->
+    <main class="main-wrapper">
+        <div class="auth-card-split">
+            <!-- Cột trái: Giới thiệu quyền lợi hội viên phong cách Coolmate -->
+            <div class="auth-hero-banner">
+                <div>
+                    <span class="hero-tag">ĐẶC QUYỀN HỘI VIÊN SIMPLAIN</span>
+                    <h2 class="hero-title">Gia nhập Simplain Club ngay hôm nay</h2>
+                    <p class="hero-desc">
+                        Trải nghiệm giải pháp mua sắm trang phục cơ bản dành riêng cho nam giới hiện đại. Đơn giản, tiện lợi và chất lượng vượt trội.
+                    </p>
+
+                    <div class="perks-list">
+                        <div class="perk-item">
+                            <div class="perk-icon-box">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </div>
+                            <div class="perk-info">
+                                <h4>Đổi trả 60 ngày miễn phí</h4>
+                                <p>Bất kể lý do gì, shipper đến tận nhà đổi size mới hoặc hoàn tiền.</p>
+                            </div>
+                        </div>
+
+                        <div class="perk-item">
+                            <div class="perk-icon-box">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="perk-info">
+                                <h4>Hoàn tiền 5% CoolCash</h4>
+                                <p>Tích lũy điểm tiêu dùng trừ trực tiếp vào đơn hàng kế tiếp.</p>
+                            </div>
+                        </div>
+
+                        <div class="perk-item">
+                            <div class="perk-icon-box">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div class="perk-info">
+                                <h4>Giao hàng nhanh 24h - 48h</h4>
+                                <p>Đóng gói hộp quà Eco thân thiện môi trường, nguyên seal.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-testimonial">
+                    <div class="stars">★★★★★</div>
+                    <p>"Chất lượng áo thun và quần lót cực êm, dịch vụ đổi trả siêu nhanh. Rất an tâm khi mua sắm!"</p>
+                </div>
+            </div>
+
+            <!-- Cột phải: Form Đăng nhập -->
+            <div class="auth-form-side">
+                <div class="auth-tabs">
+                    <a th:href="@{/auth/login}" class="auth-tab-btn active">ĐĂNG NHẬP</a>
+                    <a th:href="@{/auth/register}" class="auth-tab-btn">ĐĂNG KÝ</a>
+                    <a th:href="@{/admin/login}" class="auth-tab-btn" style="color: var(--cm-blue);" title="Dành cho Nhân viên CMS">NHÂN VIÊN CMS</a>
+                </div>
+
+                <div class="form-header">
+                    <h2>Chào mừng trở lại</h2>
+                    <p>Đăng nhập để nhận ưu đãi thành viên và theo dõi đơn hàng</p>
+                </div>
+
+                <!-- Thông báo lỗi từ Server Thymeleaf nếu có -->
+                <div th:if="${errorMessage != null}" class="alert-box alert-danger" th:text="${errorMessage}"></div>
+
+                <!-- Form đăng nhập chuẩn Thymeleaf -->
+                <form id="loginForm" th:action="@{/auth/login}" th:object="${loginForm}" method="post">
+                    <div class="form-group">
+                        <label for="identifier" class="form-label">Email hoặc Số điện thoại <span class="required-star">*</span></label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                </svg>
+                            </span>
+                            <input type="text" id="identifier" th:field="*{identifier}" class="form-input"
+                                   th:classappend="${#fields.hasErrors('identifier')} ? 'is-invalid' : ''"
+                                   placeholder="Ví dụ: duy@gmail.com hoặc 0987654321" required autocomplete="username">
+                        </div>
+                        <div class="field-error-msg"
+                             th:if="${#fields.hasErrors('identifier')}"
+                             th:errors="*{identifier}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="matKhau" class="form-label">Mật khẩu <span class="required-star">*</span></label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </span>
+                            <input type="password" id="matKhau" th:field="*{matKhau}" class="form-input"
+                                   th:classappend="${#fields.hasErrors('matKhau')} ? 'is-invalid' : ''"
+                                   placeholder="Nhập mật khẩu của bạn" required autocomplete="current-password">
+                        </div>
+                        <div class="field-error-msg"
+                             th:if="${#fields.hasErrors('matKhau')}"
+                             th:errors="*{matKhau}"></div>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe" checked>
+                            <span>Ghi nhớ đăng nhập</span>
+                        </label>
+                        <a href="#" class="link-muted">Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" id="btnSubmitLogin" class="btn-submit-coolmate">
+                        ĐĂNG NHẬP
+                    </button>
+                </form>
+
+                <p style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--cm-text-secondary);">
+                    Chưa có tài khoản Simplain?
+                    <a th:href="@{/auth/register}" style="font-weight: 700; color: var(--cm-black); text-decoration: underline;">Đăng ký thành viên ngay</a>
+                </p>
+
+                <div style="text-align: center; margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--cm-border); font-size: 13px; color: var(--cm-text-secondary);">
+                    Bạn là Cán bộ / Nhân viên Simplain?
+                    <a th:href="@{/admin/login}" style="font-weight: 700; color: var(--cm-blue); text-decoration: none;">Đăng nhập Cổng Quản Trị CMS →</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
