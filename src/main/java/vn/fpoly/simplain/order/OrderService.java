@@ -14,6 +14,8 @@ import vn.fpoly.simplain.order.dto.CreateOrderItemRequest;
 import vn.fpoly.simplain.order.dto.CreateOrderRequest;
 import vn.fpoly.simplain.order.dto.OrderItemResponse;
 import vn.fpoly.simplain.order.dto.OrderResponse;
+import vn.fpoly.simplain.order.dto.OrderStatusHistoryResponse;
+import vn.fpoly.simplain.order.dto.UpdateOrderStatusRequest;
 import vn.fpoly.simplain.repository.BienTheSanPhamRepository;
 import vn.fpoly.simplain.repository.ChiTietDonHangRepository;
 import vn.fpoly.simplain.repository.DonHangRepository;
@@ -222,7 +224,103 @@ public class OrderService {
     }
 
     /**
-     * Chuyển đổi entity DonHang sang DTO OrderResponse.
+     * Cập nhật trạng thái đơn hàng và mã vận đơn (US22).
+     * Ghi vết đầy đủ vào bảng 'lich_su_trang_thai_don_hang'.
+     * Nếu đơn hàng bị hủy (DA_HUY), tự động hoàn lại tồn kho cho các biến thể sản phẩm.
+     */
+    @Transactional
+    public OrderResponse updateOrderStatus(String maDonHang, UpdateOrderStatusRequest request) {
+        DonHang donHang = donHangRepository.findByMaDonHang(maDonHang)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng: " + maDonHang));
+
+        // Kiểm tra nếu đơn hàng đã bị hủy thì không cho cập nhật trạng thái khác
+        if ("DA_HUY".equalsIgnoreCase(donHang.getTrangThai().getMaTrangThai())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn hàng đã bị hủy, không thể thay đổi trạng thái!");
+        }
+
+        TrangThaiDonHang trangThaiMoi = getOrCreateTrangThai(request.getMaTrangThaiMoi());
+
+        // Nếu chuyển sang trạng thái Hủy (DA_HUY): Tự động hoàn lại số lượng tồn kho
+        if ("DA_HUY".equalsIgnoreCase(trangThaiMoi.getMaTrangThai())) {
+            List<ChiTietDonHang> chiTiets = chiTietDonHangRepository.findByDonHangId(donHang.getId());
+            for (ChiTietDonHang ct : chiTiets) {
+                if (ct.getBienThe() != null) {
+                    BienTheSanPham bienThe = ct.getBienThe();
+                    int tonKhoMoi = (bienThe.getSoLuong() != null ? bienThe.getSoLuong() : 0) + ct.getSoLuong();
+                    bienThe.setSoLuong(tonKhoMoi);
+                    bienTheSanPhamRepository.save(bienThe);
+                }
+            }
+        }
+
+        // Cập nhật mã vận đơn nếu có
+        if (request.getMaVanDon() != null && !request.getMaVanDon().trim().isEmpty()) {
+            donHang.setMaVanDon(request.getMaVanDon().trim());
+        }
+
+        donHang.setTrangThai(trangThaiMoi);
+        donHang = donHangRepository.save(donHang);
+
+        // Ghi log vào bảng lịch sử trạng thái
+        String ghiChu = (request.getGhiChu() != null && !request.getGhiChu().trim().isEmpty())
+                ? request.getGhiChu().trim()
+                : "Chuyển trạng thái sang: " + trangThaiMoi.getTenTrangThai();
+
+        LichSuTrangThaiDonHang lichSu = LichSuTrangThaiDonHang.builder()
+                .donHang(donHang)
+                .trangThaiMoi(trangThaiMoi)
+                .nguoiThucHienId(request.getNguoiThucHienId())
+                .ghiChu(ghiChu)
+                .ngayChuyen(LocalDateTime.now())
+                .build();
+        lichSuTrangThaiDonHangRepository.save(lichSu);
+
+        return toOrderResponse(donHang);
+    }
+
+    /**
+     * Lấy danh sách lịch sử đơn hàng của một khách hàng (US23).
+     */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByCustomer(Long khachHangId) {
+        List<DonHang> danhSachDon = donHangRepository.findByKhachHangIdOrderByNgayTaoDesc(khachHangId);
+        return danhSachDon.stream().map(this::toOrderResponse).toList();
+    }
+
+    /**
+     * Lấy toàn bộ danh sách đơn hàng cho Admin / Kho.
+     */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrders() {
+        return donHangRepository.findAllByOrderByNgayTaoDesc().stream()
+                .map(this::toOrderResponse)
+                .toList();
+    }
+
+    /**
+     * Lấy lịch sử chuyển trạng thái của một đơn hàng (US22, US23).
+     */
+    @Transactional(readOnly = true)
+    public List<OrderStatusHistoryResponse> getOrderHistory(String maDonHang) {
+        DonHang donHang = donHangRepository.findByMaDonHang(maDonHang)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng: " + maDonHang));
+
+        return lichSuTrangThaiDonHangRepository.findByDonHangIdOrderByNgayChuyenDesc(donHang.getId())
+                .stream()
+                .map(ls -> OrderStatusHistoryResponse.builder()
+                        .id(ls.getId())
+                        .maTrangThai(ls.getTrangThaiMoi() != null ? ls.getTrangThaiMoi().getMaTrangThai() : null)
+                        .tenTrangThai(ls.getTrangThaiMoi() != null ? ls.getTrangThaiMoi().getTenTrangThai() : null)
+                        .maMauHex(ls.getTrangThaiMoi() != null ? ls.getTrangThaiMoi().getMaMauHex() : null)
+                        .nguoiThucHienId(ls.getNguoiThucHienId())
+                        .ghiChu(ls.getGhiChu())
+                        .ngayChuyen(ls.getNgayChuyen())
+                        .build())
+                .toList();
+    }
+
+    /**
+     * Chuyển đổi entity DonHang sang DTO OrderResponse kèm theo chi tiết và tiến trình lịch sử.
      */
     private OrderResponse toOrderResponse(DonHang donHang) {
         List<ChiTietDonHang> chiTiets = chiTietDonHangRepository.findByDonHangId(donHang.getId());
@@ -235,6 +333,20 @@ public class OrderService {
                 .soLuong(ct.getSoLuong())
                 .thanhTien(ct.getThanhTien())
                 .build()).toList();
+
+        List<OrderStatusHistoryResponse> lichSuResponses = lichSuTrangThaiDonHangRepository
+                .findByDonHangIdOrderByNgayChuyenDesc(donHang.getId())
+                .stream()
+                .map(ls -> OrderStatusHistoryResponse.builder()
+                        .id(ls.getId())
+                        .maTrangThai(ls.getTrangThaiMoi() != null ? ls.getTrangThaiMoi().getMaTrangThai() : null)
+                        .tenTrangThai(ls.getTrangThaiMoi() != null ? ls.getTrangThaiMoi().getTenTrangThai() : null)
+                        .maMauHex(ls.getTrangThaiMoi() != null ? ls.getTrangThaiMoi().getMaMauHex() : null)
+                        .nguoiThucHienId(ls.getNguoiThucHienId())
+                        .ghiChu(ls.getGhiChu())
+                        .ngayChuyen(ls.getNgayChuyen())
+                        .build())
+                .toList();
 
         return OrderResponse.builder()
                 .id(donHang.getId())
@@ -254,7 +366,30 @@ public class OrderService {
                 .ngayTao(donHang.getNgayTao())
                 .thongBao("Lấy thông tin đơn hàng thành công")
                 .items(itemResponses)
+                .lichSuTrangThai(lichSuResponses)
                 .build();
+    }
+
+    private TrangThaiDonHang getOrCreateTrangThai(String maTrangThai) {
+        String ma = maTrangThai != null ? maTrangThai.trim().toUpperCase() : "CHO_XAC_NHAN";
+        return trangThaiDonHangRepository.findByMaTrangThai(ma)
+                .orElseGet(() -> {
+                    String ten;
+                    String hex;
+                    switch (ma) {
+                        case "CHO_GIAO_HANG" -> { ten = "Chờ giao hàng"; hex = "#3B82F6"; }
+                        case "DANG_GIAO" -> { ten = "Đang giao hàng"; hex = "#8B5CF6"; }
+                        case "DA_GIAO" -> { ten = "Đã giao hàng"; hex = "#10B981"; }
+                        case "HOAN_THANH" -> { ten = "Hoàn thành"; hex = "#059669"; }
+                        case "DA_HUY" -> { ten = "Đã hủy"; hex = "#EF4444"; }
+                        default -> { ten = ma; hex = "#6B7280"; }
+                    }
+                    return trangThaiDonHangRepository.save(TrangThaiDonHang.builder()
+                            .maTrangThai(ma)
+                            .tenTrangThai(ten)
+                            .maMauHex(hex)
+                            .build());
+                });
     }
 
     private String generateOrderCode() {

@@ -70,4 +70,7 @@ public class OrderResponse {
 
     @Schema(description = "Danh sách chi tiết các món hàng trong đơn")
     private List<OrderItemResponse> items;
+
+    @Schema(description = "Tiến trình lịch sử thay đổi trạng thái và vận đơn")
+    private List<OrderStatusHistoryResponse> lichSuTrangThai;
 }

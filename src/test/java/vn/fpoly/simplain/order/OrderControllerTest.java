@@ -28,6 +28,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,6 +57,9 @@ class OrderControllerTest {
 
     @Autowired
     private TrangThaiDonHangRepository trangThaiDonHangRepository;
+
+    @Autowired
+    private vn.fpoly.simplain.repository.KhachHangRepository khachHangRepository;
 
     private BienTheSanPham bienTheMau;
 
@@ -216,5 +220,151 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.maDonHang").value(maDonHang))
                 .andExpect(jsonPath("$.tenNguoiNhan").value("Trần Thị Mai"))
                 .andExpect(jsonPath("$.items[0].maSku").value("AO-POLO-DEN-M"));
+    }
+
+    @Test
+    @DisplayName("US22: Cập nhật trạng thái vận đơn thành công và tự động ghi log lịch sử")
+    void testUpdateOrderStatus_Success_AndLoggedHistory() throws Exception {
+        // Tạo đơn hàng trước
+        CreateOrderRequest createReq = CreateOrderRequest.builder()
+                .tenNguoiNhan("Lê Minh Khoa")
+                .soDienThoaiNhan("0933445566")
+                .diaChiGiaoHang("Quận 1, TP Hồ Chí Minh")
+                .tongTienHang(BigDecimal.valueOf(250000))
+                .tongThanhToan(BigDecimal.valueOf(250000))
+                .items(List.of(
+                        CreateOrderItemRequest.builder()
+                                .bienTheId(bienTheMau.getId())
+                                .maSku("AO-POLO-DEN-M")
+                                .tenSanPham("Áo Polo Đen Form Vừa")
+                                .donGia(BigDecimal.valueOf(250000))
+                                .soLuong(1)
+                                .build()
+                ))
+                .build();
+
+        String res = mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String maDonHang = objectMapper.readTree(res).get("maDonHang").asText();
+
+        // Cập nhật trạng thái sang DANG_GIAO với mã vận đơn Viettel Post
+        vn.fpoly.simplain.order.dto.UpdateOrderStatusRequest updateReq = vn.fpoly.simplain.order.dto.UpdateOrderStatusRequest.builder()
+                .maTrangThaiMoi("DANG_GIAO")
+                .maVanDon("VTP123456789")
+                .nguoiThucHienId(99L)
+                .ghiChu("Đã giao bưu tá Viettel Post")
+                .build();
+
+        mockMvc.perform(put("/api/orders/{maDonHang}/status", maDonHang)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.maTrangThai").value("DANG_GIAO"))
+                .andExpect(jsonPath("$.maVanDon").value("VTP123456789"));
+
+        // Kiểm tra lịch sử chuyển trạng thái có 2 dòng (CHO_XAC_NHAN và DANG_GIAO)
+        DonHang donHang = donHangRepository.findByMaDonHang(maDonHang).orElseThrow();
+        List<LichSuTrangThaiDonHang> histories = lichSuTrangThaiDonHangRepository.findByDonHangIdOrderByNgayChuyenDesc(donHang.getId());
+        assertThat(histories).hasSize(2);
+        assertThat(histories.get(0).getTrangThaiMoi().getMaTrangThai()).isEqualTo("DANG_GIAO");
+        assertThat(histories.get(0).getGhiChu()).isEqualTo("Đã giao bưu tá Viettel Post");
+    }
+
+    @Test
+    @DisplayName("US22: Khi đơn hàng bị hủy (DA_HUY), hệ thống tự động hoàn lại tồn kho cho biến thể")
+    void testUpdateOrderStatus_CancelOrder_AndStockRestored() throws Exception {
+        // Đặt mua 3 sản phẩm: Tồn kho giảm từ 10 xuống 7
+        CreateOrderRequest createReq = CreateOrderRequest.builder()
+                .tenNguoiNhan("Hoàng Nam")
+                .soDienThoaiNhan("0966778899")
+                .diaChiGiaoHang("Đà Nẵng")
+                .tongTienHang(BigDecimal.valueOf(750000))
+                .tongThanhToan(BigDecimal.valueOf(750000))
+                .items(List.of(
+                        CreateOrderItemRequest.builder()
+                                .bienTheId(bienTheMau.getId())
+                                .maSku("AO-POLO-DEN-M")
+                                .tenSanPham("Áo Polo Đen Form Vừa")
+                                .donGia(BigDecimal.valueOf(250000))
+                                .soLuong(3)
+                                .build()
+                ))
+                .build();
+
+        String res = mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String maDonHang = objectMapper.readTree(res).get("maDonHang").asText();
+
+        // Kiểm tra tồn kho sau khi mua là 7
+        BienTheSanPham btSauMua = bienTheSanPhamRepository.findById(bienTheMau.getId()).orElseThrow();
+        assertThat(btSauMua.getSoLuong()).isEqualTo(7);
+
+        // Hủy đơn hàng
+        vn.fpoly.simplain.order.dto.UpdateOrderStatusRequest cancelReq = vn.fpoly.simplain.order.dto.UpdateOrderStatusRequest.builder()
+                .maTrangThaiMoi("DA_HUY")
+                .ghiChu("Khách đổi ý không muốn nhận hàng nữa")
+                .build();
+
+        mockMvc.perform(put("/api/orders/{maDonHang}/status", maDonHang)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(cancelReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.maTrangThai").value("DA_HUY"));
+
+        // Kiểm tra tồn kho đã được hoàn lại đầy đủ: 7 + 3 = 10
+        BienTheSanPham btSauHuy = bienTheSanPhamRepository.findById(bienTheMau.getId()).orElseThrow();
+        assertThat(btSauHuy.getSoLuong()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("US23: Khách hàng xem lịch sử danh sách các đơn hàng đã đặt")
+    void testGetOrdersByCustomer_Success() throws Exception {
+        // Tạo khách hàng mẫu
+        vn.fpoly.simplain.entity.KhachHang khachHang = khachHangRepository.save(vn.fpoly.simplain.entity.KhachHang.builder()
+                .maKhachHang("KH-001")
+                .hoTen("Khách Thân Thiết")
+                .soDienThoai("0911223344")
+                .email("khach@example.com")
+                .build());
+
+        // Tạo 2 đơn hàng cho khách hàng này
+        CreateOrderRequest req1 = CreateOrderRequest.builder()
+                .maKhachHangId(khachHang.getId())
+                .tenNguoiNhan("Khách Thân Thiết")
+                .soDienThoaiNhan("0911223344")
+                .diaChiGiaoHang("Hà Nội")
+                .tongTienHang(BigDecimal.valueOf(250000))
+                .tongThanhToan(BigDecimal.valueOf(250000))
+                .items(List.of(CreateOrderItemRequest.builder()
+                        .bienTheId(bienTheMau.getId()).maSku("AO-POLO-DEN-M").tenSanPham("Áo Polo").donGia(BigDecimal.valueOf(250000)).soLuong(1).build()))
+                .build();
+
+        CreateOrderRequest req2 = CreateOrderRequest.builder()
+                .maKhachHangId(khachHang.getId())
+                .tenNguoiNhan("Khách Thân Thiết")
+                .soDienThoaiNhan("0911223344")
+                .diaChiGiaoHang("Hà Nội")
+                .tongTienHang(BigDecimal.valueOf(250000))
+                .tongThanhToan(BigDecimal.valueOf(250000))
+                .items(List.of(CreateOrderItemRequest.builder()
+                        .bienTheId(bienTheMau.getId()).maSku("AO-POLO-DEN-M").tenSanPham("Áo Polo").donGia(BigDecimal.valueOf(250000)).soLuong(1).build()))
+                .build();
+
+        mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req1))).andExpect(status().isCreated());
+        mockMvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req2))).andExpect(status().isCreated());
+
+        // Tra cứu danh sách đơn theo khách hàng
+        mockMvc.perform(get("/api/orders/customer/{khachHangId}", khachHang.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2));
     }
 }

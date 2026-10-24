@@ -12,8 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
 import vn.fpoly.simplain.order.dto.CreateOrderRequest;
 import vn.fpoly.simplain.order.dto.OrderResponse;
+import vn.fpoly.simplain.order.dto.OrderStatusHistoryResponse;
+import vn.fpoly.simplain.order.dto.UpdateOrderStatusRequest;
+
+import java.util.List;
 
 /**
  * Controller tiếp nhận các yêu cầu API liên quan đến Đơn hàng (Module 5).
@@ -44,6 +49,47 @@ public class OrderController {
     }
 
     /**
+     * Cập nhật trạng thái đơn hàng và mã vận đơn (US22).
+     */
+    @Operation(
+            summary = "Cập nhật trạng thái vận đơn (US22)",
+            description = "Dành cho Admin/Kho cập nhật tiến trình đơn (Chờ giao hàng, Đang giao, Đã giao, Hủy...), bổ sung mã vận đơn và tự động ghi nhật ký lịch sử."
+    )
+    @PutMapping("/{maDonHang}/status")
+    public OrderResponse updateOrderStatus(
+            @Parameter(description = "Mã đơn hàng cần cập nhật", example = "DH261024-ABCDEF")
+            @PathVariable String maDonHang,
+            @Valid @RequestBody UpdateOrderStatusRequest request) {
+        return orderService.updateOrderStatus(maDonHang, request);
+    }
+
+    /**
+     * Lấy danh sách lịch sử đơn hàng của một khách hàng (US23).
+     */
+    @Operation(
+            summary = "Theo dõi Lịch sử đơn hàng cá nhân (US23)",
+            description = "Khách hàng tra cứu danh sách toàn bộ các đơn hàng đã đặt của mình, sắp xếp theo thời gian mới nhất."
+    )
+    @GetMapping("/customer/{khachHangId}")
+    public List<OrderResponse> getOrdersByCustomer(
+            @Parameter(description = "ID khách hàng", example = "1")
+            @PathVariable Long khachHangId) {
+        return orderService.getOrdersByCustomer(khachHangId);
+    }
+
+    /**
+     * Lấy toàn bộ danh sách đơn hàng trong hệ thống (Admin/Kho).
+     */
+    @Operation(
+            summary = "Lấy tất cả đơn hàng (Admin/Kho)",
+            description = "Tra cứu danh sách tất cả các đơn hàng trong hệ thống, sắp xếp theo ngày tạo mới nhất."
+    )
+    @GetMapping
+    public List<OrderResponse> getAllOrders() {
+        return orderService.getAllOrders();
+    }
+
+    /**
      * Lấy thông tin chi tiết một đơn hàng theo mã đơn hàng (US23).
      */
     @Operation(
@@ -55,5 +101,19 @@ public class OrderController {
             @Parameter(description = "Mã đơn hàng cần tra cứu (VD: DH261024-ABCDEF)", example = "DH261024-ABCDEF")
             @PathVariable String maDonHang) {
         return orderService.getOrderByCode(maDonHang);
+    }
+
+    /**
+     * Lấy dòng thời gian tiến trình trạng thái của đơn hàng (US22, US23).
+     */
+    @Operation(
+            summary = "Xem dòng thời gian lịch sử trạng thái đơn hàng (US22, US23)",
+            description = "Xem chi tiết nhật ký các lần chuyển đổi trạng thái, người thực hiện và ghi chú tiến trình vận chuyển."
+    )
+    @GetMapping("/{maDonHang}/history")
+    public List<OrderStatusHistoryResponse> getOrderHistory(
+            @Parameter(description = "Mã đơn hàng cần xem lịch sử", example = "DH261024-ABCDEF")
+            @PathVariable String maDonHang) {
+        return orderService.getOrderHistory(maDonHang);
     }
 }
