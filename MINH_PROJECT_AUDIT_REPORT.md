@@ -1,6 +1,6 @@
 # BÁO CÁO KHẢO SÁT VÀ KIỂM KÊ TOÀN DIỆN DỰ ÁN SIMPLAIN (SIMPL4)
-**Tài liệu dành cho Dev: Minh | Mã phân công: Module 3 (US12 - US16)**  
-*Ngày thực hiện khảo sát: 21/10/2026*
+**Tài liệu dành cho Dev: Gia Minh | Mã phân công: Module 3 (US12 - US16)**  
+*Ngày thực hiện khảo sát & cập nhật: 24/10/2026*
 
 ---
 

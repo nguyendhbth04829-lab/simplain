@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US12 - Ngoại lệ không tìm thấy tài nguyên (HTTP 404)
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.exception;
 

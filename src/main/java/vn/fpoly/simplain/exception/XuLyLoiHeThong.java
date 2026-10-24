@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US12 - Bộ xử lý lỗi tập trung @RestControllerAdvice
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.exception;
 

@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US12 - DTO thông điệp chi tiết lỗi hệ thống
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.dto;
 

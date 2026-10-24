@@ -2,6 +2,7 @@
  * Tác giả: Gia Minh
  * Chức năng: US12 - Quản lý hồ sơ khách hàng và Đổi mật khẩu
  * Thực thể ánh xạ trực tiếp bảng khach_hang trong CSDL Simpl4
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.entity;
 

@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US12 - REST API xem hồ sơ, cập nhật thông tin cá nhân và đổi mật khẩu
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.controller;
 

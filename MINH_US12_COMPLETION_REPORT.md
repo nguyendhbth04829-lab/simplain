@@ -1,7 +1,7 @@
 # BÁO CÁO NGHIỆM THU HOÀN THÀNH USER STORY 12 (US12)
 **Tính năng: Hồ sơ khách hàng (Cập nhật thông tin cá nhân & Đổi mật khẩu) — Tiếng Việt 100%**  
-**Người thực hiện: Minh | Module 3 (Storefront / Khách hàng)**  
-*Thời điểm hoàn thành: 21/10/2026*
+**Người thực hiện: Gia Minh | Module 3 (Storefront / Khách hàng)**  
+*Thời điểm cập nhật & hoàn thiện: 24/10/2026*
 
 ---
 

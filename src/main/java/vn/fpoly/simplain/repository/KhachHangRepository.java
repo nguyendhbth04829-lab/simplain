@@ -2,6 +2,7 @@
  * Tác giả: Gia Minh
  * Chức năng: US12 - Quản lý hồ sơ khách hàng
  * Giao diện Spring Data JPA truy vấn dữ liệu bảng khach_hang
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.repository;
 
