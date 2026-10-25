@@ -41,7 +41,7 @@ public class BienTheSanPham {
     @Column(name = "ma_sku", nullable = false, unique = true, length = 100)
     private String maSku;
 
-    @Column(name = "ma_vach_barcode", unique = true, length = 100)
+    @Column(name = "ma_vach_barcode", length = 100)
     private String maVachBarcode;
 
     @Builder.Default

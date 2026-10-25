@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đơn hàng & Tồn kho - Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black tracking-tight text-white">Simplain</span>
+                <span class="bg-indigo-700 text-indigo-200 text-xs px-2.5 py-1 rounded font-semibold uppercase tracking-wider">Module 5</span>
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium">
+                <a href="/admin/orders" class="bg-indigo-800 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition">📦 Đơn hàng</a>
+                <a href="/orders/new" class="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-500 transition font-bold">+ Tạo đơn mới</a>
+                <a href="/admin/rma" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">🔁 Đổi trả RMA</a>
+                <a href="/rma/new" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">+ Gửi RMA</a>
+                <a href="/docs" target="_blank" class="text-amber-300 px-3 py-2 rounded-md hover:text-amber-200 hover:bg-indigo-800 transition flex items-center">⚡ Swagger API</a>
+                <a href="/h2-console" target="_blank" class="text-emerald-300 px-3 py-2 rounded-md hover:text-emerald-200 hover:bg-indigo-800 transition">🗄️ H2 DB</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Thông báo Flash Messages -->
+        <div th:if="${successMessage}" class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r shadow-sm">
+            <div class="flex items-center">
+                <span class="text-emerald-700 font-medium" th:text="${successMessage}">Thao tác thành công!</span>
+            </div>
+        </div>
+        <div th:if="${errorMessage}" class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r shadow-sm">
+            <div class="flex items-center">
+                <span class="text-rose-700 font-medium" th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+            </div>
+        </div>
+
+        <!-- Bảng Giám sát Tồn kho Thực tế (US21 & US22 verification) -->
+        <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <span>📊 Tồn kho biến thể sản phẩm (Kiểm chứng trừ kho / hoàn kho)</span>
+                </h3>
+                <span class="text-xs text-slate-500 italic">Dữ liệu thực từ bảng bien_the_san_pham</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div th:each="sku : ${skus}" class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center">
+                    <div>
+                        <div class="font-mono text-xs font-bold text-indigo-700" th:text="${sku.maSku}">SKU</div>
+                        <div class="text-sm font-semibold text-slate-900" th:text="${#numbers.formatDecimal(sku.giaBan, 0, 'COMMA', 0, 'POINT')} + ' đ'">150,000 đ</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-500">Tồn kho:</span>
+                        <span class="text-lg font-black ml-1" 
+                              th:classappend="${sku.soLuong > 10} ? 'text-emerald-600' : (${sku.soLuong > 0} ? 'text-amber-600' : 'text-rose-600')"
+                              th:text="${sku.soLuong}">25</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Danh sách Đơn hàng (US22 & US23) -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Danh sách Đơn hàng (US21 - US23)</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Theo dõi trạng thái, mã vận đơn và cập nhật quy trình giao hàng</p>
+                </div>
+                <a href="/orders/new" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    + Tạo đơn hàng test (US21)
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-xs tracking-wider">
+                        <tr>
+                            <th class="py-3 px-4 text-left">Mã đơn</th>
+                            <th class="py-3 px-4 text-left">Người nhận</th>
+                            <th class="py-3 px-4 text-left">Tổng tiền</th>
+                            <th class="py-3 px-4 text-left">Trạng thái</th>
+                            <th class="py-3 px-4 text-left">Mã vận đơn</th>
+                            <th class="py-3 px-4 text-center">Thao tác đổi trạng thái</th>
+                            <th class="py-3 px-4 text-right">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white">
+                        <tr th:if="${#lists.isEmpty(orders)}">
+                            <td colspan="7" class="py-8 text-center text-slate-400">Chưa có đơn hàng nào. Hãy bấm "+ Tạo đơn hàng test" để bắt đầu!</td>
+                        </tr>
+                        <tr th:each="order : ${orders}" class="hover:bg-slate-50 transition">
+                            <td class="py-3.5 px-4 font-mono font-bold text-indigo-700" th:text="${order.maDonHang}">DH261025-001</td>
+                            <td class="py-3.5 px-4">
+                                <div class="font-medium text-slate-900" th:text="${order.tenNguoiNhan}">Nguyễn Văn An</div>
+                                <div class="text-xs text-slate-500" th:text="${order.soDienThoaiNhan}">0912345678</div>
+                            </td>
+                            <td class="py-3.5 px-4 font-semibold text-slate-900" th:text="${#numbers.formatDecimal(order.tongThanhToan, 0, 'COMMA', 0, 'POINT')} + ' đ'">300,000 đ</td>
+                            <td class="py-3.5 px-4">
+                                <span th:if="${order.maTrangThai == 'CHO_XAC_NHAN'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Chờ xác nhận</span>
+                                <span th:if="${order.maTrangThai == 'CHO_GIAO_HANG'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">Chờ giao hàng</span>
+                                <span th:if="${order.maTrangThai == 'DANG_GIAO'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-indigo-100 text-indigo-800">Đang giao</span>
+                                <span th:if="${order.maTrangThai == 'DA_GIAO'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-800">Đã giao</span>
+                                <span th:if="${order.maTrangThai == 'HOAN_THANH'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Hoàn thành</span>
+                                <span th:if="${order.maTrangThai == 'DA_HUY'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Đã hủy (Đã hoàn kho)</span>
+                            </td>
+                            <td class="py-3.5 px-4 font-mono text-xs text-slate-600" th:text="${order.maVanDon != null ? order.maVanDon : '—'}">VTP-123456</td>
+                            <td class="py-3.5 px-4 text-center">
+                                <!-- Form nhanh cập nhật trạng thái (US22) -->
+                                <form th:if="${order.maTrangThai != 'DA_HUY' and order.maTrangThai != 'HOAN_THANH'}" 
+                                      th:action="@{'/admin/orders/' + ${order.maDonHang} + '/status'}" method="post" 
+                                      class="inline-flex items-center gap-1.5">
+                                    <select name="maTrangThaiMoi" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                        <option value="CHO_GIAO_HANG" th:selected="${order.maTrangThai == 'CHO_XAC_NHAN'}">-> Chờ giao</option>
+                                        <option value="DANG_GIAO" th:selected="${order.maTrangThai == 'CHO_GIAO_HANG'}">-> Đang giao</option>
+                                        <option value="DA_GIAO" th:selected="${order.maTrangThai == 'DANG_GIAO'}">-> Đã giao</option>
+                                        <option value="HOAN_THANH" th:selected="${order.maTrangThai == 'DA_GIAO'}">-> Hoàn thành</option>
+                                        <option value="DA_HUY" class="text-rose-600 font-bold">❌ Hủy đơn (Hoàn kho)</option>
+                                    </select>
+                                    <input type="hidden" name="ghiChu" value="Cập nhật nhanh qua Web Admin">
+                                    <button type="submit" class="px-2 py-1 bg-slate-800 text-white text-xs font-medium rounded hover:bg-slate-700 transition">Cập nhật</button>
+                                </form>
+                                <span th:if="${order.maTrangThai == 'DA_HUY' or order.maTrangThai == 'HOAN_THANH'}" class="text-xs text-slate-400">Đơn đã đóng</span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right">
+                                <a th:href="@{'/admin/orders/' + ${order.maDonHang}}" class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs underline">Chi tiết & Lịch sử &rarr;</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>

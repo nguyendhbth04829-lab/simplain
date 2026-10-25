@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đổi trả RMA (US25) - Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black tracking-tight text-white">Simplain</span>
+                <span class="bg-indigo-700 text-indigo-200 text-xs px-2.5 py-1 rounded font-semibold uppercase tracking-wider">Module 5</span>
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium">
+                <a href="/admin/orders" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">📦 Đơn hàng</a>
+                <a href="/orders/new" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition font-bold">+ Tạo đơn mới</a>
+                <a href="/admin/rma" class="bg-indigo-800 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition">🔁 Đổi trả RMA</a>
+                <a href="/rma/new" class="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-500 transition font-bold">+ Gửi RMA</a>
+                <a href="/docs" target="_blank" class="text-amber-300 px-3 py-2 rounded-md hover:text-amber-200 hover:bg-indigo-800 transition flex items-center">⚡ Swagger API</a>
+                <a href="/h2-console" target="_blank" class="text-emerald-300 px-3 py-2 rounded-md hover:text-emerald-200 hover:bg-indigo-800 transition">🗄️ H2 DB</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <div th:if="${successMessage}" class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r shadow-sm">
+            <span class="text-emerald-700 font-medium" th:text="${successMessage}">Thao tác thành công!</span>
+        </div>
+        <div th:if="${errorMessage}" class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r shadow-sm">
+            <span class="text-rose-700 font-medium" th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Danh sách Yêu cầu Đổi / Trả Hàng (RMA - US24 & US25)</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Tiếp nhận yêu cầu từ khách hàng, kiểm định hàng hóa và quyết định hoàn kho</p>
+                </div>
+                <a href="/rma/new" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    + Gửi yêu cầu RMA test (US24)
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-xs tracking-wider">
+                        <tr>
+                            <th class="py-3 px-4 text-left">Mã RMA</th>
+                            <th class="py-3 px-4 text-left">Đơn hàng gốc</th>
+                            <th class="py-3 px-4 text-left">Loại yêu cầu</th>
+                            <th class="py-3 px-4 text-left">Lý do</th>
+                            <th class="py-3 px-4 text-left">Trạng thái RMA</th>
+                            <th class="py-3 px-4 text-left">Kiểm định / Ghi chú</th>
+                            <th class="py-3 px-4 text-center">Xét duyệt (US25)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white">
+                        <tr th:if="${#lists.isEmpty(rmas)}">
+                            <td colspan="7" class="py-8 text-center text-slate-400">Chưa có yêu cầu RMA nào. Hãy tạo đơn hàng, chuyển trạng thái "Đã giao" và bấm "+ Gửi yêu cầu RMA test"!</td>
+                        </tr>
+                        <tr th:each="rma : ${rmas}" class="hover:bg-slate-50 transition">
+                            <td class="py-3.5 px-4 font-mono font-bold text-indigo-700" th:text="${rma.maYeuCauRma}">RMA261025-001</td>
+                            <td class="py-3.5 px-4 font-mono text-slate-700">
+                                <a th:href="@{'/admin/orders/' + ${rma.maDonHang}}" class="hover:underline font-semibold" th:text="${rma.maDonHang}">DH001</a>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span th:if="${rma.loaiDoiTra == 'DOI_HANG'}" class="px-2 py-0.5 text-xs font-bold rounded bg-sky-100 text-sky-800">Đổi hàng</span>
+                                <span th:if="${rma.loaiDoiTra == 'TRA_HANG_HOAN_TIEN'}" class="px-2 py-0.5 text-xs font-bold rounded bg-amber-100 text-amber-800">Trả hàng hoàn tiền</span>
+                            </td>
+                            <td class="py-3.5 px-4 max-w-xs truncate text-slate-700" th:text="${rma.lyDo}">Rộng quá muốn đổi size</td>
+                            <td class="py-3.5 px-4">
+                                <span th:if="${rma.trangThai == 'CHO_DUYET'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Chờ duyệt</span>
+                                <span th:if="${rma.trangThai == 'DA_DUYET'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Đã duyệt</span>
+                                <span th:if="${rma.trangThai == 'TU_CHOI'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Từ chối</span>
+                                <span th:if="${rma.trangThai == 'HOAN_TAT'}" class="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">Hoàn tất</span>
+                            </td>
+                            <td class="py-3.5 px-4 text-xs text-slate-600 italic" th:text="${rma.ghiChuKiemDinh != null ? rma.ghiChuKiemDinh : '—'}">Chưa kiểm định</td>
+                            <td class="py-3.5 px-4 text-center">
+                                <!-- Form xét duyệt nhanh (US25) -->
+                                <form th:if="${rma.trangThai == 'CHO_DUYET'}" 
+                                      th:action="@{'/admin/rma/' + ${rma.maYeuCauRma} + '/review'}" method="post" 
+                                      class="inline-flex items-center gap-1.5">
+                                    <select name="trangThaiMoi" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white font-medium focus:outline-none">
+                                        <option value="DA_DUYET">Đồng ý duyệt</option>
+                                        <option value="TU_CHOI">Từ chối</option>
+                                        <option value="HOAN_TAT">Hoàn tất</option>
+                                    </select>
+                                    <input type="text" name="ghiChuKiemDinh" placeholder="Ghi chú kiểm định..." class="text-xs border border-slate-300 rounded px-2 py-1 w-36 focus:outline-none">
+                                    <button type="submit" class="px-2.5 py-1 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition">Duyệt</button>
+                                </form>
+                                <span th:if="${rma.trangThai != 'CHO_DUYET'}" class="text-xs text-slate-400">Đã duyệt</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>

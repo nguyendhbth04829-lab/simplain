@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Đơn hàng & Timeline Lịch sử - Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black tracking-tight text-white">Simplain</span>
+                <span class="bg-indigo-700 text-indigo-200 text-xs px-2.5 py-1 rounded font-semibold uppercase tracking-wider">Module 5</span>
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium">
+                <a href="/admin/orders" class="bg-indigo-800 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition">📦 Đơn hàng</a>
+                <a href="/orders/new" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition font-bold">+ Tạo đơn mới</a>
+                <a href="/admin/rma" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">🔁 Đổi trả RMA</a>
+                <a href="/rma/new" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">+ Gửi RMA</a>
+                <a href="/docs" target="_blank" class="text-amber-300 px-3 py-2 rounded-md hover:text-amber-200 hover:bg-indigo-800 transition flex items-center">⚡ Swagger API</a>
+                <a href="/h2-console" target="_blank" class="text-emerald-300 px-3 py-2 rounded-md hover:text-emerald-200 hover:bg-indigo-800 transition">🗄️ H2 DB</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Header Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <a href="/admin/orders" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">&larr; Trở về danh sách đơn</a>
+                <h1 class="text-2xl font-bold text-slate-900 mt-1 flex items-center gap-3">
+                    <span>Đơn hàng: <span class="font-mono text-indigo-700" th:text="${order.maDonHang}">DH261025-001</span></span>
+                    <span th:if="${order.maTrangThai == 'CHO_XAC_NHAN'}" class="px-3 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Chờ xác nhận</span>
+                    <span th:if="${order.maTrangThai == 'CHO_GIAO_HANG'}" class="px-3 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-800">Chờ giao hàng</span>
+                    <span th:if="${order.maTrangThai == 'DANG_GIAO'}" class="px-3 py-0.5 text-xs font-bold rounded-full bg-indigo-100 text-indigo-800">Đang giao</span>
+                    <span th:if="${order.maTrangThai == 'DA_GIAO'}" class="px-3 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-800">Đã giao</span>
+                    <span th:if="${order.maTrangThai == 'HOAN_THANH'}" class="px-3 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Hoàn thành</span>
+                    <span th:if="${order.maTrangThai == 'DA_HUY'}" class="px-3 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Đã hủy (Hoàn kho)</span>
+                </h1>
+            </div>
+
+            <!-- Form cập nhật trạng thái đơn (US22) -->
+            <div th:if="${order.maTrangThai != 'DA_HUY' and order.maTrangThai != 'HOAN_THANH'}" class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                <form th:action="@{'/admin/orders/' + ${order.maDonHang} + '/status'}" method="post" class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold text-slate-600">Đổi trạng thái:</span>
+                    <select name="maTrangThaiMoi" class="text-xs border border-slate-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium">
+                        <option value="CHO_GIAO_HANG" th:selected="${order.maTrangThai == 'CHO_XAC_NHAN'}">Chờ giao hàng</option>
+                        <option value="DANG_GIAO" th:selected="${order.maTrangThai == 'CHO_GIAO_HANG'}">Đang giao</option>
+                        <option value="DA_GIAO" th:selected="${order.maTrangThai == 'DANG_GIAO'}">Đã giao</option>
+                        <option value="HOAN_THANH" th:selected="${order.maTrangThai == 'DA_GIAO'}">Hoàn thành</option>
+                        <option value="DA_HUY" class="text-rose-600 font-bold">❌ HỦY ĐƠN (Hoàn trả tồn kho)</option>
+                    </select>
+                    <input type="text" name="maVanDon" placeholder="Mã vận đơn..." th:value="${order.maVanDon}" class="text-xs border border-slate-300 rounded px-2 py-1.5 w-32 focus:outline-none">
+                    <input type="text" name="ghiChu" placeholder="Ghi chú..." class="text-xs border border-slate-300 rounded px-2 py-1.5 w-36 focus:outline-none">
+                    <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition">Lưu</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Thông tin đơn hàng & Sản phẩm (Cột 2 phần) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Sản phẩm trong đơn -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                    <h3 class="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">Chi tiết sản phẩm đã mua</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-slate-50 text-slate-600 text-xs uppercase font-semibold">
+                                <tr>
+                                    <th class="py-2.5 px-3 text-left">SKU / Sản phẩm</th>
+                                    <th class="py-2.5 px-3 text-right">Đơn giá</th>
+                                    <th class="py-2.5 px-3 text-center">Số lượng</th>
+                                    <th class="py-2.5 px-3 text-right">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr th:each="item : ${order.items}">
+                                    <td class="py-3 px-3">
+                                        <div class="font-bold text-slate-900" th:text="${item.tenSanPham}">Tên SP</div>
+                                        <div class="font-mono text-xs text-indigo-600" th:text="${item.maSku}">SKU-001</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-right text-slate-600" th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT')} + ' đ'">150,000 đ</td>
+                                    <td class="py-3 px-3 text-center font-bold text-slate-900" th:text="${item.soLuong}">2</td>
+                                    <td class="py-3 px-3 text-right font-bold text-indigo-700" th:text="${#numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' đ'">300,000 đ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tổng kết tiền -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col items-end space-y-1 text-sm">
+                        <div class="flex justify-between w-64 text-slate-600">
+                            <span>Tiền hàng:</span>
+                            <span class="font-semibold" th:text="${#numbers.formatDecimal(order.tongTienHang, 0, 'COMMA', 0, 'POINT')} + ' đ'">300,000 đ</span>
+                        </div>
+                        <div class="flex justify-between w-64 text-slate-600">
+                            <span>Phí vận chuyển:</span>
+                            <span class="font-semibold" th:text="${#numbers.formatDecimal(order.phiVanChuyen, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        </div>
+                        <div class="flex justify-between w-64 text-slate-600">
+                            <span>Giảm giá:</span>
+                            <span class="font-semibold text-emerald-600" th:text="'- ' + ${#numbers.formatDecimal(order.tienGiamGia, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        </div>
+                        <div class="flex justify-between w-64 text-base font-bold text-slate-900 pt-2 border-t border-slate-200">
+                            <span>Tổng thanh toán:</span>
+                            <span class="text-indigo-700" th:text="${#numbers.formatDecimal(order.tongThanhToan, 0, 'COMMA', 0, 'POINT')} + ' đ'">300,000 đ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thông tin giao hàng -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                    <h3 class="text-base font-bold text-slate-900 mb-3 pb-2 border-b border-slate-100">Thông tin nhận hàng & Vận chuyển</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-slate-500 block text-xs">Người nhận:</span>
+                            <span class="font-semibold text-slate-800" th:text="${order.tenNguoiNhan}">Nguyễn Văn An</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-xs">Số điện thoại:</span>
+                            <span class="font-semibold text-slate-800" th:text="${order.soDienThoaiNhan}">0912345678</span>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <span class="text-slate-500 block text-xs">Địa chỉ giao hàng:</span>
+                            <span class="font-medium text-slate-800" th:text="${order.diaChiGiaoHang}">123 Lê Duẩn, Quận 1</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-xs">Mã vận đơn:</span>
+                            <span class="font-mono font-bold text-indigo-700" th:text="${order.maVanDon != null ? order.maVanDon : 'Chưa có'}">—</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Timeline Lịch sử trạng thái (US23) -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 h-fit">
+                <h3 class="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+                    <span>🕒 Timeline Trạng thái (US23)</span>
+                </h3>
+
+                <div class="relative border-l-2 border-indigo-200 ml-3 space-y-6 py-2">
+                    <div th:each="hist : ${order.lichSuTrangThai}" class="relative pl-6">
+                        <!-- Dot -->
+                        <span class="absolute -left-2 top-1 w-4 h-4 rounded-full bg-indigo-600 ring-4 ring-indigo-50"></span>
+                        
+                        <div class="text-xs font-bold uppercase tracking-wider text-indigo-700" th:text="${hist.trangThaiSau}">CHO_XAC_NHAN</div>
+                        <div class="text-xs text-slate-500 mt-0.5" th:text="${#temporals.format(hist.thoiGian, 'dd/MM/yyyy HH:mm:ss')}">25/10/2026 08:30</div>
+                        <div class="text-xs text-slate-700 mt-1 italic bg-slate-50 p-2 rounded border border-slate-100" th:text="${hist.ghiChu != null ? hist.ghiChu : 'Không có ghi chú'}">Ghi chú log</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Yêu Cầu Đổi / Trả Hàng (Test US24) - Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black tracking-tight text-white">Simplain</span>
+                <span class="bg-indigo-700 text-indigo-200 text-xs px-2.5 py-1 rounded font-semibold uppercase tracking-wider">Module 5</span>
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium">
+                <a href="/admin/orders" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">📦 Đơn hàng</a>
+                <a href="/orders/new" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition font-bold">+ Tạo đơn mới</a>
+                <a href="/admin/rma" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">🔁 Đổi trả RMA</a>
+                <a href="/rma/new" class="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-500 transition font-bold">+ Gửi RMA</a>
+                <a href="/docs" target="_blank" class="text-amber-300 px-3 py-2 rounded-md hover:text-amber-200 hover:bg-indigo-800 transition flex items-center">⚡ Swagger API</a>
+                <a href="/h2-console" target="_blank" class="text-emerald-300 px-3 py-2 rounded-md hover:text-emerald-200 hover:bg-indigo-800 transition">🗄️ H2 DB</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <div th:if="${errorMessage}" class="mb-6 bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r shadow-sm">
+            <span class="text-rose-700 font-medium" th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <div class="border-b border-slate-100 pb-4 mb-6">
+                <h1 class="text-2xl font-bold text-slate-900">Gửi Yêu Cầu Đổi / Trả Hàng (US24)</h1>
+                <p class="text-sm text-slate-500 mt-1">Chỉ áp dụng cho các đơn hàng đã ở trạng thái <strong>ĐÃ GIAO</strong> hoặc <strong>HOÀN THÀNH</strong>.</p>
+            </div>
+
+            <!-- Cảnh báo nếu không có đơn hàng nào đủ điều kiện -->
+            <div th:if="${#lists.isEmpty(orders)}" class="p-4 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-sm mb-6">
+                ⚠️ Hiện chưa có đơn hàng nào ở trạng thái "Đã giao" hoặc "Hoàn thành". Vui lòng vào trang <strong>📦 Đơn hàng</strong> và đổi trạng thái của một đơn sang <strong>Đã giao</strong> trước khi tạo yêu cầu RMA.
+            </div>
+
+            <form th:if="${not #lists.isEmpty(orders)}" action="/rma/new" method="post" class="space-y-6">
+
+                <!-- 1. Chọn đơn hàng -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Chọn Đơn hàng đã nhận *</label>
+                    <select name="maDonHang" id="orderSelect" required class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option th:each="o : ${orders}" th:value="${o.maDonHang}" 
+                                th:text="'Mã: ' + ${o.maDonHang} + ' — Người nhận: ' + ${o.tenNguoiNhan} + ' (' + ${o.soDienThoaiNhan} + ') — Tổng: ' + ${#numbers.formatDecimal(o.tongThanhToan, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                            DH001
+                        </option>
+                    </select>
+                </div>
+
+                <!-- 2. Loại yêu cầu RMA -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Loại yêu cầu *</label>
+                        <select name="loaiYeuCau" id="loaiYeuCauSelect" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="DOI_HANG">Đổi sản phẩm (Size / Màu khác)</option>
+                            <option value="TRA_HANG_HOAN_TIEN">Trả hàng & Hoàn tiền</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Số lượng đổi/trả *</label>
+                        <input type="number" name="soLuong" value="1" min="1" max="10" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- 3. Sản phẩm trong đơn cần đổi trả -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Chọn sản phẩm trong đơn cần xử lý *</label>
+                    <select name="chiTietDonHangId" required class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <th:block th:each="o : ${orders}">
+                            <option th:each="item : ${o.items}" th:value="${item.id}" 
+                                    th:text="'[' + ${o.maDonHang} + '] ' + ${item.tenSanPham} + ' (SKU: ' + ${item.maSku} + ', Mua: ' + ${item.soLuong} + ')'">
+                                Áo thun
+                            </option>
+                        </th:block>
+                    </select>
+                </div>
+
+                <!-- 4. Nếu đổi hàng: Chọn Biến thể mới muốn đổi sang -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Biến thể mới muốn đổi sang (Nếu chọn Đổi hàng)</label>
+                    <select name="bienTheMoiId" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Không đổi sản phẩm mới (chỉ trả hàng) --</option>
+                        <option th:each="sku : ${skus}" th:value="${sku.id}" 
+                                th:text="${sku.maSku} + ' — Còn tồn: ' + ${sku.soLuong} + ' cái'">
+                            SKU-002
+                        </option>
+                    </select>
+                </div>
+
+                <!-- 5. Lý do -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Lý do đổi / trả hàng *</label>
+                    <textarea name="lyDo" rows="2" required placeholder="Ví dụ: Sản phẩm bị rộng, muốn đổi sang size nhỏ hơn hoặc hàng bị lỗi đường may" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">Sản phẩm mặc không vừa, muốn đổi size</textarea>
+                </div>
+
+                <!-- 6. Thông tin hoàn tiền (Nếu chọn Trả hàng) -->
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                    <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Thông tin tài khoản nhận tiền (Dành cho Trả hàng)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Số tài khoản</label>
+                            <input type="text" name="soTaiKhoanNganHang" value="1903456789012" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Tên ngân hàng</label>
+                            <input type="text" name="tenNganHang" value="Techcombank" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Chủ tài khoản</label>
+                            <input type="text" name="chuTaiKhoan" value="NGUYEN VAN AN" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+                    <a href="/admin/rma" class="text-sm font-medium text-slate-600 hover:text-slate-900">&larr; Quay lại danh sách RMA</a>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition shadow-md">
+                        📩 Gửi Yêu Cầu Đổi / Trả (RMA)
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+</body>
+</html>

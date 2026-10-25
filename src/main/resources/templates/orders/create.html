@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Đơn Hàng Mới (Test US21) - Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black tracking-tight text-white">Simplain</span>
+                <span class="bg-indigo-700 text-indigo-200 text-xs px-2.5 py-1 rounded font-semibold uppercase tracking-wider">Module 5</span>
+            </div>
+            <nav class="flex items-center space-x-2 text-sm font-medium">
+                <a href="/admin/orders" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">📦 Đơn hàng</a>
+                <a href="/orders/new" class="bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-500 transition font-bold">+ Tạo đơn mới</a>
+                <a href="/admin/rma" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">🔁 Đổi trả RMA</a>
+                <a href="/rma/new" class="text-indigo-200 px-3 py-2 rounded-md hover:text-white hover:bg-indigo-800 transition">+ Gửi RMA</a>
+                <a href="/docs" target="_blank" class="text-amber-300 px-3 py-2 rounded-md hover:text-amber-200 hover:bg-indigo-800 transition flex items-center">⚡ Swagger API</a>
+                <a href="/h2-console" target="_blank" class="text-emerald-300 px-3 py-2 rounded-md hover:text-emerald-200 hover:bg-indigo-800 transition">🗄️ H2 DB</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <div th:if="${errorMessage}" class="mb-6 bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r shadow-sm">
+            <span class="text-rose-700 font-medium" th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <div class="border-b border-slate-100 pb-4 mb-6">
+                <h1 class="text-2xl font-bold text-slate-900">Tạo Đơn Hàng Test (US21)</h1>
+                <p class="text-sm text-slate-500 mt-1">Giả lập khách đặt hàng từ Giỏ hàng / Checkout. Hệ thống sẽ tự động trừ số lượng tồn kho biến thể sản phẩm.</p>
+            </div>
+
+            <form action="/orders/new" method="post" class="space-y-6">
+
+                <!-- 1. Khách hàng -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Khách hàng đặt hàng *</label>
+                    <select name="khachHangId" required class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.hoTen} + ' (' + ${c.soDienThoai} + ') - ' + ${c.email}">Nguyễn Văn An</option>
+                    </select>
+                </div>
+
+                <!-- 2. Chọn Biến thể sản phẩm (SKU) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Chọn Biến thể sản phẩm (SKU) *</label>
+                        <select name="bienTheSanPhamId" required class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option th:each="sku : ${skus}" th:value="${sku.id}" 
+                                    th:text="${sku.maSku} + ' — Giá: ' + ${#numbers.formatDecimal(sku.giaBan, 0, 'COMMA', 0, 'POINT')} + ' đ (Còn tồn: ' + ${sku.soLuong} + ')'">
+                                AT-DEN-M - 150,000 đ
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Số lượng mua *</label>
+                        <input type="number" name="soLuong" value="1" min="1" max="99" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- 3. Thông tin người nhận -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Tên người nhận *</label>
+                        <input type="text" name="tenNguoiNhan" value="Nguyễn Văn An" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Số điện thoại nhận *</label>
+                        <input type="text" name="soDienThoaiNhan" value="0912345678" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- 4. Địa chỉ giao hàng -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Địa chỉ giao hàng chi tiết *</label>
+                    <input type="text" name="diaChiGiaoHang" value="123 Lê Duẩn, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- 5. Phương thức thanh toán & Ghi chú -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Phương thức thanh toán *</label>
+                        <select name="phuongThucThanhToan" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                            <option value="VNPAY">Cổng thanh toán VNPAY (QR Code)</option>
+                            <option value="MOMO">Ví điện tử MoMo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Ghi chú đơn hàng</label>
+                        <input type="text" name="ghiChu" placeholder="Ví dụ: Giao sau 18h" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+                    <a href="/admin/orders" class="text-sm font-medium text-slate-600 hover:text-slate-900">&larr; Quay lại danh sách</a>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-700 transition shadow-md">
+                        🚀 Xác nhận Đặt Hàng (Trừ kho ngay)
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+
+</body>
+</html>
