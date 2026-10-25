@@ -1,0 +1,237 @@
+<!-- 
+    Tác giả: Gia Minh
+    Chức năng: US13 - Giao diện danh sách sổ địa chỉ nhận hàng của khách hàng (Phiên bản Đột Phá 2026)
+    Cập nhật xác nhận commit US13: 25/10/2026 - Gia Minh
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Địa Chỉ Giao Hàng • Simplain Menswear</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .the-dia-chi {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .the-dia-chi:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+<!-- Header thống nhất toàn hệ thống -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">MENSWEAR ESSENTIALS</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                    <i class="fa-solid fa-location-dot text-zinc-400"></i> Sổ Địa Chỉ Khách Hàng
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <a th:href="@{|/khach-hang/ho-so?id=${idKhachHang}|}" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3.5 py-2 rounded-xl transition">
+                    ← Về Hồ Sơ
+                </a>
+                <a th:href="@{|/khach-hang/dia-chi/them?idKhachHang=${idKhachHang}|}" 
+                   class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 hover:bg-zinc-800">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Thêm Địa Chỉ Mới</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+    
+    <!-- Thông báo kết quả -->
+    <div th:if="${thongBaoThanhCong}" class="mb-8 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoThanhCong}"></span>
+    </div>
+    <div th:if="${thongBaoLoi}" class="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoLoi}"></span>
+    </div>
+
+    <!-- Thanh tiêu đề và công cụ lọc -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-zinc-200 gap-4 mb-8">
+        <div>
+            <h2 class="text-2xl font-black uppercase tracking-tight text-zinc-950">Sổ Địa Chỉ Giao Hàng</h2>
+            <p class="text-xs text-zinc-500 mt-1">Quản lý danh sách nơi nhận hàng để đặt mua trang phục nhanh chóng trong 1 bước</p>
+        </div>
+
+        <!-- Ô tìm kiếm trực tiếp -->
+        <div class="relative w-full sm:w-72" th:if="${danhSachDiaChi != null and not #lists.isEmpty(danhSachDiaChi)}">
+            <input type="text" id="timKiemInput" oninput="locDiaChi(this.value)" placeholder="Tìm kiếm tên, SĐT, tỉnh thành..." 
+                   class="w-full rounded-xl border border-zinc-300 py-2.5 pl-10 pr-4 text-xs font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition bg-white">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-zinc-400 text-xs"></i>
+        </div>
+    </div>
+
+    <!-- Danh sách địa chỉ rỗng -->
+    <div th:if="${danhSachDiaChi == null or #lists.isEmpty(danhSachDiaChi)}" 
+         class="bg-white border border-zinc-200/80 rounded-3xl p-16 text-center shadow-xs">
+        <div class="w-20 h-20 mx-auto mb-4 bg-zinc-100 text-zinc-400 rounded-3xl flex items-center justify-center text-3xl">
+            <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+        <h3 class="text-lg font-bold text-zinc-900 mb-1">Chưa có địa chỉ giao hàng nào</h3>
+        <p class="text-xs text-zinc-500 mb-6 max-w-sm mx-auto">
+            Hãy thêm địa chỉ nhận hàng đầu tiên để tiết kiệm thời gian thanh toán khi mua sắm tại Simplain.
+        </p>
+        <a th:href="@{|/khach-hang/dia-chi/them?idKhachHang=${idKhachHang}|}" 
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-black text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition shadow-md">
+            <i class="fa-solid fa-plus"></i>
+            <span>Thêm Địa Chỉ Đầu Tiên</span>
+        </a>
+    </div>
+
+    <!-- Lưới hiển thị các thẻ địa chỉ -->
+    <div th:if="${danhSachDiaChi != null and not #lists.isEmpty(danhSachDiaChi)}" class="grid grid-cols-1 md:grid-cols-2 gap-6" id="vungTheDiaChi">
+        
+        <div th:each="dc : ${danhSachDiaChi}" 
+             th:classappend="${dc.laMacDinh} ? 'border-zinc-950 ring-2 ring-zinc-950 bg-white' : 'border-zinc-200/80 bg-white'"
+             class="the-dia-chi border rounded-3xl p-7 flex flex-col justify-between shadow-xs relative overflow-hidden"
+             th:data-timkiem="${dc.tenNguoiNhan + ' ' + dc.soDienThoai + ' ' + dc.tinhThanh + ' ' + dc.quanHuyen + ' ' + dc.phuongXa + ' ' + dc.diaChiChiTiet}">
+            
+            <div>
+                <!-- Header của thẻ: Tên + SĐT + Badge Mặc định -->
+                <div class="flex justify-between items-start mb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2.5">
+                            <h4 class="font-black text-zinc-950 text-base" th:text="${dc.tenNguoiNhan}"></h4>
+                            <span th:if="${dc.laMacDinh}" 
+                                  class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                <i class="fa-solid fa-check"></i> MẶC ĐỊNH
+                            </span>
+                        </div>
+                        <div class="text-xs text-zinc-500 font-mono flex items-center gap-1.5">
+                            <i class="fa-solid fa-phone text-[11px] text-zinc-400"></i>
+                            <span th:text="${dc.soDienThoai}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Nút sao chép địa chỉ -->
+                    <button type="button" 
+                            th:data-copy="${dc.tenNguoiNhan + ' • ' + dc.soDienThoai + ' • ' + dc.diaChiChiTiet + ', ' + dc.phuongXa + ', ' + dc.quanHuyen + ', ' + dc.tinhThanh}"
+                            onclick="saoChepDiaChi(this.getAttribute('data-copy'))"
+                            title="Sao chép toàn bộ địa chỉ"
+                            class="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-600 flex items-center justify-center text-xs transition">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+
+                <!-- Địa chỉ chi tiết -->
+                <div class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/60 text-xs text-zinc-700 leading-relaxed mb-6">
+                    <p class="font-bold text-zinc-900 text-sm mb-1" th:text="${dc.diaChiChiTiet}"></p>
+                    <p class="text-zinc-500" th:text="${dc.phuongXa + ', ' + dc.quanHuyen + ', ' + dc.tinhThanh}"></p>
+                </div>
+            </div>
+
+            <!-- Các nút thao tác dưới chân thẻ -->
+            <div class="pt-4 border-t border-zinc-100 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <a th:href="@{|/khach-hang/dia-chi/sua/${dc.id}?idKhachHang=${idKhachHang}|}" 
+                       class="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs transition">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Sửa
+                    </a>
+
+                    <form th:action="@{|/khach-hang/dia-chi/xoa/${dc.id}|}" method="post" 
+                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa địa chỉ này?');" class="inline">
+                        <input type="hidden" name="idKhachHang" th:value="${idKhachHang}">
+                        <button type="submit" 
+                                class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Xóa
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Nút Thiết lập mặc định nếu chưa là mặc định -->
+                <form th:if="${not dc.laMacDinh}" th:action="@{|/khach-hang/dia-chi/mac-dinh/${dc.id}|}" method="post">
+                    <input type="hidden" name="idKhachHang" th:value="${idKhachHang}">
+                    <button type="submit" 
+                            class="px-3.5 py-2 rounded-xl border border-zinc-300 hover:border-black text-zinc-700 hover:text-black font-bold text-xs transition">
+                        Đặt làm mặc định
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Thông báo khi tìm kiếm không ra kết quả -->
+    <div id="khongTimThay" class="hidden bg-white border border-zinc-200/80 rounded-3xl p-12 text-center text-zinc-500 text-sm mt-6">
+        Không tìm thấy địa chỉ nào khớp với từ khóa tìm kiếm của bạn.
+    </div>
+
+</main>
+
+<!-- Toast thông báo nổi -->
+<div id="hopThoaiToast" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 hidden bg-zinc-950 text-white px-6 py-3.5 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-3 border border-white/10 transition-all">
+    <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+    <span id="toastNoiDung">Đã sao chép địa chỉ thành công!</span>
+</div>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-10 text-center text-xs text-zinc-400 mt-16">
+    <p>© 2026 Simplain Menswear Essentials. Đã được xác thực mã hóa an toàn.</p>
+</footer>
+
+<script>
+    function saoChepDiaChi(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.getElementById('hopThoaiToast');
+            document.getElementById('toastNoiDung').textContent = "Đã sao chép địa chỉ vào bộ nhớ tạm!";
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+        });
+    }
+
+    function locDiaChi(tuKhoa) {
+        const query = tuKhoa.toLowerCase().trim();
+        const theList = document.querySelectorAll('.the-dia-chi');
+        let coKetQua = false;
+
+        theList.forEach(the => {
+            const duLieu = the.getAttribute('data-timkiem').toLowerCase();
+            if (duLieu.includes(query)) {
+                the.style.display = '';
+                coKetQua = true;
+            } else {
+                the.style.display = 'none';
+            }
+        });
+
+        const khongTimThay = document.getElementById('khongTimThay');
+        if (!coKetQua && theList.length > 0) {
+            khongTimThay.classList.remove('hidden');
+        } else {
+            khongTimThay.classList.add('hidden');
+        }
+    }
+</script>
+
+</body>
+</html>

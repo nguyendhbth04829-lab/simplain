@@ -1,0 +1,211 @@
+<!-- 
+    Tác giả: Gia Minh
+    Chức năng: US15 - Giao diện danh sách đánh giá sản phẩm của khách hàng (Phiên bản Đột Phá 2026)
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đánh Giá Của Tôi • Simplain Menswear</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+<!-- Header thống nhất toàn hệ thống -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">MENSWEAR ESSENTIALS</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <i class="fa-solid fa-star"></i> Lịch Sử Nhận Xét
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <a th:href="@{|/khach-hang/ho-so?id=${idKhachHang}|}" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3.5 py-2 rounded-xl transition">
+                    ← Về Hồ Sơ
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+    
+    <!-- Thông báo kết quả -->
+    <div th:if="${thongBaoThanhCong}" class="mb-8 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoThanhCong}"></span>
+    </div>
+    <div th:if="${thongBaoLoi}" class="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoLoi}"></span>
+    </div>
+
+    <!-- Tiêu đề trang -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-zinc-200 gap-4 mb-8">
+        <div>
+            <h2 class="text-2xl font-black uppercase tracking-tight text-zinc-950">Lịch Sử Nhận Xét & Đánh Giá</h2>
+            <p class="text-xs text-zinc-500 mt-1">Tổng hợp những phản hồi thực tế của bạn đối với sản phẩm đã mua</p>
+        </div>
+    </div>
+
+    <!-- Thanh phân loại theo sao -->
+    <div th:if="${danhSachDanhGia != null and not #lists.isEmpty(danhSachDanhGia)}" class="mb-8 flex flex-wrap gap-2">
+        <button type="button" onclick="locSao(0, this)" class="btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-black text-white shadow-xs transition">
+            Tất cả (<span th:text="${#lists.size(danhSachDanhGia)}">0</span>)
+        </button>
+        <button type="button" onclick="locSao(5, this)" class="btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition">
+            5 sao ★★★★★
+        </button>
+        <button type="button" onclick="locSao(4, this)" class="btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition">
+            4 sao ★★★★☆
+        </button>
+        <button type="button" onclick="locSao(3, this)" class="btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition">
+            3 sao ★★★☆☆
+        </button>
+        <button type="button" onclick="locSao(2, this)" class="btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition">
+            1-2 sao ★★☆☆☆
+        </button>
+    </div>
+
+    <!-- Danh sách rỗng -->
+    <div th:if="${danhSachDanhGia == null or #lists.isEmpty(danhSachDanhGia)}" 
+         class="bg-white border border-zinc-200/80 rounded-3xl p-16 text-center shadow-xs">
+        <div class="w-20 h-20 mx-auto mb-4 bg-amber-50 text-amber-500 rounded-3xl flex items-center justify-center text-3xl">
+            <i class="fa-solid fa-star"></i>
+        </div>
+        <h3 class="text-lg font-bold text-zinc-900 mb-1">Chưa có đánh giá nào</h3>
+        <p class="text-xs text-zinc-500 mb-6 max-w-sm mx-auto">
+            Sau khi đặt mua sản phẩm và nhận hàng thành công, bạn có thể gửi phản hồi đánh giá chất lượng tại đây.
+        </p>
+        <a th:href="@{|/khach-hang/ho-so?id=${idKhachHang}|}" 
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-black text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition shadow-md">
+            Về Hồ Sơ Cá Nhân
+        </a>
+    </div>
+
+    <!-- Danh sách bài đánh giá -->
+    <div th:if="${danhSachDanhGia != null and not #lists.isEmpty(danhSachDanhGia)}" class="space-y-6">
+        <div th:each="dg : ${danhSachDanhGia}" 
+             class="the-dg bg-white border border-zinc-200/80 rounded-3xl p-7 shadow-xs space-y-4"
+             th:data-sao="${dg.soSao}">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-2">
+                <div>
+                    <h4 class="font-black text-zinc-950 text-base" th:text="${dg.tenSanPham}"></h4>
+                    <div class="flex items-center gap-2 mt-1 text-xs text-zinc-400">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            <i class="fa-solid fa-circle-check"></i> Đã mua hàng
+                        </span>
+                        <span>•</span>
+                        <span th:text="${'Ngày nhận xét: ' + #temporals.format(dg.ngayTao, 'dd/MM/yyyy HH:mm')}"></span>
+                    </div>
+                </div>
+
+                <!-- Sao vàng -->
+                <div class="flex items-center text-amber-400 text-base">
+                    <span th:each="i : ${#numbers.sequence(1, dg.soSao)}">★</span>
+                    <span th:if="${dg.soSao < 5}" th:each="i : ${#numbers.sequence(dg.soSao + 1, 5)}" class="text-zinc-200">★</span>
+                    <span class="text-xs font-bold text-zinc-700 ml-2" th:text="${'(' + dg.soSao + '/5)'}"></span>
+                </div>
+            </div>
+
+            <!-- Nội dung nhận xét -->
+            <div class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/60 text-xs text-zinc-700 leading-relaxed italic">
+                <p th:text="${dg.noiDung != null and dg.noiDung != '' ? dg.noiDung : 'Khách hàng không để lại nhận xét bằng lời'}"></p>
+            </div>
+
+            <!-- Ảnh đính kèm -->
+            <div th:if="${dg.danhSachAnh != null and not #lists.isEmpty(dg.danhSachAnh)}" class="flex flex-wrap gap-3 pt-2">
+                <div th:each="anh : ${dg.danhSachAnh}" class="w-16 h-16 rounded-xl border border-zinc-200 overflow-hidden bg-zinc-100 cursor-pointer hover:opacity-80 transition"
+                     onclick="moAnh(this.querySelector('img').src)">
+                    <img th:src="${anh}" alt="Ảnh sản phẩm" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+
+        <div id="khongCoSao" class="hidden bg-white border border-zinc-200/80 rounded-3xl p-12 text-center text-zinc-500 text-sm">
+            Không có đánh giá nào phù hợp với số sao đã chọn.
+        </div>
+    </div>
+
+</main>
+
+<!-- Modal Phóng To Ảnh -->
+<div id="modalAnh" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4" onclick="dongAnh()">
+    <div class="relative max-w-2xl max-h-[85vh] bg-white rounded-2xl p-2 overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+        <button type="button" onclick="dongAnh()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold">
+            ✕
+        </button>
+        <img id="anhLon" src="" class="max-w-full max-h-[80vh] rounded-xl object-contain">
+    </div>
+</div>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-10 text-center text-xs text-zinc-400 mt-16">
+    <p>© 2026 Simplain Menswear Essentials. Đã được xác thực mã hóa an toàn.</p>
+</footer>
+
+<script>
+    function locSao(saoChon, nut) {
+        document.querySelectorAll('.btn-sao').forEach(b => {
+            b.className = 'btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition';
+        });
+        nut.className = 'btn-sao px-4 py-2 rounded-xl text-xs font-bold bg-black text-white shadow-xs transition';
+
+        const theList = document.querySelectorAll('.the-dg');
+        let dem = 0;
+        theList.forEach(t => {
+            const sao = parseInt(t.getAttribute('data-sao'));
+            if (saoChon === 0) {
+                t.style.display = '';
+                dem++;
+            } else if (saoChon <= 2 && sao <= 2) {
+                t.style.display = '';
+                dem++;
+            } else if (sao === saoChon) {
+                t.style.display = '';
+                dem++;
+            } else {
+                t.style.display = 'none';
+            }
+        });
+
+        const box = document.getElementById('khongCoSao');
+        if (dem === 0 && theList.length > 0) box.classList.remove('hidden');
+        else box.classList.add('hidden');
+    }
+
+    function moAnh(url) {
+        document.getElementById('anhLon').src = url;
+        document.getElementById('modalAnh').classList.remove('hidden');
+    }
+
+    function dongAnh() {
+        document.getElementById('modalAnh').classList.add('hidden');
+    }
+</script>
+
+</body>
+</html>
