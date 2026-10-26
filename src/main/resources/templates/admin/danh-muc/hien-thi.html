@@ -1,0 +1,289 @@
+<!-- 
+    Tác giả: Nhóm Simplain & Gia Minh
+    Chức năng: Quản lý Danh Mục Thời Trang (Phiên bản Đột Phá 2026)
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Danh Mục • Simplain Admin</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .error { color: #e11d48; font-size: 0.8125rem; margin-top: 0.35rem; display: block; font-weight: 500; }
+        .table-row-hover:hover { background-color: #fafafa; }
+    </style>
+</head>
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+<!-- Header Admin -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">ADMINISTRATOR PORTAL</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-zinc-900 text-white">
+                    <i class="fa-solid fa-folder-tree text-zinc-400"></i> Quản Lý Danh Mục
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <a href="/" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-store text-zinc-500"></i>
+                    <span>Về Cửa Hàng</span>
+                </a>
+                <a href="/admin/bo-suu-tap/hien-thi" class="text-xs font-bold text-zinc-600 hover:text-black px-3.5 py-2 rounded-xl hover:bg-zinc-100 transition hidden sm:inline">
+                    Bộ Sưu Tập Lookbook
+                </a>
+                <a href="/docs" target="_blank" class="text-xs font-bold bg-zinc-950 text-white px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5">
+                    <span>Swagger Docs</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-zinc-200 gap-4 mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                <span>Hệ Thống Quản Trị</span>
+                <span>/</span>
+                <span class="text-zinc-900">Danh Mục Ngành Hàng</span>
+            </div>
+            <h2 class="text-3xl font-black uppercase tracking-tight text-zinc-950">
+                Phân Loại Danh Mục Sản Phẩm
+            </h2>
+            <p class="text-xs text-zinc-500 mt-1">Cấu hình cây danh mục thời trang (Áo, Quần, Phụ kiện, Đồ lót nam)</p>
+        </div>
+    </div>
+
+    <!-- Bố cục 2 Cột -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- CỘT TRÁI (4 Cột): Form Thêm Mới -->
+        <section class="lg:col-span-4 bg-white border border-zinc-200/80 rounded-3xl p-7 shadow-xs">
+            <div class="flex items-center gap-2.5 pb-4 border-b border-zinc-100 mb-6">
+                <div class="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-900 flex items-center justify-center text-sm font-bold">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <h3 class="text-base font-black uppercase tracking-tight text-zinc-950">Thêm Danh Mục Mới</h3>
+            </div>
+
+            <form th:object="${danhMuc}" action="/admin/danh-muc/add" method="post" class="space-y-5">
+                
+                <div>
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Tên danh mục <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" th:field="*{tenDanhMuc}" id="inputTenDM" oninput="tuDongTaoSlugDM(this.value)"
+                               placeholder="Ví dụ: Áo Sơ Mi Nam" 
+                               class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                        <i class="fa-solid fa-shirt absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                    </div>
+                    <span class="error" th:if="${#fields.hasErrors('tenDanhMuc')}" th:errors="*{tenDanhMuc}"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Đường dẫn Slug <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" th:field="*{duongDanSlug}" id="inputSlugDM"
+                               placeholder="ao-so-mi-nam" 
+                               class="w-full rounded-xl border border-zinc-300 p-3.5 pl-10 text-sm font-mono font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                        <i class="fa-solid fa-link absolute left-3.5 top-4 text-zinc-400 text-sm"></i>
+                    </div>
+                    <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Danh mục cha
+                    </label>
+                    <select th:field="*{maDanhMucCha}" 
+                            class="w-full rounded-xl border border-zinc-300 p-3.5 text-sm font-semibold outline-none bg-white focus:border-black focus:ring-1 focus:ring-black transition">
+                        <option value="">-- Cấp cao nhất (Không có cha) --</option>
+                        <option th:each="dm : ${listTatCa}" th:value="${dm.id}" th:text="${dm.tenDanhMuc}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Thứ tự hiển thị
+                    </label>
+                    <input type="number" th:field="*{thuTuHienThi}" placeholder="0" 
+                           class="w-full rounded-xl border border-zinc-300 p-3.5 text-sm font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                        Trạng thái
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2.5 p-3 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                            <input type="radio" th:field="*{kichHoat}" value="true" class="text-black focus:ring-black">
+                            <span class="flex items-center gap-1.5 text-emerald-700">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Hoạt động
+                            </span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-3 rounded-xl border border-zinc-300 cursor-pointer hover:bg-zinc-50 transition text-xs font-bold">
+                            <input type="radio" th:field="*{kichHoat}" value="false" class="text-black focus:ring-black">
+                            <span class="flex items-center gap-1.5 text-zinc-500">
+                                <span class="w-2 h-2 rounded-full bg-zinc-400"></span> Tạm dừng
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" 
+                        class="w-full py-3.5 rounded-xl bg-black text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition shadow-md flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tạo Danh Mục Mới</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- CỘT PHẢI (8 Cột): Bảng Hiển Thị -->
+        <section class="lg:col-span-8 bg-white border border-zinc-200/80 rounded-3xl p-7 shadow-xs space-y-6">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pb-4 border-b border-zinc-100">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-base font-black uppercase tracking-tight text-zinc-950">Danh Sách Danh Mục</h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-zinc-100 text-zinc-700" th:text="${listDanhMuc.size() + ' mục'}"></span>
+                </div>
+
+                <form action="/admin/danh-muc/hien-thi" method="get" class="flex w-full sm:w-80">
+                    <div class="relative w-full">
+                        <input type="text" name="ten" th:value="${ten}" placeholder="Tìm tên danh mục..." 
+                               class="w-full rounded-xl border border-zinc-300 py-2.5 pl-10 pr-20 text-xs font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition bg-zinc-50/50">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-zinc-400 text-xs"></i>
+                        <button type="submit" 
+                                class="absolute right-1 top-1 bottom-1 px-3 rounded-lg bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                            Tìm
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-zinc-200/80">
+                <table class="min-w-full divide-y divide-zinc-200 text-sm">
+                    <thead class="bg-zinc-50">
+                        <tr class="text-left text-[11px] font-black uppercase tracking-wider text-zinc-400">
+                            <th class="py-3.5 px-4">Tên Danh Mục</th>
+                            <th class="py-3.5 px-4">Thứ Tự</th>
+                            <th class="py-3.5 px-4">Trạng Thái</th>
+                            <th class="py-3.5 px-4 text-right">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100 bg-white">
+                        <tr th:each="dm : ${listDanhMuc}" class="table-row-hover transition">
+                            <td class="py-4 px-4">
+                                <div class="font-bold text-zinc-950 text-sm" th:text="${dm.tenDanhMuc}"></div>
+                                <div class="text-[11px] text-zinc-400 font-mono mt-0.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-link text-[10px]"></i>
+                                    <span th:text="${dm.duongDanSlug}"></span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 font-mono font-bold text-zinc-600" th:text="${dm.thuTuHienThi != null ? dm.thuTuHienThi : 0}"></td>
+                            <td class="py-4 px-4">
+                                <span th:if="${dm.kichHoat}" 
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động
+                                </span>
+                                <span th:unless="${dm.kichHoat}" 
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span> Tạm dừng
+                                </span>
+                            </td>
+                            <td class="py-4 px-4 text-right">
+                                <div class="inline-flex items-center gap-2">
+                                    <a th:href="@{|/admin/danh-muc/view?id=${dm.id}|}" 
+                                       title="Sửa" class="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs transition">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <a th:href="@{|/admin/danh-muc/delete?id=${dm.id}|}" 
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');"
+                                       title="Xóa" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${listDanhMuc == null or listDanhMuc.empty}">
+                            <td colspan="4" class="py-12 px-4 text-center text-xs text-zinc-400">
+                                <i class="fa-solid fa-folder-open text-2xl block mb-2 text-zinc-300"></i>
+                                Không tìm thấy danh mục nào phù hợp.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            <div class="flex items-center justify-between pt-2" th:if="${totalPages > 1}">
+                <a th:if="${page > 0}" 
+                   th:href="@{|/admin/danh-muc/hien-thi?page=${page - 1}&ten=${ten != null ? ten : ''}|}" 
+                   class="px-4 py-2 rounded-xl border border-zinc-300 hover:border-black text-xs font-bold transition">
+                    ← Trang Trước
+                </a>
+                <span th:if="${page == 0}" class="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-300 text-xs font-bold cursor-not-allowed">
+                    ← Trang Trước
+                </span>
+
+                <span class="text-xs font-bold text-zinc-600 font-mono" 
+                      th:text="${'Trang ' + (page + 1) + ' / ' + totalPages}"></span>
+
+                <a th:if="${page < totalPages - 1}" 
+                   th:href="@{|/admin/danh-muc/hien-thi?page=${page + 1}&ten=${ten != null ? ten : ''}|}" 
+                   class="px-4 py-2 rounded-xl border border-zinc-300 hover:border-black text-xs font-bold transition">
+                    Trang Sau →
+                </a>
+                <span th:if="${page >= totalPages - 1}" class="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-300 text-xs font-bold cursor-not-allowed">
+                    Trang Sau →
+                </span>
+            </div>
+
+        </section>
+
+    </div>
+</main>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-10 text-center text-xs text-zinc-400 mt-16">
+    <p>© 2026 Simplain Menswear Administrator. Hệ thống điều hành thương mại điện tử.</p>
+</footer>
+
+<script>
+    function tuDongTaoSlugDM(ten) {
+        if (!ten) return;
+        const slug = ten.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim().replace(/\s+/g, '-');
+        document.getElementById('inputSlugDM').value = slug;
+    }
+</script>
+
+</body>
+</html>

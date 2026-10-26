@@ -1,0 +1,19 @@
+/**
+ * Tác giả: Gia Minh
+ * Chức năng: US12 - Ngoại lệ tài khoản bị khóa (HTTP 403)
+ * Cập nhật xác nhận commit US12: 24/10/2026 - Gia Minh
+ */
+package vn.fpoly.simplain.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+/**
+ * Ngoại lệ khi tài khoản đã bị khóa không cho phép thao tác (HTTP 403).
+ */
+@ResponseStatus(HttpStatus.FORBIDDEN)
+public class TaiKhoanBiKhoaException extends RuntimeException {
+    public TaiKhoanBiKhoaException(String thongDiep) {
+        super(thongDiep);
+    }
+}

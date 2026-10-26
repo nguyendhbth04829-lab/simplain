@@ -1,0 +1,835 @@
+<!-- 
+    Tác giả: Gia Minh
+    Chức năng: Cổng thông tin trang chủ Simplain Storefront & Hub điều hướng hệ thống (Phiên bản Đột Phá 2026)
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplain Menswear • Thời Trang Nam Tối Giản & Cổng Khách Hàng</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 20%, rgba(24, 24, 27, 0.04) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+        .the-vip-card {
+            background: linear-gradient(135deg, #09090b 0%, #1c1917 50%, #000000 100%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .the-vip-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.5);
+        }
+        .card-story {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-story:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+        .shimmer-badge {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+            background-size: 200% auto;
+            animation: shimmer 3s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        .drawer-cart {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .drawer-open {
+            transform: translateX(0) !important;
+        }
+    </style>
+</head>
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+<!-- 1. Thanh thông báo chạy trên cùng (Announcement Bar) -->
+<div class="bg-black text-white text-[12px] font-medium py-2 px-4 text-center tracking-wide flex justify-center items-center gap-2">
+    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span>ƯU ĐÃI THÀNH VIÊN: Miễn phí vận chuyển cho đơn từ 500k • Hoàn tiền Coolcash đến 7% vào ví</span>
+    <span class="mx-2 text-zinc-600">|</span>
+    <a th:href="@{|/khach-hang/hoi-vien?idKhachHang=${idKhachHangHienTai}|}" class="underline hover:text-amber-300 transition">Khám phá Simplain Club →</a>
+</div>
+
+<!-- 2. Header thương hiệu chuẩn mực cao cấp -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <!-- Logo Simplain -->
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">MENSWEAR ESSENTIALS</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                    <i class="fa-solid fa-layer-group text-zinc-400"></i> Module 3 • Storefront & Khách Hàng
+                </span>
+            </div>
+
+            <!-- Thanh điều hướng Storefront -->
+            <nav class="hidden lg:flex items-center space-x-8 text-sm font-semibold tracking-wide text-zinc-600">
+                <a href="#danh-sach-san-pham" class="hover:text-black transition">Bộ Sưu Tập</a>
+                <a href="#5-user-stories" class="hover:text-black transition">5 Mô-Đun Nghiệp Vụ</a>
+                <a th:href="@{|/khach-hang/ho-so?id=${idKhachHangHienTai}|}" class="hover:text-black transition">Tài Khoản Khách</a>
+                <a th:href="@{|/khach-hang/hoi-vien?id=${idKhachHangHienTai}|}" class="hover:text-black transition">Ví Coolcash</a>
+                <a href="/admin/danh-muc/hien-thi" class="hover:text-black transition text-zinc-400 hover:text-zinc-900">Admin Quản Trị</a>
+            </nav>
+
+            <!-- Cụm công cụ bên phải (Tài khoản test, Yêu thích, Giỏ hàng, Swagger) -->
+            <div class="flex items-center space-x-3">
+                <!-- Chọn ID Khách Hàng Thử Nghiệm -->
+                <div class="flex items-center bg-zinc-100 px-3 py-1.5 rounded-xl border border-zinc-200/80 text-xs">
+                    <i class="fa-solid fa-user-circle text-zinc-400 mr-2"></i>
+                    <span class="text-zinc-500 font-medium mr-1.5 hidden sm:inline">Khách:</span>
+                    <select onchange="chuyenTaiKhoan(this.value)" class="bg-transparent font-bold text-zinc-900 outline-none cursor-pointer">
+                        <option th:each="kh : ${danhSachKhachHang}" 
+                                th:value="${kh.id}" 
+                                th:selected="${kh.id == idKhachHangHienTai}"
+                                th:text="${'ID ' + kh.id + ' • ' + kh.hoTen}"></option>
+                        <option th:if="${danhSachKhachHang == null or #lists.isEmpty(danhSachKhachHang)}" value="1">ID 1 • Khách mặc định</option>
+                    </select>
+                </div>
+
+                <!-- Nút Yêu Thích -->
+                <a th:href="@{|/khach-hang/yeu-thich?idKhachHang=${idKhachHangHienTai}|}" 
+                   title="Xem sản phẩm yêu thích (US14)"
+                   class="w-10 h-10 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 flex items-center justify-center text-zinc-700 hover:text-rose-600 transition shadow-xs relative">
+                    <i class="fa-regular fa-heart text-base"></i>
+                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                        ♥
+                    </span>
+                </a>
+
+                <!-- Nút Mở Giỏ Hàng Trượt -->
+                <button type="button" onclick="moGioHang()" 
+                        title="Mở giỏ hàng mua sắm"
+                        class="w-10 h-10 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 flex items-center justify-center text-zinc-700 hover:text-black transition shadow-xs relative">
+                    <i class="fa-solid fa-bag-shopping text-base"></i>
+                    <span id="badgeSoLuongGioHang" class="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                        2
+                    </span>
+                </button>
+
+                <!-- Nút Swagger API -->
+                <a href="/docs" target="_blank" 
+                   class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-bold transition shadow-xs">
+                    <span>Swagger Docs</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 3. Hero Section - Banner Biên Tập Thời Trang Đột Phá -->
+<section class="hero-gradient border-b border-zinc-200/80 py-16 lg:py-24 relative overflow-hidden bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <div class="lg:col-span-7 space-y-6 text-left">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100 border border-zinc-200 text-xs font-bold uppercase tracking-wider text-zinc-800">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span>BỘ SƯU TẬP XUÂN HÈ 2026 • GIA MINH CODE</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-zinc-950 uppercase leading-[1.08]">
+                    Tối Giản Trong Thiết Kế.<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-600 to-zinc-400">
+                        Đột Phá Trong Trải Nghiệm.
+                    </span>
+                </h1>
+
+                <p class="text-base sm:text-lg text-zinc-600 max-w-xl leading-relaxed">
+                    Khám phá hệ thống thương mại điện tử Simplain hoàn chỉnh với đầy đủ 5 User Story: Quản lý hồ sơ, sổ địa chỉ hành chính 3 cấp, wishlist yêu thích, đánh giá kiểm định mua hàng và thẻ hội viên hoàn tiền Coolcash.
+                </p>
+
+                <div class="flex flex-wrap gap-4 pt-2">
+                    <a th:href="@{|/khach-hang/ho-so?id=${idKhachHangHienTai}|}" 
+                       class="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-black text-white font-bold text-sm hover:bg-zinc-800 transition duration-150 shadow-md">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Vào Cổng Khách Hàng (Module 3)</span>
+                    </a>
+                    <a href="#5-user-stories" 
+                       class="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white border border-zinc-300 text-zinc-800 font-bold text-sm hover:bg-zinc-100 transition duration-150 shadow-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Khám Phá 5 User Story</span>
+                    </a>
+                </div>
+
+                <!-- Thống kê nhanh nổi bật -->
+                <div class="grid grid-cols-3 gap-6 pt-8 border-t border-zinc-200/80 max-w-lg">
+                    <div>
+                        <span class="text-2xl sm:text-3xl font-black text-zinc-950 block">100%</span>
+                        <span class="text-xs text-zinc-500 font-medium">Tiếng Việt chuẩn mực</span>
+                    </div>
+                    <div>
+                        <span class="text-2xl sm:text-3xl font-black text-zinc-950 block">119/119</span>
+                        <span class="text-xs text-zinc-500 font-medium">Test tự động PASS</span>
+                    </div>
+                    <div>
+                        <span class="text-2xl sm:text-3xl font-black text-zinc-950 block">63</span>
+                        <span class="text-xs text-zinc-500 font-medium">Tỉnh thành offline</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner Hình Ảnh Thẻ VIP 3D Tương Tác Bên Phải -->
+            <div class="lg:col-span-5 flex justify-center">
+                <div class="the-vip-card w-full max-w-md rounded-3xl p-8 text-white relative overflow-hidden border border-zinc-800">
+                    <div class="absolute -right-16 -top-16 w-52 h-52 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[11px] font-extrabold tracking-[0.25em] text-zinc-400 uppercase block">SIMPLAIN BLACK CARD</span>
+                            <span class="text-xs text-amber-400 font-bold flex items-center gap-1 mt-0.5">
+                                <i class="fa-solid fa-crown text-[10px]"></i> PRIVILEGE MEMBER
+                            </span>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                            HOÀN TIỀN 7%
+                        </span>
+                    </div>
+
+                    <!-- Chip thẻ EMV thực tế -->
+                    <div class="my-8 flex items-center justify-between">
+                        <div class="w-14 h-10 rounded-lg bg-gradient-to-tr from-amber-600 via-amber-300 to-amber-500 p-0.5 shadow-md">
+                            <div class="w-full h-full rounded-md border border-amber-900/30 grid grid-cols-2 gap-1 p-1">
+                                <div class="border-b border-r border-amber-800/40"></div>
+                                <div class="border-b border-amber-800/40"></div>
+                                <div class="border-r border-amber-800/40"></div>
+                                <div></div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-wifi text-zinc-400 text-lg rotate-90"></i>
+                    </div>
+
+                    <!-- Số thẻ dập nổi -->
+                    <div class="font-mono text-xl tracking-[0.22em] text-zinc-200 font-bold mb-6">
+                        8829 • 2026 • 0001 • <span th:text="${idKhachHangHienTai}">1</span>
+                    </div>
+
+                    <div class="flex justify-between items-end pt-4 border-t border-white/10 text-xs">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider text-zinc-400 block font-semibold">Chủ thẻ hội viên</span>
+                            <span class="font-bold text-sm tracking-wide text-white">NGUYỄN GIA MINH</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] uppercase tracking-wider text-zinc-400 block font-semibold">Điểm khả dụng</span>
+                            <span class="font-mono font-bold text-amber-400 text-sm">450.000 điểm</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- 4. KHỐI 5 USER STORIES CỐT LÕI (US12 -> US16) -->
+<section id="5-user-stories" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4 border-b border-zinc-200 pb-6">
+        <div>
+            <span class="text-xs font-bold tracking-widest text-zinc-400 uppercase block mb-1">KIẾN TRÚC HỆ THỐNG GIA MINH</span>
+            <h2 class="text-3xl font-black uppercase tracking-tight text-zinc-950">
+                5 Phân Hệ Nghiệp Vụ Khách Hàng (Module 3)
+            </h2>
+        </div>
+        <span class="px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-emerald-600"></i> Bảo mật BCrypt • Data Hành Chính Offline • 100% Hoàn Thiện
+        </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- THẺ US12: Hồ sơ & Đổi mật khẩu -->
+        <div class="card-story bg-white border border-zinc-200 rounded-3xl p-7 flex flex-col justify-between shadow-xs">
+            <div>
+                <div class="flex justify-between items-start mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 text-xl font-bold">
+                        <i class="fa-solid fa-id-card-clip"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-zinc-100 text-zinc-800 tracking-wider">
+                        US12 • Hồ Sơ
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-950 mb-2">Hồ Sơ & Đổi Mật Khẩu</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed mb-6">
+                    Quản lý thông tin định danh cá nhân, tính tuổi tự động, đo độ hoàn thiện hồ sơ. Cơ chế đổi mật khẩu băm BCrypt với thước đo độ mạnh an toàn thời gian thực.
+                </p>
+                
+                <div class="space-y-2 text-xs font-medium text-zinc-600 mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Mã hóa BCrypt khớp kiểm định
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Đo độ mạnh & Eye toggle ẩn hiện
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 border-t border-zinc-100 grid grid-cols-2 gap-3">
+                <a th:href="@{|/khach-hang/ho-so?id=${idKhachHangHienTai}|}" 
+                   class="text-center py-2.5 px-3 rounded-xl bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                    Xem Hồ Sơ
+                </a>
+                <a th:href="@{|/khach-hang/doi-mat-khau?id=${idKhachHangHienTai}|}" 
+                   class="text-center py-2.5 px-3 rounded-xl bg-zinc-100 text-zinc-800 text-xs font-bold hover:bg-zinc-200 transition">
+                    Đổi Mật Khẩu
+                </a>
+            </div>
+        </div>
+
+        <!-- THẺ US13: Sổ địa chỉ nhận hàng -->
+        <div class="card-story bg-white border border-zinc-200 rounded-3xl p-7 flex flex-col justify-between shadow-xs">
+            <div>
+                <div class="flex justify-between items-start mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-900 text-xl font-bold">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-zinc-100 text-zinc-800 tracking-wider">
+                        US13 • Sổ Địa Chỉ
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-950 mb-2">Sổ Địa Chỉ Giao Hàng</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed mb-6">
+                    Quản lý nhiều địa chỉ nhận hàng. Cascading Dropdown 3 cấp Tỉnh → Huyện → Xã vận hành từ danh mục nội bộ 63 tỉnh/thành offline. Live preview nhãn bưu kiện.
+                </p>
+
+                <div class="space-y-2 text-xs font-medium text-zinc-600 mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> 63 Tỉnh/thành offline không lỗi mạng
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Độc quyền 1 địa chỉ mặc định/khách
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 border-t border-zinc-100 grid grid-cols-2 gap-3">
+                <a th:href="@{|/khach-hang/dia-chi?idKhachHang=${idKhachHangHienTai}|}" 
+                   class="text-center py-2.5 px-3 rounded-xl bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                    Sổ Địa Chỉ
+                </a>
+                <a th:href="@{|/khach-hang/dia-chi/them?idKhachHang=${idKhachHangHienTai}|}" 
+                   class="text-center py-2.5 px-3 rounded-xl bg-zinc-100 text-zinc-800 text-xs font-bold hover:bg-zinc-200 transition">
+                    + Thêm Mới
+                </a>
+            </div>
+        </div>
+
+        <!-- THẺ US14: Sản phẩm yêu thích (Wishlist) -->
+        <div class="card-story bg-white border border-zinc-200 rounded-3xl p-7 flex flex-col justify-between shadow-xs">
+            <div>
+                <div class="flex justify-between items-start mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-rose-50 text-rose-700 tracking-wider">
+                        US14 • Yêu Thích
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-950 mb-2">Bộ Sưu Tập Yêu Thích</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed mb-6">
+                    Lưu trữ các mẫu thời trang ưng ý. Ràng buộc toàn vẹn Unique Index (maKhachHang, maSanPham) ngăn trùng lặp. Tìm kiếm, sắp xếp theo giá và chuyển nhanh sang giỏ hàng.
+                </p>
+
+                <div class="space-y-2 text-xs font-medium text-zinc-600 mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Chống trùng lặp CSDL an toàn
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Lọc giá & Chuyển sang giỏ hàng
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 border-t border-zinc-100">
+                <a th:href="@{|/khach-hang/yeu-thich?idKhachHang=${idKhachHangHienTai}|}" 
+                   class="block text-center py-2.5 px-4 rounded-xl bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                    Xem Danh Sách Yêu Thích →
+                </a>
+            </div>
+        </div>
+
+        <!-- THẺ US15: Đánh giá sản phẩm đã mua -->
+        <div class="card-story bg-white border border-zinc-200 rounded-3xl p-7 flex flex-col justify-between shadow-xs">
+            <div>
+                <div class="flex justify-between items-start mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-amber-50 text-amber-700 tracking-wider">
+                        US15 • Đánh Giá
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-950 mb-2">Đánh Giá Sản Phẩm Đã Mua</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed mb-6">
+                    Chỉ cho phép người đã mua và nhận hàng thành công ("GIAO_HANG_THANH_CONG") gửi nhận xét. Khóa cứng 1 đánh giá/chi tiết đơn hàng. Bộ chọn sao cảm xúc & đếm ký tự.
+                </p>
+
+                <div class="space-y-2 text-xs font-medium text-zinc-600 mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Xác minh đơn hàng đã giao thực tế
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Ngăn chặn đánh giá trùng lặp
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 border-t border-zinc-100">
+                <a th:href="@{|/khach-hang/danh-gia?idKhachHang=${idKhachHangHienTai}|}" 
+                   class="block text-center py-2.5 px-4 rounded-xl bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                    Xem Đánh Giá Của Tôi →
+                </a>
+            </div>
+        </div>
+
+        <!-- THẺ US16: Hội viên & Coolcash -->
+        <div class="card-story bg-white border border-zinc-200 rounded-3xl p-7 flex flex-col justify-between shadow-xs">
+            <div>
+                <div class="flex justify-between items-start mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-zinc-950 text-amber-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-zinc-950 text-amber-300 tracking-wider">
+                        US16 • Loyalty Club
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-950 mb-2">Hội Viên & Ví Coolcash</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed mb-6">
+                    Hệ thống tích lũy doanh số tự động nâng hạng (Đồng → Bạc → Vàng → Kim Cương). Tích điểm thưởng Coolcash 1:1, công cụ tính điểm giả lập & sổ cái giao dịch.
+                </p>
+
+                <div class="space-y-2 text-xs font-medium text-zinc-600 mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Tự động thăng hạng theo chi tiêu
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Ví Coolcash 1 điểm = 1 VNĐ
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 border-t border-zinc-100">
+                <a th:href="@{|/khach-hang/hoi-vien?idKhachHang=${idKhachHangHienTai}|}" 
+                   class="block text-center py-2.5 px-4 rounded-xl bg-black text-white text-xs font-bold hover:bg-zinc-800 transition">
+                    Mở Ví Hội Viên Coolcash →
+                </a>
+            </div>
+        </div>
+
+        <!-- THẺ LIÊN KẾT ADMIN & TÀI LIỆU SWAGGER -->
+        <div class="card-story bg-zinc-950 text-white rounded-3xl p-7 flex flex-col justify-between shadow-md border border-zinc-800">
+            <div>
+                <div class="flex justify-between items-start mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-white/10 text-zinc-300 tracking-wider">
+                        Quản Trị & Docs
+                    </span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Admin Portal & OpenAPI</h3>
+                <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+                    Khu vực quản trị Danh mục & Bộ sưu tập. Hệ thống tài liệu Swagger UI tự động tạo lập với đầy đủ ghi chú tiếng Việt cho tất cả REST API.
+                </p>
+
+                <div class="space-y-2 text-xs font-medium text-zinc-300 mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i> Swagger UI tại /docs
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i> CRUD Danh mục & Bộ sưu tập
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-5 border-t border-white/10 grid grid-cols-2 gap-3">
+                <a href="/admin/danh-muc/hien-thi" 
+                   class="text-center py-2.5 px-3 rounded-xl bg-white text-black text-xs font-bold hover:bg-zinc-100 transition">
+                    Admin Danh Mục
+                </a>
+                <a href="/docs" target="_blank" 
+                   class="text-center py-2.5 px-3 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition">
+                    Swagger Docs ↗
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- 5. BỘ SƯU TẬP SẢN PHẨM MẪU VỚI TƯƠNG TÁC THÊM GIỎ HÀNG -->
+<section id="danh-sach-san-pham" class="py-20 bg-white border-t border-zinc-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4 border-b border-zinc-200 pb-6">
+            <div>
+                <span class="text-xs font-bold tracking-widest text-zinc-400 uppercase block mb-1">MENSWEAR CATALOG</span>
+                <h2 class="text-3xl font-black uppercase tracking-tight text-zinc-950">
+                    Sản Phẩm Tiêu Biểu Simplain
+                </h2>
+            </div>
+            <a th:href="@{|/khach-hang/yeu-thich?idKhachHang=${idKhachHangHienTai}|}" 
+               class="text-sm font-bold text-zinc-900 hover:text-black underline underline-offset-4">
+                Xem toàn bộ trong Wishlist →
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <!-- Sản phẩm 1 -->
+            <div class="group bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-200/80 flex flex-col justify-between transition hover:shadow-lg">
+                <div>
+                    <div class="relative h-72 overflow-hidden bg-zinc-200">
+                        <img src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=600&q=80" 
+                             alt="Áo Sơ Mi Oxford Dài Tay" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-black text-white">
+                            BEST SELLER
+                        </span>
+                        <button type="button" onclick="thaoTacYeuThich(1, 'Áo Sơ Mi Oxford Trắng Dài Tay', this)" 
+                                title="Thêm vào yêu thích" 
+                                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-zinc-400 hover:text-rose-500 flex items-center justify-center transition shadow-sm">
+                            <i class="fa-solid fa-heart text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between items-center text-[11px] text-zinc-400 font-mono">
+                            <span>SP-OXF-001</span>
+                            <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">100% Cotton</span>
+                        </div>
+                        <h4 class="font-bold text-zinc-950 text-base leading-snug">Áo Sơ Mi Oxford Trắng Dài Tay</h4>
+                        <div class="pt-1 flex items-baseline gap-2">
+                            <span class="text-lg font-black text-zinc-950">450.000 đ</span>
+                            <span class="text-xs text-zinc-400 line-through">550.000 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 pt-0">
+                    <button type="button" onclick="themVaoGioHang('Áo Sơ Mi Oxford Trắng Dài Tay', 450000)" 
+                            class="w-full py-3 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Thêm Vào Giỏ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sản phẩm 2 -->
+            <div class="group bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-200/80 flex flex-col justify-between transition hover:shadow-lg">
+                <div>
+                    <div class="relative h-72 overflow-hidden bg-zinc-200">
+                        <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80" 
+                             alt="Áo Thun Pima Cotton Cao Cấp" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-zinc-800 text-white">
+                            NEW ARRIVAL
+                        </span>
+                        <button type="button" onclick="thaoTacYeuThich(2, 'Áo Thun Nam Pima Cotton Cổ Tròn', this)" 
+                                title="Thêm vào yêu thích" 
+                                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-zinc-400 hover:text-rose-500 flex items-center justify-center transition shadow-sm">
+                            <i class="fa-solid fa-heart text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between items-center text-[11px] text-zinc-400 font-mono">
+                            <span>SP-TSH-002</span>
+                            <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">Pima Cotton</span>
+                        </div>
+                        <h4 class="font-bold text-zinc-950 text-base leading-snug">Áo Thun Nam Pima Cotton Cổ Tròn</h4>
+                        <div class="pt-1 flex items-baseline gap-2">
+                            <span class="text-lg font-black text-zinc-950">290.000 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 pt-0">
+                    <button type="button" onclick="themVaoGioHang('Áo Thun Nam Pima Cotton Cổ Tròn', 290000)" 
+                            class="w-full py-3 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Thêm Vào Giỏ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sản phẩm 3 -->
+            <div class="group bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-200/80 flex flex-col justify-between transition hover:shadow-lg">
+                <div>
+                    <div class="relative h-72 overflow-hidden bg-zinc-200">
+                        <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=600&q=80" 
+                             alt="Quần Chino Slim-Fit Co Giãn" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <button type="button" onclick="thaoTacYeuThich(3, 'Quần Chino Nam Slim-Fit Co Giãn', this)" 
+                                title="Thêm vào yêu thích" 
+                                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-zinc-400 hover:text-rose-500 flex items-center justify-center transition shadow-sm">
+                            <i class="fa-solid fa-heart text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between items-center text-[11px] text-zinc-400 font-mono">
+                            <span>SP-CHI-003</span>
+                            <span class="text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">Cotton Spandex</span>
+                        </div>
+                        <h4 class="font-bold text-zinc-950 text-base leading-snug">Quần Chino Nam Slim-Fit Co Giãn</h4>
+                        <div class="pt-1 flex items-baseline gap-2">
+                            <span class="text-lg font-black text-zinc-950">520.000 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 pt-0">
+                    <button type="button" onclick="themVaoGioHang('Quần Chino Nam Slim-Fit Co Giãn', 520000)" 
+                            class="w-full py-3 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Thêm Vào Giỏ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sản phẩm 4 -->
+            <div class="group bg-zinc-50 rounded-2xl overflow-hidden border border-zinc-200/80 flex flex-col justify-between transition hover:shadow-lg">
+                <div>
+                    <div class="relative h-72 overflow-hidden bg-zinc-200">
+                        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80" 
+                             alt="Áo Khoác Blazer Tối Giản" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <span class="shimmer-badge absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-black">
+                            PREMIUM EDITION
+                        </span>
+                        <button type="button" onclick="thaoTacYeuThich(4, 'Áo Khoác Blazer Tối Giản Simplain', this)" 
+                                title="Thêm vào yêu thích" 
+                                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-zinc-400 hover:text-rose-500 flex items-center justify-center transition shadow-sm">
+                            <i class="fa-solid fa-heart text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-2">
+                        <div class="flex justify-between items-center text-[11px] text-zinc-400 font-mono">
+                            <span>SP-BLZ-004</span>
+                            <span class="text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded">Linen Blend</span>
+                        </div>
+                        <h4 class="font-bold text-zinc-950 text-base leading-snug">Áo Khoác Blazer Tối Giản Simplain</h4>
+                        <div class="pt-1 flex items-baseline gap-2">
+                            <span class="text-lg font-black text-zinc-950">980.000 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 pt-0">
+                    <button type="button" onclick="themVaoGioHang('Áo Khoác Blazer Tối Giản Simplain', 980000)" 
+                            class="w-full py-3 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Thêm Vào Giỏ</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- 6. GIỎ HÀNG SLIDE-OVER (DRAWER TRƯỢT TỪ PHẢI SANG) -->
+<div id="manHinhMo" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden transition-opacity" onclick="dongGioHang()"></div>
+<div id="nganKeoGioHang" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl p-6 flex flex-col justify-between translate-x-full drawer-cart">
+    <div>
+        <div class="flex justify-between items-center pb-4 border-b border-zinc-200">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bag-shopping text-lg"></i>
+                <h3 class="font-black text-lg uppercase tracking-tight">Giỏ Hàng Của Bạn</h3>
+            </div>
+            <button type="button" onclick="dongGioHang()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-600">
+                ✕
+            </button>
+        </div>
+
+        <div id="danhSachMonGioHang" class="py-6 space-y-4 overflow-y-auto max-h-[60vh]">
+            <!-- Món 1 -->
+            <div class="flex gap-4 items-center p-3 rounded-xl bg-zinc-50 border border-zinc-200/60">
+                <div class="w-16 h-16 rounded-lg bg-zinc-200 overflow-hidden flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=150&q=80" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h5 class="text-xs font-bold text-zinc-900 truncate">Áo Sơ Mi Oxford Trắng Dài Tay</h5>
+                    <span class="text-xs font-mono text-zinc-500">1 x 450.000 đ</span>
+                </div>
+                <span class="text-xs font-black text-zinc-900">450.000 đ</span>
+            </div>
+            <!-- Món 2 -->
+            <div class="flex gap-4 items-center p-3 rounded-xl bg-zinc-50 border border-zinc-200/60">
+                <div class="w-16 h-16 rounded-lg bg-zinc-200 overflow-hidden flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=150&q=80" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h5 class="text-xs font-bold text-zinc-900 truncate">Áo Thun Nam Pima Cotton Cổ Tròn</h5>
+                    <span class="text-xs font-mono text-zinc-500">1 x 290.000 đ</span>
+                </div>
+                <span class="text-xs font-black text-zinc-900">290.000 đ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thanh toán giỏ hàng -->
+    <div class="pt-4 border-t border-zinc-200 space-y-3">
+        <div class="flex justify-between items-center text-sm font-bold">
+            <span class="text-zinc-600">Tạm tính:</span>
+            <span id="tongTienGioHang" class="text-lg font-black text-zinc-950">740.000 đ</span>
+        </div>
+        <p class="text-[11px] text-zinc-400 leading-tight">
+            Đơn hàng đạt chuẩn miễn phí vận chuyển toàn quốc. Tích lũy điểm Coolcash tự động khi giao thành công.
+        </p>
+        <a th:href="@{|/khach-hang/dia-chi?idKhachHang=${idKhachHangHienTai}|}" 
+           class="w-full py-3.5 rounded-xl bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition flex items-center justify-center gap-2">
+            <span>Tiến Hành Đặt Hàng</span>
+            <i class="fa-solid fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- 7. THANH ĐIỀU KHIỂN DOCK NỔI DƯỚI CÙNG (DOCK TESTING TESTBAR) -->
+<aside class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-zinc-950/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-4 text-xs">
+    <div class="flex items-center gap-2 pr-3 border-r border-white/20">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-bold tracking-wider uppercase text-[11px] hidden sm:inline">Simplain Hub</span>
+    </div>
+    
+    <div class="flex items-center gap-1.5 overflow-x-auto">
+        <a th:href="@{|/khach-hang/ho-so?id=${idKhachHangHienTai}|}" 
+           class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black font-semibold transition">
+            <i class="fa-solid fa-user mr-1"></i> Hồ sơ
+        </a>
+        <a th:href="@{|/khach-hang/dia-chi?idKhachHang=${idKhachHangHienTai}|}" 
+           class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black font-semibold transition">
+            <i class="fa-solid fa-location-dot mr-1"></i> Sổ địa chỉ
+        </a>
+        <a th:href="@{|/khach-hang/yeu-thich?id=${idKhachHangHienTai}|}" 
+           class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black font-semibold transition">
+            <i class="fa-solid fa-heart mr-1"></i> Yêu thích
+        </a>
+        <a th:href="@{|/khach-hang/danh-gia?idKhachHang=${idKhachHangHienTai}|}" 
+           class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black font-semibold transition">
+            <i class="fa-solid fa-star mr-1"></i> Đánh giá
+        </a>
+        <a th:href="@{|/khach-hang/hoi-vien?idKhachHang=${idKhachHangHienTai}|}" 
+           class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black font-semibold transition">
+            <i class="fa-solid fa-crown mr-1 text-amber-400"></i> Coolcash
+        </a>
+    </div>
+</aside>
+
+<!-- Toast thông báo nổi -->
+<div id="hopThoaiToast" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 hidden bg-zinc-950 text-white px-6 py-3.5 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-3 border border-white/10 transition-all">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+    <span id="toastNoiDung">Thông báo thành công!</span>
+</div>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-12 text-center text-xs text-zinc-400 mt-16 pb-24">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-2">
+            <span class="font-black text-zinc-900 uppercase tracking-widest text-sm">SIMPLAIN</span>
+            <span>• © 2026 Nền tảng thời trang nam tối giản. Phát triển bởi Gia Minh.</span>
+        </div>
+        <div class="flex space-x-6 text-zinc-600 font-semibold">
+            <a href="/docs" target="_blank" class="hover:text-black transition">Swagger API</a>
+            <a href="/admin/danh-muc/hien-thi" class="hover:text-black transition">Admin Portal</a>
+            <a th:href="@{|/khach-hang/ho-so?id=${idKhachHangHienTai}|}" class="hover:text-black transition">Hồ Sơ Cá Nhân</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    function chuyenTaiKhoan(id) {
+        window.location.href = `/?idKhachHang=${id}`;
+    }
+
+    function moGioHang() {
+        document.getElementById('manHinhMo').classList.remove('hidden');
+        document.getElementById('nganKeoGioHang').classList.add('drawer-open');
+    }
+
+    function dongGioHang() {
+        document.getElementById('manHinhMo').classList.add('hidden');
+        document.getElementById('nganKeoGioHang').classList.remove('drawer-open');
+    }
+
+    let soLuongGioHang = 2;
+    function themVaoGioHang(tenSP, gia) {
+        soLuongGioHang++;
+        document.getElementById('badgeSoLuongGioHang').textContent = soLuongGioHang;
+        
+        // Thêm phần tử vào danh sách giỏ
+        const danhSach = document.getElementById('danhSachMonGioHang');
+        const node = document.createElement('div');
+        node.className = 'flex gap-4 items-center p-3 rounded-xl bg-zinc-50 border border-zinc-200/60 animate-pulse';
+        node.innerHTML = `
+            <div class="w-16 h-16 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                SIMP
+            </div>
+            <div class="flex-1 min-w-0">
+                <h5 class="text-xs font-bold text-zinc-900 truncate">${tenSP}</h5>
+                <span class="text-xs font-mono text-zinc-500">1 x ${new Intl.NumberFormat('vi-VN').format(gia)} đ</span>
+            </div>
+            <span class="text-xs font-black text-zinc-900">${new Intl.NumberFormat('vi-VN').format(gia)} đ</span>
+        `;
+        danhSach.prepend(node);
+
+        moGioHang();
+        hienToast(`Đã thêm "${tenSP}" vào giỏ hàng!`, 'fa-bag-shopping text-emerald-400');
+    }
+
+    function thaoTacYeuThich(idSP, tenSP, nut) {
+        nut.classList.toggle('text-rose-500');
+        nut.classList.toggle('text-zinc-400');
+        hienToast(`Đã lưu "${tenSP}" vào danh sách yêu thích!`, 'fa-heart text-rose-500');
+    }
+
+    function hienToast(noiDung, iconClass) {
+        const toast = document.getElementById('hopThoaiToast');
+        const icon = document.getElementById('toastIcon');
+        const text = document.getElementById('toastNoiDung');
+        
+        icon.className = `fa-solid ${iconClass}`;
+        text.textContent = noiDung;
+        
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+</script>
+
+</body>
+</html>

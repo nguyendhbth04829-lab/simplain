@@ -1,0 +1,190 @@
+<!-- 
+    Tác giả: Gia Minh
+    Chức năng: US15 - Giao diện biểu mẫu gửi đánh giá sản phẩm đã mua (Phiên bản Đột Phá 2026)
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viết Đánh Giá Sản Phẩm • Simplain Menswear</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .loi { color: #e11d48; font-size: 0.8125rem; margin-top: 0.35rem; display: block; font-weight: 500; }
+        .star-item { cursor: pointer; transition: transform 0.15s ease, color 0.15s ease; }
+        .star-item:hover { transform: scale(1.25); }
+    </style>
+</head>
+<body class="bg-[#fafafa] text-zinc-900 antialiased min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+<!-- Header thống nhất toàn hệ thống -->
+<header class="bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="flex flex-col">
+                    <span class="text-3xl font-black tracking-widest text-black uppercase font-sans leading-none">
+                        SIMPLAIN
+                    </span>
+                    <span class="text-[9px] tracking-[0.3em] uppercase text-zinc-400 font-bold mt-1">MENSWEAR ESSENTIALS</span>
+                </a>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    <i class="fa-solid fa-star"></i> Đánh Giá Sản Phẩm
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <a th:href="@{|/khach-hang/danh-gia?idKhachHang=${idKhachHang}|}" class="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3.5 py-2 rounded-xl transition">
+                    ✕ Hủy Bỏ
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+    
+    <div class="flex justify-between items-center pb-6 border-b border-zinc-200 mb-8">
+        <div>
+            <h2 class="text-2xl font-black uppercase tracking-tight text-zinc-950">Đánh Giá Sản Phẩm</h2>
+            <p class="text-xs text-zinc-500 mt-1">Nhận xét của bạn giúp cộng đồng Simplain có cái nhìn chân thực về chất lượng</p>
+        </div>
+    </div>
+
+    <!-- Thông báo lỗi nếu có -->
+    <div th:if="${thongBaoLoi}" class="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-sm flex items-center gap-3 shadow-xs">
+        <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
+        <span class="font-semibold" th:text="${thongBaoLoi}"></span>
+    </div>
+
+    <!-- Form viết đánh giá -->
+    <div class="bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-10 shadow-xs">
+        <form th:object="${danhGiaRequest}" th:action="@{/khach-hang/danh-gia/viet}" method="post" class="space-y-6">
+            <input type="hidden" name="idKhachHang" th:value="${idKhachHang}">
+            <input type="hidden" th:field="*{maSanPhamId}">
+            <input type="hidden" th:field="*{maChiTietDonHangId}">
+
+            <!-- Bộ chọn sao trực quan có cảm xúc -->
+            <div class="text-center p-6 rounded-2xl bg-zinc-50 border border-zinc-200/60">
+                <label class="block text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-2">
+                    Mức độ hài lòng của bạn <span class="text-rose-500">*</span>
+                </label>
+
+                <!-- Dãy 5 ngôi sao -->
+                <div class="flex justify-center items-center gap-3 text-4xl my-3 text-amber-400" id="vungSao">
+                    <span class="star-item" onclick="chon(1)">★</span>
+                    <span class="star-item" onclick="chon(2)">★</span>
+                    <span class="star-item" onclick="chon(3)">★</span>
+                    <span class="star-item" onclick="chon(4)">★</span>
+                    <span class="star-item" onclick="chon(5)">★</span>
+                </div>
+
+                <p id="camXucText" class="text-sm font-bold text-zinc-900">
+                    😍 Rất hài lòng! Sản phẩm tuyệt vời (5 sao)
+                </p>
+
+                <!-- Dropdown ẩn để map vào model bean -->
+                <select id="soSaoSelect" th:field="*{soSao}" class="hidden">
+                    <option value="5">5</option>
+                    <option value="4">4</option>
+                    <option value="3">3</option>
+                    <option value="2">2</option>
+                    <option value="1">1</option>
+                </select>
+                <span class="loi text-center" th:if="${#fields.hasErrors('soSao')}" th:errors="*{soSao}"></span>
+            </div>
+
+            <!-- Ô nhận xét -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                        Nhận xét chi tiết
+                    </label>
+                    <span id="demKyTu" class="text-xs text-zinc-400 font-mono">0 / 500 ký tự</span>
+                </div>
+                <textarea th:field="*{noiDung}" id="inputNoiDung" rows="4" maxlength="500"
+                          oninput="capNhatDem(this)"
+                          placeholder="Chia sẻ trải nghiệm của bạn về độ co giãn, form dáng, đường may hoặc thời gian đóng gói..." 
+                          class="w-full rounded-xl border border-zinc-300 p-4 text-sm font-semibold outline-none focus:border-black focus:ring-1 focus:ring-black transition"></textarea>
+                <span class="loi" th:if="${#fields.hasErrors('noiDung')}" th:errors="*{noiDung}"></span>
+            </div>
+
+            <!-- Thẻ xem trước bài đánh giá (Live Preview) -->
+            <div class="p-4 rounded-2xl bg-zinc-50 border border-dashed border-zinc-300 text-xs text-zinc-600">
+                <span class="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider mb-1">Xem trước hiển thị:</span>
+                <div class="text-amber-400 text-sm mb-1" id="xemTruocSao">★★★★★</div>
+                <p id="xemTruocText" class="italic text-zinc-700">"Chưa có nhận xét bằng chữ..."</p>
+            </div>
+
+            <!-- Nút gửi -->
+            <div class="pt-4 border-t border-zinc-200 flex justify-end gap-3">
+                <a th:href="@{|/khach-hang/danh-gia?idKhachHang=${idKhachHang}|}" 
+                   class="px-6 py-3.5 rounded-xl border border-zinc-300 text-zinc-700 font-bold text-xs uppercase hover:bg-zinc-50 transition">
+                    Hủy Bỏ
+                </a>
+                <button type="submit" 
+                        class="px-8 py-3.5 rounded-xl bg-black text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Gửi Đánh Giá</span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+</main>
+
+<!-- Footer bản quyền -->
+<footer class="bg-white border-t border-zinc-200 py-10 text-center text-xs text-zinc-400 mt-16">
+    <p>© 2026 Simplain Menswear Essentials. Đã được xác thực mã hóa an toàn.</p>
+</footer>
+
+<script>
+    const labels = {
+        1: "😡 Rất tệ - Chất lượng không đúng mô tả (1 sao)",
+        2: "🙁 Chưa hài lòng - Cần cải thiện (2 sao)",
+        3: "😐 Tạm ổn - Bình thường (3 sao)",
+        4: "🙂 Hài lòng - Vải đẹp, chuẩn form (4 sao)",
+        5: "😍 Tuyệt vời! Rất hài lòng về sản phẩm (5 sao)"
+    };
+
+    function chon(sao) {
+        document.getElementById('soSaoSelect').value = sao;
+        const items = document.querySelectorAll('#vungSao .star-item');
+        items.forEach((it, idx) => {
+            if (idx < sao) {
+                it.className = 'star-item text-amber-400';
+            } else {
+                it.className = 'star-item text-zinc-200';
+            }
+        });
+        document.getElementById('camXucText').textContent = labels[sao];
+
+        let str = '';
+        for (let i = 1; i <= 5; i++) str += (i <= sao ? '★' : '☆');
+        document.getElementById('xemTruocSao').textContent = str;
+    }
+
+    function capNhatDem(tx) {
+        document.getElementById('demKyTu').textContent = `${tx.value.length} / 500 ký tự`;
+        document.getElementById('xemTruocText').textContent = tx.value.trim() ? `"${tx.value}"` : '"Chưa có nhận xét bằng chữ..."';
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        chon(parseInt(document.getElementById('soSaoSelect').value) || 5);
+        capNhatDem(document.getElementById('inputNoiDung'));
+    });
+</script>
+
+</body>
+</html>
