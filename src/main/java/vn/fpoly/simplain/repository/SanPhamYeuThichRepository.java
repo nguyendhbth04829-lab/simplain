@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US14 - Repository thao tác dữ liệu bảng san_pham_yeu_thich
+ * Cập nhật xác nhận commit US14: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.repository;
 

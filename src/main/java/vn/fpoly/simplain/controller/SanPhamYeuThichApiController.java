@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US14 - REST API Quản lý danh sách sản phẩm yêu thích (Wishlist) của khách hàng
+ * Cập nhật xác nhận commit US14: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.controller;
 

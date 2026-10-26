@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US14 - DTO yêu cầu thêm sản phẩm vào danh sách yêu thích
+ * Cập nhật xác nhận commit US14: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.dto;
 

@@ -3,7 +3,8 @@
 **Người thực hiện**: Gia Minh (Module 3 — Storefront & Khách hàng)  
 **Phạm vi hoàn thành**: Duy nhất **US14 — Sản phẩm yêu thích (Wishlist)**  
 **Trạng thái**: Hoàn thành 100% — Đã kiểm thử và chạy thực tế 91/91 test đạt (PASS)  
-**Quy chuẩn ngôn ngữ**: 100% Tiếng Việt (Tên lớp, phương thức, biến, DTO, view, tài liệu, thông báo lỗi)
+**Quy chuẩn ngôn ngữ**: 100% Tiếng Việt (Tên lớp, phương thức, biến, DTO, view, tài liệu, thông báo lỗi)  
+**Cập nhật xác nhận commit US14**: 26/10/2026 — Gia Minh
 
 ---
 

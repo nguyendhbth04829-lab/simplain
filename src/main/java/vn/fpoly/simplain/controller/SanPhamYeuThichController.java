@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US14 - Controller phục vụ giao diện Web Thymeleaf quản lý Danh sách sản phẩm yêu thích (Wishlist)
+ * Cập nhật xác nhận commit US14: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.controller;
 

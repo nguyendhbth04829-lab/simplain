@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US14 - Dịch vụ xử lý nghiệp vụ Quản lý danh sách sản phẩm yêu thích (Wishlist)
+ * Cập nhật xác nhận commit US14: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.service;
 
