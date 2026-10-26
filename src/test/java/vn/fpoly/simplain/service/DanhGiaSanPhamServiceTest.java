@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US15 - Kiểm thử đơn vị tầng nghiệp vụ DanhGiaSanPhamService
+ * Cập nhật xác nhận commit US15: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.service;
 

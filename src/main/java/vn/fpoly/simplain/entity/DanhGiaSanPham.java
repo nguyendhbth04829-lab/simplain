@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US15 - Thực thể đánh giá sản phẩm trong CSDL Simpl4
+ * Cập nhật xác nhận commit US15: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.entity;
 

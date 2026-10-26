@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US15 - Kiểm thử tầng REST API DanhGiaSanPhamApiController
+ * Cập nhật xác nhận commit US15: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.controller;
 

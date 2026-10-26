@@ -1,6 +1,7 @@
 /**
  * Tác giả: Gia Minh
  * Chức năng: US15 - DTO phản hồi chi tiết đánh giá sản phẩm
+ * Cập nhật xác nhận commit US15: 26/10/2026 - Gia Minh
  */
 package vn.fpoly.simplain.dto;
 
