@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Cổng thanh toán | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+        
+        /* Pulse Dot cho Trạng thái */
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('phuong-thuc-thanh-toan')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title bên trái + Nút Thêm bên phải -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-credit-card text-blue-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Cổng thanh toán</span>
+                        <span class="text-xs font-mono font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full" th:text="${tongSo + ' cổng'}">0 cổng</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Bật/Tắt và quản lý cấu hình các cổng thanh toán COD, VNPay, MoMo (US18)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        onclick="moModalThem()"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Thêm cổng thanh toán</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. THẺ THỐNG KÊ NHANH CỔNG THANH TOÁN -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng số cổng</div>
+                    <div class="text-2xl font-black text-slate-900 mt-1" th:text="${tongSo}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/30 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Đang Bật Kích hoạt</div>
+                    <div class="text-2xl font-black text-emerald-600 mt-1" th:text="${soDangBat}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Đang Tắt (Tạm ẩn)</div>
+                    <div class="text-2xl font-black text-slate-600 mt-1" th:text="${soDangTat}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-ban"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+            <form action="/admin/phuong-thuc-thanh-toan/hien-thi" method="get" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <!-- Ô tìm kiếm từ khóa -->
+                <div class="sm:col-span-5 relative">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1"></i>Tìm kiếm cổng thanh toán
+                    </label>
+                    <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                           placeholder="Tìm kiếm theo tên cổng, mã phương thức, mô tả..."
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                </div>
+
+                <!-- Lọc Loại trực tuyến / Tiền mặt -->
+                <div class="sm:col-span-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        <i class="fa-solid fa-layer-group text-slate-400 mr-1"></i>Hình thức
+                    </label>
+                    <select name="laTrucTuyen"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">-- Tất cả hình thức --</option>
+                        <option value="true" th:selected="${laTrucTuyen == true}">Trực tuyến (Online / Ví / QR)</option>
+                        <option value="false" th:selected="${laTrucTuyen == false}">Tiền mặt khi nhận hàng (COD)</option>
+                    </select>
+                </div>
+
+                <!-- Lọc Trạng thái kích hoạt -->
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        <i class="fa-solid fa-toggle-on text-slate-400 mr-1"></i>Trạng thái
+                    </label>
+                    <select name="kichHoat"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">-- Trạng thái --</option>
+                        <option value="true" th:selected="${kichHoat == true}">Đang Bật</option>
+                        <option value="false" th:selected="${kichHoat == false}">Đang Tắt</option>
+                    </select>
+                </div>
+
+                <!-- Nút Lọc & Đặt lại -->
+                <div class="sm:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                            class="flex-1 btn-navy font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition">
+                        <i class="fa-solid fa-filter text-[11px]"></i>
+                        <span>Lọc</span>
+                    </button>
+                    <a href="/admin/phuong-thuc-thanh-toan/hien-thi"
+                       class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center justify-center shadow-xs transition" title="Đặt lại bộ lọc">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. THANH THAO TÁC HÀNG LOẠT (BULK ACTIONS BAR) -->
+        <div id="bulkActionsBar" class="hidden bg-slate-900 text-white p-3.5 rounded-2xl shadow-lg border border-slate-800 flex flex-wrap items-center justify-between gap-3 transition-all duration-300">
+            <div class="flex items-center gap-3">
+                <span class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-xs">
+                    <i class="fa-solid fa-check-double"></i>
+                </span>
+                <span class="text-xs font-medium">
+                    Đã chọn <strong id="selectedCount" class="text-amber-400 font-black">0</strong> cổng thanh toán
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="thucHienThaoTacHangLoat('bat')"
+                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-toggle-on"></i>
+                    <span>Bật kích hoạt đã chọn</span>
+                </button>
+                <button type="button" onclick="thucHienThaoTacHangLoat('tat')"
+                        class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-toggle-off"></i>
+                    <span>Tắt kích hoạt đã chọn</span>
+                </button>
+                <button type="button" onclick="thucHienThaoTacHangLoat('xoa')"
+                        class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Xóa các mục đã chọn</span>
+                </button>
+                <button type="button" onclick="boChonTatCa()"
+                        class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition" title="Bỏ chọn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. BẢNG DANH SÁCH CỔNG THANH TOÁN (CRUD & TOGGLE BẬT/TẮT) -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <th class="py-3.5 px-4 w-10 text-center">
+                                <input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"
+                                       class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                            </th>
+                            <th class="py-3.5 px-4 w-14">ID</th>
+                            <th class="py-3.5 px-4">Cổng thanh toán &amp; Mô tả</th>
+                            <th class="py-3.5 px-4">Mã định danh</th>
+                            <th class="py-3.5 px-4">Hình thức</th>
+                            <th class="py-3.5 px-4 text-center">Trạng thái</th>
+                            <th class="py-3.5 px-4 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <!-- Danh sách trống -->
+                        <tr th:if="${danhSachPhuongThuc == null or danhSachPhuongThuc.isEmpty()}">
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-50 flex items-center justify-center text-2xl text-slate-300">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                                <div class="font-bold text-slate-600">Không tìm thấy cổng thanh toán nào</div>
+                                <div class="text-[11px] mt-1">Hãy thử tìm với từ khóa khác hoặc bấm "+ Thêm cổng thanh toán"</div>
+                            </td>
+                        </tr>
+
+                        <!-- Dòng bản ghi -->
+                        <tr th:each="pt : ${danhSachPhuongThuc}" class="hover:bg-slate-50/70 transition group">
+                            <!-- Checkbox -->
+                            <td class="py-3.5 px-4 text-center">
+                                <input type="checkbox" name="selectedIds" th:value="${pt.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                       class="item-checkbox w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                            </td>
+
+                            <!-- ID -->
+                            <td class="py-3.5 px-4 font-mono font-bold text-slate-400" th:text="${pt.id}">1</td>
+
+                            <!-- Tên & Biểu tượng & Mô tả -->
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-lg flex-shrink-0 overflow-hidden">
+                                        <!-- Nếu biểu tượng là file ảnh tải lên từ máy -->
+                                        <img th:if="${pt.bieuTuong != null and (pt.bieuTuong.startsWith('/uploads/') or pt.bieuTuong.startsWith('http') or pt.bieuTuong.contains('.'))}"
+                                             th:src="${pt.bieuTuong}" alt="Logo" class="w-full h-full object-contain p-1 rounded-lg">
+                                        <!-- Nếu là class biểu tượng fontawesome thông thường -->
+                                        <i th:unless="${pt.bieuTuong != null and (pt.bieuTuong.startsWith('/uploads/') or pt.bieuTuong.startsWith('http') or pt.bieuTuong.contains('.'))}"
+                                           th:class="${pt.bieuTuong != null ? pt.bieuTuong : 'fa-solid fa-credit-card text-blue-600'}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-black text-slate-900 text-xs sm:text-sm" th:text="${pt.tenPhuongThuc}">
+                                            Thanh toán khi nhận hàng (COD)
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1 max-w-md"
+                                             th:text="${pt.moTa != null ? pt.moTa : 'Chưa có mô tả chi tiết'}">
+                                            Mô tả hướng dẫn thanh toán
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Mã phương thức -->
+                            <td class="py-3.5 px-4">
+                                <span class="font-mono font-bold text-[11px] px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700"
+                                      th:text="${pt.maPhuongThuc}">
+                                    COD
+                                </span>
+                            </td>
+
+                            <!-- Phân loại trực tuyến / tiền mặt -->
+                            <td class="py-3.5 px-4">
+                                <span th:if="${pt.laTrucTuyen}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <i class="fa-solid fa-bolt text-[9px]"></i> Trực tuyến
+                                </span>
+                                <span th:if="${!pt.laTrucTuyen}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                    <i class="fa-solid fa-hand-holding-dollar text-[9px]"></i> Tiền mặt
+                                </span>
+                            </td>
+
+                            <!-- CỘT TRẠNG THÁI: GIỐNG CÁC CHỨC NĂNG QUẢN LÝ KHÁC (DANH MỤC, SẢN PHẨM, MÀU SẮC,...) -->
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <span th:if="${pt.kichHoat}" class="status-badge-active">
+                                    <span class="pulse-dot bg-emerald-500"></span>
+                                    Còn hoạt động
+                                </span>
+                                <span th:unless="${pt.kichHoat}" class="status-badge-inactive">
+                                    <span class="pulse-dot bg-neutral-400"></span>
+                                    Tạm ngưng
+                                </span>
+                            </td>
+
+                            <!-- CỘT THAO TÁC: SỬA + BẬT/TẮT ĐỔI TRẠNG THÁI + XÓA GIỐNG HỆT CÁC CHỨC NĂNG KHÁC -->
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <!-- Nút Sửa: Mở Modal Chỉnh sửa -->
+                                    <button type="button"
+                                            th:onclick="'moModalSua(' + ${pt.id} + ')'"
+                                            class="btn-outline px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                                            title="Chỉnh sửa cổng thanh toán">
+                                        <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                        <span>Sửa</span>
+                                    </button>
+
+                                    <!-- Nút Bật / Tắt (Đổi trạng thái) -->
+                                    <a th:href="@{/admin/phuong-thuc-thanh-toan/doi-trang-thai(id=${pt.id})}"
+                                       th:class="${pt.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                       th:title="${pt.kichHoat} ? 'Tạm ngưng hoạt động cổng thanh toán này' : 'Kích hoạt cổng thanh toán này'"
+                                       class="px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs transition">
+                                        <i th:class="${pt.kichHoat} ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]'"></i>
+                                        <span th:text="${pt.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                    </a>
+
+                                    <!-- Nút Xóa: Có bảo vệ chống xóa nếu đã có giao dịch -->
+                                    <a th:href="@{/admin/phuong-thuc-thanh-toan/xoa(id=${pt.id})}"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa cổng thanh toán này không? (Hệ thống sẽ bảo vệ nếu đã có giao dịch phát sinh)')"
+                                       class="btn-danger-outline px-2 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                                       title="Xóa cổng thanh toán">
+                                        <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                        <span>Xóa</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${totalPages > 1}" class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <div>
+                    Trang <span class="font-bold text-slate-800" th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages}">1</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(page=${currentPage - 1}, tuKhoa=${tuKhoa}, laTrucTuyen=${laTrucTuyen}, kichHoat=${kichHoat})}"
+                       class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold">
+                        &larr; Trước
+                    </a>
+                    <a th:if="${currentPage + 1 < totalPages}"
+                       th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(page=${currentPage + 1}, tuKhoa=${tuKhoa}, laTrucTuyen=${laTrucTuyen}, kichHoat=${kichHoat})}"
+                       class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 1: THÊM MỚI CỔNG THANH TOÁN (US18 - C trong CRUD)        -->
+    <!-- ============================================================= -->
+    <div id="modalThem" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shadow-xs">
+                        <i class="fa-solid fa-credit-card text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Thêm Cổng Thanh Toán Mới</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Thiết lập phương thức thanh toán mới trong hệ thống</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalThem()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/phuong-thuc-thanh-toan/them}" th:object="${phuongThucMoi}" method="post" enctype="multipart/form-data" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mã phương thức <span class="text-rose-500 font-bold">*</span></label>
+                    <input type="text" th:field="*{maPhuongThuc}" placeholder="VD: VNPAY_QR, MOMO_WALLET, COD..."
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-mono uppercase font-bold">
+                    <span th:if="${#fields.hasErrors('maPhuongThuc')}" th:errors="*{maPhuongThuc}" class="error"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên hiển thị <span class="text-rose-500 font-bold">*</span></label>
+                    <input type="text" th:field="*{tenPhuongThuc}" placeholder="VD: Cổng thanh toán VNPay (Quét QR)"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span th:if="${#fields.hasErrors('tenPhuongThuc')}" th:errors="*{tenPhuongThuc}" class="error"></span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Hình thức thanh toán</label>
+                        <select th:field="*{laTrucTuyen}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="false">Tiền mặt khi nhận (COD)</option>
+                            <option value="true">Trực tuyến (Online Gateway)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Trạng thái ban đầu</label>
+                        <select th:field="*{kichHoat}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="true">BẬT kích hoạt ngay</option>
+                            <option value="false">TẮT (Tạm ẩn)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- CHỌN ẢNH BIỂU TƯỢNG TỪ MÁY TÍNH -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Ảnh biểu tượng cổng thanh toán</label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden flex-shrink-0" id="previewThemContainer">
+                            <i id="previewThemIcon" class="fa-solid fa-cloud-arrow-up text-slate-400 text-lg"></i>
+                            <img id="previewThemImg" class="w-full h-full object-contain hidden" alt="Preview">
+                        </div>
+                        <div class="flex-1">
+                            <input type="file" name="fileBieuTuong" id="fileBieuTuongThem" accept="image/*" onchange="xemTruocAnh(this, 'previewThemImg', 'previewThemIcon')"
+                                   class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                            <p class="text-[11px] text-slate-400 mt-1">Chọn ảnh PNG, JPG, WEBP, SVG từ máy (tối đa 5MB)</p>
+                        </div>
+                    </div>
+                    <input type="hidden" th:field="*{bieuTuong}">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mô tả hướng dẫn cho khách hàng</label>
+                    <textarea th:field="*{moTa}" rows="2" placeholder="VD: Quét mã QR thanh toán qua ứng dụng ngân hàng hoặc thẻ ATM..."
+                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium resize-none"></textarea>
+                </div>
+
+                <input type="hidden" th:field="*{cauHinh}">
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="dongModalThem()"
+                            class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Lưu cổng thanh toán</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 2: CHỈNH SỬA & CẤU HÌNH THAM SỐ (US18 - U trong CRUD)   -->
+    <!-- ============================================================= -->
+    <div id="modalSua" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shadow-xs">
+                        <i class="fa-solid fa-sliders text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Cấu hình Cổng Thanh Toán</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Bật/Tắt và chỉnh sửa thông số cổng thanh toán</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalSua()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="formSua" method="post" enctype="multipart/form-data" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="editId" name="id">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mã phương thức <span class="text-rose-500 font-bold">*</span></label>
+                    <input type="text" id="editMaPhuongThuc" name="maPhuongThuc" required
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-mono uppercase font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên hiển thị <span class="text-rose-500 font-bold">*</span></label>
+                    <input type="text" id="editTenPhuongThuc" name="tenPhuongThuc" required
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Hình thức</label>
+                        <select id="editLaTrucTuyen" name="laTrucTuyen" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="false">Tiền mặt (COD)</option>
+                            <option value="true">Trực tuyến (Online Gateway)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Trạng thái Bật/Tắt (US18)</label>
+                        <select id="editKichHoat" name="kichHoat" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="true">BẬT (Khách có thể thanh toán)</option>
+                            <option value="false">TẮT (Tạm ẩn cổng thanh toán)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- CHỌN ẢNH BIỂU TƯỢNG TỪ MÁY TÍNH -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Ảnh biểu tượng cổng thanh toán</label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden flex-shrink-0" id="previewSuaContainer">
+                            <i id="previewSuaIcon" class="fa-solid fa-cloud-arrow-up text-slate-400 text-lg"></i>
+                            <img id="previewSuaImg" class="w-full h-full object-contain hidden" alt="Preview">
+                        </div>
+                        <div class="flex-1">
+                            <input type="file" name="fileBieuTuong" id="fileBieuTuongSua" accept="image/*" onchange="xemTruocAnh(this, 'previewSuaImg', 'previewSuaIcon')"
+                                   class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                            <p class="text-[11px] text-slate-400 mt-1">Để trống nếu muốn giữ nguyên logo / icon hiện tại</p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editBieuTuong" name="bieuTuong">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mô tả hướng dẫn cho khách hàng</label>
+                    <textarea id="editMoTa" name="moTa" rows="2"
+                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium resize-none"></textarea>
+                </div>
+
+                <input type="hidden" id="editCauHinh" name="cauHinh">
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="dongModalSua()"
+                            class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Đóng
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Cập nhật thông tin</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Form ẩn phục vụ thao tác hàng loạt -->
+    <form id="formThaoTacHangLoat" th:action="@{/admin/phuong-thuc-thanh-toan/thao-tac-hang-loat}" method="post" style="display: none;">
+        <div id="hiddenInputsContainer"></div>
+        <input type="hidden" name="hanhDong" id="inputHanhDongHangLoat">
+    </form>
+
+    <!-- JavaScript Xử lý Bật/Tắt & CRUD Cổng thanh toán (US18) -->
+    <script>
+        // 1. Thao tác BẬT / TẮT 1-click (AJAX)
+        function toggleCongThanhToan(id, btnElement) {
+            btnElement.disabled = true;
+            fetch(`/admin/phuong-thuc-thanh-toan/toggle/${id}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnElement.disabled = false;
+                if (data.success) {
+                    const isKichHoat = data.kichHoat;
+                    const circle = btnElement.querySelector('span');
+                    const badge = btnElement.parentElement.querySelector('.status-badge');
+
+                    if (isKichHoat) {
+                        btnElement.classList.remove('bg-slate-300', 'ring-slate-200');
+                        btnElement.classList.add('bg-emerald-600', 'ring-emerald-300');
+                        circle.classList.remove('translate-x-0');
+                        circle.classList.add('translate-x-5');
+                        badge.innerText = 'ĐANG BẬT';
+                        badge.classList.remove('text-slate-400');
+                        badge.classList.add('text-emerald-700');
+                        btnElement.title = 'Bấm để TẮT cổng thanh toán';
+                    } else {
+                        btnElement.classList.remove('bg-emerald-600', 'ring-emerald-300');
+                        btnElement.classList.add('bg-slate-300', 'ring-slate-200');
+                        circle.classList.remove('translate-x-5');
+                        circle.classList.add('translate-x-0');
+                        badge.innerText = 'ĐANG TẮT';
+                        badge.classList.remove('text-emerald-700');
+                        badge.classList.add('text-slate-400');
+                        btnElement.title = 'Bấm để BẬT cổng thanh toán';
+                    }
+
+                    hienThiToast(data.message, 'success');
+                } else {
+                    hienThiToast(data.message || 'Không thể đổi trạng thái!', 'error');
+                }
+            })
+            .catch(err => {
+                btnElement.disabled = false;
+                hienThiToast('Lỗi kết nối máy chủ: ' + err, 'error');
+            });
+        }
+
+        // Hàm xem trước ảnh khi chọn từ máy tính
+        function xemTruocAnh(input, imgId, iconId) {
+            const img = document.getElementById(imgId);
+            const icon = document.getElementById(iconId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    if (icon) icon.classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 2. Quản lý Modal Thêm mới
+        function moModalThem() {
+            const fileInput = document.getElementById('fileBieuTuongThem');
+            if (fileInput) fileInput.value = '';
+            const img = document.getElementById('previewThemImg');
+            if (img) {
+                img.src = '';
+                img.classList.add('hidden');
+            }
+            const icon = document.getElementById('previewThemIcon');
+            if (icon) icon.classList.remove('hidden');
+
+            document.getElementById('modalThem').classList.remove('hidden');
+        }
+        function dongModalThem() {
+            document.getElementById('modalThem').classList.add('hidden');
+        }
+
+        // 3. Quản lý Modal Sửa & Nạp dữ liệu qua API
+        function moModalSua(id) {
+            const fileInput = document.getElementById('fileBieuTuongSua');
+            if (fileInput) fileInput.value = '';
+
+            fetch(`/admin/phuong-thuc-thanh-toan/api/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('editId').value = data.id;
+                document.getElementById('editMaPhuongThuc').value = data.maPhuongThuc || '';
+                document.getElementById('editTenPhuongThuc').value = data.tenPhuongThuc || '';
+                document.getElementById('editLaTrucTuyen').value = data.laTrucTuyen ? 'true' : 'false';
+                document.getElementById('editKichHoat').value = data.kichHoat ? 'true' : 'false';
+                document.getElementById('editBieuTuong').value = data.bieuTuong || '';
+                document.getElementById('editMoTa').value = data.moTa || '';
+                document.getElementById('editCauHinh').value = data.cauHinh || '';
+
+                // Hiển thị ảnh hiện tại nếu có
+                const img = document.getElementById('previewSuaImg');
+                const icon = document.getElementById('previewSuaIcon');
+                if (data.bieuTuong && (data.bieuTuong.startsWith('/uploads/') || data.bieuTuong.startsWith('http') || data.bieuTuong.includes('.'))) {
+                    img.src = data.bieuTuong;
+                    img.classList.remove('hidden');
+                    if (icon) icon.classList.add('hidden');
+                } else {
+                    img.src = '';
+                    img.classList.add('hidden');
+                    if (icon) icon.classList.remove('hidden');
+                }
+
+                document.getElementById('formSua').action = `/admin/phuong-thuc-thanh-toan/sua/${id}`;
+                document.getElementById('modalSua').classList.remove('hidden');
+            })
+            .catch(err => {
+                alert('Không thể tải thông tin cổng thanh toán: ' + err);
+            });
+        }
+        function dongModalSua() {
+            document.getElementById('modalSua').classList.add('hidden');
+        }
+
+        // 5. Thao tác hàng loạt (Bulk actions)
+        function toggleCheckAll(master) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            const total = document.querySelectorAll('.item-checkbox').length;
+            const bar = document.getElementById('bulkActionsBar');
+            const counter = document.getElementById('selectedCount');
+            const master = document.getElementById('checkAll');
+
+            counter.innerText = checkedBoxes.length;
+            if (checkedBoxes.length > 0) {
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+
+            if (master) {
+                master.checked = (checkedBoxes.length === total && total > 0);
+            }
+        }
+
+        function boChonTatCa() {
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+            const master = document.getElementById('checkAll');
+            if (master) master.checked = false;
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function thucHienThaoTacHangLoat(hanhDong) {
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Vui lòng chọn ít nhất một cổng thanh toán!');
+                return;
+            }
+
+            if (hanhDong === 'xoa') {
+                if (!confirm(`Bạn có chắc chắn muốn xóa ${checkedBoxes.length} cổng thanh toán đã chọn?`)) {
+                    return;
+                }
+            }
+
+            const container = document.getElementById('hiddenInputsContainer');
+            container.innerHTML = '';
+
+            checkedBoxes.forEach(cb => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'ids';
+                inp.value = cb.value;
+                container.appendChild(inp);
+            });
+
+            document.getElementById('inputHanhDongHangLoat').value = hanhDong;
+            document.getElementById('formThaoTacHangLoat').submit();
+        }
+
+        // 6. Toast Notification Helper
+        function hienThiToast(message, type = 'success') {
+            const div = document.createElement('div');
+            const isSuccess = type === 'success';
+            div.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-semibold text-white transition-all transform duration-300 ${isSuccess ? 'bg-emerald-600' : 'bg-rose-600'}`;
+            div.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check' : 'fa-circle-exclamation'} text-sm"></i> <span>${message}</span>`;
+            document.body.appendChild(div);
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transform = 'translateY(10px)';
+                setTimeout(() => div.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

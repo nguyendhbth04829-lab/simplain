@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Mã giảm giá (Voucher - US26) | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('voucher')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER & NÚT TẠO MỚI (US26) -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-md shadow-blue-500/20">
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Chương Trình Mã Giảm Giá (Voucher)
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Quản lý chiến dịch khuyến mãi chiết khấu, hạn mức ngân sách và lượt dùng voucher (US26 - Mod 6).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/voucher/tao-moi"
+                   class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-extrabold uppercase tracking-wider transition shadow-md shadow-blue-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Tạo Chương Trình Mới
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. TAB LỌC TRẠNG THÁI (KÈM BADGE SỐ LƯỢNG) -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold scrollbar-none">
+            <a th:href="@{/admin/voucher/hien-thi(tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai='TAT_CA')}"
+               class="px-4 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-2xs"
+               th:classappend="${trangThaiHienTai == 'TAT_CA' ? 'bg-[#0f172a] text-white font-extrabold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                <span>Tất cả</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px]"
+                      th:classappend="${trangThaiHienTai == 'TAT_CA' ? 'bg-slate-700 text-slate-200' : 'bg-slate-100 text-slate-600'}"
+                      th:text="${thongKe['TAT_CA']}">0</span>
+            </a>
+
+            <a th:href="@{/admin/voucher/hien-thi(tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai='DANG_DIEN_RA')}"
+               class="px-4 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-2xs"
+               th:classappend="${trangThaiHienTai == 'DANG_DIEN_RA' ? 'bg-emerald-600 text-white font-extrabold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Đang diễn ra</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px]"
+                      th:classappend="${trangThaiHienTai == 'DANG_DIEN_RA' ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-800'}"
+                      th:text="${thongKe['DANG_DIEN_RA']}">0</span>
+            </a>
+
+            <a th:href="@{/admin/voucher/hien-thi(tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai='SAP_DIEN_RA')}"
+               class="px-4 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-2xs"
+               th:classappend="${trangThaiHienTai == 'SAP_DIEN_RA' ? 'bg-sky-600 text-white font-extrabold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                <i class="fa-regular fa-clock text-[11px]"></i>
+                <span>Sắp diễn ra</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px]"
+                      th:classappend="${trangThaiHienTai == 'SAP_DIEN_RA' ? 'bg-sky-800 text-white' : 'bg-sky-100 text-sky-800'}"
+                      th:text="${thongKe['SAP_DIEN_RA']}">0</span>
+            </a>
+
+            <a th:href="@{/admin/voucher/hien-thi(tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai='DA_KET_THUC')}"
+               class="px-4 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-2xs"
+               th:classappend="${trangThaiHienTai == 'DA_KET_THUC' ? 'bg-rose-600 text-white font-extrabold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                <span>Đã hết hạn</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px]"
+                      th:classappend="${trangThaiHienTai == 'DA_KET_THUC' ? 'bg-rose-800 text-white' : 'bg-rose-100 text-rose-800'}"
+                      th:text="${thongKe['DA_KET_THUC']}">0</span>
+            </a>
+
+            <a th:href="@{/admin/voucher/hien-thi(tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai='TAM_NGUNG')}"
+               class="px-4 py-2 rounded-xl transition flex items-center gap-2 whitespace-nowrap shadow-2xs"
+               th:classappend="${trangThaiHienTai == 'TAM_NGUNG' ? 'bg-slate-700 text-white font-extrabold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                <span>Tạm ngưng</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px]"
+                      th:classappend="${trangThaiHienTai == 'TAM_NGUNG' ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-700'}"
+                      th:text="${thongKe['TAM_NGUNG']}">0</span>
+            </a>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM THEO TỪ KHÓA & HÌNH THỨC GIẢM GIÁ -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs">
+            <form th:action="@{/admin/voucher/hien-thi}" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
+                <input type="hidden" name="trangThai" th:value="${trangThaiHienTai}" />
+
+                <div class="sm:col-span-6 relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                           placeholder="Tìm kiếm theo mã code voucher hoặc tên chương trình..."
+                           class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500" />
+                </div>
+
+                <div class="sm:col-span-4">
+                    <select name="loaiGiamGia"
+                            class="w-full py-2.5 px-3 rounded-xl border border-slate-300 text-xs bg-white focus:ring-blue-500 focus:border-blue-500 font-semibold">
+                        <option value="TAT_CA" th:selected="${loaiGiamGiaHienTai == 'TAT_CA'}">--- Tất cả hình thức giảm ---</option>
+                        <option value="PERCENT" th:selected="${loaiGiamGiaHienTai == 'PERCENT'}">Giảm theo Phần trăm (%)</option>
+                        <option value="FIXED_AMOUNT" th:selected="${loaiGiamGiaHienTai == 'FIXED_AMOUNT'}">Giảm Tiền mặt cố định (VNĐ)</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                            class="w-full py-2.5 px-4 rounded-xl bg-[#0f172a] hover:bg-blue-600 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-2xs">
+                        <i class="fa-solid fa-filter"></i> Lọc dữ liệu
+                    </button>
+                    <a th:href="@{/admin/voucher/hien-thi}" title="Đặt lại bộ lọc"
+                       class="p-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-600 transition">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. BẢNG DỮ LIỆU MÃ GIẢM GIÁ (TABLE) -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50/80 text-[11px] font-extrabold uppercase text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="py-3.5 px-4">Mã &amp; Tên Voucher</th>
+                            <th class="py-3.5 px-3">Hình Thức Giảm</th>
+                            <th class="py-3.5 px-3">Đơn Tối Thiểu</th>
+                            <th class="py-3.5 px-3">Tiến Độ Lượt Dùng</th>
+                            <th class="py-3.5 px-3">Ngân Sách Chiến Dịch</th>
+                            <th class="py-3.5 px-3">Thời Gian Hiệu Lực</th>
+                            <th class="py-3.5 px-3 text-center">Trạng Thái</th>
+                            <th class="py-3.5 px-4 text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr th:if="${trangVoucher.empty}">
+                            <td colspan="8" class="text-center py-12 text-slate-400">
+                                <i class="fa-solid fa-ticket text-3xl mb-2 block text-slate-300"></i>
+                                Không tìm thấy chương trình mã giảm giá nào phù hợp.
+                            </td>
+                        </tr>
+
+                        <tr th:each="m : ${trangVoucher.content}" class="hover:bg-slate-50/60 transition group">
+                            <!-- Mã & Tên -->
+                            <td class="py-3.5 px-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-mono font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-xs tracking-wider"
+                                              th:text="${m.maCode}">
+                                            CODE20
+                                        </span>
+                                        <button type="button" th:onclick="copyCode([[${m.maCode}]])" title="Sao chép mã"
+                                                class="text-slate-400 hover:text-blue-600 transition text-[11px] p-0.5">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    <strong class="font-bold text-slate-900 line-clamp-1 block" th:text="${m.tenVoucher}">Tên voucher</strong>
+                                    <span class="text-[10px] text-slate-400" th:if="${m.moTa != null && !m.moTa.isBlank()}" th:text="${m.moTa}">Mô tả...</span>
+                                </div>
+                            </td>
+
+                            <!-- Hình thức giảm -->
+                            <td class="py-3.5 px-3">
+                                <div th:if="${m.loaiGiamGia == 'PERCENT'}" class="space-y-0.5">
+                                    <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-black text-[11px] inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-percent text-[9px]"></i>
+                                        <span th:text="${'Giảm ' + #numbers.formatDecimal(m.giaTriGiam, 0, 'POINT', 0, 'COMMA') + '%'}">Giảm 20%</span>
+                                    </span>
+                                    <div class="text-[10px] text-slate-500 font-medium">
+                                        Tối đa: <strong class="text-slate-800"
+                                                        th:text="${m.giamToiDa != null ? #numbers.formatDecimal(m.giamToiDa, 0, 'POINT', 0, 'COMMA') + ' đ' : 'Không giới hạn'}">50k</strong>
+                                    </div>
+                                </div>
+
+                                <div th:if="${m.loaiGiamGia == 'FIXED_AMOUNT'}" class="space-y-0.5">
+                                    <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-black text-[11px] inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-money-bill-wave text-[9px]"></i>
+                                        <span th:text="${'Giảm ' + #numbers.formatDecimal(m.giaTriGiam, 0, 'POINT', 0, 'COMMA') + ' đ'}">Giảm 30,000 đ</span>
+                                    </span>
+                                    <div class="text-[10px] text-slate-400">Tiền mặt cố định</div>
+                                </div>
+                            </td>
+
+                            <!-- Đơn tối thiểu & Giới hạn user -->
+                            <td class="py-3.5 px-3">
+                                <div class="space-y-0.5 text-xs">
+                                    <div class="font-extrabold text-slate-800 font-mono"
+                                         th:text="${m.giaTriDonToiThieu != null && m.giaTriDonToiThieu > 0 ? #numbers.formatDecimal(m.giaTriDonToiThieu, 0, 'POINT', 0, 'COMMA') + ' đ' : '0 đ (Mọi đơn)'}">
+                                        200,000 đ
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 block"
+                                          th:text="${'Tối đa: ' + m.gioiHanMoiUser + ' lần/khách'}">
+                                        Tối đa: 1 lần/khách
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Tiến độ lượt dùng -->
+                            <td class="py-3.5 px-3">
+                                <div class="space-y-1 w-32">
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <strong class="font-mono font-bold text-slate-900" th:text="${m.soLuongDaDung}">0</strong>
+                                        <span class="text-slate-400 font-mono"
+                                              th:text="${m.tongSoLuong != null ? '/ ' + m.tongSoLuong : '/ &infin;'}">/ 500</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden" th:if="${m.tongSoLuong != null}">
+                                        <div class="bg-blue-600 h-full rounded-full transition-all"
+                                             th:style="${'width: ' + m.getPhanTramSuDung() + '%'}"></div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Ngân sách chiến dịch -->
+                            <td class="py-3.5 px-3">
+                                <div class="space-y-1 w-36">
+                                    <div class="text-[11px] font-mono">
+                                        <strong class="text-amber-800 font-bold"
+                                                th:text="${m.nganSachDaDung != null ? #numbers.formatDecimal(m.nganSachDaDung, 0, 'POINT', 0, 'COMMA') + ' đ' : '0 đ'}">0 đ</strong>
+                                        <span class="text-slate-400 text-[10px]"
+                                              th:text="${m.nganSach != null ? ' / ' + #numbers.formatDecimal(m.nganSach, 0, 'POINT', 0, 'COMMA') + ' đ' : ' / &infin;'}">/ 10M</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden" th:if="${m.nganSach != null}">
+                                        <div class="bg-amber-500 h-full rounded-full transition-all"
+                                             th:style="${'width: ' + m.getPhanTramNganSach() + '%'}"></div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Thời gian hiệu lực -->
+                            <td class="py-3.5 px-3 font-mono text-[11px] text-slate-600 space-y-0.5">
+                                <div><i class="fa-solid fa-play text-[9px] text-emerald-500 mr-1"></i><span th:text="${#temporals.format(m.ngayBatDau, 'dd/MM/yyyy HH:mm')}">01/10/2026</span></div>
+                                <div><i class="fa-solid fa-stop text-[9px] text-rose-500 mr-1"></i><span th:text="${#temporals.format(m.ngayKetThuc, 'dd/MM/yyyy HH:mm')}">31/10/2026</span></div>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td class="py-3.5 px-3 text-center">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border inline-block"
+                                      th:classappend="${m.getTrangThaiBadgeClass()}"
+                                      th:text="${m.getTrangThaiLabel()}">
+                                    Đang diễn ra
+                                </span>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <!-- Nút Sửa -->
+                                    <a th:href="@{'/admin/voucher/chinh-sua/' + ${m.id}}" title="Chỉnh sửa voucher"
+                                       class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition shadow-2xs">
+                                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                    </a>
+
+                                    <!-- Nút Bật/Tắt Kích hoạt -->
+                                    <form th:action="@{'/admin/voucher/kich-hoat/' + ${m.id}}" method="POST" class="inline">
+                                        <button type="submit"
+                                                th:title="${m.kichHoat ? 'Tạm ngưng voucher' : 'Kích hoạt lại voucher'}"
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center transition shadow-2xs"
+                                                th:classappend="${m.kichHoat ? 'bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'}">
+                                            <i class="fa-solid text-xs" th:classappend="${m.kichHoat ? 'fa-pause' : 'fa-play'}"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Nút Xóa (Nếu chưa có đơn dùng) -->
+                                    <form th:if="${m.soLuongDaDung == 0}"
+                                          th:action="@{'/admin/voucher/xoa/' + ${m.id}}" method="POST" class="inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa mã giảm giá này không? Thao tác không thể hoàn tác!')">
+                                        <button type="submit" title="Xóa voucher"
+                                                class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white flex items-center justify-center transition shadow-2xs">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${trangVoucher.totalPages > 1}"
+                 class="p-4 bg-slate-50/60 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3 text-xs">
+                <span class="text-slate-500">
+                    Hiển thị trang <strong class="text-slate-900" th:text="${currentPage + 1}">1</strong> / <span th:text="${trangVoucher.totalPages}">1</span>
+                    (Tổng cộng <strong th:text="${trangVoucher.totalElements}">0</strong> mã)
+                </span>
+
+                <div class="flex items-center gap-1 font-bold">
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/admin/voucher/hien-thi(page=${currentPage - 1}, size=${pageSize}, tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai=${trangThaiHienTai})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-white text-slate-700 transition">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Trước
+                    </a>
+
+                    <a th:if="${currentPage < trangVoucher.totalPages - 1}"
+                       th:href="@{/admin/voucher/hien-thi(page=${currentPage + 1}, size=${pageSize}, tuKhoa=${tuKhoa}, loaiGiamGia=${loaiGiamGiaHienTai}, trangThai=${trangThaiHienTai})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-white text-slate-700 transition">
+                        Sau <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function copyCode(code) {
+            if (!code) return;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Đã sao chép mã voucher: ' + code);
+            }).catch(() => {
+                prompt('Sao chép mã voucher:', code);
+            });
+        }
+    </script>
+</body>
+</html>

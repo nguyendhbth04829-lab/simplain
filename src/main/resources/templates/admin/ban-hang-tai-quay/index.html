@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bán Hàng Tại Quầy (POS) | SIMPLAIN STORE</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome Pro Icons -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <!-- Google Inter Font -->
+
+    <style>
+        body, button, input, select, textarea, table, th, td, h1, h2, h3, h4, h5, h6, span, p, a {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+
+        /* Ẩn thanh cuộn mặc định */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Custom Scrollbar */
+        .pos-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .pos-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .pos-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .pos-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* CSS Chuyên dụng cho Hóa đơn in nhiệt (80mm Thermal Receipt) */
+        @media print {
+            body {
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            /* Ẩn toàn bộ giao diện màn hình POS khi in ngoại trừ hóa đơn */
+            header, section, aside, #containerTabsHoaDon, #modalChonSanPham, #modalThemKhachNhanh, #posToast, .no-print {
+                display: none !important;
+            }
+            #modalInHoaDon {
+                display: block !important;
+                position: static !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                backdrop-filter: none !important;
+            }
+            #modalInHoaDon > div {
+                box-shadow: none !important;
+                border: none !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                background: transparent !important;
+            }
+            #receiptPreviewContainer {
+                padding: 0 !important;
+                margin: 0 auto !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+            }
+            /* Hiện vùng in biên lai nhiệt chuẩn 80mm */
+            #receiptPrintArea {
+                display: block !important;
+                visibility: visible !important;
+                position: static !important;
+                width: 78mm !important;
+                max-width: 80mm !important;
+                margin: 0 auto !important;
+                padding: 2mm !important;
+                background: white !important;
+                color: black !important;
+                font-size: 11px !important;
+                line-height: 1.35 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            #receiptPrintArea * {
+                visibility: visible !important;
+            }
+            #receiptPrintArea table {
+                display: table !important;
+                width: 100% !important;
+            }
+            #receiptPrintArea thead {
+                display: table-header-group !important;
+            }
+            #receiptPrintArea tbody {
+                display: table-row-group !important;
+            }
+            #receiptPrintArea tr {
+                display: table-row !important;
+            }
+            #receiptPrintArea th, #receiptPrintArea td {
+                display: table-cell !important;
+            }
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- =========================================================================
+         1. TOPBAR THANH ĐIỀU HƯỚNG & QUÉT MÃ VẠCH NHANH
+         ========================================================================= -->
+    <header class="bg-[#0a192f] text-white h-14 shrink-0 px-4 flex items-center justify-between border-b border-slate-800 z-30 shadow-md">
+        <!-- Logo & Nút về Admin -->
+        <div class="flex items-center gap-3">
+            <a href="/admin/dashboard" title="Về trang quản trị" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-sm text-white shadow-md shadow-blue-500/30 group-hover:bg-blue-500 transition">
+                    S
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-black text-sm tracking-wider uppercase">SIMPLAIN<span class="text-blue-400">.</span>POS</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ONLINE</span>
+                    </div>
+                </div>
+            </a>
+            <a href="/admin/dashboard" class="hidden md:inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800/60 hover:bg-slate-800 transition">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Admin Centre
+            </a>
+        </div>
+
+        <!-- Ô quét mã vạch Barcode / Tìm nhanh SKU (Hỗ trợ súng bắn Barcode & Phím Enter) -->
+        <div class="flex-1 max-w-xl mx-4">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
+                    <i class="fa-solid fa-barcode text-sm"></i>
+                </span>
+                <input type="text" id="inputBarcodeScan" placeholder="Quét mã vạch Barcode hoặc gõ SKU rồi Enter (VD: SKU-POLO...)"
+                       autocomplete="off"
+                       class="w-full pl-9 pr-24 py-1.5 text-xs rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-400 font-mono font-bold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner"
+                       onkeydown="xuLyQuetBarcode(event)" />
+                <button type="button" onclick="moModalChonSanPham()"
+                        class="absolute inset-y-1 right-1 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold flex items-center gap-1 transition cursor-pointer">
+                    <i class="fa-solid fa-magnifying-glass"></i> Tìm SP
+                </button>
+            </div>
+        </div>
+
+        <!-- Thông tin thu ngân & Phím tắt -->
+        <div class="flex items-center gap-3">
+            <div class="hidden lg:flex items-center gap-2 text-[11px] text-slate-300">
+                <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-amber-300">F2: Tìm SP</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-emerald-300">F4: Khách</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-blue-300">F9: Thanh toán</span>
+            </div>
+            <div class="flex items-center gap-2 pl-2 border-l border-slate-800">
+                <div class="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div class="text-right hidden sm:block">
+                    <div class="text-xs font-bold text-white leading-tight" th:text="${nhanVienHienTai != null ? nhanVienHienTai.hoTen : 'Thu ngân'}">Thu ngân</div>
+                    <div class="text-[9px] text-slate-400 font-mono">Quầy #01</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =========================================================================
+         2. THANH TAB HÓA ĐƠN CHỜ TẠI QUẦY (MULTI-TAB POS)
+         ========================================================================= -->
+    <div class="bg-slate-200/90 border-b border-slate-300 px-4 py-1.5 flex items-center justify-between shrink-0 shadow-2xs">
+        <!-- Danh sách tabs hóa đơn chờ -->
+        <div id="containerTabsHoaDon" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1">
+            <!-- Render động bằng JavaScript -->
+        </div>
+
+        <!-- Nút tạo thêm Tab Hóa đơn mới -->
+        <button type="button" onclick="taoTabHoaDonMoi()" title="Tạo thêm hóa đơn chờ mới (+)"
+                class="ml-3 shrink-0 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 border border-slate-300 hover:border-blue-400 text-xs font-bold flex items-center gap-1.5 transition shadow-2xs cursor-pointer">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Thêm HĐ</span>
+        </button>
+    </div>
+
+    <!-- =========================================================================
+         3. KHÔNG GIAN BÁN HÀNG CHÍNH (2 CỘT TỶ LỆ 8 : 4)
+         ========================================================================= -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- CỘT TRÁI (7.5 / 12): GIỎ HÀNG CỦA HÓA ĐƠN ĐANG CHỌN -->
+        <section class="flex-1 flex flex-col bg-white border-r border-slate-200 overflow-hidden">
+            <!-- Thanh tiêu đề giỏ hàng + Thống kê số món -->
+            <div class="px-5 py-2.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-blue-600"></i>
+                    <span class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Danh Sách Mặt Hàng</span>
+                    <span id="badgeTongSoLuong" class="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-blue-100 text-blue-800">
+                        0 món
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="moModalChonSanPham()" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-circle-plus"></i> Chọn nhanh mặt hàng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách mặt hàng đã thêm vào tab -->
+            <div class="flex-1 overflow-y-auto pos-scroll p-3">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-slate-100 text-[11px] uppercase font-bold text-slate-600 border-b border-slate-200 shadow-2xs">
+                        <tr>
+                            <th class="p-2.5 text-center w-10">STT</th>
+                            <th class="p-2.5 w-14 text-center">Ảnh</th>
+                            <th class="p-2.5">Sản Phẩm &amp; Phân Loại</th>
+                            <th class="p-2.5 text-right w-28">Đơn Giá</th>
+                            <th class="p-2.5 text-center w-36">Số Lượng</th>
+                            <th class="p-2.5 text-right w-32">Thành Tiền</th>
+                            <th class="p-2.5 text-center w-12">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyMatHang" class="divide-y divide-slate-100 text-xs">
+                        <!-- Render danh sách mặt hàng bằng JavaScript -->
+                    </tbody>
+                </table>
+
+                <!-- Trạng thái giỏ rỗng -->
+                <div id="emptyCartNotice" class="hidden flex flex-col items-center justify-center py-20 text-slate-400">
+                    <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-3xl mb-3 text-slate-300">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                    </div>
+                    <p class="font-bold text-slate-600 text-sm">Hóa đơn này chưa có sản phẩm nào</p>
+                    <p class="text-xs text-slate-400 mt-1 max-w-sm text-center">Quét mã vạch Barcode bằng máy quét, gõ mã SKU vào ô phía trên, hoặc nhấn nút <b>"Chọn nhanh mặt hàng"</b> để bán hàng.</p>
+                    <button type="button" onclick="moModalChonSanPham()"
+                            class="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5">
+                        <i class="fa-solid fa-shirt"></i> Mở kho chọn sản phẩm
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CỘT PHẢI (4.5 / 12): THÔNG TIN KHÁCH HÀNG & BẢNG THANH TOÁN -->
+        <aside class="w-96 lg:w-[420px] bg-slate-50 flex flex-col shrink-0 border-l border-slate-200 overflow-hidden">
+            
+            <div class="flex-1 overflow-y-auto pos-scroll p-4 space-y-4">
+
+                <!-- 1. KHỐI KHÁCH HÀNG -->
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-check text-blue-600"></i> Khách Hàng (F4)
+                        </span>
+                        <button type="button" onclick="moModalThemKhachNhanh()" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-user-plus"></i> Thêm mới
+                        </button>
+                    </div>
+
+                    <!-- Ô tìm kiếm khách hàng -->
+                    <div class="relative z-30">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="inputTimKhachHang" placeholder="Tìm theo Tên hoặc Số điện thoại (Enter để chọn)..."
+                               autocomplete="off"
+                               class="w-full pl-8 pr-8 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                               oninput="timKiemKhachHangDebounce(this.value)"
+                               onfocus="timKiemKhachHangDebounce(this.value)"
+                               onkeydown="xuLyPhimTatTimKhach(event)" />
+                        <button type="button" id="btnClearKhachHang" onclick="datLaiKhachLe()" title="Đặt lại khách lẻ"
+                                class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-rose-500 cursor-pointer">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+
+                        <!-- Dropdown kết quả tìm kiếm khách hàng -->
+                        <div id="dropdownKhachHang" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto pos-scroll divide-y divide-slate-100">
+                        </div>
+                    </div>
+
+                    <!-- Hiển thị thông tin khách hàng đang chọn -->
+                    <div id="boxThongTinKhachHang" class="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200/80 space-y-1.5 text-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <div id="labelTenKhachHang" class="font-extrabold text-slate-800">Khách lẻ tại quầy</div>
+                                    <div id="labelSdtKhachHang" class="text-[11px] text-slate-500 font-mono">---</div>
+                                </div>
+                            </div>
+                            <span id="badgeLoaiKhach" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Khách lẻ</span>
+                        </div>
+                        <!-- Chi tiết Hội viên & Điểm tích lũy -->
+                        <div id="boxHoiVienDetail" class="hidden pt-1.5 border-t border-blue-200/60 flex items-center justify-between text-[11px]">
+                            <span class="text-slate-600 font-medium">
+                                Hạng: <b id="badgeHangHoiVien" class="text-amber-800 font-bold">Đồng</b>
+                            </span>
+                            <span class="text-amber-700 font-bold font-mono">
+                                Điểm tích lũy: <b id="labelDiemTichLuyHienTai" class="font-black text-amber-800">0 đ</b>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. KHỐI CHI TIẾT TÍNH TIỀN -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+                    <span class="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-calculator text-blue-600"></i> Chi Tiết Thanh Toán
+                    </span>
+
+                    <div class="space-y-2 text-xs">
+                        <!-- Tổng tiền hàng -->
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Tổng tiền hàng:</span>
+                            <span id="labelTongTienHang" class="font-bold font-mono text-slate-800 text-sm">0 đ</span>
+                        </div>
+
+                        <!-- Giảm giá / Chiết khấu -->
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-slate-600 shrink-0">Giảm giá / Voucher:</span>
+                            <div class="relative w-36">
+                                <input type="number" id="inputTienGiamGia" value="0" min="0" step="1000"
+                                       class="w-full text-right pr-6 pl-2 py-1 rounded-lg border border-slate-300 font-mono font-bold text-xs focus:outline-none focus:border-blue-600 text-rose-600"
+                                       oninput="tinhToanTongTienThanhToan()" />
+                                <span class="absolute right-2 inset-y-0 flex items-center text-[10px] text-slate-400 font-mono">đ</span>
+                            </div>
+                        </div>
+
+                        <!-- Giảm giá bằng Điểm tích lũy (US16, US19) -->
+                        <div id="boxDungDiemCoolcash" class="hidden p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-extrabold text-amber-900 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-coins text-amber-500"></i> Dùng điểm tích lũy
+                                </span>
+                                <span class="text-[11px] font-mono font-bold text-amber-700">
+                                    Khả dụng: <span id="labelDiemKhaDung" class="font-black">0</span> đ
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="flex items-center gap-1.5 text-[11px] font-bold text-amber-900 cursor-pointer">
+                                    <input type="checkbox" id="chkDungDiem" onchange="toggleDungDiem(this.checked)" class="rounded text-amber-600 focus:ring-amber-500 cursor-pointer" />
+                                    <span>Trừ vào hóa đơn</span>
+                                </label>
+                                <div class="flex items-center gap-1">
+                                    <div class="relative w-28">
+                                        <input type="number" id="inputDiemDung" value="0" min="0" step="1000" disabled
+                                               class="w-full text-right pr-5 pl-2 py-1 rounded-lg border border-amber-300 font-mono font-bold text-xs focus:outline-none focus:border-amber-600 bg-white text-amber-900 disabled:bg-slate-100 disabled:text-slate-400"
+                                               oninput="tinhToanTongTienThanhToan()" />
+                                        <span class="absolute right-1.5 inset-y-0 flex items-center text-[10px] text-amber-600 font-mono">đ</span>
+                                    </div>
+                                    <button type="button" id="btnDungHetDiem" onclick="dungHetDiem()" disabled
+                                            class="px-2 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 disabled:opacity-40 text-amber-900 font-bold text-[10px] cursor-pointer">
+                                        Tối đa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="border-t border-dashed border-slate-200 pt-2 flex items-center justify-between">
+                            <span class="font-extrabold text-sm text-slate-900 uppercase">Khách Cần Trả:</span>
+                            <span id="labelTongThanhToan" class="font-black font-mono text-xl text-blue-600">0 đ</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. PHƯƠNG THỨC THANH TOÁN (TIỀN MẶT / CHUYỂN KHOẢN QR) -->
+                    <div class="pt-2 border-t border-slate-100 space-y-2">
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                            Phương thức thanh toán <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2" id="groupPhuongThucThanhToan">
+                            <!-- Nút chọn Tiền mặt -->
+                            <button type="button" id="btnPtttTienMat" onclick="chonPhuongThuc('TIEN_MAT')"
+                                    class="p-2.5 rounded-xl border-2 border-blue-600 bg-blue-50/60 text-blue-900 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                <i class="fa-solid fa-money-bill-wave text-emerald-600 text-sm"></i>
+                                <span>Tiền mặt</span>
+                            </button>
+                            <!-- Nút chọn Chuyển khoản QR -->
+                            <button type="button" id="btnPtttChuyenKhoan" onclick="chonPhuongThuc('CHUYEN_KHOAN')"
+                                    class="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                <i class="fa-solid fa-qrcode text-purple-600 text-sm"></i>
+                                <span>Chuyển khoản QR</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Khối nhập tiền khách đưa (khi chọn Tiền mặt) -->
+                    <div id="boxTienMat" class="space-y-2.5 pt-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                Tiền khách đưa:
+                            </label>
+                            <div class="relative w-44">
+                                <input type="number" id="inputTienKhachDua" value="0" min="0" step="1000"
+                                       class="w-full text-right pr-6 pl-2 py-1.5 rounded-lg border border-slate-300 font-mono font-extrabold text-sm focus:outline-none focus:border-blue-600 text-emerald-700 bg-emerald-50/40"
+                                       oninput="tinhTienThuaTraKhach()" />
+                                <span class="absolute right-2 inset-y-0 flex items-center text-[10px] text-slate-400 font-mono">đ</span>
+                            </div>
+                        </div>
+
+                        <!-- Các mệnh giá nhanh -->
+                        <div class="flex flex-wrap items-center gap-1 text-[10px] font-mono">
+                            <button type="button" onclick="setTienKhachDuaDungSoTien()" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 border border-slate-200 cursor-pointer">Đúng tiền</button>
+                            <button type="button" onclick="themMenhGia(50000)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 border border-slate-200 cursor-pointer">50k</button>
+                            <button type="button" onclick="themMenhGia(100000)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 border border-slate-200 cursor-pointer">100k</button>
+                            <button type="button" onclick="themMenhGia(200000)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 border border-slate-200 cursor-pointer">200k</button>
+                            <button type="button" onclick="themMenhGia(500000)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 border border-slate-200 cursor-pointer">500k</button>
+                        </div>
+
+                        <!-- Tiền thừa trả khách -->
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-100 text-xs">
+                            <span class="font-bold text-slate-600">Tiền thừa trả khách:</span>
+                            <span id="labelTienThuaTraKhach" class="font-black font-mono text-base text-emerald-600">0 đ</span>
+                        </div>
+                    </div>
+
+                    <!-- Khối mã QR (khi chọn Chuyển khoản QR) -->
+                    <div id="boxChuyenKhoanQr" class="hidden p-3 rounded-xl bg-purple-50/70 border border-purple-200 text-center space-y-2">
+                        <div class="text-[11px] font-bold text-purple-900 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-qrcode text-purple-600"></i> Quét mã VietQR thanh toán nhanh
+                        </div>
+                        <div class="flex justify-center">
+                            <!-- Ảnh QR Code sinh theo số tiền thanh toán -->
+                            <img id="imgVietQr" src="" alt="VietQR" class="w-40 h-40 object-contain rounded-lg border border-purple-200 shadow-sm bg-white" />
+                        </div>
+                        <p class="text-[10px] text-purple-700">Khách mở ứng dụng ngân hàng quét mã QR trên màn hình.</p>
+                    </div>
+
+                    <!-- Ghi chú hóa đơn -->
+                    <div>
+                        <input type="text" id="inputGhiChuDonHang" placeholder="Ghi chú đơn hàng (nếu có)..."
+                               class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 text-slate-700" />
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- 4. KHỐI NÚT HÀNH ĐỘNG DƯỚI CÙNG -->
+            <div class="p-4 bg-white border-t border-slate-200 space-y-2 shrink-0">
+                <button type="button" id="btnThanhToanVaIn" onclick="thucHienThanhToan()"
+                        class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg shadow-blue-600/30 cursor-pointer">
+                    <i class="fa-solid fa-print text-base"></i>
+                    <span>Thanh Toán &amp; In Hóa Đơn (F9)</span>
+                </button>
+                <button type="button" onclick="xacNhanDongTabHienTai()"
+                        class="w-full py-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-regular fa-trash-can"></i> Hủy hóa đơn chờ này
+                </button>
+            </div>
+
+        </aside>
+
+    </div>
+
+    <!-- =========================================================================
+         4. MODAL CHỌN SẢN PHẨM / BIẾN THỂ TRỰC QUAN (VISUAL PRODUCT PICKER)
+         ========================================================================= -->
+    <div id="modalChonSanPham" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-scale-up">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0 bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-shirt"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-slate-900 uppercase">Chọn Biến Thể Sản Phẩm Mở Bán</h3>
+                        <p class="text-[11px] text-slate-500">Tìm kiếm theo Tên sản phẩm, Mã SKU hoặc Mã vạch Barcode</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalChonSanPham')" class="text-slate-400 hover:text-slate-700 text-lg p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Ô tìm kiếm trong modal -->
+            <div class="p-4 border-b border-slate-200 bg-white shrink-0">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="inputModalSearchSp" placeholder="Nhập tên sản phẩm, mã SKU hoặc quét barcode..."
+                           autocomplete="off"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                           oninput="timKiemSpModalDebounce(this.value)" />
+                </div>
+            </div>
+
+            <!-- Danh sách kết quả sản phẩm -->
+            <div id="gridModalSanPham" class="flex-1 overflow-y-auto pos-scroll p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <!-- Render sản phẩm dạng card -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end shrink-0">
+                <button type="button" onclick="dongModal('modalChonSanPham')"
+                        class="px-5 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-bold text-xs uppercase hover:bg-slate-100 transition cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         5. MODAL TẠO NHANH KHÁCH HÀNG
+         ========================================================================= -->
+    <div id="modalThemKhachNhanh" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2 font-black text-sm text-slate-900 uppercase">
+                    <i class="fa-solid fa-user-plus text-blue-600"></i> Thêm Nhanh Khách Hàng
+                </div>
+                <button type="button" onclick="dongModal('modalThemKhachNhanh')" class="text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="formThemKhachNhanh" onsubmit="xuLyThemKhachNhanh(event)" class="p-5 space-y-3.5 text-xs">
+                <!-- Thông báo lỗi hoặc Cảnh báo trùng lặp SĐT -->
+                <div id="modalThemKhachAlert" class="hidden p-3 rounded-2xl border text-xs"></div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Họ và tên khách hàng <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modalKhHoTen" required placeholder="Ví dụ: Nguyễn Văn An"
+                           oninput="xoaLoiModalKhach()"
+                           class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 font-medium" />
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Số điện thoại <span class="text-rose-500">*</span></label>
+                    <input type="tel" id="modalKhSdt" required placeholder="Ví dụ: 0912345678"
+                           oninput="xoaLoiModalKhach()"
+                           class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 font-mono font-bold" />
+                    <p id="errorModalKhSdt" class="hidden text-rose-600 text-[11px] font-bold mt-1.5 flex items-center gap-1.5"></p>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Email (tùy chọn)</label>
+                    <input type="email" id="modalKhEmail" placeholder="Ví dụ: an.nguyen@gmail.com"
+                           oninput="xoaLoiModalKhach()"
+                           class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 font-medium" />
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="dongModal('modalThemKhachNhanh')"
+                            class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold text-slate-700 uppercase">
+                        Hủy
+                    </button>
+                    <button type="submit" id="btnLuuKhachNhanh"
+                            class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase transition cursor-pointer">
+                        Lưu Khách Hàng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         6. MODAL XEM TRƯỚC & IN HÓA ĐƠN BÁN LẺ 80MM (THERMAL RECEIPT MODAL)
+         ========================================================================= -->
+    <div id="modalInHoaDon" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden flex flex-col max-h-[92vh]">
+            <!-- Modal Header -->
+            <div class="p-4 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between shrink-0 no-print">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <div class="font-black text-xs text-emerald-950 uppercase">Thanh Toán Thành Công!</div>
+                        <div class="text-[10px] text-emerald-700">Đơn hàng đã được lưu và trừ kho thật</div>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalInVaTiepTuc()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Preview Card Giống Hóa Đơn In Nhiệt 80mm -->
+            <div class="flex-1 overflow-y-auto pos-scroll p-4 bg-slate-100 flex justify-center">
+                <div id="receiptPreviewContainer" class="bg-white p-4 rounded-xl shadow-xs border border-slate-200 w-full text-slate-900" style="font-family: monospace, sans-serif;">
+                    
+                    <!-- VÙNG IN HÓA ĐƠN CHÍNH THỨC (RECEIPT PRINT AREA) -->
+                    <div id="receiptPrintArea">
+                        <div style="text-align: center; margin-bottom: 8px;">
+                            <div style="font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">SIMPLAIN STORE</div>
+                            <div style="font-size: 10px; color: #444;">THỜI TRANG NAM CAO CẤP</div>
+                            <div style="font-size: 10px;">Đ/C: 123 Phố Tràng Tiền, Hoàn Kiếm, Hà Nội</div>
+                            <div style="font-size: 10px;">Hotline: 1900 6868 - Web: simplain.vn</div>
+                            <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+                            <div style="font-size: 13px; font-weight: 800; text-transform: uppercase;">HÓA ĐƠN BÁN HÀNG TẠI QUẦY</div>
+                        </div>
+
+                        <div style="font-size: 10px; margin-bottom: 6px; line-height: 1.4;">
+                            <div><b>Mã đơn:</b> <span id="recMaDonHang">#DH-POS-000</span></div>
+                            <div><b>Ngày tạo:</b> <span id="recNgayTao">26/10/2026 15:30</span></div>
+                            <div><b>Thu ngân:</b> <span id="recThuNgan">Nguyễn Văn A</span></div>
+                            <div><b>Khách hàng:</b> <span id="recKhachHang">Khách lẻ</span></div>
+                            <div><b>SĐT:</b> <span id="recSdt">---</span></div>
+                            <div id="recRowHang" class="hidden"><b>Hạng hội viên:</b> <span id="recHangHoiVien">Đồng</span></div>
+                        </div>
+
+                        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+                        <!-- Bảng sản phẩm biên lai -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 6px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #000; text-align: left;">
+                                    <th style="padding: 2px 0;">Tên SP</th>
+                                    <th style="padding: 2px 0; text-align: center; width: 24px;">SL</th>
+                                    <th style="padding: 2px 0; text-align: right; width: 55px;">Đơn giá</th>
+                                    <th style="padding: 2px 0; text-align: right; width: 60px;">T.Tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recTbodyItems">
+                                <!-- Render dòng sản phẩm in -->
+                            </tbody>
+                        </table>
+
+                        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+                        <!-- Tổng tiền & Thanh toán -->
+                        <div style="font-size: 10px; line-height: 1.5;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tổng tiền hàng:</span>
+                                <span id="recTongTienHang" style="font-weight: bold;">0 đ</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Giảm giá / Voucher:</span>
+                                <span id="recTienGiamGia">0 đ</span>
+                            </div>
+                            <div id="recRowCoolcash" style="display: none; justify-content: space-between; color: #b45309;">
+                                <span>Giảm điểm Loyalty:</span>
+                                <span id="recTienCoolcash">-0 đ</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 900; margin: 4px 0; border-top: 1px solid #000; padding-top: 4px;">
+                                <span>TỔNG THANH TOÁN:</span>
+                                <span id="recTongThanhToan">0 đ</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Phương thức:</span>
+                                <span id="recPttt">Tiền mặt</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tiền khách đưa:</span>
+                                <span id="recTienKhachDua">0 đ</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tiền thừa trả khách:</span>
+                                <span id="recTienThua" style="font-weight: bold;">0 đ</span>
+                            </div>
+                            <div id="recRowDiemConLai" style="display: none; justify-content: space-between; font-size: 9px; color: #047857; border-top: 1px dashed #ccc; margin-top: 3px; padding-top: 3px;">
+                                <span>Điểm tích lũy còn lại:</span>
+                                <span id="recDiemConLai" style="font-weight: bold;">0 đ</span>
+                            </div>
+                        </div>
+
+                        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+
+                        <div style="text-align: center; font-size: 9px; color: #444; line-height: 1.3;">
+                            <div style="font-weight: bold; margin-bottom: 2px;">Cảm ơn quý khách và hẹn gặp lại!</div>
+                            <div>Quý khách vui lòng giữ hóa đơn để được đổi size/màu trong vòng 30 ngày (sản phẩm còn nguyên tem mác).</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer có nút bấm In Hóa Đơn to rõ -->
+            <div class="p-3 bg-white border-t border-slate-200 flex items-center justify-between gap-2 shrink-0 no-print">
+                <button type="button" onclick="dongModalInVaTiepTuc()"
+                        class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold text-xs uppercase text-slate-700 transition cursor-pointer">
+                    Bán đơn tiếp
+                </button>
+                <button type="button" onclick="inHoaDonNgay()"
+                        class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs uppercase flex items-center gap-2 shadow-md transition cursor-pointer">
+                    <i class="fa-solid fa-print text-sm"></i>
+                    <span>In Hóa Đơn Ngay</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         7. TOAST NOTIFICATION
+         ========================================================================= -->
+    <div id="posToast" class="fixed bottom-5 right-5 z-50 hidden max-w-sm px-4 py-3 rounded-2xl shadow-xl text-xs font-bold transition-all transform duration-200">
+        <div class="flex items-center gap-2">
+            <i id="posToastIcon" class="fa-solid fa-circle-check text-base"></i>
+            <span id="posToastMsg">Thông báo</span>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         8. JAVASCRIPT XỬ LÝ TOÀN BỘ NGHIỆP VỤ BÁN HÀNG TẠI QUẦY (POS CORE)
+         ========================================================================= -->
+    <script>
+        // State dữ liệu POS
+        let danhSachHoaDonCho = [];
+        let hoaDonDangChonId = null;
+        let phuongThucHienTai = 'TIEN_MAT'; // 'TIEN_MAT' hoặc 'CHUYEN_KHOAN'
+        let khachHangDangChon = null; // { id, hoTen, soDienThoai }
+        let soDiemKhachCo = 0;
+        let debounceTimer = null;
+        let debounceSpTimer = null;
+
+        // Khởi động khi tải trang
+        document.addEventListener('DOMContentLoaded', () => {
+            taiDanhSachHoaDonCho();
+            caiDatPhimTat();
+
+            // Đóng dropdown tìm khách hàng khi click ra ngoài
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('dropdownKhachHang');
+                const input = document.getElementById('inputTimKhachHang');
+                if (dropdown && input && !dropdown.contains(e.target) && e.target !== input) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+
+        // 1. Phím tắt bán hàng (Hotkeys)
+        function caiDatPhimTat() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'F2') {
+                    e.preventDefault();
+                    moModalChonSanPham();
+                } else if (e.key === 'F4') {
+                    e.preventDefault();
+                    document.getElementById('inputTimKhachHang').focus();
+                } else if (e.key === 'F9') {
+                    e.preventDefault();
+                    thucHienThanhToan();
+                } else if (e.key === 'Escape') {
+                    dongModal('modalChonSanPham');
+                    dongModal('modalThemKhachNhanh');
+                    dongModal('modalInHoaDon');
+                }
+            });
+        }
+
+        // 2. Tải danh sách Hóa đơn chờ từ Server
+        function taiDanhSachHoaDonCho() {
+            fetch('/admin/ban-hang-tai-quay/api/hoa-don-cho')
+                .then(res => res.json())
+                .then(data => {
+                    danhSachHoaDonCho = data || [];
+                    if (danhSachHoaDonCho.length > 0) {
+                        // Nếu chưa chọn tab nào hoặc tab cũ không còn, chọn tab đầu tiên
+                        const exists = danhSachHoaDonCho.some(h => h.id === hoaDonDangChonId);
+                        if (!hoaDonDangChonId || !exists) {
+                            hoaDonDangChonId = danhSachHoaDonCho[0].id;
+                        }
+                    } else {
+                        hoaDonDangChonId = null;
+                    }
+                    renderTabsHoaDon();
+                    renderGioHangHienTai();
+                })
+                .catch(err => hienToast('Lỗi tải danh sách hóa đơn: ' + err, 'error'));
+        }
+
+        // 3. Render danh sách Tab Hóa đơn chờ
+        function renderTabsHoaDon() {
+            const container = document.getElementById('containerTabsHoaDon');
+            let html = '';
+
+            danhSachHoaDonCho.forEach((hdc, idx) => {
+                const isActive = (hdc.id === hoaDonDangChonId);
+                const soMon = hdc.tongSoLuong || 0;
+                const tabTitle = hdc.maHoaDon || ('HĐ ' + (idx + 1));
+
+                if (isActive) {
+                    html += `
+                        <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-sm shrink-0 border border-blue-500 cursor-pointer">
+                            <i class="fa-solid fa-receipt text-xs text-blue-200"></i>
+                            <span>${tabTitle}</span>
+                            <span class="px-1.5 py-0.2 rounded-full bg-blue-700 text-[10px] font-mono">${soMon}</span>
+                            <button type="button" onclick="dongTabHoaDon(event, ${hdc.id})" title="Đóng tab này" class="text-blue-200 hover:text-white ml-1 p-0.5 cursor-pointer">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div onclick="chuyenTabHoaDon(${hdc.id})"
+                             class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white text-slate-700 hover:bg-slate-100 font-bold text-xs shrink-0 border border-slate-300 transition cursor-pointer">
+                            <i class="fa-regular fa-receipt text-slate-400 text-xs"></i>
+                            <span>${tabTitle}</span>
+                            <span class="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-600 text-[10px] font-mono">${soMon}</span>
+                            <button type="button" onclick="dongTabHoaDon(event, ${hdc.id})" title="Đóng tab này" class="text-slate-400 hover:text-rose-600 ml-1 p-0.5 cursor-pointer">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 4. Chuyển đổi tab đang thao tác
+        function chuyenTabHoaDon(id) {
+            hoaDonDangChonId = id;
+            renderTabsHoaDon();
+            renderGioHangHienTai();
+        }
+
+        // 5. Tạo mới Tab hóa đơn
+        function taoTabHoaDonMoi() {
+            fetch('/admin/ban-hang-tai-quay/api/hoa-don-cho/tao', { method: 'POST' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) {
+                        hienToast(res.error, 'error');
+                        return;
+                    }
+                    hoaDonDangChonId = res.id;
+                    taiDanhSachHoaDonCho();
+                    hienToast('Đã tạo thêm hóa đơn chờ ' + res.maHoaDon, 'success');
+                })
+                .catch(err => hienToast('Lỗi tạo hóa đơn mới: ' + err, 'error'));
+        }
+
+        // 6. Đóng / Hủy một tab hóa đơn
+        function dongTabHoaDon(event, id) {
+            if (event) event.stopPropagation();
+            if (!confirm('Bạn có chắc chắn muốn đóng hóa đơn chờ này? Dữ liệu hàng trong tab sẽ bị xóa.')) {
+                return;
+            }
+
+            fetch('/admin/ban-hang-tai-quay/api/hoa-don-cho/' + id, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(res => {
+                    taiDanhSachHoaDonCho();
+                    hienToast('Đã đóng hóa đơn chờ thành công', 'info');
+                })
+                .catch(err => hienToast('Lỗi đóng hóa đơn: ' + err, 'error'));
+        }
+
+        function xacNhanDongTabHienTai() {
+            if (hoaDonDangChonId) {
+                dongTabHoaDon(null, hoaDonDangChonId);
+            }
+        }
+
+        // 7. Render giỏ hàng của Tab hiện tại
+        function renderGioHangHienTai() {
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            const tbody = document.getElementById('tbodyMatHang');
+            const emptyNotice = document.getElementById('emptyCartNotice');
+            const badgeTong = document.getElementById('badgeTongSoLuong');
+
+            if (!hdc || !hdc.danhSachMatHang || hdc.danhSachMatHang.length === 0) {
+                tbody.innerHTML = '';
+                emptyNotice.classList.remove('hidden');
+                badgeTong.innerText = '0 món';
+                dongBoKhachHangChoHdc(hdc);
+                capNhatTongTienUI(0);
+                return;
+            }
+
+            emptyNotice.classList.add('hidden');
+            badgeTong.innerText = (hdc.tongSoLuong || 0) + ' món';
+
+            let html = '';
+            hdc.danhSachMatHang.forEach((it, idx) => {
+                const donGiaFmt = new Intl.NumberFormat('vi-VN').format(it.donGia) + ' đ';
+                const thanhTienFmt = new Intl.NumberFormat('vi-VN').format(it.thanhTien) + ' đ';
+                const imgTag = it.anhDaiDienUrl
+                    ? `<img src="${it.anhDaiDienUrl}" alt="SP" class="w-10 h-10 object-cover rounded-lg border border-slate-200" />`
+                    : `<div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold"><i class="fa-solid fa-shirt"></i></div>`;
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-2.5 text-center font-mono font-bold text-slate-400 text-[11px]">${idx + 1}</td>
+                        <td class="p-2.5 text-center">${imgTag}</td>
+                        <td class="p-2.5">
+                            <div class="font-extrabold text-slate-900 leading-tight">${it.tenSanPham}</div>
+                            <div class="flex items-center gap-1.5 mt-0.5 text-[11px]">
+                                <span class="px-1.5 py-0.2 rounded bg-slate-100 font-mono text-slate-600 font-bold">${it.maSku}</span>
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-medium">
+                                    <span class="w-2 h-2 rounded-full inline-block border border-slate-300" style="background-color: ${it.maMauHex || '#000'}"></span>
+                                    ${it.tenMauSac || 'Màu'}
+                                </span>
+                                <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold">${it.tenKichThuoc || 'FreeSize'}</span>
+                                <span class="text-slate-400 text-[10px] font-mono">(Kho: ${it.tonKhoHienTai})</span>
+                            </div>
+                        </td>
+                        <td class="p-2.5 text-right font-mono font-bold text-slate-700">${donGiaFmt}</td>
+                        <td class="p-2.5 text-center">
+                            <div class="inline-flex items-center rounded-xl border border-slate-300 bg-white p-0.5 shadow-2xs">
+                                <button type="button" onclick="thayDoiSoLuong(${it.id}, ${it.soLuong - 1})"
+                                        class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 font-bold transition cursor-pointer">
+                                    <i class="fa-solid fa-minus text-[10px]"></i>
+                                </button>
+                                <input type="number" value="${it.soLuong}" min="1" max="${it.tonKhoHienTai}"
+                                       onchange="thayDoiSoLuong(${it.id}, parseInt(this.value))"
+                                       class="w-10 text-center font-mono font-extrabold text-xs focus:outline-none text-slate-900" />
+                                <button type="button" onclick="thayDoiSoLuong(${it.id}, ${it.soLuong + 1})"
+                                        class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 font-bold transition cursor-pointer">
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="p-2.5 text-right font-mono font-extrabold text-blue-600 text-sm">${thanhTienFmt}</td>
+                        <td class="p-2.5 text-center">
+                            <button type="button" onclick="xoaDongMatHang(${it.id})" title="Xóa mặt hàng này"
+                                    class="w-8 h-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition cursor-pointer">
+                                <i class="fa-regular fa-trash-can text-sm"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+
+            dongBoKhachHangChoHdc(hdc);
+            capNhatTongTienUI(hdc.tongTienHang || 0);
+        }
+
+        function dongBoKhachHangChoHdc(hdc) {
+            if (hdc && hdc.maKhachHangId) {
+                khachHangDangChon = { id: hdc.maKhachHangId, hoTen: hdc.tenKhachHang, soDienThoai: hdc.soDienThoaiKhach };
+                document.getElementById('btnClearKhachHang').classList.remove('hidden');
+                capNhatThongTinKhachHangUI(hdc.tenKhachHang, hdc.soDienThoaiKhach, 'Hội viên');
+                taiThongTinHoiVienVaDiem(hdc.maKhachHangId);
+            } else if (khachHangDangChon && khachHangDangChon.id && hdc && hdc.id === hoaDonDangChonId) {
+                // Khách hàng vừa được chọn trong phiên hiện tại nhưng server chưa kịp trả về
+                document.getElementById('btnClearKhachHang').classList.remove('hidden');
+                capNhatThongTinKhachHangUI(khachHangDangChon.hoTen, khachHangDangChon.soDienThoai, 'Hội viên');
+            } else {
+                khachHangDangChon = null;
+                document.getElementById('btnClearKhachHang').classList.add('hidden');
+                capNhatThongTinKhachHangUI(hdc ? hdc.tenKhachHang : 'Khách lẻ tại quầy', hdc ? hdc.soDienThoaiKhach : '');
+                datLaiDiemHoiVienUI();
+            }
+        }
+
+        // 8. Thêm sản phẩm bằng quét mã vạch Barcode hoặc gõ SKU Enter
+        function xuLyQuetBarcode(event) {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+
+            const input = document.getElementById('inputBarcodeScan');
+            const kw = input.value.trim();
+            if (!kw) return;
+
+            if (!hoaDonDangChonId) {
+                hienToast('Vui lòng chọn hoặc tạo 1 hóa đơn chờ trước khi thêm hàng!', 'warning');
+                return;
+            }
+
+            // Gọi API tìm kiếm biến thể theo Barcode hoặc SKU
+            fetch('/admin/ban-hang-tai-quay/api/san-pham?q=' + encodeURIComponent(kw))
+                .then(res => res.json())
+                .then(items => {
+                    if (!items || items.length === 0) {
+                        hienToast('Không tìm thấy sản phẩm nào với mã: ' + kw, 'warning');
+                        return;
+                    }
+                    // Thêm biến thể đầu tiên tìm thấy
+                    const bt = items[0];
+                    themBienTheVaoHoaDon(bt.maBienTheId, 1);
+                    input.value = '';
+                })
+                .catch(err => hienToast('Lỗi quét mã vạch: ' + err, 'error'));
+        }
+
+        // 9. Thêm biến thể vào hóa đơn chờ
+        function themBienTheVaoHoaDon(maBienTheId, soLuong = 1) {
+            if (!hoaDonDangChonId) {
+                hienToast('Vui lòng chọn 1 tab hóa đơn chờ!', 'warning');
+                return;
+            }
+
+            fetch('/admin/ban-hang-tai-quay/api/them-mat-hang', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    maHoaDonChoId: hoaDonDangChonId,
+                    maBienTheId: maBienTheId,
+                    soLuong: soLuong
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.error) {
+                    hienToast(res.error, 'error');
+                    return;
+                }
+                taiDanhSachHoaDonCho();
+                hienToast('Đã thêm sản phẩm vào hóa đơn', 'success');
+            })
+            .catch(err => hienToast('Lỗi thêm sản phẩm: ' + err, 'error'));
+        }
+
+        // 10. Thay đổi số lượng mặt hàng
+        function thayDoiSoLuong(chiTietId, soLuongMoi) {
+            if (isNaN(soLuongMoi)) return;
+
+            fetch('/admin/ban-hang-tai-quay/api/cap-nhat-so-luong', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    maChiTietId: chiTietId,
+                    soLuong: soLuongMoi
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.error) {
+                    hienToast(res.error, 'error');
+                    taiDanhSachHoaDonCho();
+                    return;
+                }
+                taiDanhSachHoaDonCho();
+            })
+            .catch(err => hienToast('Lỗi cập nhật số lượng: ' + err, 'error'));
+        }
+
+        // 11. Xóa một dòng mặt hàng
+        function xoaDongMatHang(chiTietId) {
+            fetch('/admin/ban-hang-tai-quay/api/chi-tiet/' + chiTietId, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(res => {
+                    taiDanhSachHoaDonCho();
+                    hienToast('Đã xóa sản phẩm khỏi hóa đơn', 'info');
+                })
+                .catch(err => hienToast('Lỗi xóa sản phẩm: ' + err, 'error'));
+        }
+
+        // 12. Cập nhật giao diện tiền & Tính toán tiền thừa
+        function capNhatTongTienUI(tongTienHang) {
+            document.getElementById('labelTongTienHang').innerText = new Intl.NumberFormat('vi-VN').format(tongTienHang) + ' đ';
+            tinhToanTongTienThanhToan();
+        }
+
+        function tinhToanTongTienThanhToan() {
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            const tongTienHang = (hdc && hdc.tongTienHang) ? Number(hdc.tongTienHang) : 0;
+            const giamGia = Math.max(0, Number(document.getElementById('inputTienGiamGia').value) || 0);
+            
+            let diemDung = 0;
+            const chkDungDiem = document.getElementById('chkDungDiem');
+            if (chkDungDiem && chkDungDiem.checked) {
+                diemDung = Math.max(0, Number(document.getElementById('inputDiemDung').value) || 0);
+                if (diemDung > soDiemKhachCo) {
+                    diemDung = soDiemKhachCo;
+                    document.getElementById('inputDiemDung').value = diemDung;
+                }
+                const tienToiDaCoTheGiam = Math.max(0, tongTienHang - giamGia);
+                if (diemDung > tienToiDaCoTheGiam) {
+                    diemDung = tienToiDaCoTheGiam;
+                    document.getElementById('inputDiemDung').value = diemDung;
+                }
+            }
+
+            const tongThanhToan = Math.max(0, tongTienHang - giamGia - diemDung);
+            document.getElementById('labelTongThanhToan').innerText = new Intl.NumberFormat('vi-VN').format(tongThanhToan) + ' đ';
+
+            // Cập nhật lại QR Code nếu đang chọn chuyển khoản
+            if (phuongThucHienTai === 'CHUYEN_KHOAN') {
+                taoQrChuyenKhoan(tongThanhToan);
+            }
+
+            tinhTienThuaTraKhach();
+        }
+
+        function toggleDungDiem(checked) {
+            const inputDiem = document.getElementById('inputDiemDung');
+            const btnDungHet = document.getElementById('btnDungHetDiem');
+            if (checked) {
+                inputDiem.disabled = false;
+                btnDungHet.disabled = false;
+                dungHetDiem();
+            } else {
+                inputDiem.value = 0;
+                inputDiem.disabled = true;
+                btnDungHet.disabled = true;
+                tinhToanTongTienThanhToan();
+            }
+        }
+
+        function dungHetDiem() {
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            const tongTienHang = (hdc && hdc.tongTienHang) ? Number(hdc.tongTienHang) : 0;
+            const giamGia = Math.max(0, Number(document.getElementById('inputTienGiamGia').value) || 0);
+            const tienToiDa = Math.max(0, tongTienHang - giamGia);
+
+            const diemApDung = Math.min(soDiemKhachCo, tienToiDa);
+            document.getElementById('inputDiemDung').value = diemApDung;
+            tinhToanTongTienThanhToan();
+        }
+
+        function tinhTienThuaTraKhach() {
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            const tongTienHang = (hdc && hdc.tongTienHang) ? Number(hdc.tongTienHang) : 0;
+            const giamGia = Math.max(0, Number(document.getElementById('inputTienGiamGia').value) || 0);
+            
+            let diemDung = 0;
+            const chkDungDiem = document.getElementById('chkDungDiem');
+            if (chkDungDiem && chkDungDiem.checked) {
+                diemDung = Math.max(0, Number(document.getElementById('inputDiemDung').value) || 0);
+            }
+
+            const tongThanhToan = Math.max(0, tongTienHang - giamGia - diemDung);
+
+            const tienKhachDua = Math.max(0, Number(document.getElementById('inputTienKhachDua').value) || 0);
+            const tienThua = tienKhachDua - tongThanhToan;
+
+            const elThua = document.getElementById('labelTienThuaTraKhach');
+            if (tienThua >= 0) {
+                elThua.innerText = new Intl.NumberFormat('vi-VN').format(tienThua) + ' đ';
+                elThua.className = 'font-black font-mono text-base text-emerald-600';
+            } else {
+                elThua.innerText = 'Thiếu ' + new Intl.NumberFormat('vi-VN').format(Math.abs(tienThua)) + ' đ';
+                elThua.className = 'font-black font-mono text-base text-rose-600';
+            }
+        }
+
+        function setTienKhachDuaDungSoTien() {
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            const tongTienHang = (hdc && hdc.tongTienHang) ? Number(hdc.tongTienHang) : 0;
+            const giamGia = Math.max(0, Number(document.getElementById('inputTienGiamGia').value) || 0);
+            
+            let diemDung = 0;
+            const chkDungDiem = document.getElementById('chkDungDiem');
+            if (chkDungDiem && chkDungDiem.checked) {
+                diemDung = Math.max(0, Number(document.getElementById('inputDiemDung').value) || 0);
+            }
+
+            const tongThanhToan = Math.max(0, tongTienHang - giamGia - diemDung);
+
+            document.getElementById('inputTienKhachDua').value = tongThanhToan;
+            tinhTienThuaTraKhach();
+        }
+
+        function themMenhGia(tien) {
+            const cur = Number(document.getElementById('inputTienKhachDua').value) || 0;
+            document.getElementById('inputTienKhachDua').value = cur + tien;
+            tinhTienThuaTraKhach();
+        }
+
+        // 13. Chọn phương thức thanh toán
+        function chonPhuongThuc(pttt) {
+            phuongThucHienTai = pttt;
+            const btnTm = document.getElementById('btnPtttTienMat');
+            const btnCk = document.getElementById('btnPtttChuyenKhoan');
+            const boxTm = document.getElementById('boxTienMat');
+            const boxQr = document.getElementById('boxChuyenKhoanQr');
+
+            if (pttt === 'TIEN_MAT') {
+                btnTm.className = 'p-2.5 rounded-xl border-2 border-blue-600 bg-blue-50/60 text-blue-900 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer';
+                btnCk.className = 'p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer';
+                boxTm.classList.remove('hidden');
+                boxQr.classList.add('hidden');
+            } else {
+                btnCk.className = 'p-2.5 rounded-xl border-2 border-purple-600 bg-purple-50/60 text-purple-900 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer';
+                btnTm.className = 'p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer';
+                boxTm.classList.add('hidden');
+                boxQr.classList.remove('hidden');
+
+                const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+                const tongTienHang = (hdc && hdc.tongTienHang) ? Number(hdc.tongTienHang) : 0;
+                const giamGia = Math.max(0, Number(document.getElementById('inputTienGiamGia').value) || 0);
+                taoQrChuyenKhoan(Math.max(0, tongTienHang - giamGia));
+            }
+        }
+
+        function taoQrChuyenKhoan(soTien) {
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            const maHdc = hdc ? hdc.maHoaDon : 'SIMPLAIN';
+            // Dùng VietQR Quick Link Demo
+            const qrUrl = `https://img.vietqr.io/image/MB-0988889999-compact.png?amount=${soTien}&addInfo=${encodeURIComponent('THANH TOAN ' + maHdc)}&accountName=SIMPLAIN%20STORE`;
+            document.getElementById('imgVietQr').src = qrUrl;
+        }
+
+        let danhSachKhachHangTimDuoc = [];
+
+        // 14. Tìm kiếm khách hàng (Debounce & Phím Enter)
+        function timKiemKhachHangDebounce(val) {
+            clearTimeout(debounceTimer);
+            const dropdown = document.getElementById('dropdownKhachHang');
+            if (!val || val.trim().length === 0) {
+                dropdown.classList.add('hidden');
+                dropdown.innerHTML = '';
+                danhSachKhachHangTimDuoc = [];
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                thucHienTimKiemKhachHang(val.trim(), false);
+            }, 150);
+        }
+
+        function thucHienTimKiemKhachHang(tuKhoa, chonNgayNeuDuyNhat = false) {
+            const dropdown = document.getElementById('dropdownKhachHang');
+            if (!tuKhoa || tuKhoa.trim().length === 0) {
+                dropdown.classList.add('hidden');
+                danhSachKhachHangTimDuoc = [];
+                return;
+            }
+
+            fetch('/admin/ban-hang-tai-quay/api/khach-hang?q=' + encodeURIComponent(tuKhoa.trim()))
+                .then(res => res.json())
+                .then(list => {
+                    danhSachKhachHangTimDuoc = list || [];
+
+                    if (chonNgayNeuDuyNhat && danhSachKhachHangTimDuoc.length === 1) {
+                        const duyNhat = danhSachKhachHangTimDuoc[0];
+                        chonKhachHang(duyNhat.id, duyNhat.hoTen, duyNhat.soDienThoai);
+                        dropdown.classList.add('hidden');
+                        return;
+                    }
+
+                    if (danhSachKhachHangTimDuoc.length === 0) {
+                        const sdtLoc = tuKhoa.replace(/[^0-9]/g, '');
+                        dropdown.innerHTML = `
+                            <div class="p-3 text-center text-slate-500 text-xs space-y-2">
+                                <div>Không tìm thấy khách hàng nào khớp với "<b>${tuKhoa}</b>".</div>
+                                <button type="button" onclick="moModalThemKhachNhanh('${sdtLoc}')"
+                                        class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-user-plus text-[10px]"></i> Thêm mới khách hàng với SĐT này
+                                </button>
+                            </div>
+                        `;
+                        dropdown.classList.remove('hidden');
+                        return;
+                    }
+
+                    let html = '';
+                    danhSachKhachHangTimDuoc.forEach((k) => {
+                        const ten = (k.hoTen || 'Khách hàng').replace(/"/g, '&quot;');
+                        const sdt = (k.soDienThoai || '').replace(/"/g, '&quot;');
+                        html += `
+                            <div onclick="chonKhachHang(${k.id}, '${ten.replace(/'/g, "\\'")}', '${sdt}')"
+                                 class="p-2.5 hover:bg-blue-50 transition cursor-pointer flex items-center justify-between group">
+                                <div class="min-w-0 pr-2">
+                                    <div class="font-extrabold text-slate-800 text-xs truncate group-hover:text-blue-600 transition">${ten}</div>
+                                    <div class="text-[11px] text-slate-500 font-mono flex items-center gap-2 mt-0.5">
+                                        <span><i class="fa-solid fa-phone text-[9px] text-slate-400"></i> ${sdt || 'Chưa có SĐT'}</span>
+                                        <span class="text-[10px] text-slate-400 font-mono">#${k.maKhachHang || ''}</span>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-mono text-blue-600 bg-blue-50 group-hover:bg-blue-600 group-hover:text-white px-2 py-0.5 rounded-lg font-bold shrink-0 border border-blue-200 transition">
+                                    Chọn
+                                </span>
+                            </div>
+                        `;
+                    });
+                    dropdown.innerHTML = html;
+                    dropdown.classList.remove('hidden');
+                })
+                .catch(() => {
+                    dropdown.classList.add('hidden');
+                    danhSachKhachHangTimDuoc = [];
+                });
+        }
+
+        function xuLyPhimTatTimKhach(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = e.target.value.trim();
+                if (!val) return;
+
+                if (danhSachKhachHangTimDuoc && danhSachKhachHangTimDuoc.length > 0) {
+                    // Nếu đã có danh sách gợi ý, chọn ngay khách đầu tiên
+                    const k = danhSachKhachHangTimDuoc[0];
+                    chonKhachHang(k.id, k.hoTen, k.soDienThoai);
+                    document.getElementById('dropdownKhachHang').classList.add('hidden');
+                } else {
+                    // Tìm kiếm ngay lập tức và tự động chọn nếu có 1 kết quả
+                    thucHienTimKiemKhachHang(val, true);
+                }
+            } else if (e.key === 'Escape') {
+                document.getElementById('dropdownKhachHang').classList.add('hidden');
+            }
+        }
+
+        function chonKhachHang(id, hoTen, sdt) {
+            khachHangDangChon = { id, hoTen, soDienThoai: sdt };
+            document.getElementById('dropdownKhachHang').classList.add('hidden');
+            document.getElementById('inputTimKhachHang').value = '';
+            document.getElementById('btnClearKhachHang').classList.remove('hidden');
+
+            // Cập nhật tab hiện tại trong bộ nhớ ngay lập tức để không bị mất khi sửa giỏ hàng
+            if (hoaDonDangChonId) {
+                const curHdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+                if (curHdc) {
+                    curHdc.maKhachHangId = id;
+                    curHdc.tenKhachHang = hoTen;
+                    curHdc.soDienThoaiKhach = sdt;
+                }
+            }
+
+            capNhatThongTinKhachHangUI(hoTen, sdt, 'Hội viên');
+            taiThongTinHoiVienVaDiem(id);
+
+            // Cập nhật lên server cho tab hiện tại
+            if (hoaDonDangChonId) {
+                fetch(`/admin/ban-hang-tai-quay/api/cap-nhat-khach-hang?hoaDonChoId=${hoaDonDangChonId}&khachHangId=${id}&tenKhachHang=${encodeURIComponent(hoTen)}&soDienThoai=${encodeURIComponent(sdt)}`, { method: 'POST' });
+            }
+        }
+
+        function taiThongTinHoiVienVaDiem(khId) {
+            fetch(`/admin/ban-hang-tai-quay/api/khach-hang/${khId}/diem`)
+                .then(res => res.json())
+                .then(info => {
+                    if (info && !info.error) {
+                        soDiemKhachCo = Number(info.soDuCoolcash) || 0;
+                        const tenHang = info.tenHang || 'Thành viên mới';
+                        document.getElementById('badgeHangHoiVien').innerText = tenHang;
+                        document.getElementById('labelDiemTichLuyHienTai').innerText = new Intl.NumberFormat('vi-VN').format(soDiemKhachCo) + ' đ';
+                        document.getElementById('labelDiemKhaDung').innerText = new Intl.NumberFormat('vi-VN').format(soDiemKhachCo);
+                        document.getElementById('boxHoiVienDetail').classList.remove('hidden');
+
+                        if (soDiemKhachCo > 0) {
+                            document.getElementById('boxDungDiemCoolcash').classList.remove('hidden');
+                        } else {
+                            document.getElementById('boxDungDiemCoolcash').classList.add('hidden');
+                        }
+                    } else {
+                        datLaiDiemHoiVienUI();
+                    }
+                    tinhToanTongTienThanhToan();
+                })
+                .catch(() => {
+                    datLaiDiemHoiVienUI();
+                    tinhToanTongTienThanhToan();
+                });
+        }
+
+        function datLaiDiemHoiVienUI() {
+            soDiemKhachCo = 0;
+            document.getElementById('boxHoiVienDetail').classList.add('hidden');
+            document.getElementById('boxDungDiemCoolcash').classList.add('hidden');
+            const chk = document.getElementById('chkDungDiem');
+            if (chk) chk.checked = false;
+            const inpDiem = document.getElementById('inputDiemDung');
+            if (inpDiem) { inpDiem.value = 0; inpDiem.disabled = true; }
+            const btnHet = document.getElementById('btnDungHetDiem');
+            if (btnHet) btnHet.disabled = true;
+        }
+
+        function datLaiKhachLe() {
+            khachHangDangChon = null;
+            document.getElementById('inputTimKhachHang').value = '';
+            document.getElementById('btnClearKhachHang').classList.add('hidden');
+
+            // Xóa khách khỏi tab trong bộ nhớ
+            if (hoaDonDangChonId) {
+                const curHdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+                if (curHdc) {
+                    curHdc.maKhachHangId = null;
+                    curHdc.tenKhachHang = 'Khách lẻ tại quầy';
+                    curHdc.soDienThoaiKhach = '';
+                }
+            }
+
+            capNhatThongTinKhachHangUI('Khách lẻ tại quầy', '', 'Khách lẻ');
+            datLaiDiemHoiVienUI();
+            tinhToanTongTienThanhToan();
+
+            if (hoaDonDangChonId) {
+                fetch(`/admin/ban-hang-tai-quay/api/cap-nhat-khach-hang?hoaDonChoId=${hoaDonDangChonId}&tenKhachHang=${encodeURIComponent('Khách lẻ tại quầy')}`, { method: 'POST' });
+            }
+        }
+
+        function capNhatThongTinKhachHangUI(hoTen, sdt, badgeText = 'Khách lẻ') {
+            document.getElementById('labelTenKhachHang').innerText = hoTen || 'Khách lẻ tại quầy';
+            document.getElementById('labelSdtKhachHang').innerText = sdt ? sdt : '---';
+            document.getElementById('badgeLoaiKhach').innerText = badgeText;
+        }
+
+        // 15. Tạo nhanh khách hàng
+        function xoaLoiModalKhach() {
+            const alertBox = document.getElementById('modalThemKhachAlert');
+            if (alertBox) {
+                alertBox.classList.add('hidden');
+                alertBox.innerHTML = '';
+            }
+            const errSdt = document.getElementById('errorModalKhSdt');
+            if (errSdt) {
+                errSdt.classList.add('hidden');
+                errSdt.innerHTML = '';
+            }
+            const sdtInput = document.getElementById('modalKhSdt');
+            if (sdtInput) {
+                sdtInput.classList.remove('border-rose-500', 'bg-rose-50/50');
+            }
+        }
+
+        function moModalThemKhachNhanh(prefilledSdt = '') {
+            xoaLoiModalKhach();
+            document.getElementById('modalKhHoTen').value = '';
+            document.getElementById('modalKhSdt').value = (typeof prefilledSdt === 'string') ? prefilledSdt : '';
+            document.getElementById('modalKhEmail').value = '';
+            moModal('modalThemKhachNhanh');
+            setTimeout(() => {
+                if (prefilledSdt) {
+                    document.getElementById('modalKhHoTen').focus();
+                } else {
+                    document.getElementById('modalKhSdt').focus();
+                }
+            }, 100);
+        }
+
+        function xuLyThemKhachNhanh(e) {
+            e.preventDefault();
+            xoaLoiModalKhach();
+
+            const hoTen = document.getElementById('modalKhHoTen').value.trim();
+            const sdt = document.getElementById('modalKhSdt').value.trim();
+            const email = document.getElementById('modalKhEmail').value.trim();
+
+            if (!hoTen) {
+                hienToast('Vui lòng nhập họ và tên khách hàng!', 'warning');
+                document.getElementById('modalKhHoTen').focus();
+                return;
+            }
+
+            if (!sdt) {
+                hienToast('Vui lòng nhập số điện thoại khách hàng!', 'warning');
+                document.getElementById('modalKhSdt').focus();
+                return;
+            }
+
+            // Chuẩn hóa và kiểm tra định dạng SĐT phía máy khách (Client-side validation)
+            let sdtChuan = sdt.replace(/[^0-9]/g, '');
+            if (sdtChuan.startsWith('84') && sdtChuan.length >= 10) {
+                sdtChuan = '0' + sdtChuan.substring(2);
+            }
+            const vnfRegex = /^0[35789][0-9]{8}$/;
+            if (!vnfRegex.test(sdtChuan)) {
+                const sdtInput = document.getElementById('modalKhSdt');
+                sdtInput.classList.add('border-rose-500', 'bg-rose-50/50');
+                const errSdt = document.getElementById('errorModalKhSdt');
+                errSdt.classList.remove('hidden');
+                errSdt.innerHTML = '<i class="fa-solid fa-circle-exclamation text-rose-500"></i> Số điện thoại không đúng định dạng (phải gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)!';
+                hienToast('Số điện thoại không đúng định dạng di động Việt Nam (10 chữ số)!', 'error');
+                sdtInput.focus();
+                return;
+            }
+
+            const btnLuu = document.getElementById('btnLuuKhachNhanh');
+            if (btnLuu) {
+                btnLuu.disabled = true;
+                btnLuu.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+            }
+
+            fetch('/admin/ban-hang-tai-quay/api/khach-hang/tao-nhanh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hoTen, soDienThoai: sdt, email })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, ok: res.ok, data })))
+            .then(({ status, ok, data }) => {
+                if (btnLuu) {
+                    btnLuu.disabled = false;
+                    btnLuu.innerHTML = 'Lưu Khách Hàng';
+                }
+
+                if (!ok || data.error) {
+                    const errorMsg = data.error || data.message || 'Lỗi kiểm tra thông tin khách hàng';
+                    hienToast(errorMsg, 'error');
+
+                    const sdtInput = document.getElementById('modalKhSdt');
+                    sdtInput.classList.add('border-rose-500', 'bg-rose-50/50');
+
+                    const errSdt = document.getElementById('errorModalKhSdt');
+                    errSdt.classList.remove('hidden');
+                    errSdt.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-500"></i> ${errorMsg}`;
+
+                    const alertBox = document.getElementById('modalThemKhachAlert');
+                    alertBox.classList.remove('hidden');
+
+                    if (data.trungSoDienThoai && data.khachHangTonTai) {
+                        const khCu = data.khachHangTonTai;
+                        alertBox.className = 'p-3 rounded-2xl border border-rose-200 bg-rose-50 text-rose-900 text-xs space-y-2';
+                        alertBox.innerHTML = `
+                            <div class="flex items-start gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base mt-0.5"></i>
+                                <div class="space-y-1">
+                                    <div class="font-extrabold text-rose-800">Số điện thoại đã tồn tại trong hệ thống!</div>
+                                    <div class="text-[11px] text-rose-700">
+                                        Khách hàng: <strong class="font-black">${khCu.hoTen || ''}</strong> (${khCu.soDienThoai || ''}) 
+                                        ${khCu.maKhachHang ? `<span class="bg-rose-200 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">${khCu.maKhachHang}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-1 flex justify-end">
+                                <button type="button" 
+                                        onclick="dongModal('modalThemKhachNhanh'); chonKhachHang(${khCu.id}, '${(khCu.hoTen || '').replace(/'/g, "\\'")}', '${khCu.soDienThoai || ''}'); hienToast('Đã chọn khách hàng ${khCu.hoTen} vào hóa đơn!', 'success');"
+                                        class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[11px] uppercase transition cursor-pointer flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-user-check"></i> Chọn khách hàng này vào đơn
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        alertBox.className = 'p-3 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 text-xs flex items-center gap-2';
+                        alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation text-amber-600 text-sm"></i> <span>${errorMsg}</span>`;
+                    }
+                    return;
+                }
+
+                dongModal('modalThemKhachNhanh');
+                chonKhachHang(data.id, data.hoTen, data.soDienThoai);
+                hienToast('Đã lưu và gắn khách hàng ' + data.hoTen + ' vào hóa đơn!', 'success');
+            })
+            .catch(err => {
+                if (btnLuu) {
+                    btnLuu.disabled = false;
+                    btnLuu.innerHTML = 'Lưu Khách Hàng';
+                }
+                hienToast('Lỗi gửi yêu cầu tạo khách hàng: ' + err, 'error');
+            });
+        }
+
+        // 16. Modal Tìm & Chọn sản phẩm dạng trực quan
+        function moModalChonSanPham() {
+            document.getElementById('inputModalSearchSp').value = '';
+            taiSanPhamModal('');
+            moModal('modalChonSanPham');
+        }
+
+        function timKiemSpModalDebounce(val) {
+            clearTimeout(debounceSpTimer);
+            debounceSpTimer = setTimeout(() => {
+                taiSanPhamModal(val.trim());
+            }, 300);
+        }
+
+        function taiSanPhamModal(tuKhoa) {
+            const grid = document.getElementById('gridModalSanPham');
+            grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-xs">Đang tải danh sách biến thể...</div>';
+
+            fetch('/admin/ban-hang-tai-quay/api/san-pham?q=' + encodeURIComponent(tuKhoa))
+                .then(res => res.json())
+                .then(items => {
+                    if (!items || items.length === 0) {
+                        grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-xs">Không tìm thấy sản phẩm hoặc biến thể phù hợp.</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    items.forEach(it => {
+                        const donGiaFmt = new Intl.NumberFormat('vi-VN').format(it.donGia) + ' đ';
+                        const tonKho = it.tonKhoHienTai || 0;
+                        const hetHang = (tonKho <= 0);
+
+                        const imgTag = it.anhDaiDienUrl
+                            ? `<img src="${it.anhDaiDienUrl}" alt="SP" class="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0" />`
+                            : `<div class="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-lg shrink-0"><i class="fa-solid fa-shirt"></i></div>`;
+
+                        html += `
+                            <div class="bg-white p-3 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition flex items-start gap-2.5 ${hetHang ? 'opacity-60 bg-slate-50' : ''}">
+                                ${imgTag}
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-extrabold text-slate-900 text-xs truncate" title="${it.tenSanPham}">${it.tenSanPham}</div>
+                                    <div class="flex items-center gap-1.5 mt-1 text-[10px]">
+                                        <span class="font-mono text-slate-500 font-bold">${it.maSku}</span>
+                                        <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold">${it.tenKichThuoc}</span>
+                                        <span class="w-2.5 h-2.5 rounded-full inline-block border border-slate-300" style="background-color: ${it.maMauHex || '#000'}"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-2">
+                                        <div class="font-mono font-black text-blue-600 text-xs">${donGiaFmt}</div>
+                                        <div class="text-[10px] ${hetHang ? 'text-rose-500 font-extrabold' : 'text-slate-500 font-mono'}">
+                                            ${hetHang ? 'Hết hàng' : 'Kho: ' + tonKho}
+                                        </div>
+                                    </div>
+                                    <button type="button" ${hetHang ? 'disabled' : ''} onclick="themBienTheTuModal(${it.maBienTheId})"
+                                            class="w-full mt-2 py-1.5 rounded-lg ${hetHang ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'} text-[11px] font-bold flex items-center justify-center gap-1 transition">
+                                        <i class="fa-solid fa-plus text-[10px]"></i> Thêm vào giỏ
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    grid.innerHTML = html;
+                })
+                .catch(err => {
+                    grid.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 text-xs">Lỗi: ' + err + '</div>';
+                });
+        }
+
+        function themBienTheTuModal(maBienTheId) {
+            themBienTheVaoHoaDon(maBienTheId, 1);
+        }
+
+        // 17. THANH TOÁN VÀ IN HÓA ĐƠN BÁN LẺ
+        function thucHienThanhToan() {
+            if (!hoaDonDangChonId) {
+                hienToast('Vui lòng chọn 1 hóa đơn chờ để thanh toán!', 'warning');
+                return;
+            }
+
+            const hdc = danhSachHoaDonCho.find(h => h.id === hoaDonDangChonId);
+            if (!hdc || !hdc.danhSachMatHang || hdc.danhSachMatHang.length === 0) {
+                hienToast('Hóa đơn chưa có sản phẩm nào để thanh toán!', 'warning');
+                return;
+            }
+
+            const giamGia = Math.max(0, Number(document.getElementById('inputTienGiamGia').value) || 0);
+            const tienKhachDua = Math.max(0, Number(document.getElementById('inputTienKhachDua').value) || 0);
+            const ghiChu = document.getElementById('inputGhiChuDonHang').value.trim();
+
+            let tienCoolcashDung = 0;
+            const chkDungDiem = document.getElementById('chkDungDiem');
+            if (chkDungDiem && chkDungDiem.checked) {
+                tienCoolcashDung = Math.max(0, Number(document.getElementById('inputDiemDung').value) || 0);
+            }
+
+            const ptttId = (phuongThucHienTai === 'TIEN_MAT') ? 226 : 227; // ID 226: TIEN_MAT, 227: CHUYEN_KHOAN
+
+            const btnSubmit = document.getElementById('btnThanhToanVaIn');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-base"></i> Đang xử lý thanh toán...';
+
+            const payload = {
+                maHoaDonChoId: hoaDonDangChonId,
+                maKhachHangId: khachHangDangChon ? khachHangDangChon.id : null,
+                tenKhachHang: khachHangDangChon ? khachHangDangChon.hoTen : 'Khách lẻ tại quầy',
+                soDienThoaiKhach: khachHangDangChon ? khachHangDangChon.soDienThoai : '0000000000',
+                maPhuongThucId: ptttId,
+                tienGiamGia: giamGia,
+                tienCoolcashDung: tienCoolcashDung,
+                tienKhachDua: (phuongThucHienTai === 'TIEN_MAT') ? tienKhachDua : 0,
+                ghiChu: ghiChu
+            };
+
+            fetch('/admin/ban-hang-tai-quay/api/thanh-toan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-print text-base"></i> Thanh Toán &amp; In Hóa Đơn (F9)';
+
+                if (res.error) {
+                    hienToast(res.error, 'error');
+                    return;
+                }
+
+                // Điền dữ liệu vào mẫu in hóa đơn 80mm
+                napDuLieuVaoMauIn(res);
+
+                // Mở Modal xem trước hóa đơn
+                moModal('modalInHoaDon');
+
+                hienToast('Thanh toán thành công đơn hàng #' + res.maDonHang + '!', 'success');
+
+                // Tải lại danh sách tabs hóa đơn chờ
+                taiDanhSachHoaDonCho();
+
+                // Kích hoạt in hóa đơn nhiệt
+                setTimeout(() => {
+                    window.print();
+                }, 400);
+            })
+            .catch(err => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-print text-base"></i> Thanh Toán &amp; In Hóa Đơn (F9)';
+                hienToast('Lỗi thanh toán: ' + err, 'error');
+            });
+        }
+
+        // 18. Nạp dữ liệu vào mẫu in hóa đơn
+        function napDuLieuVaoMauIn(data) {
+            document.getElementById('recMaDonHang').innerText = '#' + data.maDonHang;
+            document.getElementById('recNgayTao').innerText = data.formattedNgayTao || '';
+            document.getElementById('recThuNgan').innerText = data.tenNhanVien || 'Thu ngân';
+            document.getElementById('recKhachHang').innerText = data.tenKhachHang || 'Khách lẻ';
+            document.getElementById('recSdt').innerText = data.soDienThoaiKhach || '---';
+
+            if (data.tenHangThanhVien) {
+                document.getElementById('recHangHoiVien').innerText = data.tenHangThanhVien;
+                document.getElementById('recRowHang').classList.remove('hidden');
+            } else {
+                document.getElementById('recRowHang').classList.add('hidden');
+            }
+
+            const tbody = document.getElementById('recTbodyItems');
+            let html = '';
+            (data.danhSachMatHang || []).forEach(it => {
+                html += `
+                    <tr style="border-bottom: 1px dashed #eee;">
+                        <td style="padding: 3px 0;">${it.tenSanPham} (${it.maSku})</td>
+                        <td style="padding: 3px 0; text-align: center;">${it.soLuong}</td>
+                        <td style="padding: 3px 0; text-align: right;">${new Intl.NumberFormat('vi-VN').format(it.donGia)}</td>
+                        <td style="padding: 3px 0; text-align: right; font-weight: bold;">${new Intl.NumberFormat('vi-VN').format(it.thanhTien)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+
+            document.getElementById('recTongTienHang').innerText = new Intl.NumberFormat('vi-VN').format(data.tongTienHang) + ' đ';
+            document.getElementById('recTienGiamGia').innerText = new Intl.NumberFormat('vi-VN').format(data.tienGiamGia) + ' đ';
+
+            const rowCoolcash = document.getElementById('recRowCoolcash');
+            if (data.tienCoolcashDung && Number(data.tienCoolcashDung) > 0) {
+                document.getElementById('recTienCoolcash').innerText = '-' + new Intl.NumberFormat('vi-VN').format(data.tienCoolcashDung) + ' đ';
+                rowCoolcash.style.display = 'flex';
+            } else {
+                rowCoolcash.style.display = 'none';
+            }
+
+            document.getElementById('recTongThanhToan').innerText = new Intl.NumberFormat('vi-VN').format(data.tongThanhToan) + ' đ';
+            document.getElementById('recPttt').innerText = data.tenPhuongThucThanhToan || 'Tiền mặt';
+            document.getElementById('recTienKhachDua').innerText = new Intl.NumberFormat('vi-VN').format(data.tienKhachDua) + ' đ';
+            document.getElementById('recTienThua').innerText = new Intl.NumberFormat('vi-VN').format(data.tienThuaTraKhach) + ' đ';
+
+            const rowDiemConLai = document.getElementById('recRowDiemConLai');
+            if (data.soDuCoolcashConLai !== undefined && data.soDuCoolcashConLai !== null) {
+                document.getElementById('recDiemConLai').innerText = new Intl.NumberFormat('vi-VN').format(data.soDuCoolcashConLai) + ' đ';
+                rowDiemConLai.style.display = 'flex';
+            } else {
+                rowDiemConLai.style.display = 'none';
+            }
+        }
+
+        function inHoaDonNgay() {
+            window.print();
+        }
+
+        function dongModalInVaTiepTuc() {
+            dongModal('modalInHoaDon');
+            datLaiKhachLe();
+        }
+
+        // 19. Tiện ích Modals & Toasts
+        function moModal(id) {
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            }
+        }
+
+        function dongModal(id) {
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+
+        function hienToast(msg, type = 'info') {
+            const toast = document.getElementById('posToast');
+            const icon = document.getElementById('posToastIcon');
+            const txt = document.getElementById('posToastMsg');
+
+            txt.innerText = msg;
+
+            if (type === 'success') {
+                toast.className = 'fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold bg-emerald-600 text-white';
+                icon.className = 'fa-solid fa-circle-check text-base text-emerald-200';
+            } else if (type === 'error') {
+                toast.className = 'fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold bg-rose-600 text-white';
+                icon.className = 'fa-solid fa-circle-exclamation text-base text-rose-200';
+            } else if (type === 'warning') {
+                toast.className = 'fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold bg-amber-500 text-white';
+                icon.className = 'fa-solid fa-triangle-exclamation text-base text-amber-200';
+            } else {
+                toast.className = 'fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold bg-slate-900 text-white';
+                icon.className = 'fa-solid fa-circle-info text-base text-blue-300';
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

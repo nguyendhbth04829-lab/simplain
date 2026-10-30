@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán không thành công | Simplain</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts Plus Jakarta Sans -->
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .btn-navy {
+            background-color: #0f172a;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .btn-navy:hover {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header tối giản -->
+    <header class="w-full bg-white border-b border-slate-200/80 py-4 shadow-2xs">
+        <div class="max-w-4xl mx-auto px-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <span class="text-xl font-black tracking-tighter text-[#0f172a]">SIMPLAIN</span>
+            </a>
+            <div class="text-xs text-slate-500">
+                Hotline hỗ trợ: <span class="font-bold text-[#0f172a]">1900 6868</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-lg mx-auto px-4 py-12 flex-grow w-full flex items-center justify-center">
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 text-center space-y-6 w-full">
+
+            <div class="w-20 h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-3xl mx-auto border-2 border-rose-200 shadow-xs animate-bounce">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+
+            <div>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Thanh Toán Chưa Hoàn Tất</h1>
+                <p class="text-xs text-rose-600 font-semibold mt-2" th:text="${lyDo}">Giao dịch thanh toán đã bị hủy hoặc xảy ra lỗi.</p>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 text-xs text-left space-y-2 border border-slate-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Mã đơn hàng:</span>
+                    <span class="font-bold text-[#0f172a] font-mono" th:text="${'#' + donHang.maDonHang}">#DH123456</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Số tiền:</span>
+                    <span class="font-bold text-slate-900"
+                          th:text="${#numbers.formatDecimal(donHang.tongThanhToan, 0, 'COMMA', 0, 'POINT') + ' đ'}">270.000 đ</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Trạng thái:</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px]">Chưa thanh toán</span>
+                </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <a th:href="@{'/thanh-toan/qr/' + ${donHang.maDonHang}}"
+                   class="w-full py-3.5 px-4 rounded-xl btn-navy font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Thử Thanh Toán Lại Ngay</span>
+                </a>
+
+                <a href="/gio-hang" class="w-full py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs uppercase tracking-wider shadow-2xs flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Quay lại Giỏ hàng</span>
+                </a>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="w-full bg-white border-t border-slate-200/80 py-6 text-xs text-slate-400 text-center">
+        &copy; 2026 SIMPLAIN Menswear. All rights reserved.
+    </footer>
+
+</body>
+</html>

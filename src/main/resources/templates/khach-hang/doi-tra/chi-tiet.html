@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Chi tiết phiếu Đổi/Trả #' + rmaDetail.yeuCauDoiTra.maYeuCauRma + ' | SIMPLAIN STORE'}">Chi tiết Yêu Cầu Đổi/Trả | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-[#0a192f] text-slate-200 text-xs py-2 text-center font-medium tracking-wide border-b border-slate-800 px-4">
+        Simplain RMA Center: Tiến trình thẩm định và xử lý yêu cầu đổi trả online &bull; Hotline: 1900.272737
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+        <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="/cua-hang" class="flex items-center space-x-2">
+                    <span class="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN<span class="text-blue-600">.</span></span>
+                </a>
+                <span class="hidden sm:inline-block text-slate-300">|</span>
+                <span class="text-xs font-extrabold uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-receipt text-blue-600"></i> Chi Tiết Phiếu Đổi/Trả (RMA)
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs font-semibold">
+                <a href="/khach-hang/doi-tra" class="text-blue-600 hover:text-blue-800 transition flex items-center gap-1 py-1 px-2.5 rounded-lg bg-blue-50">
+                    <i class="fa-solid fa-list-check text-xs"></i> Danh sách phiếu RMA
+                </a>
+                <a href="/khach-hang/don-hang" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-box text-blue-600"></i> Đơn mua
+                </a>
+                <a href="/khach-hang/dang-xuat" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 px-3 py-1.5 rounded-xl transition flex items-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+        <!-- Breadcrumb & Back -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
+            <nav class="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                <a href="/cua-hang" class="hover:text-blue-600">Trang chủ</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                <a href="/khach-hang/doi-tra" class="hover:text-blue-600">Yêu cầu Đổi/Trả</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                <span class="font-bold text-slate-900 font-mono" th:text="${'#' + rmaDetail.yeuCauDoiTra.maYeuCauRma}">#RMA123</span>
+            </nav>
+
+            <a href="/khach-hang/doi-tra" class="text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-chevron-left text-[10px]"></i> Quay lại danh sách phiếu
+            </a>
+        </div>
+
+        <!-- Success Notification -->
+        <div th:if="${thongBaoThanhCong}" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-2xs">
+            <div class="flex items-center space-x-3 text-xs">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+                <div>
+                    <h4 class="font-black">Thao tác thành công!</h4>
+                    <p class="text-[11px]" th:text="${thongBaoThanhCong}">Yêu cầu đã được lưu</p>
+                </div>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- RMA HEADER OVERVIEW CARD -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs uppercase font-extrabold tracking-wider text-slate-400">Phiếu yêu cầu</span>
+                        <h1 class="text-xl sm:text-2xl font-black text-slate-900 font-mono"
+                            th:text="${'#' + rmaDetail.yeuCauDoiTra.maYeuCauRma}">#RMA-20261027-0001</h1>
+                        <button type="button"
+                                th:data-copy="${rmaDetail.yeuCauDoiTra.maYeuCauRma}"
+                                onclick="copyText(this.getAttribute('data-copy'))"
+                                title="Sao chép mã RMA"
+                                class="p-1.5 text-slate-400 hover:text-blue-600 transition">
+                            <i class="fa-regular fa-copy text-xs"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500"
+                       th:text="${'Gửi lúc: ' + #temporals.format(rmaDetail.yeuCauDoiTra.ngayTao, 'dd/MM/yyyy HH:mm')}">
+                        27/10/2026 14:00
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Badge trạng thái -->
+                    <span class="px-3 py-1.5 rounded-full text-xs font-extrabold border uppercase tracking-wider flex items-center gap-1.5"
+                          th:classappend="${rmaDetail.badgeClass}">
+                        <i class="fa-solid fa-circle-notch animate-spin text-[10px]" th:if="${rmaDetail.yeuCauDoiTra.trangThai == 'CHO_XU_LY'}"></i>
+                        <i class="fa-solid fa-clock text-[10px]" th:if="${rmaDetail.yeuCauDoiTra.trangThai == 'DA_TIEP_NHAN'}"></i>
+                        <i class="fa-solid fa-spinner animate-spin text-[10px]" th:if="${rmaDetail.yeuCauDoiTra.trangThai == 'DANG_XU_LY'}"></i>
+                        <i class="fa-solid fa-circle-check text-[10px]" th:if="${rmaDetail.yeuCauDoiTra.trangThai == 'HOAN_THANH'}"></i>
+                        <i class="fa-solid fa-circle-xmark text-[10px]" th:if="${rmaDetail.yeuCauDoiTra.trangThai == 'TU_CHOI'}"></i>
+                        <span th:text="${rmaDetail.tenTrangThaiTiengViet}">Chờ xử lý</span>
+                    </span>
+
+                    <!-- Badge hình thức -->
+                    <span th:if="${rmaDetail.yeuCauDoiTra.loaiDoiTra == 'DOI_HANG'}"
+                          class="px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                        <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Đổi sản phẩm mới (SKU)
+                    </span>
+                    <span th:if="${rmaDetail.yeuCauDoiTra.loaiDoiTra == 'TRA_HANG_HOAN_TIEN'}"
+                          class="px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                        <i class="fa-solid fa-money-bill-transfer text-[10px]"></i> Trả hàng & Hoàn tiền
+                    </span>
+                </div>
+            </div>
+
+            <!-- Grid tóm tắt -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <span class="text-slate-400 block text-[11px]">Đơn hàng gốc:</span>
+                    <a th:if="${rmaDetail.yeuCauDoiTra.donHang != null}"
+                       th:href="@{'/khach-hang/don-hang/' + ${rmaDetail.yeuCauDoiTra.donHang.maDonHang}}"
+                       class="font-mono font-bold text-blue-600 hover:underline flex items-center gap-1"
+                       th:text="${'#' + rmaDetail.yeuCauDoiTra.donHang.maDonHang}">
+                        #SMPL-123
+                    </a>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <span class="text-slate-400 block text-[11px]">Số lượng mặt hàng đổi trả:</span>
+                    <strong class="font-bold text-slate-900" th:text="${rmaDetail.tongSoLuongTra + ' món hàng'}">1 món</strong>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <span class="text-slate-400 block text-[11px]">Giá trị / Tiền hoàn:</span>
+                    <strong class="font-black text-blue-600 text-sm"
+                            th:text="${#numbers.formatDecimal(rmaDetail.tongTienUocTinh, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                        0 đ
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- THÔNG TIN HOÀN TIỀN (NẾU CHỌN TRẢ HÀNG HOÀN TIỀN) -->
+        <div th:if="${rmaDetail.yeuCauDoiTra.loaiDoiTra == 'TRA_HANG_HOAN_TIEN' && rmaDetail.yeuCauDoiTra.thongTinNganHang != null}"
+             class="bg-emerald-50/60 rounded-3xl p-6 border border-emerald-200 shadow-2xs space-y-3">
+            <div class="flex items-center gap-2 font-black text-xs uppercase tracking-wide text-emerald-900">
+                <i class="fa-solid fa-building-columns text-emerald-700"></i> Tài Khoản Ngân Hàng Nhận Tiền Hoàn
+            </div>
+            <div class="p-4 rounded-2xl bg-white border border-emerald-200 text-xs text-slate-800 space-y-2">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <span class="text-slate-500">Thông tin chuyển khoản:</span>
+                    <strong class="font-mono font-extrabold text-emerald-800 text-sm"
+                            th:text="${rmaDetail.yeuCauDoiTra.thongTinNganHang}">
+                        Vietcombank - STK: 1029384756 - NGUYEN VAN A
+                    </strong>
+                </div>
+                <div class="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-100">
+                    <span class="text-slate-500">Số tiền hoàn thực nhận:</span>
+                    <strong class="text-base font-black text-emerald-700"
+                            th:text="${#numbers.formatDecimal(rmaDetail.yeuCauDoiTra.soTienHoan, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                        500,000 đ
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- KHỐI BIÊN LAI / BILL CHUYỂN KHOẢN HOÀN TIỀN TỪ CỬA HÀNG (NẾU ĐÃ CÓ ẢNH BILL) -->
+        <div th:if="${rmaDetail.yeuCauDoiTra.hinhAnhBill != null && !rmaDetail.yeuCauDoiTra.hinhAnhBill.isBlank()}"
+             class="bg-emerald-50/70 rounded-3xl p-6 border-2 border-emerald-300 shadow-sm space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2 font-black text-xs uppercase tracking-wide text-emerald-950">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <span>Biên Lai Chuyển Khoản Hoàn Tiền / Phiếu Xuất Bill Từ SIMPLAIN</span>
+                </div>
+                <span class="px-3 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i> Đã hoàn tất thanh toán
+                </span>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white border border-emerald-200 text-xs flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="relative group shrink-0">
+                    <img th:src="${rmaDetail.yeuCauDoiTra.hinhAnhBill}" alt="Ảnh biên lai chuyển tiền"
+                         th:onclick="moModalXemAnh([[${rmaDetail.yeuCauDoiTra.hinhAnhBill}]])"
+                         class="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-2xl border-2 border-emerald-400 group-hover:border-emerald-600 cursor-pointer shadow-md transition transform group-hover:scale-105" />
+                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 rounded-2xl transition flex items-center justify-center text-white pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass-plus text-base"></i>
+                    </div>
+                </div>
+
+                <div class="space-y-2 flex-1 min-w-0">
+                    <div class="font-extrabold text-sm text-slate-900">
+                        Hóa đơn điện tử / Ảnh chụp ủy nhiệm chi ngân hàng
+                    </div>
+                    <p class="text-slate-600 text-[11px] leading-relaxed font-medium">
+                        SIMPLAIN đã giải ngân và chuyển khoản thành công số tiền hoàn trả vào tài khoản ngân hàng của quý khách. Quý khách vui lòng kiểm tra tài khoản hoặc sử dụng mã giao dịch để đối soát.
+                    </p>
+                    <div class="flex items-center gap-2 flex-wrap pt-1">
+                        <button type="button" th:onclick="moModalXemAnh([[${rmaDetail.yeuCauDoiTra.hinhAnhBill}]])"
+                                class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition inline-flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-expand"></i> Phóng to xem biên lai
+                        </button>
+                        <a th:href="${rmaDetail.yeuCauDoiTra.hinhAnhBill}" target="_blank" download="bien-lai-hoan-tien-simplain.jpg"
+                           class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition inline-flex items-center gap-1.5 border border-slate-200">
+                            <i class="fa-solid fa-download"></i> Tải ảnh về máy
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DANH SÁCH MẶT HÀNG ĐỔI / TRẢ (TIÊU CHÍ 1 & 2) -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+            <h2 class="font-extrabold text-sm text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-box-open text-blue-600"></i> Danh Sách Sản Phẩm Đổi / Trả
+            </h2>
+
+            <div class="space-y-4">
+                <div th:each="item : ${rmaDetail.danhSachSanPhamDoiTra}"
+                     class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
+                    
+                    <!-- Dòng mặt hàng cũ gửi trả -->
+                    <div class="flex items-start gap-3">
+                        <img th:src="${item.hinhAnhUrl}" th:alt="${item.tenSanPham}"
+                             class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-slate-200 bg-white shrink-0" />
+                        
+                        <div class="flex-1 min-w-0 space-y-1 text-xs">
+                            <div class="flex items-start justify-between gap-2 flex-wrap">
+                                <h3 class="font-bold text-slate-900 line-clamp-1" th:text="${item.tenSanPham}">Tên áo</h3>
+                                <span class="font-black text-slate-900"
+                                      th:text="${#numbers.formatDecimal(item.donGia, 0, 'POINT', 0, 'COMMA') + ' đ'}">250,000 đ</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
+                                <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-mono" th:text="${'SKU cũ: ' + item.skuCu}">SKU-1</span>
+                                <span th:if="${item.phanLoaiCu != null && !item.phanLoaiCu.isBlank()}" th:text="${'Phân loại: ' + item.phanLoaiCu}">Đen / L</span>
+                                <span>&bull;</span>
+                                <span>Số lượng gửi trả: <strong class="text-rose-600 font-bold" th:text="${item.soLuongTra}">1</strong></span>
+                            </div>
+
+                            <div class="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px]">
+                                <strong class="font-bold">Tình trạng lỗi:</strong> <span th:text="${item.tinhTrangLoi}">Lỗi rách chỉ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dòng SKU MỚI ĐỔI SANG (Nếu là Đổi hàng) -->
+                    <div th:if="${item.maBienTheMoiId != null}"
+                         class="p-3 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </span>
+                            <div class="text-xs">
+                                <span class="text-[10px] uppercase font-bold text-blue-700 block tracking-wide">Đổi sang SKU mới:</span>
+                                <strong class="font-bold text-slate-900 font-mono" th:text="${item.skuMoi}">SKU-MOI</strong>
+                                <span class="text-slate-600 ml-1.5" th:if="${item.phanLoaiMoi != null}" th:text="${'(' + item.phanLoaiMoi + ')'}">(Trắng / XL)</span>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 font-bold text-[11px]">
+                            Đổi 1 - 1
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THÔNG TIN ĐỊA CHỈ NHẬN HÀNG / THU HỒI HÀNG (CHUẨN SHOPEE) -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+            <h2 class="font-extrabold text-sm text-slate-900 uppercase tracking-wide flex items-center justify-between flex-wrap gap-2">
+                <span class="flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-rose-500"></i> Địa Chỉ Nhận Hàng Đổi / Thu Hồi Hàng
+                </span>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    <i class="fa-solid fa-truck-fast mr-1"></i> Shipper Giao Nhận Tận Nơi
+                </span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                <div>
+                    <span class="text-slate-400 block text-[11px]">Người nhận / giao hàng:</span>
+                    <strong class="font-bold text-slate-900 text-sm"
+                            th:text="${rmaDetail.yeuCauDoiTra.tenNguoiNhan != null && !rmaDetail.yeuCauDoiTra.tenNguoiNhan.isBlank() ? rmaDetail.yeuCauDoiTra.tenNguoiNhan : (rmaDetail.yeuCauDoiTra.donHang != null ? rmaDetail.yeuCauDoiTra.donHang.tenNguoiNhan : 'Chưa cập nhật')}">
+                        Nguyễn Văn A
+                    </strong>
+                    <div class="text-[11px] font-mono font-bold text-blue-600 mt-0.5"
+                         th:text="${rmaDetail.yeuCauDoiTra.soDienThoaiNhan != null && !rmaDetail.yeuCauDoiTra.soDienThoaiNhan.isBlank() ? rmaDetail.yeuCauDoiTra.soDienThoaiNhan : (rmaDetail.yeuCauDoiTra.donHang != null ? rmaDetail.yeuCauDoiTra.donHang.soDienThoaiNhan : '')}">
+                        0987654321
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <span class="text-slate-400 block text-[11px]">Địa chỉ giao nhận chi tiết:</span>
+                    <p class="font-medium text-slate-800 leading-relaxed"
+                       th:text="${rmaDetail.yeuCauDoiTra.diaChiNhanHang != null && !rmaDetail.yeuCauDoiTra.diaChiNhanHang.isBlank() ? rmaDetail.yeuCauDoiTra.diaChiNhanHang : (rmaDetail.yeuCauDoiTra.donHang != null ? rmaDetail.yeuCauDoiTra.donHang.diaChiGiaoHang : 'Chưa cập nhật')}">
+                        123 Cầu Giấy, Hà Nội
+                    </p>
+                    <div th:if="${rmaDetail.yeuCauDoiTra.ghiChuGiaoHang != null && !rmaDetail.yeuCauDoiTra.ghiChuGiaoHang.isBlank()}"
+                         class="text-[11px] text-slate-500 mt-1 italic">
+                        <i class="fa-regular fa-message mr-1"></i> Ghi chú: <span th:text="${rmaDetail.yeuCauDoiTra.ghiChuGiaoHang}">Giao giờ hành chính</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LÝ DO & MINH CHỨNG HÌNH ẢNH -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+            <h2 class="font-extrabold text-sm text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-blue-600"></i> Lý Do & Minh Chứng Khách Hàng
+            </h2>
+
+            <div class="space-y-4 text-xs">
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <span class="text-[11px] text-slate-400 block font-semibold">Lý do đổi trả đã gửi:</span>
+                    <p class="text-slate-800 font-medium leading-relaxed" th:text="${rmaDetail.yeuCauDoiTra.lyDo}">Lý do...</p>
+                </div>
+
+                <!-- Album ảnh minh chứng (Tải từ máy) -->
+                <div th:if="${!#lists.isEmpty(rmaDetail.danhSachHinhAnh)}" class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-camera text-blue-600"></i>
+                            Ảnh chụp minh chứng sản phẩm lỗi (<span th:text="${rmaDetail.danhSachHinhAnh.size()}">1</span> ảnh):
+                        </span>
+                        <span class="text-[10px] text-slate-400">Bấm vào ảnh để phóng to</span>
+                    </div>
+
+                    <div class="flex items-center gap-3 flex-wrap pt-1">
+                        <div th:each="imgUrl : ${rmaDetail.danhSachHinhAnh}" class="relative group">
+                            <img th:src="${imgUrl}" alt="Minh chứng lỗi"
+                                 th:onclick="moModalXemAnh([[${imgUrl}]])"
+                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-slate-200 group-hover:border-blue-500 cursor-pointer shadow-2xs transition transform group-hover:scale-105" />
+                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 rounded-2xl transition flex items-center justify-center text-white pointer-events-none">
+                                <i class="fa-solid fa-magnifying-glass-plus text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phản hồi từ Admin CSKH (nếu có) -->
+                <div th:if="${rmaDetail.yeuCauDoiTra.ghiChuAdmin != null && !rmaDetail.yeuCauDoiTra.ghiChuAdmin.isBlank()}"
+                     class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
+                    <span class="text-[11px] font-black uppercase text-amber-800 block flex items-center gap-1">
+                        <i class="fa-solid fa-headset"></i> Phản hồi từ Bộ phận CSKH Simplain:
+                    </span>
+                    <p class="text-xs font-semibold leading-relaxed" th:text="${rmaDetail.yeuCauDoiTra.ghiChuAdmin}">Ghi chú duyệt...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTION FOOTER -->
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <a href="/khach-hang/doi-tra" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold uppercase hover:bg-slate-50 transition">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Danh sách phiếu RMA
+            </a>
+
+            <a th:if="${rmaDetail.yeuCauDoiTra.donHang != null}"
+               th:href="@{'/khach-hang/don-hang/' + ${rmaDetail.yeuCauDoiTra.donHang.maDonHang}}"
+               class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition">
+                Xem lại đơn hàng gốc <i class="fa-solid fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            &copy; 2026 SIMPLAIN STORE &bull; Đổi trả dễ dàng &bull; Trải nghiệm mua sắm chuẩn Shopee
+        </div>
+    </footer>
+
+    <!-- Modal phóng to xem ảnh minh chứng -->
+    <div id="modalXemAnh" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden" onclick="dongModalXemAnh()">
+        <div class="relative max-w-3xl max-h-[90vh] bg-transparent flex flex-col items-center" onclick="event.stopPropagation()">
+            <button type="button" onclick="dongModalXemAnh()"
+                    class="absolute -top-10 right-0 text-white hover:text-slate-300 text-2xl transition p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img id="imgModalSrc" src="" alt="Ảnh minh chứng phóng to"
+                 class="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl border border-white/20">
+        </div>
+    </div>
+
+    <script>
+        function copyText(str) {
+            if (!str) return;
+            navigator.clipboard.writeText(str).then(() => {
+                alert('Đã sao chép: ' + str);
+            }).catch(() => {
+                prompt('Sao chép mã:', str);
+            });
+        }
+
+        function moModalXemAnh(url) {
+            if (!url) return;
+            document.getElementById('imgModalSrc').src = url;
+            document.getElementById('modalXemAnh').classList.remove('hidden');
+        }
+
+        function dongModalXemAnh() {
+            document.getElementById('modalXemAnh').classList.add('hidden');
+            document.getElementById('imgModalSrc').src = '';
+        }
+    </script>
+</body>
+</html>

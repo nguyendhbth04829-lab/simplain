@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản Phẩm Yêu Thích (Wishlist) &bull; Simplain Store</title>
+
+    <!-- Tailwind CSS qua CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+
+    <!-- Font Awesome Pro / Free Icons -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Font Inter -->
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- 1. HEADER STOREFRONT SIMPLAIN (CHUẨN ĐỒNG BỘ TOÀN HỆ THỐNG) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Logo Simplain -->
+            <div class="flex items-center gap-6">
+                <a href="/cua-hang" class="flex items-center space-x-2 group">
+                    <span class="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN STORE<span class="text-blue-600">.</span></span>
+                    <span class="hidden sm:inline-block text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded tracking-widest uppercase">Nam</span>
+                </a>
+
+                <nav class="hidden md:flex items-center space-x-6 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <a href="/cua-hang" class="hover:text-blue-600 transition">Tất cả sản phẩm</a>
+                    <a href="/khach-hang/yeu-thich" class="text-rose-600 flex items-center gap-1">
+                        <i class="fa-solid fa-heart text-xs"></i>Yêu thích
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Cụm Tìm kiếm nhanh -->
+            <form action="/cua-hang" method="get" class="relative hidden sm:block w-48 lg:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-neutral-400 text-xs"></i>
+                <input type="text" name="tuKhoa" placeholder="Tìm kiếm sản phẩm yêu thích..."
+                       class="w-full pl-8 pr-3 py-1.5 rounded-full border border-neutral-200 bg-neutral-50 text-xs focus:bg-white focus:border-black outline-none transition">
+            </form>
+
+            <!-- Cụm Tài khoản Khách hàng & Wishlist Badge -->
+            <div class="flex items-center space-x-2.5 text-xs font-bold">
+                <!-- Nút Yêu thích (Active) -->
+                <a href="/khach-hang/yeu-thich"
+                   class="relative px-3 py-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition flex items-center gap-1.5"
+                   title="Danh sách yêu thích của bạn">
+                    <i class="fa-solid fa-heart text-rose-500"></i>
+                    <span class="hidden md:inline">Yêu thích</span>
+                    <span id="badgeWishlistHeader"
+                          th:text="${tongSoYeuThich != null ? tongSoYeuThich : 0}"
+                          class="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-black">
+                        0
+                    </span>
+                </a>
+
+                <!-- Nút Sổ địa chỉ -->
+                <a th:if="${khachHangDangNhap != null}" href="/khach-hang/so-dia-chi"
+                   class="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1.5" title="Sổ địa chỉ nhận hàng">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span class="hidden md:inline">Sổ địa chỉ</span>
+                </a>
+
+                <!-- Hồ sơ cá nhân -->
+                <a th:if="${khachHangDangNhap != null}" href="/khach-hang/thong-tin"
+                   class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1.5" title="Hồ sơ tài khoản">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span class="hidden sm:inline" th:text="${khachHangDangNhap.hoTen}">Khách hàng</span>
+                </a>
+
+                <!-- Chưa đăng nhập -->
+                <a th:if="${khachHangDangNhap == null}" href="/khach-hang/dang-nhap"
+                   class="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition flex items-center gap-1.5">
+                    <i class="fa-regular fa-user"></i>
+                    <span class="hidden sm:inline">Simplain Club</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. BREADCRUMB ĐIỀU HƯỚNG -->
+    <nav class="w-full px-4 sm:px-8 lg:px-12 py-3 bg-white border-b border-slate-100">
+        <ol class="flex items-center flex-wrap gap-2 text-xs text-neutral-500 font-medium">
+            <li><a href="/cua-hang" class="hover:text-black transition"><i class="fa-solid fa-house mr-1"></i>Trang chủ</a></li>
+            <li><i class="fa-solid fa-chevron-right text-[10px] text-neutral-400"></i></li>
+            <li><a href="/cua-hang" class="hover:text-black transition">Cửa hàng</a></li>
+            <li><i class="fa-solid fa-chevron-right text-[10px] text-neutral-400"></i></li>
+            <li class="font-bold text-rose-600 flex items-center gap-1">
+                <i class="fa-solid fa-heart text-xs"></i>
+                <span>Sản phẩm yêu thích (US14)</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- 3. BANNER HERO DARK NAVY GRADIENT (US14) -->
+    <section class="bg-gradient-to-r from-[#0a192f] via-[#0f172a] to-[#1e293b] text-white border-b border-slate-800 shadow-sm">
+        <div class="w-full px-4 sm:px-8 lg:px-12 py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <div class="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-heart text-rose-400"></i>SIMPLAIN WISHLIST &bull; Sản Phẩm Yêu Thích Của Bạn (US14)
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight uppercase">
+                    Danh Sách Sản Phẩm Yêu Thích
+                </h1>
+                <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                    Nơi lưu trữ những mẫu thời trang nam bạn đã thả tim. Dễ dàng xem lại, theo dõi mức giá và đặt mua ngay khi cần.
+                </p>
+            </div>
+
+            <!-- Thống kê số lượng -->
+            <div class="flex items-center gap-3 bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 self-start md:self-auto">
+                <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Đang yêu thích</div>
+                    <div class="text-lg font-black font-mono text-white">
+                        <span id="soLuongYeuThichBanner" th:text="${tongSoYeuThich != null ? tongSoYeuThich : 0}">0</span> món đồ
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. NỘI DUNG CHÍNH (MAIN CONTAINER) -->
+    <main class="w-full px-4 sm:px-8 lg:px-12 py-8 flex-1">
+
+        <!-- Thông báo Flash thành công / lỗi -->
+        <div th:if="${thongBaoThanhCong}"
+             class="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+                <span th:text="${thongBaoThanhCong}">Thao tác thành công!</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${loiThaoTac}"
+             class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-sm"></i>
+                <span th:text="${loiThaoTac}">Đã xảy ra lỗi!</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- ======================================================================= -->
+        <!-- TRƯỜNG HỢP 1: DANH SÁCH YÊU THÍCH TRỐNG (EMPTY STATE)                    -->
+        <!-- ======================================================================= -->
+        <div th:if="${#lists.isEmpty(danhSachSanPham)}"
+             id="khungEmptyState"
+             class="bg-white rounded-3xl border border-slate-200/80 p-12 sm:p-16 text-center max-w-2xl mx-auto shadow-sm my-6 space-y-5">
+            <div class="w-24 h-24 rounded-full bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center text-4xl mx-auto shadow-inner">
+                <i class="fa-regular fa-heart"></i>
+            </div>
+            <div class="space-y-1.5">
+                <h3 class="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight">
+                    Danh Sách Yêu Thích Của Bạn Đang Trống
+                </h3>
+                <p class="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Bạn chưa lưu sản phẩm nào. Hãy khám phá bộ sưu tập thời trang nam Simplain và nhấn vào biểu tượng <i class="fa-solid fa-heart text-rose-500 mx-0.5"></i> trên mỗi sản phẩm để lưu lại tại đây!
+                </p>
+            </div>
+            <div class="pt-3">
+                <a href="/cua-hang"
+                   class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#0f172a] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition shadow-sm cursor-pointer">
+                    <i class="fa-solid fa-store"></i>
+                    <span>Khám phá Cửa hàng ngay</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ======================================================================= -->
+        <!-- TRƯỜNG HỢP 2: GRID HIỂN THỊ CÁC SẢN PHẨM YÊU THÍCH                      -->
+        <!-- ======================================================================= -->
+        <div th:if="${not #lists.isEmpty(danhSachSanPham)}" class="space-y-6">
+
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                    Hiển thị <span class="text-rose-600 font-black" th:text="${#lists.size(danhSachSanPham)}">0</span> sản phẩm đã lưu
+                </span>
+                <a href="/cua-hang" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+                    <span>Xem thêm sản phẩm khác</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+
+            <!-- Grid thẻ sản phẩm yêu thích (3 hoặc 4 cột) -->
+            <div id="gridYeuThich" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+                <article th:each="sp : ${danhSachSanPham}"
+                         th:id="'the-sp-' + ${sp.id}"
+                         class="bg-white rounded-2xl border border-neutral-200/80 shadow-2xs hover:shadow-xl hover:border-neutral-300 transition-all duration-300 overflow-hidden flex flex-col group relative">
+
+                    <!-- Khung Ảnh Đại diện Sản phẩm -->
+                    <a th:href="@{/cua-hang/san-pham/{id}(id=${sp.id})}" class="relative h-72 w-full bg-neutral-100 overflow-hidden block">
+                        <img th:src="${sp.anhDaiDienUrl}"
+                             th:alt="${sp.tenSanPham}"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+
+                        <!-- Cụm Nhãn Góc Trái: Best Seller + Danh mục -->
+                        <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                            <span th:if="${sp.noiBat}"
+                                  class="bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                                <i class="fa-solid fa-fire"></i>Best Seller
+                            </span>
+                            <span class="bg-black/80 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                                  th:text="${sp.tenDanhMuc}">
+                                Áo Nam
+                            </span>
+                        </div>
+
+                        <!-- Nút Xóa Khỏi Wishlist (Nổi trên góc phải ảnh) -->
+                        <button type="button"
+                                th:onclick="'xoaYeuThichAjax(this, ' + ${sp.id} + ')'"
+                                class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-rose-50 text-rose-500 shadow-md flex items-center justify-center transition cursor-pointer z-20 group/btn"
+                                title="Bỏ khỏi danh sách yêu thích">
+                            <i class="fa-solid fa-heart text-sm group-hover/btn:hidden"></i>
+                            <i class="fa-solid fa-xmark text-sm hidden group-hover/btn:inline"></i>
+                        </button>
+
+                        <!-- Thanh thông tin Chất liệu & Form dáng trên chân ảnh -->
+                        <div class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-xl text-[11px] shadow-xs z-10">
+                            <span class="font-semibold text-neutral-700 truncate" th:text="${sp.chatLieu}">Chất liệu</span>
+                            <span class="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px] whitespace-nowrap" th:text="${sp.formDang}">Regular Fit</span>
+                        </div>
+                    </a>
+
+                    <!-- Phần Thông tin Chi tiết Thẻ Sản phẩm -->
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                                <span th:text="${sp.maSanPham}">SP-001</span>
+                                <span th:if="${sp.tongTonKho > 0}" class="text-emerald-600 font-sans font-bold">Còn hàng</span>
+                                <span th:if="${sp.tongTonKho <= 0}" class="text-slate-400 font-sans">Hết hàng</span>
+                            </div>
+
+                            <a th:href="@{/cua-hang/san-pham/{id}(id=${sp.id})}" class="block">
+                                <h3 class="text-sm font-extrabold text-neutral-900 group-hover:text-blue-600 transition line-clamp-2 leading-snug"
+                                    th:text="${sp.tenSanPham}">
+                                    Tên sản phẩm
+                                </h3>
+                            </a>
+
+                            <!-- Giá bán hiển thị nổi bật -->
+                            <div class="pt-1 flex items-baseline gap-2">
+                                <span class="text-base font-black text-black font-mono"
+                                      th:text="${#numbers.formatDecimal(sp.giaThapNhat != null ? sp.giaThapNhat : sp.giaCoBan, 0, 'POINT', 0, 'COMMA') + ' ₫'}">
+                                    299.000 ₫
+                                </span>
+                                <span th:if="${sp.giaCaoNhat != null and sp.giaThapNhat != null and sp.giaCaoNhat.compareTo(sp.giaThapNhat) > 0}"
+                                      class="text-xs font-bold text-neutral-400 font-mono"
+                                      th:text="${'- ' + #numbers.formatDecimal(sp.giaCaoNhat, 0, 'POINT', 0, 'COMMA') + ' ₫'}">
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Cụm Hành động: Xem chi tiết & Bỏ thích -->
+                        <div class="pt-2 border-t border-neutral-100 flex items-center gap-2">
+                            <a th:href="@{/cua-hang/san-pham/{id}(id=${sp.id})}"
+                               class="flex-1 text-center py-2 px-3 rounded-xl bg-[#0f172a] hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs">
+                                <i class="fa-solid fa-eye mr-1"></i>Xem &amp; Mua
+                            </a>
+                            <a th:href="@{/khach-hang/yeu-thich/xoa/{id}(id=${sp.id})}"
+                               onclick="return confirm('Bạn có chắc chắn muốn bỏ sản phẩm này khỏi danh sách yêu thích?')"
+                               class="py-2 px-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-xs font-bold transition"
+                               title="Bỏ yêu thích">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                </article>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 5. TOAST NOTIFICATION CONTAINER (GÓC DƯỚI MÀN HÌNH) -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- 6. FOOTER STOREFRONT CHUẨN SIMPLAIN -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-bold text-slate-700 uppercase tracking-widest text-[11px] mb-1">SIMPLAIN STORE &bull; Mua sắm thông minh, phong cách tối giản</p>
+            <p>&copy; 2026 Simplain Menswear. All rights reserved &bull; US14 Quản lý Sản phẩm Yêu thích.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT XỬ LÝ AJAX WISHLIST & TOAST -->
+    <script>
+        function hienThiToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-slate-900 text-white border-slate-700' : 'bg-rose-600 text-white border-rose-500';
+            const iconClass = type === 'success' ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-circle-exclamation text-amber-300';
+
+            toast.className = `${bgClass} border px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 transform translate-y-3 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="${iconClass} text-sm"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-3', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-3');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function xoaYeuThichAjax(btn, spId) {
+            btn.disabled = true;
+            fetch(`/khach-hang/yeu-thich/toggle/${spId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.thanhCong && !data.daYeuThich) {
+                    hienThiToast(data.thongBao || 'Đã bỏ sản phẩm khỏi danh sách yêu thích!');
+                    
+                    // Cập nhật số lượng trên Header và Banner
+                    const headerBadge = document.getElementById('badgeWishlistHeader');
+                    if (headerBadge) headerBadge.innerText = data.tongSoYeuThich;
+                    const bannerBadge = document.getElementById('soLuongYeuThichBanner');
+                    if (bannerBadge) bannerBadge.innerText = data.tongSoYeuThich;
+
+                    // Hiệu ứng mờ dần và gỡ bỏ thẻ
+                    const theSp = document.getElementById(`the-sp-${spId}`);
+                    if (theSp) {
+                        theSp.style.transition = 'all 0.4s ease';
+                        theSp.style.opacity = '0';
+                        theSp.style.transform = 'scale(0.9)';
+                        setTimeout(() => {
+                            theSp.remove();
+                            // Nếu không còn sản phẩm nào thì reload lại để hiện Empty State
+                            const conLai = document.querySelectorAll('#gridYeuThich article');
+                            if (conLai.length === 0) {
+                                window.location.reload();
+                            }
+                        }, 400);
+                    }
+                } else {
+                    hienThiToast(data.thongBao || 'Có lỗi xảy ra', 'error');
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                hienThiToast('Không thể kết nối đến máy chủ, vui lòng thử lại sau!', 'error');
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

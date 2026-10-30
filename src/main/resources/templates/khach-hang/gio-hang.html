@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng của bạn | Simplain</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts Plus Jakarta Sans -->
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+
+    <!-- Header Navigation Bar -->
+    <header class="w-full bg-white border-b border-slate-200/80 sticky top-0 z-50 backdrop-blur-md bg-white/95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-6">
+                <a href="/cua-hang" class="flex items-center gap-2 group">
+                    <span class="w-9 h-9 rounded-xl bg-[#0f172a] text-white flex items-center justify-center font-black text-lg shadow-sm group-hover:scale-105 transition-transform">S</span>
+                    <div class="flex flex-col">
+                        <span class="font-extrabold text-base tracking-wider text-[#0f172a] leading-none uppercase">Simplain</span>
+                        <span class="text-[9px] font-semibold text-slate-400 tracking-widest uppercase">Namwear</span>
+                    </div>
+                </a>
+
+                <nav class="hidden md:flex items-center space-x-6 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <a href="/cua-hang" class="hover:text-blue-600 transition">Cửa hàng</a>
+                    <a href="/cua-hang" class="hover:text-blue-600 transition">Sản phẩm mới</a>
+                    <a href="/khach-hang/yeu-thich" class="hover:text-rose-600 transition">Yêu thích</a>
+                </nav>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                <!-- Yêu thích Link -->
+                <a href="/khach-hang/yeu-thich"
+                   class="relative px-3 py-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 transition flex items-center gap-1.5"
+                   title="Danh sách yêu thích (US14)">
+                    <i class="fa-solid fa-heart text-rose-500 text-xs"></i>
+                    <span class="hidden md:inline text-xs font-bold">Yêu thích</span>
+                </a>
+
+                <!-- Giỏ hàng (Active) -->
+                <a href="/gio-hang"
+                   class="relative px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1.5"
+                   title="Giỏ hàng của bạn (US17)">
+                    <i class="fa-solid fa-cart-shopping text-blue-600 text-xs"></i>
+                    <span class="text-xs font-bold">Giỏ hàng</span>
+                    <span id="badgeGioHangHeader"
+                          th:text="${gioHang != null ? gioHang.tongSoLuongItem : 0}"
+                          class="px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[10px] font-black">
+                        0
+                    </span>
+                </a>
+
+                <!-- Hồ sơ / Đăng nhập -->
+                <div th:if="${khachHang != null}" class="flex items-center gap-2">
+                    <a href="/khach-hang/thong-tin"
+                       class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1.5 text-xs font-bold">
+                        <i class="fa-solid fa-user-check text-xs"></i>
+                        <span class="hidden sm:inline" th:text="${khachHang.hoTen}">Tài khoản</span>
+                    </a>
+                </div>
+                <div th:if="${khachHang == null}">
+                    <a href="/khach-hang/dang-nhap"
+                       class="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition flex items-center gap-1.5 text-xs font-bold">
+                        <i class="fa-regular fa-user text-xs"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full">
+        <nav class="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+            <a href="/cua-hang" class="hover:text-slate-900 transition flex items-center gap-1">
+                <i class="fa-solid fa-house text-[10px]"></i> Trang chủ
+            </a>
+            <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+            <span class="text-slate-900 font-bold">Giỏ hàng của bạn</span>
+        </nav>
+    </div>
+
+    <!-- Main Cart Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 w-full flex-grow">
+
+        <!-- Thông báo Toast / Flash Message -->
+        <div th:if="${thongBaoThanhCong}" class="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between text-xs font-semibold animate-pulse">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Cập nhật giỏ hàng thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 text-sm"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div th:if="${loiGioHang}" class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between text-xs font-semibold">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-600 text-base"></i>
+                <span th:text="${loiGioHang}">Có lỗi xảy ra với giỏ hàng!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800 text-sm"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Banner Thông báo Giỏ hàng (US17) -->
+        <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div>
+                <h1 class="text-2xl font-black text-[#0f172a] tracking-tight flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-blue-600"></i>
+                    Giỏ hàng của bạn
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 ml-2"
+                          th:text="${gioHang.tongSoLuongItem + ' sản phẩm'}">0 sản phẩm</span>
+                </h1>
+                <p class="text-xs text-slate-500 mt-1">Quản lý các biến thể sản phẩm lẻ và bó hàng Combo ưu đãi (US17).</p>
+            </div>
+
+            <!-- Nút Xóa sạch toàn bộ giỏ hàng -->
+            <div th:if="${!gioHang.gioHangRong}" class="flex items-center gap-3">
+                <form th:action="@{/gio-hang/xoa-het}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn làm trống toàn bộ giỏ hàng không?')">
+                    <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-bold transition flex items-center gap-1.5 border border-slate-200">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                        <span>Làm trống giỏ hàng</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TRƯỜNG HỢP 1: GIỎ HÀNG RỖNG -->
+        <div th:if="${gioHang.gioHangRong}" class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center max-w-2xl mx-auto shadow-xs">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-4xl shadow-inner">
+                <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <h2 class="text-xl font-black text-[#0f172a] mb-2">Giỏ hàng của bạn đang trống</h2>
+            <p class="text-xs text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
+                Bạn chưa thêm sản phẩm hoặc gói combo nào vào giỏ hàng. Hãy khám phá ngay các mẫu trang phục thời trang tối giản chất lượng cao tại Simplain!
+            </p>
+            <div class="flex items-center justify-center gap-4">
+                <a href="/cua-hang"
+                   class="px-6 py-3 rounded-xl bg-[#0f172a] hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-wider transition shadow-sm inline-flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Khám phá Cửa hàng</span>
+                </a>
+                <a href="/khach-hang/yeu-thich"
+                   class="px-6 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition border border-rose-200 inline-flex items-center gap-2">
+                    <i class="fa-solid fa-heart"></i>
+                    <span>Xem Yêu thích</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- TRƯỜNG HỢP 2: CÓ SẢN PHẨM HOẶC BÓ COMBO TRONG GIỎ -->
+        <div th:if="${!gioHang.gioHangRong}" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- CỘT TRÁI (8/12): DANH SÁCH MỤC HÀNG & BÓ COMBO -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- 1. BÓ HÀNG COMBO ƯU ĐÃI (US17 - Tiêu chí 2: Sinh nhom_combo_token) -->
+                <div th:if="${gioHang.danhSachBocCombo != null and !gioHang.danhSachBocCombo.isEmpty()}" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                            Bó hàng Combo Ưu Đãi (US17)
+                        </h2>
+                        <span class="text-xs text-slate-500" th:text="${gioHang.danhSachBocCombo.size() + ' gói combo'}">1 gói</span>
+                    </div>
+
+                    <div th:each="combo : ${gioHang.danhSachBocCombo}"
+                         class="bg-gradient-to-r from-blue-50/60 via-indigo-50/40 to-slate-50 border-2 border-indigo-200 rounded-3xl p-5 sm:p-6 shadow-xs relative transition hover:border-indigo-300">
+
+                        <!-- Header của Bó Combo -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-indigo-100">
+                            <div>
+                                <div class="flex items-center flex-wrap gap-2 mb-1">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                        <i class="fa-solid fa-box-open text-[9px]"></i> GÓI COMBO
+                                    </span>
+                                    <!-- Tiêu chí 2: Hiển thị nhom_combo_token duy nhất đã sinh -->
+                                    <span class="px-2 py-0.5 rounded-md bg-white border border-indigo-200 text-indigo-700 font-mono text-[10px] font-bold"
+                                          th:title="'Mã bó combo token: ' + ${combo.nhomComboToken}"
+                                          th:text="${combo.nhomComboToken}">
+                                        COMBO-ABCXYZ
+                                    </span>
+                                </div>
+                                <h3 class="text-base font-extrabold text-[#0f172a]" th:text="${combo.tenCombo}">Tự Chọn Box 3 Quần Lót</h3>
+                                <p class="text-[11px] text-slate-500">Giá combo ưu đãi trọn gói. Tăng/giảm số lượng sẽ áp dụng đồng thời cho tất cả các món.</p>
+                            </div>
+
+                            <!-- Hành động trên Bó Combo: Đổi số lượng Combo & Xóa Combo -->
+                            <div class="flex items-center gap-4">
+                                <!-- Bộ chọn số lượng cả Combo -->
+                                <div class="flex items-center border border-indigo-300 bg-white rounded-xl overflow-hidden shadow-2xs"
+                                     th:data-token="${combo.nhomComboToken}">
+                                    <button type="button"
+                                            onclick="thayDoiSoLuongComboTuButton(this, -1)"
+                                            class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition text-xs font-bold cursor-pointer"
+                                            title="Giảm số lượng combo">
+                                        <i class="fa-solid fa-minus text-[10px]"></i>
+                                    </button>
+                                    <input type="number" min="1"
+                                           th:value="${combo.soLuong}"
+                                           onchange="thayDoiSoLuongComboTuInput(this)"
+                                           class="w-12 h-8 text-center font-bold text-xs text-slate-800 bg-white border-x border-indigo-200 outline-none focus:bg-indigo-50">
+                                    <button type="button"
+                                            onclick="thayDoiSoLuongComboTuButton(this, 1)"
+                                            class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition text-xs font-bold cursor-pointer"
+                                            title="Tăng số lượng combo">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Thành tiền Combo -->
+                                <div class="text-right min-w-[100px]">
+                                    <div class="text-sm font-black text-indigo-700"
+                                         th:text="${#numbers.formatDecimal(combo.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                        299.000 đ
+                                    </div>
+                                    <div class="text-[10px] text-slate-400"
+                                         th:text="${'Đơn giá: ' + #numbers.formatDecimal(combo.giaCombo, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                        299.000 đ/bó
+                                    </div>
+                                </div>
+
+                                <!-- Nút Xóa Bó Combo (Tiêu chí 2: Xóa toàn vẹn nhóm combo) -->
+                                <form th:action="@{'/gio-hang/xoa-combo/' + ${combo.nhomComboToken}}" method="post"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa toàn bộ gói Combo này khỏi giỏ hàng?')">
+                                    <button type="submit" class="w-8 h-8 rounded-xl bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition flex items-center justify-center text-xs" title="Xóa gói Combo này">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách các món con bên trong bó combo -->
+                        <div class="mt-4 pt-1 space-y-2.5">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group text-indigo-500"></i>
+                                Các món được chọn trong bó combo:
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <a th:each="mon : ${combo.danhSachMonCon}"
+                                   th:href="${mon.maSanPhamId != null ? ('/cua-hang/san-pham/' + mon.maSanPhamId + (mon.maBienTheId != null ? ('?bienTheId=' + mon.maBienTheId) : '')) : (mon.duongDanSlug != null and !mon.duongDanSlug.isEmpty() ? ('/cua-hang/san-pham/slug/' + mon.duongDanSlug) : '/cua-hang')}"
+                                   class="flex items-center gap-3 bg-white/90 p-2.5 rounded-2xl border border-indigo-100/80 hover:border-indigo-300 transition shadow-2xs group">
+                                    <img th:src="${mon.anhDaiDien != null ? mon.anhDaiDien : '/images/placeholder.jpg'}"
+                                         th:alt="${mon.tenSanPham}"
+                                         class="w-12 h-14 object-cover rounded-xl border border-slate-100 flex-shrink-0 bg-slate-50 group-hover:scale-105 transition">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition truncate" th:text="${mon.tenSanPham}">Tên sản phẩm</p>
+                                        <div class="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500">
+                                            <span class="inline-block w-2.5 h-2.5 rounded-full border border-slate-300"
+                                                  th:style="'background-color: ' + ${mon.maMauHex}"></span>
+                                            <span th:text="${mon.tenMau}">Đen</span>
+                                            <span>•</span>
+                                            <span class="font-bold text-slate-700" th:text="${'Size ' + mon.tenKichThuoc}">Size L</span>
+                                        </div>
+                                        <div class="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                                            <i class="fa-solid fa-check"></i> Đã đóng gói theo combo
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2. BIẾN THỂ SẢN PHẨM LẺ (US17 - Tiêu chí 1: Thêm/Sửa/Xóa biến thể) -->
+                <div th:if="${gioHang.danhSachItemLe != null and !gioHang.danhSachItemLe.isEmpty()}" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                            Sản phẩm mua lẻ (US17)
+                        </h2>
+                        <span class="text-xs text-slate-500" th:text="${gioHang.danhSachItemLe.size() + ' sản phẩm'}">0 sản phẩm</span>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-200/80 divide-y divide-slate-100 shadow-xs overflow-hidden">
+                        <div th:each="item : ${gioHang.danhSachItemLe}"
+                             class="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition">
+
+                            <!-- Khối Ảnh & Thông tin biến thể -->
+                            <div class="flex items-center gap-4 flex-1 min-w-0">
+                                <a th:href="${item.maSanPhamId != null ? ('/cua-hang/san-pham/' + item.maSanPhamId + (item.maBienTheId != null ? ('?bienTheId=' + item.maBienTheId) : '')) : (item.duongDanSlug != null and !item.duongDanSlug.isEmpty() ? ('/cua-hang/san-pham/slug/' + item.duongDanSlug) : '/cua-hang')}" class="flex-shrink-0 group">
+                                    <img th:src="${item.anhDaiDien != null ? item.anhDaiDien : '/images/placeholder.jpg'}"
+                                         th:alt="${item.tenSanPham}"
+                                         class="w-16 h-20 sm:w-20 sm:h-24 object-cover rounded-2xl border border-slate-200 group-hover:scale-102 transition bg-slate-50">
+                                </a>
+
+                                <div class="flex-1 min-w-0 space-y-1">
+                                    <a th:href="${item.maSanPhamId != null ? ('/cua-hang/san-pham/' + item.maSanPhamId + (item.maBienTheId != null ? ('?bienTheId=' + item.maBienTheId) : '')) : (item.duongDanSlug != null and !item.duongDanSlug.isEmpty() ? ('/cua-hang/san-pham/slug/' + item.duongDanSlug) : '/cua-hang')}"
+                                       class="text-xs sm:text-sm font-bold text-[#0f172a] hover:text-blue-600 transition truncate block"
+                                       th:text="${item.tenSanPham}">
+                                        Áo Polo Nam Excool Công Nghệ Làm Mát
+                                    </a>
+
+                                    <!-- Chi tiết Phân loại: Màu sắc & Kích thước -->
+                                    <div class="flex items-center flex-wrap gap-2 text-[11px] text-slate-500">
+                                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
+                                            <span class="w-2.5 h-2.5 rounded-full border border-slate-300"
+                                                  th:style="'background-color: ' + ${item.maMauHex}"></span>
+                                            <span th:text="${item.tenMau}">Đen</span>
+                                        </div>
+                                        <div class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 font-bold text-slate-700">
+                                            <span th:text="${'Size ' + item.tenKichThuoc}">Size L</span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-mono hidden sm:inline" th:text="${item.maSku}">SKU-001</span>
+                                        <span th:if="${item.laFlashSale}" class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-black flex items-center gap-1">
+                                            <i class="fa-solid fa-bolt text-rose-500"></i> Flash Sale
+                                            <span th:if="${item.phanTramGiamGia != null and item.phanTramGiamGia > 0}" th:text="'-' + ${item.phanTramGiamGia} + '%'"></span>
+                                        </span>
+                                    </div>
+
+                                    <!-- Tình trạng tồn kho -->
+                                    <div class="text-[10px] font-semibold">
+                                        <span th:if="${item.soLuongTon > 5}" class="text-emerald-600 flex items-center gap-1">
+                                            <i class="fa-solid fa-check text-[9px]"></i> Còn hàng (<span th:text="${item.soLuongTon}">10</span> chiếc sẵn có)
+                                        </span>
+                                        <span th:if="${item.soLuongTon > 0 and item.soLuongTon <= 5}" class="text-amber-600 flex items-center gap-1">
+                                            <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Chỉ còn <span th:text="${item.soLuongTon}">3</span> chiếc trong kho!
+                                        </span>
+                                        <span th:if="${item.soLuongTon <= 0}" class="text-rose-600 font-bold flex items-center gap-1">
+                                            <i class="fa-solid fa-circle-xmark text-[9px]"></i> Tạm thời hết hàng!
+                                        </span>
+                                    </div>
+
+                                    <!-- Đơn giá -->
+                                    <div class="text-xs font-bold sm:hidden flex items-baseline gap-1.5" th:classappend="${item.laFlashSale} ? 'text-rose-600' : 'text-slate-600'">
+                                        <span th:text="${#numbers.formatDecimal(item.donGia, 0, 'POINT', 0, 'COMMA') + ' đ'}">199.000 đ</span>
+                                        <span th:if="${item.laFlashSale and item.giaBanGoc != null and item.giaBanGoc > item.donGia}"
+                                              class="text-[10px] text-slate-400 line-through"
+                                              th:text="${#numbers.formatDecimal(item.giaBanGoc, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Khối Thao tác số lượng, Thành tiền & Xóa -->
+                            <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                <!-- Đơn giá hiển thị trên màn hình lớn -->
+                                <div class="hidden sm:block text-right">
+                                    <div class="text-xs font-bold" th:classappend="${item.laFlashSale} ? 'text-rose-600 font-black' : 'text-slate-500'"
+                                         th:text="${#numbers.formatDecimal(item.donGia, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                        199.000 đ
+                                    </div>
+                                    <div th:if="${item.laFlashSale and item.giaBanGoc != null and item.giaBanGoc > item.donGia}"
+                                         class="text-[10px] text-slate-400 line-through font-mono"
+                                         th:text="${#numbers.formatDecimal(item.giaBanGoc, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                        299.000 đ
+                                    </div>
+                                    <div class="text-[10px] text-slate-400" th:text="${item.laFlashSale} ? 'Giá Flash Sale' : 'Đơn giá'">Đơn giá</div>
+                                </div>
+
+                                <!-- Bộ đếm số lượng (Tiêu chí 1: Sửa số lượng) -->
+                                <div class="flex items-center border border-slate-200 bg-slate-50 rounded-xl overflow-hidden shadow-2xs"
+                                     th:data-id="${item.chiTietId}">
+                                    <button type="button"
+                                            onclick="thayDoiSoLuongItemTuButton(this, -1)"
+                                            class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition text-xs font-bold cursor-pointer"
+                                            title="Giảm số lượng">
+                                        <i class="fa-solid fa-minus text-[10px]"></i>
+                                    </button>
+                                    <input type="number" min="1"
+                                           th:value="${item.soLuong}"
+                                           onchange="thayDoiSoLuongItemTuInput(this)"
+                                           class="w-12 h-8 text-center font-bold text-xs text-slate-800 bg-white border-x border-slate-200 outline-none focus:bg-blue-50">
+                                    <button type="button"
+                                            onclick="thayDoiSoLuongItemTuButton(this, 1)"
+                                            class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition text-xs font-bold cursor-pointer"
+                                            title="Tăng số lượng">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Thành tiền -->
+                                <div class="text-right min-w-[90px]">
+                                    <div class="text-sm font-black text-[#0f172a]"
+                                         th:text="${#numbers.formatDecimal(item.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                        199.000 đ
+                                    </div>
+                                    <div class="text-[10px] text-slate-400">Thành tiền</div>
+                                </div>
+
+                                <!-- Nút Xóa (Tiêu chí 1: Xóa biến thể khỏi giỏ) -->
+                                <form th:action="@{'/gio-hang/xoa/' + ${item.chiTietId}}" method="post"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')">
+                                    <button type="submit" class="w-8 h-8 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition flex items-center justify-center text-xs" title="Xóa sản phẩm">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. KHÁM PHÁ & THÊM GÓI COMBO KÍCH CẦU (US28 / US17) -->
+                <div class="bg-white rounded-3xl border border-indigo-200/90 p-5 sm:p-6 text-slate-700 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-indigo-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                <i class="fa-solid fa-boxes-packing"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black uppercase tracking-wider text-slate-900">Gói Combo Kích Cầu Tiết Kiệm (US28)</h3>
+                                <p class="text-[11px] text-slate-400">Tự chọn các sản phẩm theo gói với giá ưu đãi cố định cực sốc</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-black uppercase">
+                            Ưu Đãi Trọn Gói
+                        </span>
+                    </div>
+
+                    <!-- Danh sách các gói combo -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" th:if="${danhSachComboGoiY != null and !danhSachComboGoiY.isEmpty()}">
+                        <div th:each="cb : ${danhSachComboGoiY}"
+                             class="bg-gradient-to-br from-indigo-50/40 via-white to-blue-50/30 border border-indigo-200 rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded-md bg-indigo-600 text-white font-mono text-[10px] font-bold"
+                                          th:text="${cb.maCombo}">COMBO-01</span>
+                                    <span class="text-xs font-black text-rose-600"
+                                          th:text="${#numbers.formatDecimal(cb.giaCombo, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                        299.000 đ
+                                    </span>
+                                </div>
+                                <h4 class="text-sm font-black text-slate-900 line-clamp-1" th:text="${cb.tenCombo}">Combo Tự Chọn</h4>
+                                <p class="text-[11px] text-slate-500">
+                                    Quy định: <span class="font-bold text-indigo-700" th:text="${'Tự chọn ' + cb.soMonQuyDinh + ' món'}">Tự chọn 3 món</span>
+                                    trong danh mục áp dụng.
+                                </p>
+
+                                <!-- Danh sách ảnh sản phẩm áp dụng trong combo -->
+                                <div class="flex items-center gap-1.5 overflow-x-auto py-1">
+                                    <div th:each="sp : ${cb.danhSachSanPham}" class="relative flex-shrink-0" th:title="${sp.tenSanPham}">
+                                        <img th:src="${sp.anhDaiDienUrl != null ? sp.anhDaiDienUrl : '/images/placeholder.jpg'}"
+                                             class="w-10 h-12 object-cover rounded-lg border border-slate-200 bg-white"
+                                             onerror="this.src='/images/placeholder.jpg'">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-indigo-100 flex items-center justify-end gap-2 mt-3">
+                                <button type="button"
+                                        th:onclick="'themNhanhGoiCombo(' + ${cb.id} + ')'"
+                                        class="px-3 py-1.5 rounded-xl border border-indigo-300 text-indigo-700 hover:bg-indigo-50 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-bolt text-[10px]"></i> Thêm nhanh
+                                </button>
+                                <button type="button"
+                                        th:onclick="'moModalChonCombo(' + ${cb.id} + ')'"
+                                        class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition shadow-2xs flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Chọn món &amp; Thêm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trường hợp fallback nếu chưa có combo trong DB -->
+                    <div th:if="${danhSachComboGoiY == null or danhSachComboGoiY.isEmpty()}" class="text-center py-6 text-slate-400 text-xs">
+                        <i class="fa-solid fa-box-open text-2xl mb-1 text-slate-300"></i>
+                        <p>Hiện tại chưa có gói Combo kích cầu mới. Hãy quay lại sau nhé!</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CỘT PHẢI (4/12): TÓM TẮT ĐƠN HÀNG & THANH TOÁN (STICKY SIDEBAR) -->
+            <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+                <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+                    <h2 class="text-base font-black text-[#0f172a] pb-4 border-b border-slate-100 flex items-center justify-between">
+                        <span>Tóm tắt đơn hàng</span>
+                        <span class="text-xs font-semibold text-slate-500" th:text="${gioHang.tongSoLuongItem + ' món'}">0 món</span>
+                    </h2>
+
+                    <!-- Chi tiết số tiền -->
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Tạm tính tiền hàng:</span>
+                            <span class="font-bold text-slate-900"
+                                  th:text="${#numbers.formatDecimal(gioHang.tongTienHang, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                0 đ
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Phí vận chuyển:</span>
+                            <span class="font-bold text-emerald-600 flex items-center gap-1">
+                                <i class="fa-solid fa-truck-fast text-[11px]"></i> MIỄN PHÍ
+                            </span>
+                        </div>
+                        <div th:if="${gioHang.tienGiamGia != null and gioHang.tienGiamGia > 0}" class="flex items-center justify-between text-emerald-600">
+                            <span>Ưu đãi giảm giá:</span>
+                            <span class="font-bold"
+                                  th:text="${'-' + #numbers.formatDecimal(gioHang.tienGiamGia, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                -0 đ
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Tổng thanh toán cuối cùng -->
+                    <div class="pt-4 border-t border-slate-200/80 flex items-baseline justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-slate-500">Tổng thanh toán:</div>
+                            <div class="text-[10px] text-slate-400">(Đã bao gồm thuế VAT)</div>
+                        </div>
+                        <div class="text-xl font-black text-[#0f172a]"
+                             th:text="${#numbers.formatDecimal(gioHang.tongThanhToan, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                            0 đ
+                        </div>
+                    </div>
+
+                    <!-- Nút Tiến hành Đặt hàng (US19) -->
+                    <a href="/thanh-toan"
+                       class="w-full py-3.5 px-4 rounded-xl bg-[#0f172a] hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <span>Tiến hành Đặt hàng (Checkout)</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <!-- Chính sách quyền lợi khi mua sắm tại Simplain -->
+                    <div class="pt-4 border-t border-slate-100 space-y-2.5 text-[11px] text-slate-500">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-rotate-left text-blue-600 text-xs w-4 text-center"></i>
+                            <span>Đổi trả 60 ngày miễn phí vì bất kỳ lý do gì</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-emerald-600 text-xs w-4 text-center"></i>
+                            <span>Bảo hành lỗi sản xuất 1 đổi 1 tận nơi</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-box text-amber-600 text-xs w-4 text-center"></i>
+                            <span>Đóng gói hộp sang trọng, kiểm tra trước khi nhận</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tiếp tục mua sắm link -->
+                <div class="text-center">
+                    <a href="/cua-hang" class="text-xs font-bold text-slate-600 hover:text-blue-600 transition inline-flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Tiếp tục mua sắm thêm sản phẩm khác</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL CHỌN MÓN CHO GÓI COMBO TRỰC TIẾP TẠI GIỎ HÀNG (US28 / US17) -->
+    <!-- ========================================================================= -->
+    <div id="modalChonComboGioHang" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header Modal -->
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                    </div>
+                    <div>
+                        <h3 id="modalComboTenText" class="text-sm font-black text-slate-900">Chọn Sản Phẩm Cho Gói Combo</h3>
+                        <p id="modalComboQuyDinhText" class="text-[11px] text-slate-400">Vui lòng chọn đúng số món quy định</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalChonCombo()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Thanh Tiến Trình Lựa Chọn Món -->
+            <div class="px-5 py-3 bg-indigo-50/60 border-b border-indigo-100 flex items-center justify-between text-xs">
+                <div class="font-bold text-indigo-900">
+                    Đã chọn: <span id="soMonDaChonText" class="text-indigo-600 font-black text-sm">0</span> / <span id="soMonCanChonText" class="font-black text-sm">3</span> món
+                </div>
+                <div class="text-[11px] text-slate-500 font-bold" id="tienDoChonText">
+                    Vui lòng chọn đủ món để thêm combo vào giỏ
+                </div>
+            </div>
+
+            <!-- Danh Sách Biến Thể Khả Dụng Để Chọn -->
+            <div id="danhSachMonComboContainer" class="flex-1 overflow-y-auto p-5 space-y-4">
+                <!-- Sẽ được nạp động qua JavaScript -->
+                <div class="text-center py-8 text-slate-400 text-xs">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
+                    <p>Đang tải danh sách sản phẩm áp dụng...</p>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                <div class="text-xs font-bold text-slate-700">
+                    Giá trọn gói: <span id="modalComboGiaText" class="text-rose-600 font-black text-sm">0 đ</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="dongModalChonCombo()"
+                            class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="button" id="btnXacNhanThemCombo" onclick="xacNhanThemComboVaoGio()" disabled
+                            class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center gap-1.5 opacity-50 cursor-not-allowed">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Thêm Bó Combo Vào Giỏ</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 py-8 text-center text-xs text-slate-400">
+        <p>© 2026 Simplain Namwear. Hệ thống thời trang nam tối giản. Bản quyền thuộc về Simplain.</p>
+    </footer>
+
+    <!-- Form ẩn phục vụ AJAX/POST cập nhật số lượng -->
+    <form id="formCapNhatAn" th:action="@{/gio-hang/cap-nhat}" method="post" style="display: none;">
+        <input type="hidden" name="chiTietGioHangId" id="inputChiTietIdAn">
+        <input type="hidden" name="nhomComboToken" id="inputComboTokenAn">
+        <input type="hidden" name="soLuong" id="inputSoLuongAn">
+    </form>
+
+    <!-- JavaScript Xử lý Giỏ hàng (US17) -->
+    <script>
+        // Cập nhật số lượng của mục lẻ bằng data-id (US17 - Tiêu chí 1)
+        function thayDoiSoLuongItemTuButton(btn, delta) {
+            const wrapper = btn.closest('[data-id]');
+            if (!wrapper) return;
+            const chiTietId = parseInt(wrapper.getAttribute('data-id'));
+            const input = wrapper.querySelector('input');
+            const curVal = parseInt(input.value) || 1;
+            thayDoiSoLuongItem(chiTietId, curVal + delta);
+        }
+
+        function thayDoiSoLuongItemTuInput(input) {
+            const wrapper = input.closest('[data-id]');
+            if (!wrapper) return;
+            const chiTietId = parseInt(wrapper.getAttribute('data-id'));
+            const val = parseInt(input.value) || 1;
+            thayDoiSoLuongItem(chiTietId, val);
+        }
+
+        function thayDoiSoLuongItem(chiTietId, soLuongMoi) {
+            if (soLuongMoi < 1) {
+                if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?')) {
+                    return;
+                }
+            }
+
+            fetch('/gio-hang/cap-nhat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    chiTietGioHangId: chiTietId,
+                    soLuong: soLuongMoi
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Không thể cập nhật số lượng sản phẩm!');
+                }
+            })
+            .catch(err => {
+                document.getElementById('inputChiTietIdAn').value = chiTietId;
+                document.getElementById('inputComboTokenAn').value = '';
+                document.getElementById('inputSoLuongAn').value = soLuongMoi;
+                document.getElementById('formCapNhatAn').submit();
+            });
+        }
+
+        // Cập nhật số lượng của toàn bộ Bó Combo bằng data-token (US17 - Tiêu chí 2)
+        function thayDoiSoLuongComboTuButton(btn, delta) {
+            const wrapper = btn.closest('[data-token]');
+            if (!wrapper) return;
+            const token = wrapper.getAttribute('data-token');
+            const input = wrapper.querySelector('input');
+            const curVal = parseInt(input.value) || 1;
+            thayDoiSoLuongCombo(token, curVal + delta);
+        }
+
+        function thayDoiSoLuongComboTuInput(input) {
+            const wrapper = input.closest('[data-token]');
+            if (!wrapper) return;
+            const token = wrapper.getAttribute('data-token');
+            const val = parseInt(input.value) || 1;
+            thayDoiSoLuongCombo(token, val);
+        }
+
+        function thayDoiSoLuongCombo(token, soLuongMoi) {
+            if (soLuongMoi < 1) {
+                if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ gói Combo này khỏi giỏ hàng không?')) {
+                    return;
+                }
+            }
+
+            fetch('/gio-hang/cap-nhat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    nhomComboToken: token,
+                    soLuong: soLuongMoi
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Không thể cập nhật số lượng Combo!');
+                }
+            })
+            .catch(err => {
+                document.getElementById('inputChiTietIdAn').value = '';
+                document.getElementById('inputComboTokenAn').value = token;
+                document.getElementById('inputSoLuongAn').value = soLuongMoi;
+                document.getElementById('formCapNhatAn').submit();
+            });
+        }
+
+        // =========================================================================
+        // LOGIC CHỌN MÓN & THÊM GÓI COMBO VÀO GIỎ HÀNG (US28 & US17)
+        // =========================================================================
+        let currentComboData = null;
+        let selectedSkuMap = {}; // skuId -> count
+
+        function moModalChonCombo(comboId) {
+            selectedSkuMap = {};
+            currentComboData = null;
+            document.getElementById('modalChonComboGioHang').classList.remove('hidden');
+
+            const container = document.getElementById('danhSachMonComboContainer');
+            container.innerHTML = `
+                <div class="text-center py-8 text-slate-400 text-xs">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-600 mb-2"></i>
+                    <p>Đang tải thông tin gói combo...</p>
+                </div>
+            `;
+
+            fetch(`/gio-hang/api/combo/${comboId}`)
+                .then(res => res.json())
+                .then(combo => {
+                    currentComboData = combo;
+                    hienThiThongTinComboModal(combo);
+                })
+                .catch(err => {
+                    container.innerHTML = `<div class="text-rose-500 font-bold text-xs text-center py-4">Lỗi: ${err.message || 'Không thể tải gói combo!'}</div>`;
+                });
+        }
+
+        function dongModalChonCombo() {
+            document.getElementById('modalChonComboGioHang').classList.add('hidden');
+            selectedSkuMap = {};
+            currentComboData = null;
+        }
+
+        function layTongSoMonDaChonGioHang() {
+            return Object.values(selectedSkuMap).reduce((sum, c) => sum + (c || 0), 0);
+        }
+
+        function layDanhSachFlatSkuIdsGioHang() {
+            const list = [];
+            for (const [skuId, count] of Object.entries(selectedSkuMap)) {
+                for (let i = 0; i < count; i++) {
+                    list.push(Number(skuId));
+                }
+            }
+            return list;
+        }
+
+        function hienThiThongTinComboModal(combo) {
+            document.getElementById('modalComboTenText').innerText = combo.tenCombo || 'Gói Combo Tiết Kiệm';
+            document.getElementById('modalComboQuyDinhText').innerText = `Tự chọn ${combo.soMonQuyDinh} món bất kỳ trong danh sách bên dưới`;
+            document.getElementById('soMonCanChonText').innerText = combo.soMonQuyDinh;
+            document.getElementById('soMonDaChonText').innerText = '0';
+            document.getElementById('modalComboGiaText').innerText = new Intl.NumberFormat('vi-VN').format(combo.giaCombo) + ' đ';
+
+            capNhatTrangThaiNutXacNhanCombo();
+
+            const container = document.getElementById('danhSachMonComboContainer');
+            if (!combo.danhSachSanPham || combo.danhSachSanPham.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">Chưa có sản phẩm nào được áp dụng cho gói combo này.</p>`;
+                return;
+            }
+
+            let html = '';
+            combo.danhSachSanPham.forEach(sp => {
+                const giaHienThi = sp.giaThapNhat || sp.giaBanThapNhat || sp.giaCoBan || 0;
+                const dsBienThe = (sp.danhSachBienThe && sp.danhSachBienThe.length > 0) ? sp.danhSachBienThe : (sp.bienTheSanPhams || []);
+
+                html += `
+                    <div class="border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${sp.anhDaiDienUrl || '/images/placeholder.jpg'}"
+                                 class="w-12 h-14 object-cover rounded-xl border border-slate-200 bg-white flex-shrink-0"
+                                 onerror="this.src='/images/placeholder.jpg'">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-xs text-slate-900 truncate">${sp.tenSanPham}</h4>
+                                <div class="text-[11px] text-slate-500 font-mono">${new Intl.NumberFormat('vi-VN').format(giaHienThi)} đ</div>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách biến thể SKU của sản phẩm -->
+                        <div class="pt-2 border-t border-slate-200/60">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Chọn phân loại (Màu / Size):</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                `;
+
+                if (dsBienThe && dsBienThe.length > 0) {
+                    dsBienThe.forEach(bt => {
+                        const hetHang = (bt.soLuong == null || bt.soLuong <= 0);
+                        html += `
+                            <div class="sku-combo-item p-2.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between text-xs cursor-pointer select-none transition-all ${hetHang ? 'opacity-40 cursor-not-allowed bg-slate-100' : 'hover:border-indigo-400'}"
+                                 id="sku-card-${bt.id}"
+                                 data-sku-id="${bt.id}"
+                                 data-tonkho="${bt.soLuong || 0}"
+                                 data-hethang="${hetHang}"
+                                 onclick="toggleChonSkuTrongCombo(${bt.id})">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0 shadow-sm" style="background-color: ${bt.maMauHex || '#333'}"></span>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="font-bold text-slate-800 text-[11px] truncate">${bt.tenMauSac || 'Màu'}</span>
+                                            <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">${bt.tenKichThuoc || 'Size'}</span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-mono block">${bt.maSku || ''}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    <span class="text-[10px] font-bold ${hetHang ? 'text-rose-500' : 'text-emerald-600'}">
+                                        ${hetHang ? 'Hết hàng' : 'Còn ' + bt.soLuong}
+                                    </span>
+                                    <!-- Nút tăng giảm số lượng SKU đã chọn -->
+                                    <div id="sku-counter-${bt.id}" class="hidden items-center bg-indigo-50 border border-indigo-200 rounded-lg p-0.5 ml-1">
+                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded bg-white text-indigo-700 hover:bg-indigo-100 font-bold text-xs shadow-sm"
+                                                onclick="thayDoiSoLuongSkuGioHang(${bt.id}, -1, event)">-</button>
+                                        <span id="sku-count-${bt.id}" class="w-5 text-center font-bold text-indigo-700 text-xs">1</span>
+                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded bg-white text-indigo-700 hover:bg-indigo-100 font-bold text-xs shadow-sm"
+                                                onclick="thayDoiSoLuongSkuGioHang(${bt.id}, 1, event)">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += `<div class="text-[11px] text-slate-400 col-span-2">Không có biến thể khả dụng</div>`;
+                }
+
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleChonSkuTrongCombo(skuId) {
+            const card = document.getElementById('sku-card-' + skuId);
+            if (!card || card.getAttribute('data-hethang') === 'true') return;
+
+            const quyDinh = currentComboData ? currentComboData.soMonQuyDinh : 3;
+            const currentCount = selectedSkuMap[skuId] || 0;
+
+            if (currentCount > 0) {
+                // Đã chọn -> bỏ chọn
+                thietLapSoLuongSkuGioHang(skuId, 0);
+            } else {
+                // Chưa chọn -> thêm chọn nếu chưa vượt quá số món quy định
+                const tongDaChon = layTongSoMonDaChonGioHang();
+                if (tongDaChon >= quyDinh) {
+                    alert(`Gói combo này chỉ cho phép chọn chính xác ${quyDinh} món. Vui lòng bỏ chọn bớt món khác trước!`);
+                    return;
+                }
+                thietLapSoLuongSkuGioHang(skuId, 1);
+            }
+        }
+
+        function thayDoiSoLuongSkuGioHang(skuId, delta, event) {
+            if (event) event.stopPropagation();
+            const card = document.getElementById('sku-card-' + skuId);
+            if (!card || card.getAttribute('data-hethang') === 'true') return;
+
+            const quyDinh = currentComboData ? currentComboData.soMonQuyDinh : 3;
+            const currentCount = selectedSkuMap[skuId] || 0;
+            const newCount = currentCount + delta;
+
+            if (delta > 0) {
+                const tongDaChon = layTongSoMonDaChonGioHang();
+                if (tongDaChon >= quyDinh) {
+                    alert(`Gói combo này chỉ cho phép chọn chính xác ${quyDinh} món. Đã chọn đủ số lượng!`);
+                    return;
+                }
+                const tonKho = parseInt(card.getAttribute('data-tonkho') || '0', 10);
+                if (newCount > tonKho) {
+                    alert(`Biến thể này chỉ còn ${tonKho} chiếc trong kho!`);
+                    return;
+                }
+            }
+
+            thietLapSoLuongSkuGioHang(skuId, Math.max(0, newCount));
+        }
+
+        function thietLapSoLuongSkuGioHang(skuId, soLuong) {
+            const card = document.getElementById('sku-card-' + skuId);
+            const counter = document.getElementById('sku-counter-' + skuId);
+            const countText = document.getElementById('sku-count-' + skuId);
+
+            if (soLuong <= 0) {
+                delete selectedSkuMap[skuId];
+                if (card) {
+                    card.classList.remove('border-indigo-600', 'bg-indigo-50/70', 'ring-2', 'ring-indigo-600/20');
+                    card.classList.add('border-slate-200', 'bg-white');
+                }
+                if (counter) {
+                    counter.classList.add('hidden');
+                    counter.classList.remove('flex');
+                }
+            } else {
+                selectedSkuMap[skuId] = soLuong;
+                if (card) {
+                    card.classList.remove('border-slate-200', 'bg-white');
+                    card.classList.add('border-indigo-600', 'bg-indigo-50/70', 'ring-2', 'ring-indigo-600/20');
+                }
+                if (counter) {
+                    counter.classList.remove('hidden');
+                    counter.classList.add('flex');
+                }
+                if (countText) countText.innerText = soLuong;
+            }
+
+            const tongDaChon = layTongSoMonDaChonGioHang();
+            document.getElementById('soMonDaChonText').innerText = tongDaChon;
+            capNhatTrangThaiNutXacNhanCombo();
+        }
+
+        function capNhatTrangThaiNutXacNhanCombo() {
+            const quyDinh = currentComboData ? currentComboData.soMonQuyDinh : 3;
+            const btn = document.getElementById('btnXacNhanThemCombo');
+            const tienDoText = document.getElementById('tienDoChonText');
+            const tongDaChon = layTongSoMonDaChonGioHang();
+
+            if (tongDaChon === quyDinh) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                tienDoText.innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> Đã chọn đủ ${quyDinh} món! Bạn có thể thêm vào giỏ.</span>`;
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                tienDoText.innerText = `Còn thiếu ${quyDinh - tongDaChon} món nữa`;
+            }
+        }
+
+        function xacNhanThemComboVaoGio() {
+            const quyDinh = currentComboData ? currentComboData.soMonQuyDinh : 3;
+            const flatSkuIds = layDanhSachFlatSkuIdsGioHang();
+            if (!currentComboData || flatSkuIds.length !== quyDinh) {
+                alert(`Vui lòng chọn đủ ${quyDinh} món!`);
+                return;
+            }
+
+            const btn = document.getElementById('btnXacNhanThemCombo');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang thêm vào giỏ...`;
+
+            fetch('/gio-hang/them-combo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    maComboId: currentComboData.id,
+                    danhSachBienTheIds: flatSkuIds,
+                    soLuongCombo: 1
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thành công! Đã thêm gói Combo vào giỏ hàng.');
+                    window.location.reload();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-cart-plus"></i> Thêm Bó Combo Vào Giỏ`;
+                }
+            })
+            .catch(err => {
+                alert('Không thể kết nối đến máy chủ: ' + err);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-cart-plus"></i> Thêm Bó Combo Vào Giỏ`;
+            });
+        }
+
+        // Thêm nhanh gói Combo tự động lấy các biến thể còn hàng
+        function themNhanhGoiCombo(comboId) {
+            fetch(`/gio-hang/api/combo/${comboId}`)
+                .then(res => res.json())
+                .then(combo => {
+                    const quyDinh = combo.soMonQuyDinh || 3;
+                    const dsSkuConHang = [];
+
+                    if (combo.danhSachSanPham) {
+                        for (const sp of combo.danhSachSanPham) {
+                            const dsBienThe = (sp.danhSachBienThe && sp.danhSachBienThe.length > 0) ? sp.danhSachBienThe : (sp.bienTheSanPhams || []);
+                            for (const bt of dsBienThe) {
+                                if (bt.soLuong && bt.soLuong > 0 && !dsSkuConHang.includes(bt.id)) {
+                                    dsSkuConHang.push(bt.id);
+                                    if (dsSkuConHang.length >= quyDinh) break;
+                                }
+                            }
+                            if (dsSkuConHang.length >= quyDinh) break;
+                        }
+                    }
+
+                    if (dsSkuConHang.length < quyDinh) {
+                        alert(`Các sản phẩm trong combo không đủ số lượng khả dụng để thêm nhanh. Vui lòng nhấn "Chọn món & Thêm" để tự chọn!`);
+                        moModalChonCombo(comboId);
+                        return;
+                    }
+
+                    return fetch('/gio-hang/them-combo', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            maComboId: combo.id,
+                            danhSachBienTheIds: dsSkuConHang,
+                            soLuongCombo: 1
+                        })
+                    }).then(r => r.json());
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        alert('Thành công! Đã thêm nhanh gói Combo vào giỏ hàng.');
+                        window.location.reload();
+                    } else if (data) {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi khi thêm nhanh combo: ' + err);
+                });
+        }
+    </script>
+</body>
+</html>

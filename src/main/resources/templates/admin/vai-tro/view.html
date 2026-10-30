@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa Vai trò | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-slate-900 text-slate-300 text-xs py-2 text-center font-medium tracking-wide">
+        Hệ thống Quản trị SIMPLAIN STORE &bull; Cập nhật thông tin Vai trò
+    </div>
+
+    <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('vai-tro')}"></div>
+
+    <!-- Main Container -->
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-8">
+        <div class="max-w-3xl mx-auto space-y-6">
+
+            <!-- Card Chỉnh sửa -->
+            <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+
+                <div class="flex items-center justify-between border-b border-slate-100 pb-5">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-lg font-bold shadow-xs">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full inline-block mb-1">Cập nhật Vai trò</span>
+                            <h1 class="text-xl font-black text-slate-900 tracking-tight" th:text="'Chỉnh sửa: ' + ${vaiTro.tenVaiTro}">Chỉnh sửa Vai trò</h1>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">ID vai trò: <span class="font-mono font-bold text-slate-700" th:text="${vaiTro.id}">1</span></p>
+                        </div>
+                    </div>
+                    <a href="/admin/vai-tro/hien-thi" class="btn-outline font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                        <span>Danh sách</span>
+                    </a>
+                </div>
+
+                <!-- Thẻ cảnh báo số nhân viên đang sử dụng -->
+                <div th:if="${soNhanVien > 0}" class="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start text-xs text-amber-900 shadow-xs">
+                    <i class="fa-solid fa-users text-sm mr-2.5 mt-0.5 text-amber-600 flex-shrink-0"></i>
+                    <div>
+                        <span class="font-bold">LƯU Ý RÀNG BUỘC (US03):</span>
+                        Đang có <strong th:text="${soNhanVien}">1</strong> nhân viên trong hệ thống được gán vai trò này. Vai trò này KHÔNG THỂ xóa vĩnh viễn cho đến khi tất cả nhân viên được chuyển sang vai trò khác.
+                    </div>
+                </div>
+
+                <!-- Alert Thông báo Lỗi -->
+                <div th:if="${thongBaoLoi}" class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center shadow-xs">
+                    <i class="fa-solid fa-circle-exclamation text-sm mr-2 text-rose-500"></i>
+                    <span th:text="${thongBaoLoi}"></span>
+                </div>
+
+                <!-- Form cập nhật -->
+                <form th:action="@{'/admin/vai-tro/sua/' + ${vaiTro.id}}" th:object="${vaiTroRequest}" method="post" class="space-y-4">
+                    
+                    <input type="hidden" th:field="*{id}">
+
+                    <!-- Mã vai trò -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                            Mã vai trò <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="text" th:field="*{maVaiTro}"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-mono uppercase font-bold">
+                        <p class="text-rose-600 text-xs mt-1 font-medium" th:if="${#fields.hasErrors('maVaiTro')}" th:errors="*{maVaiTro}"></p>
+                    </div>
+
+                    <!-- Tên vai trò -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                            Tên vai trò <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="text" th:field="*{tenVaiTro}"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <p class="text-rose-600 text-xs mt-1 font-medium" th:if="${#fields.hasErrors('tenVaiTro')}" th:errors="*{tenVaiTro}"></p>
+                    </div>
+
+                    <!-- Mô tả -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                            Mô tả vai trò
+                        </label>
+                        <textarea th:field="*{moTa}" rows="3"
+                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium resize-none"></textarea>
+                        <p class="text-rose-600 text-xs mt-1 font-medium" th:if="${#fields.hasErrors('moTa')}" th:errors="*{moTa}"></p>
+                    </div>
+
+                    <!-- Trạng thái -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                            Trạng thái hoạt động <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <select th:field="*{trangThai}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="1">1 - Đang hoạt động</option>
+                            <option value="0">0 - Vô hiệu hóa</option>
+                        </select>
+                        <p class="text-rose-600 text-xs mt-1 font-medium" th:if="${#fields.hasErrors('trangThai')}" th:errors="*{trangThai}"></p>
+                    </div>
+
+                    <!-- MA TRẬN PHÂN QUYỀN ĐỘNG (Dynamic RBAC) -->
+                    <div class="pt-4 border-t border-slate-100 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                    <i class="fa-solid fa-key text-blue-600"></i>
+                                    <span>Cấp phát Quyền hạn Chức năng (Dynamic RBAC)</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Tích chọn các chức năng nhân viên thuộc vai trò này được phép truy cập và thao tác</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="chonTatCaQuyen(true)"
+                                        class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition cursor-pointer">
+                                    Chọn tất cả
+                                </button>
+                                <button type="button" onclick="chonTatCaQuyen(false)"
+                                        class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">
+                                    Bỏ chọn hết
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách các nhóm quyền -->
+                        <div class="space-y-4">
+                            <div th:each="entry : ${chucNangNhomMap}" class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                                <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5"
+                                          th:text="${entry.key}">NHÓM CHỨC NĂNG</span>
+                                    <button type="button" th:data-group="${entry.key}" onclick="toggleNhomQuyen(this)"
+                                            class="text-[10px] font-bold text-blue-600 hover:underline cursor-pointer">
+                                        Chọn nhóm
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <label th:each="cn : ${entry.value}"
+                                           class="relative flex items-start gap-3 p-3 rounded-xl bg-white border border-slate-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer select-none">
+                                        <div class="flex items-center h-5 mt-0.5">
+                                            <input type="checkbox" name="danhSachQuyen"
+                                                   th:value="${cn.maQuyen}"
+                                                   th:checked="${vaiTroRequest.danhSachQuyen != null and vaiTroRequest.danhSachQuyen.contains(cn.maQuyen)}"
+                                                   th:data-group="${entry.key}"
+                                                   class="quyen-checkbox rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                                        </div>
+                                        <div class="text-xs min-w-0">
+                                            <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                <i th:class="${cn.icon} + ' text-blue-600 text-[11px]'"></i>
+                                                <span th:text="${cn.tenChucNang}">Tên chức năng</span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-500 mt-0.5 leading-snug" th:text="${cn.moTa}">Mô tả chức năng</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nút thao tác -->
+                    <div class="flex items-center space-x-3 pt-4 border-t border-slate-100">
+                        <button type="submit" class="flex-1 btn-navy font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Cập nhật vai trò &amp; Quyền hạn</span>
+                        </button>
+                        <a href="/admin/vai-tro/hien-thi" class="flex-1 text-center btn-outline font-bold py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                            <span>Quay lại</span>
+                        </a>
+                    </div>
+
+                </form>
+
+                <script>
+                    function chonTatCaQuyen(status) {
+                        document.querySelectorAll('.quyen-checkbox').forEach(cb => cb.checked = status);
+                    }
+
+                    function toggleNhomQuyen(btn) {
+                        const grp = btn.getAttribute('data-group');
+                        const checkboxes = document.querySelectorAll('.quyen-checkbox[data-group="' + grp + '"]');
+                        const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+                        checkboxes.forEach(cb => cb.checked = anyUnchecked);
+                    }
+                </script>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

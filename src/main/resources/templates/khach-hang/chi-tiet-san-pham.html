@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${sanPham.tenSanPham + ' | SIMPLAIN STORE'}">Chi tiết sản phẩm | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .swatch-selected { ring-2 ring-black ring-offset-2; }
+        .size-selected { background-color: #000 !important; color: #fff !important; border-color: #000 !important; }
+        .thumb-selected { border-color: #2563eb !important; ring-2 ring-blue-500/30; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar phong cách Simplain (Xanh Than) -->
+    <div class="bg-[#0a192f] text-slate-200 text-xs py-2 text-center font-medium tracking-wide border-b border-slate-800">
+        Freeship toàn quốc đơn từ 200k &bull; Đổi trả 60 ngày miễn phí vì bất kỳ lý do gì &bull; Hotline: 1900.272737
+    </div>
+
+    <!-- Header Storefront Simplain (Trắng & Xanh Biển) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Logo Simplain -->
+            <div class="flex items-center gap-6">
+                <a href="/cua-hang" class="flex items-center space-x-2 group">
+                    <span class="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN STORE<span class="text-blue-600">.</span></span>
+                    <span class="hidden sm:inline-block text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded tracking-widest uppercase">Nam</span>
+                </a>
+
+                <!-- Navigation link nhanh -->
+                <nav class="hidden md:flex items-center space-x-6 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <a href="/cua-hang" class="hover:text-blue-600 transition">Tất cả sản phẩm</a>
+                    <a th:each="dm : ${danhSachDanhMuc}"
+                       th:if="${dm.maDanhMucCha == null}"
+                       th:href="@{/cua-hang(maDanhMucId=${dm.id})}"
+                       th:text="${dm.tenDanhMuc}"
+                       class="hover:text-black transition">Áo Nam</a>
+                </nav>
+            </div>
+
+            <!-- Cụm Tìm kiếm nhanh & Tài khoản khách hàng -->
+            <div class="flex items-center gap-3">
+                <form action="/cua-hang" method="get" class="relative hidden sm:block w-48 lg:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-neutral-400 text-xs"></i>
+                    <input type="text" name="tuKhoa" placeholder="Tìm kiếm sản phẩm..."
+                           class="w-full pl-8 pr-3 py-1.5 rounded-full border border-neutral-200 bg-neutral-50 text-xs focus:bg-white focus:border-black outline-none transition">
+                </form>
+
+                <div class="flex items-center space-x-2 text-xs font-bold">
+                    <!-- Nút Yêu thích (Wishlist - US14) -->
+                    <a href="/khach-hang/yeu-thich"
+                       class="relative px-3 py-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 transition flex items-center gap-1.5"
+                       title="Sản phẩm yêu thích (US14)">
+                        <i class="fa-solid fa-heart text-rose-500"></i>
+                        <span class="hidden md:inline">Yêu thích</span>
+                        <span id="badgeWishlistHeader"
+                              th:text="${soLuongYeuThich != null ? soLuongYeuThich : 0}"
+                              class="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-black">
+                            0
+                        </span>
+                    </a>
+
+                    <!-- Nút Giỏ hàng (US17) -->
+                    <a href="/gio-hang"
+                       class="relative px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 transition flex items-center gap-1.5"
+                       title="Giỏ hàng của bạn (US17)">
+                        <i class="fa-solid fa-cart-shopping text-slate-700"></i>
+                        <span class="hidden md:inline">Giỏ hàng</span>
+                        <span id="badgeGioHangHeader"
+                              class="px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[10px] font-black">
+                            0
+                        </span>
+                    </a>
+
+                    <a th:if="${khachHangDangNhap != null}" href="/khach-hang/thong-tin"
+                       class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1.5" title="Hồ sơ cá nhân">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span class="hidden sm:inline" th:text="${khachHangDangNhap.hoTen}">Khách hàng</span>
+                    </a>
+                    <a th:if="${khachHangDangNhap != null}" href="/khach-hang/so-dia-chi"
+                       class="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1.5" title="Sổ địa chỉ nhận hàng (US13)">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span class="hidden md:inline">Sổ địa chỉ</span>
+                    </a>
+                    <a th:if="${khachHangDangNhap == null}" href="/khach-hang/dang-nhap"
+                       class="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-user"></i>
+                        <span class="hidden sm:inline">Simplain Club</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Breadcrumb điều hướng -->
+    <nav class="w-full px-4 sm:px-8 lg:px-12 py-4">
+        <ol class="flex items-center flex-wrap gap-2 text-xs text-neutral-500 font-medium">
+            <li><a href="/cua-hang" class="hover:text-black transition"><i class="fa-solid fa-house mr-1"></i>Trang chủ</a></li>
+            <li><i class="fa-solid fa-chevron-right text-[10px] text-neutral-400"></i></li>
+            <li><a href="/cua-hang" class="hover:text-black transition">Cửa hàng</a></li>
+            <li th:if="${sanPham.tenDanhMuc != null}"><i class="fa-solid fa-chevron-right text-[10px] text-neutral-400"></i></li>
+            <li th:if="${sanPham.tenDanhMuc != null}">
+                <a th:href="@{/cua-hang(maDanhMucId=${sanPham.maDanhMucId})}" th:text="${sanPham.tenDanhMuc}" class="hover:text-black transition">Danh mục</a>
+            </li>
+            <li><i class="fa-solid fa-chevron-right text-[10px] text-neutral-400"></i></li>
+            <li class="font-bold text-neutral-900 truncate max-w-xs sm:max-w-md" th:text="${sanPham.tenSanPham}">Tên sản phẩm</li>
+        </ol>
+    </nav>
+
+    <!-- Main Content Container: CHI TIẾT SẢN PHẨM (US11) - Full Màn Hình -->
+    <main class="flex-grow w-full px-4 sm:px-8 lg:px-12 pb-16 space-y-8"
+          th:with="vUrl=${(videoSanPham != null and videoSanPham.videoUrl != null) ? videoSanPham.videoUrl : sanPham.videoUrl}">
+
+        <!-- Grid 2 Cột: Bên trái là Thư viện ảnh, Bên phải là Thông tin & Chọn Biến thể -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs">
+
+            <!-- CỘT TRÁI (7/12): GALLERY MEDIA SẢN PHẨM (VIDEO Ở VỊ TRÍ ĐẦU TIÊN + CÁC ẢNH SAU VIDEO CHO GỌN) -->
+            <div class="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
+                
+                <!-- Dải ảnh nhỏ Thumbnail dạng cuộn dọc (Video thumbnail ở đầu + các ảnh tiếp theo) -->
+                <div id="galleryThumbnails" class="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto max-h-[560px] pb-2 md:pb-0 scrollbar-none flex-shrink-0">
+                    
+                    <!-- THUMBNAIL 1: VIDEO QUẢNG CÁO NẰM Ở VỊ TRÍ ĐẦU TIÊN (NẾU SẢN PHẨM CÓ VIDEO) -->
+                    <th:block th:if="${vUrl != null and !#strings.isEmpty(vUrl)}">
+                        <button type="button"
+                                id="thumbBtnVideo"
+                                onclick="hienThiVideoChinh()"
+                                class="w-16 h-20 rounded-xl border-2 border-slate-900 overflow-hidden flex-shrink-0 relative group thumb-btn thumb-selected focus:outline-none transition-all shadow-xs cursor-pointer bg-black"
+                                title="Xem video quảng cáo / review thực tế của sản phẩm">
+                            <img th:src="${anhChinhHienThi}" th:alt="${sanPham.tenSanPham}" class="w-full h-full object-cover filter brightness-70 group-hover:brightness-90 transition">
+                            <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition">
+                                <span class="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md transform group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-play text-[9px] ml-0.5"></i>
+                                </span>
+                                <span class="text-[9px] font-black text-white uppercase tracking-wider mt-1 drop-shadow-md">Video</span>
+                            </div>
+                        </button>
+                    </th:block>
+
+                    <!-- THUMBNAIL 2: Ảnh chính mặc định của sản phẩm -->
+                    <button type="button"
+                            onclick="chuyenAnhChinh(this.getAttribute('data-img-src'))"
+                            th:data-img-src="${anhChinhHienThi}"
+                            th:classappend="${vUrl != null and !#strings.isEmpty(vUrl)} ? '' : 'thumb-selected'"
+                            class="w-16 h-20 rounded-xl border-2 border-neutral-200 overflow-hidden flex-shrink-0 hover:border-black transition thumb-btn focus:outline-none cursor-pointer"
+                            title="Xem ảnh chính sản phẩm">
+                        <img th:src="${anhChinhHienThi}" th:alt="${sanPham.tenSanPham}" class="w-full h-full object-cover">
+                    </button>
+
+                    <!-- Lặp qua các ảnh của các biến thể để người dùng xem trước -->
+                    <th:block th:each="bt : ${danhSachBienThe}">
+                        <button th:if="${bt.anhDaiDienUrl != null and !#strings.isEmpty(bt.anhDaiDienUrl) and bt.anhDaiDienUrl != anhChinhHienThi}"
+                                type="button"
+                                onclick="chuyenAnhChinh(this.getAttribute('data-img-src'))"
+                                th:data-img-src="${bt.anhDaiDienUrl}"
+                                th:data-color-id="${bt.maMauSacId}"
+                                th:data-sku="${bt.maSku}"
+                                class="w-16 h-20 rounded-xl border-2 border-neutral-200 overflow-hidden flex-shrink-0 hover:border-black transition thumb-btn focus:outline-none cursor-pointer"
+                                th:title="${'Màu: ' + bt.tenMauSac + ' - Size: ' + bt.tenKichThuoc}">
+                            <img th:src="${bt.anhDaiDienUrl}" th:alt="${bt.maSku}" class="w-full h-full object-cover">
+                        </button>
+                    </th:block>
+                </div>
+
+                <!-- Khung hiển thị media chính: Video ở slot đầu tiên hoặc Ảnh sản phẩm -->
+                <div id="mainMediaContainer" class="flex-grow relative bg-neutral-900 rounded-2xl overflow-hidden min-h-[420px] md:min-h-[560px] flex items-center justify-center group border border-slate-200 select-none">
+                    
+                    <!-- Khung Video Player: hiển thị khi chọn video slot đầu tiên -->
+                    <div th:if="${vUrl != null and !#strings.isEmpty(vUrl)}"
+                         id="mainVideoBox"
+                         class="w-full h-full absolute inset-0 z-10 flex items-center justify-center bg-black">
+                        <!-- Video trực tiếp (MP4, WebM, MOV, OGG hoặc file tải lên máy trong thư mục /uploads/) -->
+                        <video th:if="${#strings.endsWith(vUrl.toLowerCase(), '.mp4') or #strings.endsWith(vUrl.toLowerCase(), '.webm') or #strings.endsWith(vUrl.toLowerCase(), '.mov') or #strings.endsWith(vUrl.toLowerCase(), '.ogg') or #strings.contains(vUrl.toLowerCase(), '/uploads/')}"
+                               id="mainGalleryVideo"
+                               controls playsinline autoplay muted loop
+                               class="w-full h-full object-contain">
+                            <source th:src="${vUrl}">
+                            Trình duyệt không hỗ trợ HTML5 video.
+                        </video>
+                        <!-- Video YouTube / Shorts / Embed -->
+                        <iframe th:unless="${#strings.endsWith(vUrl.toLowerCase(), '.mp4') or #strings.endsWith(vUrl.toLowerCase(), '.webm') or #strings.endsWith(vUrl.toLowerCase(), '.mov') or #strings.endsWith(vUrl.toLowerCase(), '.ogg') or #strings.contains(vUrl.toLowerCase(), '/uploads/')}"
+                                id="mainGalleryIframe"
+                                th:src="${#strings.contains(vUrl, 'youtube.com/watch?v=') ? #strings.replace(vUrl, 'youtube.com/watch?v=', 'youtube.com/embed/') : (#strings.contains(vUrl, 'youtu.be/') ? #strings.replace(vUrl, 'youtu.be/', 'youtube.com/embed/') : (#strings.contains(vUrl, 'youtube.com/shorts/') ? #strings.replace(vUrl, 'youtube.com/shorts/', 'youtube.com/embed/') : vUrl))}"
+                                class="w-full h-full border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen>
+                        </iframe>
+                        
+                        <!-- Badge video góc trên -->
+                        <div class="absolute top-4 left-4 z-20 pointer-events-none">
+                            <span class="bg-red-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+                                <i class="fa-solid fa-circle-play text-[11px]"></i>Video Review Thực Tế
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Ảnh lớn hiển thị chính -->
+                    <img id="anhChinhDisplay"
+                         th:src="${anhChinhHienThi}"
+                         th:alt="${sanPham.tenSanPham}"
+                         th:classappend="${vUrl != null and !#strings.isEmpty(vUrl)} ? 'hidden' : ''"
+                         class="w-full h-full object-contain max-h-[620px] transition-all duration-300 group-hover:scale-105 z-10 bg-neutral-100">
+
+                    <!-- Nút Chuyển Lùi (Prev) -->
+                    <button type="button"
+                            onclick="chuyenMediaLui()"
+                            title="Xem mục trước (Mũi tên trái)"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/90 hover:bg-white text-slate-800 hover:text-blue-600 shadow-lg flex items-center justify-center text-sm font-bold border border-slate-200 transition-all duration-200 hover:scale-110 active:scale-95 z-30 focus:outline-none cursor-pointer">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <!-- Nút Chuyển Tiến (Next) -->
+                    <button type="button"
+                            onclick="chuyenMediaTien()"
+                            title="Xem mục kế tiếp (Mũi tên phải)"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/90 hover:bg-white text-slate-800 hover:text-blue-600 shadow-lg flex items-center justify-center text-sm font-bold border border-slate-200 transition-all duration-200 hover:scale-110 active:scale-95 z-30 focus:outline-none cursor-pointer">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                    <!-- Chỉ số media (Badge: Ví dụ Video 1 / 4 hoặc Ảnh 2 / 4) -->
+                    <div id="imageCounterBadge"
+                         class="absolute bottom-4 left-4 bg-black/75 backdrop-blur-xs text-white text-[11px] font-mono font-bold px-3 py-1 rounded-full shadow-sm z-30 flex items-center gap-1.5">
+                        <i id="counterIcon" class="fa-solid fa-video text-[10px] text-red-400"></i>
+                        <span id="imageCounterText">1 / 1</span>
+                    </div>
+
+                    <!-- Badges góc ảnh (Nổi bật, BST) khi xem ảnh -->
+                    <div id="productBadgesCorner" class="absolute top-4 left-4 flex flex-col gap-2 z-20"
+                         th:classappend="${vUrl != null and !#strings.isEmpty(vUrl)} ? 'hidden' : ''">
+                        <span th:if="${sanPham.noiBat}" class="bg-amber-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                            <i class="fa-solid fa-fire"></i>Nổi bật (HOT)
+                        </span>
+                        <a th:if="${sanPham.tenBoSuuTap != null}"
+                           th:href="@{/cua-hang(maBoSuuTapId=${sanPham.maBoSuuTapId})}"
+                           class="bg-black/75 hover:bg-black backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 transition"
+                           title="Xem các sản phẩm khác cùng bộ sưu tập">
+                            <i class="fa-solid fa-images text-indigo-400"></i><span th:text="${sanPham.tenBoSuuTap}">BST</span>
+                        </a>
+                    </div>
+
+                    <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] font-bold text-neutral-700 shadow-xs flex items-center gap-1.5 z-20">
+                        <i class="fa-solid fa-shield-check text-blue-600"></i>
+                        <span>100% Chính hãng Simplain</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CỘT PHẢI (5/12): THÔNG TIN SẢN PHẨM & CỤM CHỌN MÀU / SIZE & TỒN KHO THỰC TẾ (US11) -->
+            <div class="lg:col-span-5 flex flex-col justify-between space-y-6">
+                <div class="space-y-4">
+
+                    <!-- Thương hiệu Simplain -->
+                    <div class="flex items-center justify-between text-xs text-neutral-500">
+                        <span class="font-extrabold text-blue-600 uppercase tracking-widest">SIMPLAIN MEN'S WEAR</span>
+                        <span class="text-[11px] text-emerald-600 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-[9px]"></i> Chính hãng 100%
+                        </span>
+                    </div>
+
+                    <!-- Tên sản phẩm -->
+                    <h1 class="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight leading-snug" th:text="${sanPham.tenSanPham}">
+                        Áo Polo Nam Pique Cotton Khử Mùi
+                    </h1>
+
+                    <!-- Banner Flash Sale Deal Sốc (US29) -->
+                    <div id="flashSaleBanner" th:classappend="${chiTietFlashSaleDangChon != null} ? '' : 'hidden'"
+                         class="p-3.5 bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500 rounded-2xl text-white shadow-md shadow-rose-500/20 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-amber-300">
+                                <i class="fa-solid fa-bolt text-sm animate-bounce"></i>
+                            </span>
+                            <div>
+                                <div class="text-[10px] font-black uppercase tracking-widest text-amber-200">DEAL CHỚP NHOÁNG FLASH SALE</div>
+                                <div class="text-xs font-bold text-white">Đang áp dụng giá sốc có hạn</div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-full font-bold">
+                            Còn <span id="labelFlashSaleConLai" th:text="${chiTietFlashSaleDangChon != null ? (chiTietFlashSaleDangChon.soLuongMoBan - (chiTietFlashSaleDangChon.soLuongDaBan != null ? chiTietFlashSaleDangChon.soLuongDaBan : 0)) : 0}">10</span> suất
+                        </span>
+                    </div>
+
+                    <!-- Giá bán & Giá gốc -->
+                    <div class="flex items-baseline gap-3 p-3.5 bg-neutral-50 rounded-2xl border border-neutral-100">
+                        <div class="text-3xl font-black text-neutral-950 font-mono tracking-tight flex items-baseline">
+                            <span id="labelGiaBan" th:text="${#numbers.formatDecimal(giaBanHienThi, 0, 'POINT', 0, 'COMMA')}">299.000</span>
+                            <span class="text-lg ml-1 font-bold text-neutral-600">₫</span>
+                        </div>
+                        <div id="boxGiaGoc" th:classappend="${chiTietFlashSaleDangChon != null or (giaGocHienThi != null and giaGocHienThi > giaBanHienThi)} ? '' : 'hidden'"
+                             class="text-sm text-neutral-400 line-through font-mono">
+                            <span id="labelGiaGoc" th:text="${#numbers.formatDecimal(giaGocHienThi, 0, 'POINT', 0, 'COMMA')}">399.000</span>₫
+                        </div>
+                        <span id="badgeTietKiem" th:classappend="${chiTietFlashSaleDangChon != null} ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-red-50 text-red-600 border-red-200'"
+                              class="border text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <span id="labelTietKiem" th:text="${chiTietFlashSaleDangChon != null ? ('-' + chiTietFlashSaleDangChon.phanTramGiamGia + '% Flash Sale') : 'Chính hãng'}">Tiết kiệm 20%</span>
+                        </span>
+                    </div>
+
+                    <!-- Đặc tính nhanh: Form dáng & Chất liệu -->
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2.5 rounded-xl border border-neutral-200/80 bg-white">
+                            <span class="text-neutral-400 text-[10px] font-bold uppercase tracking-wider block">Form dáng</span>
+                            <span class="font-bold text-neutral-800 flex items-center gap-1.5 mt-0.5">
+                                <i class="fa-solid fa-person-rays text-indigo-600"></i>
+                                <span th:text="${sanPham.formDang}">Regular Fit</span>
+                            </span>
+                        </div>
+                        <div class="p-2.5 rounded-xl border border-neutral-200/80 bg-white">
+                            <span class="text-neutral-400 text-[10px] font-bold uppercase tracking-wider block">Chất liệu</span>
+                            <span class="font-bold text-neutral-800 truncate block mt-0.5" th:text="${sanPham.chatLieu}">Cotton Compact</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-neutral-100 pt-4 space-y-4">
+
+                        <!-- CHỌN MÀU SẮC (Color Swatches) - US11 Tiêu chí 1: Nhảy ảnh tương ứng -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-xs font-bold uppercase tracking-wider text-neutral-700">
+                                    Màu sắc: <span id="labelTenMau" class="text-neutral-900 font-black" th:text="${bienTheDangChon != null ? bienTheDangChon.tenMauSac : 'Chọn màu'}">Đen</span>
+                                </label>
+                                <span class="text-[11px] text-neutral-400">Click để đổi màu &amp; ảnh</span>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-2.5" id="colorSwatchList">
+                                <!-- Lặp qua danh sách Màu sắc duy nhất của sản phẩm (US11: Nhảy ảnh tương ứng) -->
+                                <button th:each="ms : ${sanPham.danhSachMauSac}"
+                                        type="button"
+                                        onclick="chonMau(this)"
+                                        th:data-color-id="${ms.id}"
+                                        th:data-color-name="${ms.tenMau}"
+                                        th:classappend="${ms.id == mauDangChonId} ? 'swatch-selected scale-110 ring-2 ring-blue-600 ring-offset-2' : 'hover:scale-105'"
+                                        class="color-swatch w-9 h-9 rounded-full border-2 border-white shadow-md relative transition-all duration-150 cursor-pointer focus:outline-none"
+                                        th:style="${'background-color: ' + (ms.maMau != null ? ms.maMau : '#333333')}"
+                                        th:title="${ms.tenMau}">
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CHỌN KÍCH THƯỚC (Size Buttons) - Chỉ hiển thị Size (S, M, L, XL...) không hiển thị gợi ý cân nặng -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-xs font-bold uppercase tracking-wider text-neutral-700">
+                                    Kích thước: <span id="labelTenSize" class="text-neutral-900 font-black"
+                                          th:text="${bienTheDangChon != null ? (bienTheDangChon.maKichThuoc != null and !bienTheDangChon.maKichThuoc.empty ? bienTheDangChon.maKichThuoc : (bienTheDangChon.tenKichThuoc != null and #strings.contains(bienTheDangChon.tenKichThuoc, '(') ? #strings.substringBefore(bienTheDangChon.tenKichThuoc, '(').trim() : bienTheDangChon.tenKichThuoc)) : 'Chọn size'}">L</span>
+                                </label>
+                                <button type="button" onclick="moModalBangSize()" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-ruler-horizontal text-[10px]"></i>Bảng thông số &amp; Gợi ý size
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2" id="sizeButtonList">
+                                <button th:each="kt : ${sanPham.danhSachKichThuoc}"
+                                        type="button"
+                                        onclick="chonSize(this)"
+                                        th:data-size-id="${kt.id}"
+                                        th:data-size-code="${kt.maKichThuoc != null and !kt.maKichThuoc.empty ? kt.maKichThuoc : (kt.tenKichThuoc != null and #strings.contains(kt.tenKichThuoc, '(') ? #strings.substringBefore(kt.tenKichThuoc, '(').trim() : kt.tenKichThuoc)}"
+                                        th:classappend="${kt.id == sizeDangChonId} ? 'size-selected font-black border-[#0f172a] bg-[#0f172a] text-white shadow-sm' : 'bg-white text-neutral-800 hover:border-black'"
+                                        class="size-btn py-2.5 px-3 rounded-xl border border-neutral-300 text-xs font-bold transition text-center focus:outline-none cursor-pointer">
+                                    <span th:text="${kt.maKichThuoc != null and !kt.maKichThuoc.empty ? kt.maKichThuoc : (kt.tenKichThuoc != null and #strings.contains(kt.tenKichThuoc, '(') ? #strings.substringBefore(kt.tenKichThuoc, '(').trim() : kt.tenKichThuoc)}">L</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- HIỂN THỊ TỒN KHO THỰC TẾ CỦA BIẾN THỂ ĐANG CHỌN (US11 Tiêu chí 2) -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div id="stockBadgeIcon" class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">
+                                    <i class="fa-solid fa-boxes-packing"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] font-bold uppercase tracking-wider text-neutral-500">Tồn kho thực tế (US11)</div>
+                                    <div class="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 mt-0.5">
+                                        <span id="stockStatusText" class="text-emerald-700 font-bold">Còn hàng sẵn sàng giao</span>
+                                        <span class="text-neutral-400">&bull;</span>
+                                        <span class="font-mono text-neutral-700">
+                                            Số lượng: <strong id="labelSoLuongTon" class="text-neutral-900 font-black text-sm" th:text="${soLuongTonKhoHienThi}">50</strong> chiếc
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span id="stockPillBadge" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                Có sẵn
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <!-- Nút Mua hàng & Thêm Giỏ Hàng -->
+                    <div class="pt-2 space-y-2.5">
+                        <div class="flex gap-3">
+                            <!-- Bộ chọn số lượng -->
+                            <div class="inline-flex items-center rounded-xl border border-neutral-300 bg-white">
+                                <button type="button" onclick="thayDoiSoLuongMua(-1)" class="w-10 h-11 flex items-center justify-center text-neutral-500 hover:text-black font-bold focus:outline-none">-</button>
+                                <input type="number" id="inputSoLuongMua" value="1" min="1" max="99" class="w-12 text-center text-xs font-black font-mono outline-none border-x border-neutral-200">
+                                <button type="button" onclick="thayDoiSoLuongMua(1)" class="w-10 h-11 flex items-center justify-center text-neutral-500 hover:text-black font-bold focus:outline-none">+</button>
+                            </div>
+
+                            <!-- Nút Thêm vào giỏ hàng (Xanh Than) -->
+                            <button type="button"
+                                    id="btnThemGioHang"
+                                    onclick="thongBaoThemGioHang()"
+                                    class="flex-1 bg-[#0f172a] hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="fa-solid fa-cart-plus"></i>
+                                <span>Thêm vào giỏ hàng</span>
+                            </button>
+
+                            <!-- Nút Nhấn Tim Yêu Thích Chi Tiết (US14) -->
+                            <button type="button"
+                                    id="btnYeuThichChiTiet"
+                                    th:onclick="'toggleYeuThichChiTiet(this, ' + ${sanPham.id} + ')'"
+                                    th:classappend="${daYeuThich} ? 'text-rose-600 bg-rose-50 border-rose-300 ring-2 ring-rose-500/20' : 'text-slate-600 bg-slate-50 border-slate-200 hover:border-rose-400 hover:text-rose-600'"
+                                    class="px-4 py-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                                    th:title="${daYeuThich} ? 'Bỏ yêu thích' : 'Thêm vào yêu thích (US14)'">
+                                <i th:class="${daYeuThich} ? 'fa-solid fa-heart text-base text-rose-500' : 'fa-regular fa-heart text-base'"></i>
+                                <span id="labelYeuThichChiTiet" class="hidden sm:inline" th:text="${daYeuThich} ? 'Đã thích' : 'Yêu thích'">Yêu thích</span>
+                            </button>
+                        </div>
+
+                        <button type="button"
+                                id="btnMuaNgay"
+                                onclick="thucHienMuaNgay()"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Mua ngay &bull; Thanh toán khi nhận hàng</span>
+                        </button>
+                    </div>
+
+                    <!-- Các chính sách cam kết chất lượng Simplain -->
+                    <div class="grid grid-cols-2 gap-3 pt-3 border-t border-neutral-100 text-[11px] text-neutral-600">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-truck-fast text-blue-600 text-sm"></i>
+                            <span>Freeship đơn từ 200k</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-rotate-left text-blue-600 text-sm"></i>
+                            <span>Đổi trả 60 ngày miễn phí</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-shield-heart text-blue-600 text-sm"></i>
+                            <span>Bảo hành chính hãng 100%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-headset text-blue-600 text-sm"></i>
+                            <span>Tư vấn tận tâm 24/7</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+
+
+        <!-- MÔ TẢ CHI TIẾT SẢN PHẨM & FORM DÁNG & BẢO QUẢN -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
+                <h3 class="text-base font-black uppercase tracking-wide text-neutral-900 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-blue-600"></i>
+                    <span>Mô tả Chi tiết Sản phẩm</span>
+                </h3>
+                <div class="prose prose-sm max-w-none text-neutral-600 leading-relaxed space-y-3">
+                    <p class="whitespace-pre-line text-xs sm:text-sm" th:text="${sanPham.moTaChiTiet}">Mô tả chi tiết sản phẩm Simplain...</p>
+                </div>
+            </div>
+
+            <!-- Cam kết chất lượng dịch vụ -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <h3 class="text-sm font-black uppercase tracking-wide text-neutral-900 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-heart text-blue-600"></i>
+                    <span>Dịch vụ đặc quyền Simplain</span>
+                </h3>
+                <div class="space-y-3 text-xs text-neutral-600">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <div class="font-bold text-neutral-900 mb-0.5"><i class="fa-solid fa-repeat text-blue-600 mr-1.5"></i>Đổi trả 60 ngày dễ dàng</div>
+                        <p class="text-[11px] text-neutral-500">Bưu tá đến tận nhà lấy hàng đổi, hoàn toàn miễn phí.</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <div class="font-bold text-neutral-900 mb-0.5"><i class="fa-solid fa-truck text-emerald-600 mr-1.5"></i>Giao nhanh toàn quốc</div>
+                        <p class="text-[11px] text-neutral-500">Nội thành Hà Nội &amp; TP.HCM giao trong 24 giờ.</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <div class="font-bold text-neutral-900 mb-0.5"><i class="fa-solid fa-medal text-amber-500 mr-1.5"></i>Tự hào sản xuất tại VN</div>
+                        <p class="text-[11px] text-neutral-500">Chất lượng dệt may chuẩn xuất khẩu, kiểm duyệt nghiêm ngặt.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- KHỐI ĐÁNH GIÁ SẢN PHẨM TỪ KHÁCH HÀNG ĐÃ MUA HÀNG (US15 - ĐẦY ĐỦ 3 TIÊU CHÍ) -->
+        <!-- ========================================================================= -->
+        <section id="khungDanhGia" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-8 scroll-mt-24">
+            
+            <!-- Tiêu đề khối đánh giá -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-star text-amber-400"></i>Đánh giá thực tế từ khách mua hàng (US15)
+                    </div>
+                    <h3 class="text-xl font-black uppercase tracking-tight text-slate-900">
+                        Đánh Giá &amp; Nhận Xét Của Khách Hàng
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Tổng hợp ý kiến trải nghiệm chân thực từ khách hàng đã mua và hoàn thành đơn hàng Simplain
+                    </p>
+                </div>
+
+                <!-- Nút Viết Đánh Giá -->
+                <div>
+                    <button type="button"
+                            onclick="kiemTraVaMoModalDanhGia()"
+                            class="px-5 py-3 rounded-2xl bg-[#0f172a] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Viết đánh giá sản phẩm</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flash Message Alert Thành công / Lỗi (US15) -->
+            <div th:if="${thongBaoThanhCong != null}" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-3 animate-fade-in">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Cảm ơn bạn đã gửi đánh giá sản phẩm thành công!</span>
+            </div>
+            <div th:if="${loiDanhGia != null}" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-3 animate-fade-in">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i>
+                <span th:text="${loiDanhGia}">Đã có lỗi xảy ra khi gửi đánh giá!</span>
+            </div>
+
+            <!-- Cụm Thống kê Điểm sao & Biểu đồ thanh sao (Tiêu chí 3: Rating 1-5 sao) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 rounded-2xl bg-slate-50/80 border border-slate-200/60 items-center">
+                
+                <!-- Cột trái: Điểm số trung bình -->
+                <div class="text-center md:border-r md:border-slate-200 md:pr-6 space-y-2">
+                    <div class="text-5xl font-black font-mono text-slate-900"
+                         th:text="${thongKeDanhGia != null ? thongKeDanhGia.saoTrungBinh : '5.0'}">
+                        5.0
+                    </div>
+                    <div class="flex items-center justify-center gap-1 text-amber-400 text-base">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div class="text-xs text-slate-500 font-medium">
+                        Dựa trên <span class="font-bold text-slate-800" th:text="${thongKeDanhGia != null ? thongKeDanhGia.tongDanhGia : 0}">0</span> lượt đánh giá thực tế
+                    </div>
+                </div>
+
+                <!-- Cột giữa: 5 Thanh phần trăm sao (5 sao -> 1 sao) -->
+                <div class="md:col-span-2 space-y-2 text-xs font-semibold text-slate-600">
+                    <!-- 5 sao -->
+                    <div class="flex items-center gap-3">
+                        <span class="w-12 text-slate-500 flex items-center gap-1 font-mono">5 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></span>
+                        <div class="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                 th:style="'width: ' + ${thongKeDanhGia != null ? thongKeDanhGia.phanTram5Sao : 0} + '%'"></div>
+                        </div>
+                        <span class="w-10 text-right text-slate-400 font-mono text-[11px]"
+                              th:text="${thongKeDanhGia != null ? thongKeDanhGia.soLuong5Sao : 0}">0</span>
+                    </div>
+
+                    <!-- 4 sao -->
+                    <div class="flex items-center gap-3">
+                        <span class="w-12 text-slate-500 flex items-center gap-1 font-mono">4 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></span>
+                        <div class="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                 th:style="'width: ' + ${thongKeDanhGia != null ? thongKeDanhGia.phanTram4Sao : 0} + '%'"></div>
+                        </div>
+                        <span class="w-10 text-right text-slate-400 font-mono text-[11px]"
+                              th:text="${thongKeDanhGia != null ? thongKeDanhGia.soLuong4Sao : 0}">0</span>
+                    </div>
+
+                    <!-- 3 sao -->
+                    <div class="flex items-center gap-3">
+                        <span class="w-12 text-slate-500 flex items-center gap-1 font-mono">3 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></span>
+                        <div class="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                 th:style="'width: ' + ${thongKeDanhGia != null ? thongKeDanhGia.phanTram3Sao : 0} + '%'"></div>
+                        </div>
+                        <span class="w-10 text-right text-slate-400 font-mono text-[11px]"
+                              th:text="${thongKeDanhGia != null ? thongKeDanhGia.soLuong3Sao : 0}">0</span>
+                    </div>
+
+                    <!-- 2 sao -->
+                    <div class="flex items-center gap-3">
+                        <span class="w-12 text-slate-500 flex items-center gap-1 font-mono">2 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></span>
+                        <div class="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                 th:style="'width: ' + ${thongKeDanhGia != null ? thongKeDanhGia.phanTram2Sao : 0} + '%'"></div>
+                        </div>
+                        <span class="w-10 text-right text-slate-400 font-mono text-[11px]"
+                              th:text="${thongKeDanhGia != null ? thongKeDanhGia.soLuong2Sao : 0}">0</span>
+                    </div>
+
+                    <!-- 1 sao -->
+                    <div class="flex items-center gap-3">
+                        <span class="w-12 text-slate-500 flex items-center gap-1 font-mono">1 <i class="fa-solid fa-star text-amber-400 text-[10px]"></i></span>
+                        <div class="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                 th:style="'width: ' + ${thongKeDanhGia != null ? thongKeDanhGia.phanTram1Sao : 0} + '%'"></div>
+                        </div>
+                        <span class="w-10 text-right text-slate-400 font-mono text-[11px]"
+                              th:text="${thongKeDanhGia != null ? thongKeDanhGia.soLuong1Sao : 0}">0</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= DANH SÁCH CÁC BÀI ĐÁNH GIÁ TỪ KHÁCH HÀNG ================= -->
+            <div class="space-y-4">
+                
+                <!-- Trạng thái chưa có đánh giá nào -->
+                <div th:if="${#lists.isEmpty(danhSachDanhGia)}"
+                     class="text-center py-12 px-4 rounded-2xl border border-dashed border-slate-200 space-y-3 bg-slate-50/50">
+                    <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto">
+                        <i class="fa-regular fa-star"></i>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800">Chưa có đánh giá nào cho sản phẩm này</div>
+                    <p class="text-[11px] text-slate-500 max-w-md mx-auto leading-relaxed">
+                        Hãy trở thành khách hàng đầu tiên chia sẻ cảm nhận thực tế về chất lượng vải, form dáng sau khi nhận sản phẩm nhé!
+                    </p>
+                </div>
+
+                <!-- Thẻ từng đánh giá -->
+                <div th:each="dg : ${danhSachDanhGia}"
+                     class="p-5 sm:p-6 rounded-2xl border border-slate-100 bg-white hover:border-slate-200 transition space-y-3 shadow-2xs">
+                    
+                    <div class="flex items-start justify-between gap-3">
+                        <!-- Thông tin người đánh giá -->
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-slate-500 font-black text-sm">
+                                <img th:if="${dg.khachHang != null and dg.khachHang.anhDaiDien != null}"
+                                     th:src="${dg.khachHang.anhDaiDien}"
+                                     class="w-full h-full object-cover">
+                                <span th:unless="${dg.khachHang != null and dg.khachHang.anhDaiDien != null}"
+                                      th:text="${dg.khachHang != null ? #strings.substring(dg.khachHang.hoTen, 0, 1) : 'K'}">K</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-slate-900"
+                                          th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng Simplain'}">Nguyễn Hoàng Minh</span>
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                        <i class="fa-solid fa-circle-check text-[10px]"></i>Đã mua hàng
+                                    </span>
+                                </div>
+                                <div class="text-[11px] text-slate-400 font-mono mt-0.5"
+                                     th:text="${#temporals.format(dg.ngayTao, 'dd/MM/yyyy HH:mm')}">
+                                    25/10/2026 09:30
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Số sao đánh giá (Tiêu chí 3: Rating 1-5 sao) -->
+                        <div class="flex items-center gap-0.5 text-amber-400 text-xs">
+                            <i th:each="i : ${#numbers.sequence(1, 5)}"
+                               th:class="${i <= dg.soSao} ? 'fa-solid fa-star text-amber-400' : 'fa-solid fa-star text-slate-200'"></i>
+                        </div>
+                    </div>
+
+                    <!-- Tên mặt hàng biến thể đã mua (nếu có) -->
+                    <div th:if="${dg.chiTietDonHang != null}" class="text-[11px] text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 inline-block">
+                        <span class="text-slate-400">Phân loại hàng:</span>
+                        <span class="font-semibold text-slate-700" th:text="${dg.chiTietDonHang.maSku}">SP-POLO-L-DEN</span>
+                    </div>
+
+                    <!-- Nội dung nhận xét -->
+                    <p class="text-xs sm:text-[13px] text-slate-700 leading-relaxed whitespace-pre-line"
+                       th:text="${dg.noiDung}">
+                        Chất liệu vải Excool co giãn cực tốt, mặc mát mẻ, form dáng vừa vặn tôn dáng người mặc. Rất đáng tiền!
+                    </p>
+
+                    <!-- Lưới hình ảnh thực tế (Tiêu chí 2: JSON ảnh) -->
+                    <div th:if="${not #lists.isEmpty(dg.danhSachAnh)}" class="flex flex-wrap gap-2 pt-1">
+                        <a th:each="anhUrl : ${dg.danhSachAnh}"
+                           th:href="${anhUrl}" target="_blank"
+                           class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 hover:opacity-90 transition block cursor-pointer">
+                            <img th:src="${anhUrl}" alt="Ảnh đánh giá" class="w-full h-full object-cover">
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- MODAL VIẾT ĐÁNH GIÁ SẢN PHẨM (US15 - CHECK ĐIỀU KIỆN & JSON ẢNH & 1-5 SAO) -->
+        <!-- ========================================================================= -->
+        <div id="modalVietDanhGia" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full my-8 overflow-hidden border border-slate-200 flex flex-col">
+                
+                <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm font-bold shadow-xs">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">Đánh Giá Sản Phẩm Đã Mua</h3>
+                            <p class="text-[11px] text-slate-500">Chia sẻ trải nghiệm chân thực của bạn về chất liệu &amp; form dáng</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="dongModalVietDanhGia()" class="text-slate-400 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100 transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form action="/khach-hang/danh-gia/gui" method="post" enctype="multipart/form-data" class="space-y-4 p-6" novalidate>
+                    <input type="hidden" name="maSanPhamId" th:value="${sanPham.id}">
+                    <input type="hidden" name="duongDanSlug" th:value="${sanPham.duongDanSlug}">
+                    <input type="hidden" id="inputSoSaoRating" name="soSao" value="5">
+
+                    <!-- Chọn chi tiết đơn hàng đã mua (Tiêu chí 1: Check điều kiện ma_chi_tiet_don_hang_id đã hoàn thành) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                            Chọn mặt hàng từ đơn đã hoàn thành <span class="text-red-500">*</span>
+                        </label>
+                        <select id="selectChiTietDonHang" name="maChiTietDonHangId" required
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs text-slate-800 transition">
+                            <option value="">-- Chọn đơn hàng bạn đã mua sản phẩm này --</option>
+                            <option th:each="ct : ${dsChiTietDuDieuKien}"
+                                    th:value="${ct.id}"
+                                    th:text="'Đơn #' + ${ct.maDonHangId} + ' - ' + ${ct.tenSanPham} + ' (' + ${ct.maSku} + ') - SL: ' + ${ct.soLuong}">
+                                Đơn #1 - Áo Polo Nam - SL: 1
+                            </option>
+                        </select>
+                        <p class="text-[11px] text-slate-400 mt-1">Chỉ những đơn hàng ở trạng thái HOAN_THANH mới đủ điều kiện đánh giá.</p>
+                    </div>
+
+                    <!-- Tiêu chí 3: Chọn số sao đánh giá (Interactive Star Rating) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                            Mức độ hài lòng <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex items-center gap-2 py-1">
+                            <div id="cumNgoiSao" class="flex items-center gap-1.5 text-2xl cursor-pointer">
+                                <i class="fa-solid fa-star text-amber-400 transition hover:scale-110" data-sao="1" onclick="chonSaoDanhGia(1)"></i>
+                                <i class="fa-solid fa-star text-amber-400 transition hover:scale-110" data-sao="2" onclick="chonSaoDanhGia(2)"></i>
+                                <i class="fa-solid fa-star text-amber-400 transition hover:scale-110" data-sao="3" onclick="chonSaoDanhGia(3)"></i>
+                                <i class="fa-solid fa-star text-amber-400 transition hover:scale-110" data-sao="4" onclick="chonSaoDanhGia(4)"></i>
+                                <i class="fa-solid fa-star text-amber-400 transition hover:scale-110" data-sao="5" onclick="chonSaoDanhGia(5)"></i>
+                            </div>
+                            <span id="labelMucDoHaiLong" class="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                                5 sao - Cực kỳ hài lòng
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Nội dung nhận xét -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                            Nội dung nhận xét <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="noiDung" rows="4" required minlength="5" maxlength="2000"
+                                  placeholder="Hãy chia sẻ chi tiết về chất vải, độ co giãn, form dáng mặc có vừa vặn không, sự hài lòng về sản phẩm..."
+                                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs text-slate-800 transition"></textarea>
+                    </div>
+
+                    <!-- Tiêu chí 2: Upload JSON ảnh (chọn nhiều file ảnh từ máy hoặc URL) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                            Hình ảnh thực tế đính kèm (Lưu JSON ảnh)
+                        </label>
+                        <input type="file" id="inputAnhDanhGia" name="anhFiles" multiple accept="image/*"
+                               onchange="xemTruocAnhReview(event)"
+                               class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">
+                        <div id="previewAnhContainer" class="flex flex-wrap gap-2 pt-2"></div>
+                    </div>
+
+                    <!-- Nút Thao tác -->
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                        <button type="button" onclick="dongModalVietDanhGia()"
+                                class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer">
+                            Hủy bỏ
+                        </button>
+                        <button type="submit"
+                                class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Gửi đánh giá</span>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+        <div th:if="${not #lists.isEmpty(sanPhamLienQuan)}" class="space-y-6">
+            <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
+                <h3 class="text-lg font-black uppercase tracking-tight text-neutral-900">
+                    Sản phẩm liên quan bạn có thể thích
+                </h3>
+                <a href="/cua-hang" class="text-xs font-bold text-blue-600 hover:underline">Xem thêm &rarr;</a>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                <div th:each="spLq : ${sanPhamLienQuan}" class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden hover:shadow-md transition group flex flex-col justify-between">
+                    <div>
+                        <div class="relative bg-neutral-100 aspect-square overflow-hidden">
+                            <img th:src="${spLq.anhDaiDienUrl}" th:alt="${spLq.tenSanPham}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        </div>
+                        <div class="p-4 space-y-1.5">
+                            <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block" th:text="${spLq.tenDanhMuc}">Danh mục</span>
+                            <a th:href="@{/cua-hang/san-pham/{id}(id=${spLq.id})}" class="font-bold text-xs text-neutral-900 hover:text-blue-600 line-clamp-2 transition" th:text="${spLq.tenSanPham}">Tên sản phẩm</a>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 flex items-center justify-between">
+                        <span class="font-mono font-black text-sm text-neutral-900">
+                            <span th:text="${#numbers.formatDecimal(spLq.giaCoBan, 0, 'POINT', 0, 'COMMA')}">299.000</span>₫
+                        </span>
+                        <a th:href="@{/cua-hang/san-pham/{id}(id=${spLq.id})}" class="w-7 h-7 rounded-lg bg-neutral-100 hover:bg-black hover:text-white flex items-center justify-center text-xs transition">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Bảng Thông số Size & Gợi ý Chọn Size -->
+    <div id="modalBangSize" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-ruler-combined text-blue-600 text-lg"></i>
+                    <h3 class="text-base font-black uppercase text-neutral-900">Bảng Hướng Dẫn Chọn Size Chuẩn Simplain</h3>
+                </div>
+                <button type="button" onclick="dongModalBangSize()" class="text-neutral-400 hover:text-black text-lg focus:outline-none">&times;</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center text-xs border border-neutral-200 rounded-xl overflow-hidden">
+                        <thead class="bg-neutral-100 text-[11px] font-bold text-neutral-700">
+                            <tr>
+                                <th class="p-2.5">Size</th>
+                                <th class="p-2.5">Chiều cao (cm)</th>
+                                <th class="p-2.5">Cân nặng (kg)</th>
+                                <th class="p-2.5">Rộng ngực (cm)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-200 text-neutral-600">
+                            <tr><td class="p-2 font-bold text-black bg-neutral-50">S</td><td>155 - 164</td><td>48 - 56</td><td>90 - 94</td></tr>
+                            <tr><td class="p-2 font-bold text-black bg-neutral-50">M</td><td>165 - 171</td><td>57 - 65</td><td>94 - 98</td></tr>
+                            <tr><td class="p-2 font-bold text-black bg-neutral-50">L</td><td>172 - 177</td><td>66 - 74</td><td>98 - 102</td></tr>
+                            <tr><td class="p-2 font-bold text-black bg-neutral-50">XL</td><td>178 - 183</td><td>75 - 83</td><td>102 - 106</td></tr>
+                            <tr><td class="p-2 font-bold text-black bg-neutral-50">2XL</td><td>184 - 188</td><td>84 - 92</td><td>106 - 110</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs">
+                    <div class="font-bold flex items-center gap-1.5 mb-1">
+                        <i class="fa-solid fa-circle-question"></i>Hướng dẫn chọn nhanh:
+                    </div>
+                    <p class="text-[11px] leading-relaxed">
+                        Nếu số đo Chiều cao và Cân nặng của bạn nằm ở 2 size khác nhau, hãy ưu tiên chọn size theo Cân nặng để vừa vặn thoải mái nhất.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button type="button" onclick="dongModalBangSize()" class="bg-[#0f172a] hover:bg-blue-600 text-white font-bold text-xs uppercase px-5 py-2.5 rounded-xl transition">
+                    Đã hiểu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Storefront Simplain (Xanh Than Sang Trọng) -->
+    <footer class="bg-[#0a192f] text-slate-400 border-t border-slate-800 py-10 mt-auto text-xs">
+        <div class="w-full px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <span class="text-white font-black tracking-widest uppercase">SIMPLAIN STORE<span class="text-blue-500">.</span></span>
+                <span class="ml-2 text-slate-400">&copy; 2026 Thương hiệu thời trang nam tối giản &amp; hiện đại.</span>
+            </div>
+            <div class="flex items-center gap-6 font-semibold">
+                <a href="/cua-hang" class="text-slate-300 hover:text-white transition">Cửa hàng (US10)</a>
+                <a href="/khach-hang/dang-nhap" class="text-slate-300 hover:text-white transition">Hội viên Simplain Club (US01)</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Dữ liệu JSON biến thể phục vụ tương tác Client-side (US11) -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const dsBienTheData = /*[[${danhSachBienThe}]]*/ [];
+        const mapFlashSaleData = /*[[${mapFlashSaleData}]]*/ {};
+        let curMauId = /*[[${mauDangChonId}]]*/ null;
+        let curSizeId = /*[[${sizeDangChonId}]]*/ null;
+        let bienTheHienTai = /*[[${bienTheDangChon}]]*/ null;
+        const videoPromoUrl = /*[[${(videoSanPham != null and videoSanPham.videoUrl != null) ? videoSanPham.videoUrl : sanPham.videoUrl}]]*/ null;
+        /*]]>*/
+
+        // Danh sách Media đa phương tiện: Video quảng cáo ở vị trí số 0 (nếu có), tiếp theo là các ảnh sản phẩm
+        let danhSachTatCaMedia = [];
+        let indexMediaHienTai = 0;
+
+        function khoiTaoDanhSachMedia() {
+            danhSachTatCaMedia = [];
+
+            // 1. Thêm Video quảng cáo vào slot đầu tiên nếu sản phẩm có video
+            if (videoPromoUrl && videoPromoUrl.trim() !== '') {
+                danhSachTatCaMedia.push({
+                    type: 'video',
+                    url: videoPromoUrl.trim(),
+                    title: 'Video Review'
+                });
+            }
+
+            // 2. Thu thập danh sách ảnh từ các thumbnail
+            const thumbBtns = document.querySelectorAll('.thumb-btn');
+            thumbBtns.forEach(btn => {
+                const src = btn.getAttribute('data-img-src');
+                if (src && !danhSachTatCaMedia.some(m => m.type === 'image' && m.url === src)) {
+                    danhSachTatCaMedia.push({
+                        type: 'image',
+                        url: src,
+                        title: btn.getAttribute('title') || 'Ảnh sản phẩm'
+                    });
+                }
+            });
+
+            // 3. Fallback ảnh nếu chưa có ảnh nào trong mảng
+            const mainImg = document.getElementById('anhChinhDisplay');
+            if (!danhSachTatCaMedia.some(m => m.type === 'image') && mainImg && mainImg.getAttribute('src')) {
+                danhSachTatCaMedia.push({
+                    type: 'image',
+                    url: mainImg.getAttribute('src'),
+                    title: 'Ảnh đại diện'
+                });
+            }
+
+            // 4. Mặc định: Nếu có Video thì xem Video đầu tiên; Nếu không thì xem Ảnh đầu tiên
+            if (danhSachTatCaMedia.length > 0 && danhSachTatCaMedia[0].type === 'video') {
+                indexMediaHienTai = 0;
+                hienThiVideoChinh(false);
+            } else {
+                indexMediaHienTai = 0;
+                if (danhSachTatCaMedia.length > 0 && danhSachTatCaMedia[0].type === 'image') {
+                    chuyenAnhChinh(danhSachTatCaMedia[0].url, false);
+                }
+            }
+
+            capNhatChiSoMedia();
+        }
+
+        function capNhatChiSoMedia() {
+            const counterEl = document.getElementById('imageCounterText');
+            if (counterEl) {
+                const tong = danhSachTatCaMedia.length || 1;
+                const hienTai = (indexMediaHienTai >= 0 && indexMediaHienTai < tong) ? (indexMediaHienTai + 1) : 1;
+                const isVideo = danhSachTatCaMedia[indexMediaHienTai] && danhSachTatCaMedia[indexMediaHienTai].type === 'video';
+                counterEl.innerText = isVideo ? `${hienTai} / ${tong} (Video)` : `${hienTai} / ${tong}`;
+            }
+        }
+
+        // Hiển thị Video quảng cáo ở vị trí đầu tiên
+        function hienThiVideoChinh(scrollIntoView = true) {
+            const videoBox = document.getElementById('mainVideoBox');
+            const mainImg = document.getElementById('anhChinhDisplay');
+            if (videoBox) videoBox.classList.remove('hidden');
+            if (mainImg) mainImg.classList.add('hidden');
+
+            const videoIdx = danhSachTatCaMedia.findIndex(m => m.type === 'video');
+            if (videoIdx !== -1) {
+                indexMediaHienTai = videoIdx;
+            }
+
+            // Highlight thumbnail Video
+            const thumbVid = document.getElementById('thumbBtnVideo');
+            if (thumbVid) {
+                thumbVid.classList.add('thumb-selected');
+                if (scrollIntoView) {
+                    thumbVid.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                }
+            }
+
+            // Bỏ highlight ở tất cả thumbnail ảnh
+            document.querySelectorAll('.thumb-btn').forEach(btn => {
+                if (btn !== thumbVid) {
+                    btn.classList.remove('thumb-selected');
+                }
+            });
+
+            // Tự động phát video HTML5 (nếu có thẻ video)
+            const html5Vid = document.getElementById('mainGalleryVideo');
+            if (html5Vid) {
+                html5Vid.play().catch(() => {});
+            }
+
+            capNhatChiSoMedia();
+        }
+
+        // Chuyển sang hiển thị Ảnh sản phẩm (và tạm dừng video cho gọn)
+        function chuyenAnhChinh(imgSrc, autoUpdateIndex = true) {
+            if (!imgSrc) return;
+
+            // 1. Tạm dừng phát video và ẩn khung video player
+            const html5Vid = document.getElementById('mainGalleryVideo');
+            if (html5Vid) {
+                html5Vid.pause();
+            }
+            const videoBox = document.getElementById('mainVideoBox');
+            if (videoBox) {
+                videoBox.classList.add('hidden');
+            }
+
+            // 2. Hiển thị ảnh sản phẩm với hiệu ứng mượt
+            const img = document.getElementById('anhChinhDisplay');
+            if (img) {
+                img.classList.remove('hidden');
+                img.classList.add('opacity-40');
+                setTimeout(() => {
+                    img.src = imgSrc;
+                    img.classList.remove('opacity-40');
+                }, 100);
+            }
+
+            // 3. Cập nhật chỉ số vị trí
+            if (autoUpdateIndex && danhSachTatCaMedia.length > 0) {
+                const idx = danhSachTatCaMedia.findIndex(m => m.type === 'image' && m.url === imgSrc);
+                if (idx !== -1) {
+                    indexMediaHienTai = idx;
+                }
+            }
+            capNhatChiSoMedia();
+
+            // 4. Highlight thumbnail ảnh tương ứng
+            const thumbVid = document.getElementById('thumbBtnVideo');
+            if (thumbVid) {
+                thumbVid.classList.remove('thumb-selected');
+            }
+
+            document.querySelectorAll('.thumb-btn').forEach(btn => {
+                if (btn !== thumbVid) {
+                    if (btn.getAttribute('data-img-src') === imgSrc) {
+                        btn.classList.add('thumb-selected');
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                    } else {
+                        btn.classList.remove('thumb-selected');
+                    }
+                }
+            });
+        }
+
+        // Chuyển sang mục media kế tiếp (Next / Mũi tên phải)
+        function chuyenMediaTien() {
+            if (!danhSachTatCaMedia || danhSachTatCaMedia.length <= 1) return;
+            indexMediaHienTai = (indexMediaHienTai + 1) % danhSachTatCaMedia.length;
+            hienThiMediaTheoIndex(indexMediaHienTai);
+        }
+
+        // Chuyển sang mục media trước đó (Prev / Mũi tên trái)
+        function chuyenMediaLui() {
+            if (!danhSachTatCaMedia || danhSachTatCaMedia.length <= 1) return;
+            indexMediaHienTai = (indexMediaHienTai - 1 + danhSachTatCaMedia.length) % danhSachTatCaMedia.length;
+            hienThiMediaTheoIndex(indexMediaHienTai);
+        }
+
+        // Hiển thị media tương ứng theo chỉ số
+        function hienThiMediaTheoIndex(idx) {
+            if (idx < 0 || idx >= danhSachTatCaMedia.length) return;
+            const target = danhSachTatCaMedia[idx];
+            if (target.type === 'video') {
+                hienThiVideoChinh();
+            } else {
+                chuyenAnhChinh(target.url, false);
+            }
+            capNhatChiSoMedia();
+        }
+
+        // Alias tương thích các hàm cũ
+        const chuyenAnhTien = chuyenMediaTien;
+        const chuyenAnhLui = chuyenMediaLui;
+
+        // Chọn Màu sắc -> Nhảy ảnh và cập nhật tồn kho (US11)
+        function chonMau(btn) {
+            const colorId = btn.getAttribute('data-color-id');
+            const colorName = btn.getAttribute('data-color-name');
+
+            curMauId = colorId ? parseInt(colorId) : null;
+            document.getElementById('labelTenMau').innerText = colorName || 'Màu đã chọn';
+
+            // Cập nhật giao diện swatch
+            document.querySelectorAll('.color-swatch').forEach(b => {
+                b.classList.remove('swatch-selected', 'scale-110', 'ring-2', 'ring-blue-600', 'ring-offset-2');
+            });
+            btn.classList.add('swatch-selected', 'scale-110', 'ring-2', 'ring-blue-600', 'ring-offset-2');
+
+            // Nhảy ảnh chính sang ảnh của màu này (Tiêu chí 1 US11)
+            if (curMauId && dsBienTheData && dsBienTheData.length > 0) {
+                let matchedVar = dsBienTheData.find(bt => bt.maMauSacId === curMauId && bt.maKichThuocId === curSizeId && bt.anhDaiDienUrl);
+                if (!matchedVar) {
+                    matchedVar = dsBienTheData.find(bt => bt.maMauSacId === curMauId && bt.anhDaiDienUrl);
+                }
+                if (matchedVar && matchedVar.anhDaiDienUrl) {
+                    chuyenAnhChinh(matchedVar.anhDaiDienUrl);
+                }
+            }
+
+            capNhatThongTinBienTheHienTai();
+        }
+
+        // Chọn Kích thước -> Cập nhật tồn kho thực tế và nhảy ảnh nếu có (US11)
+        function chonSize(btn) {
+            const sizeId = btn.getAttribute('data-size-id');
+            let sizeCode = btn.getAttribute('data-size-code') || '';
+            if (sizeCode.includes('(')) {
+                sizeCode = sizeCode.split('(')[0].trim();
+            }
+
+            curSizeId = sizeId ? parseInt(sizeId) : null;
+            document.getElementById('labelTenSize').innerText = sizeCode || 'Size đã chọn';
+
+            document.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.remove('size-selected', 'font-black', 'border-[#0f172a]', 'bg-[#0f172a]', 'text-white', 'shadow-sm');
+                b.classList.add('bg-white', 'text-neutral-800');
+            });
+            btn.classList.add('size-selected', 'font-black', 'border-[#0f172a]', 'bg-[#0f172a]', 'text-white', 'shadow-sm');
+            btn.classList.remove('bg-white', 'text-neutral-800');
+
+            capNhatThongTinBienTheHienTai();
+        }
+
+        // Cập nhật tồn kho thực tế dựa trên cặp Màu + Size đang chọn (US11 Tiêu chí 2)
+        function capNhatThongTinBienTheHienTai() {
+            if (!dsBienTheData || dsBienTheData.length === 0) return;
+
+            // Tìm biến thể khớp với cả MauId và SizeId
+            let matched = dsBienTheData.find(bt => {
+                const matchM = !curMauId || (bt.maMauSacId === curMauId);
+                const matchS = !curSizeId || (bt.maKichThuocId === curSizeId);
+                return matchM && matchS;
+            });
+
+            // Nếu không tìm thấy cặp khớp chính xác, lấy biến thể theo màu hiện tại
+            if (!matched && curMauId) {
+                matched = dsBienTheData.find(bt => bt.maMauSacId === curMauId);
+            }
+
+            bienTheHienTai = matched;
+            if (matched) {
+                // Nhảy ảnh nếu có ảnh đại diện của biến thể
+                if (matched.anhDaiDienUrl) {
+                    chuyenAnhChinh(matched.anhDaiDienUrl);
+                }
+
+                // Cập nhật tên kích thước (chỉ hiển thị mã Size, không kèm gợi ý cân nặng)
+                let cleanSize = matched.maKichThuoc || matched.tenKichThuoc || '';
+                if (cleanSize.includes('(')) {
+                    cleanSize = cleanSize.split('(')[0].trim();
+                }
+                const labelSizeEl = document.getElementById('labelTenSize');
+                if (labelSizeEl && cleanSize) {
+                    labelSizeEl.innerText = cleanSize;
+                }
+
+                // Cập nhật giá bán & Flash Sale (US29)
+                const fsInfo = (typeof mapFlashSaleData !== 'undefined' && mapFlashSaleData && matched.id) ? mapFlashSaleData[matched.id] : null;
+                const fsBanner = document.getElementById('flashSaleBanner');
+                const boxGiaGoc = document.getElementById('boxGiaGoc');
+                const labelGiaGoc = document.getElementById('labelGiaGoc');
+                const badgeTietKiem = document.getElementById('badgeTietKiem');
+                const labelTietKiem = document.getElementById('labelTietKiem');
+                const labelFlashSaleConLai = document.getElementById('labelFlashSaleConLai');
+
+                if (fsInfo && fsInfo.conLai > 0 && fsInfo.giaFlashSale) {
+                    document.getElementById('labelGiaBan').innerText = Number(fsInfo.giaFlashSale).toLocaleString('vi-VN');
+                    if (fsBanner) fsBanner.classList.remove('hidden');
+                    if (boxGiaGoc && labelGiaGoc && fsInfo.giaBanGoc) {
+                        boxGiaGoc.classList.remove('hidden');
+                        labelGiaGoc.innerText = Number(fsInfo.giaBanGoc).toLocaleString('vi-VN');
+                    }
+                    if (badgeTietKiem && labelTietKiem) {
+                        badgeTietKiem.className = 'border text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider bg-amber-100 text-amber-800 border-amber-300';
+                        labelTietKiem.innerText = '-' + (fsInfo.phanTramGiamGia || 0) + '% Flash Sale';
+                    }
+                    if (labelFlashSaleConLai) {
+                        labelFlashSaleConLai.innerText = fsInfo.conLai;
+                    }
+                } else {
+                    if (matched.giaBan) {
+                        document.getElementById('labelGiaBan').innerText = Number(matched.giaBan).toLocaleString('vi-VN');
+                    }
+                    if (fsBanner) fsBanner.classList.add('hidden');
+                    if (boxGiaGoc) boxGiaGoc.classList.add('hidden');
+                    if (badgeTietKiem && labelTietKiem) {
+                        badgeTietKiem.className = 'border text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider bg-red-50 text-red-600 border-red-200';
+                        labelTietKiem.innerText = 'Chính hãng';
+                    }
+                }
+
+                // Cập nhật mã SKU (nếu có element)
+                const skuEl = document.getElementById('labelMaSku');
+                if (skuEl && matched.maSku) {
+                    skuEl.innerText = matched.maSku;
+                }
+
+                // Cập nhật số lượng tồn kho thực tế (Tiêu chí 2 US11)
+                const tonKho = matched.soLuong != null ? matched.soLuong : 0;
+                document.getElementById('labelSoLuongTon').innerText = tonKho;
+
+                const statusText = document.getElementById('stockStatusText');
+                const pillBadge = document.getElementById('stockPillBadge');
+                const badgeIcon = document.getElementById('stockBadgeIcon');
+
+                if (tonKho > 10) {
+                    statusText.innerText = 'Còn hàng sẵn sàng giao';
+                    statusText.className = 'text-emerald-700 font-bold';
+                    pillBadge.innerText = 'Có sẵn (' + tonKho + ')';
+                    pillBadge.className = 'bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider';
+                    badgeIcon.className = 'w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold';
+                } else if (tonKho > 0) {
+                    statusText.innerText = 'Sắp hết hàng';
+                    statusText.className = 'text-amber-700 font-bold';
+                    pillBadge.innerText = 'Chỉ còn ' + tonKho;
+                    pillBadge.className = 'bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider';
+                    badgeIcon.className = 'w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-bold';
+                } else {
+                    statusText.innerText = 'Tạm hết hàng';
+                    statusText.className = 'text-red-600 font-bold';
+                    pillBadge.innerText = 'Hết hàng';
+                    pillBadge.className = 'bg-red-50 text-red-600 border border-red-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider';
+                    badgeIcon.className = 'w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-sm font-bold';
+                }
+            }
+        }
+
+        // Chọn trực tiếp từ bảng SKU tra cứu
+        function chonBienTheTrucTiep(row) {
+            const colorId = row.getAttribute('data-color-id');
+            const colorName = row.getAttribute('data-color-name');
+            const sizeId = row.getAttribute('data-size-id');
+            const sizeCode = row.getAttribute('data-size-code');
+            const imgSrc = row.getAttribute('data-img-src');
+            const stock = row.getAttribute('data-stock');
+            const price = row.getAttribute('data-price');
+            const sku = row.getAttribute('data-sku-code');
+
+            if (colorId) curMauId = parseInt(colorId);
+            if (sizeId) curSizeId = parseInt(sizeId);
+            capNhatThongTinBienTheHienTai();
+
+            if (colorName) document.getElementById('labelTenMau').innerText = colorName;
+            if (sizeCode) document.getElementById('labelTenSize').innerText = sizeCode;
+            const skuEl = document.getElementById('labelMaSku');
+            if (sku && skuEl) skuEl.innerText = sku;
+            if (price) document.getElementById('labelGiaBan').innerText = price;
+            if (stock != null) document.getElementById('labelSoLuongTon').innerText = stock;
+
+            if (imgSrc) chuyenAnhChinh(imgSrc);
+
+            // Cập nhật active swatch và button
+            document.querySelectorAll('.color-swatch').forEach(b => {
+                b.classList.toggle('swatch-selected', b.getAttribute('data-color-id') == colorId);
+            });
+            document.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.toggle('size-selected', b.getAttribute('data-size-id') == sizeId);
+            });
+
+            // Cuộn mượt lên khu vực mua hàng
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+        }
+
+        function thayDoiSoLuongMua(delta) {
+            const inp = document.getElementById('inputSoLuongMua');
+            let val = parseInt(inp.value) || 1;
+            val = Math.max(1, Math.min(99, val + delta));
+            inp.value = val;
+        }
+
+        function thongBaoThemGioHang() {
+            if (!bienTheHienTai || !bienTheHienTai.id) {
+                alert('Vui lòng chọn màu sắc và kích thước sản phẩm trước khi thêm vào giỏ hàng!');
+                return;
+            }
+            const sl = parseInt(document.getElementById('inputSoLuongMua').value) || 1;
+            const btn = document.getElementById('btnThemGioHang');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang thêm...</span>';
+            btn.disabled = true;
+
+            fetch('/gio-hang/them', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    maBienTheId: bienTheHienTai.id,
+                    soLuong: sl
+                })
+            })
+            .then(r => r.json())
+            .then(res => {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                if (res.success) {
+                    const badge = document.getElementById('badgeGioHangHeader');
+                    if (badge) badge.innerText = res.tongSoLuong;
+                    if (confirm('Đã thêm sản phẩm vào giỏ hàng thành công!\nBạn có muốn chuyển đến Giỏ hàng ngay không?')) {
+                        window.location.href = '/gio-hang';
+                    }
+                } else {
+                    alert('Không thể thêm vào giỏ hàng: ' + (res.message || 'Lỗi'));
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                alert('Có lỗi kết nối: ' + err);
+            });
+        }
+
+        function thucHienMuaNgay() {
+            if (!bienTheHienTai || !bienTheHienTai.id) {
+                capNhatThongTinBienTheHienTai();
+            }
+            if (!bienTheHienTai || !bienTheHienTai.id) {
+                if (dsBienTheData && dsBienTheData.length === 1) {
+                    bienTheHienTai = dsBienTheData[0];
+                } else {
+                    alert('Vui lòng chọn Màu sắc và Kích thước trước khi bấm Mua ngay!');
+                    const swatch = document.querySelector('.color-swatch') || document.querySelector('.size-btn');
+                    if (swatch) swatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+            }
+            if (bienTheHienTai.soLuong !== undefined && bienTheHienTai.soLuong <= 0) {
+                alert('Rất tiếc! Biến thể này hiện đã tạm hết hàng, vui lòng chọn màu hoặc kích cỡ khác.');
+                return;
+            }
+            const sl = parseInt(document.getElementById('inputSoLuongMua').value) || 1;
+            if (bienTheHienTai.soLuong !== undefined && sl > bienTheHienTai.soLuong) {
+                alert('Số lượng mua (' + sl + ') vượt quá số lượng tồn kho hiện còn (' + bienTheHienTai.soLuong + ')!');
+                return;
+            }
+
+            const btn = document.getElementById('btnMuaNgay');
+            const oldHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i><span>Đang chuyển sang thanh toán...</span>';
+            }
+
+            fetch('/gio-hang/them', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    maBienTheId: bienTheHienTai.id,
+                    soLuong: sl
+                })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    const badge = document.getElementById('badgeGioHangHeader');
+                    if (badge && res.tongSoLuong !== undefined) {
+                        badge.innerText = res.tongSoLuong;
+                    }
+                    window.location.href = '/thanh-toan';
+                } else {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = oldHtml;
+                    }
+                    alert('Không thể mua ngay: ' + (res.message || 'Lỗi hệ thống'));
+                }
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
+                console.error(err);
+                alert('Lỗi kết nối khi mua ngay, vui lòng thử lại sau!');
+            });
+        }
+        const thongBaoMuaNgay = thucHienMuaNgay;
+
+        function moModalBangSize() {
+            const m = document.getElementById('modalBangSize');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function dongModalBangSize() {
+            const m = document.getElementById('modalBangSize');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Bắt phím Mũi tên Trái / Phải để chuyển media thuận tiện
+        window.addEventListener('keydown', function(e) {
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (e.key === 'ArrowLeft') {
+                chuyenMediaLui();
+            } else if (e.key === 'ArrowRight') {
+                chuyenMediaTien();
+            }
+        });
+
+        // Khởi tạo danh sách media (Video & Ảnh) khi tải trang
+        document.addEventListener('DOMContentLoaded', function() {
+            khoiTaoDanhSachMedia();
+            capNhatThongTinBienTheHienTai();
+            // Cập nhật số lượng giỏ hàng trên badge header (US17)
+            fetch('/gio-hang/api/dem-so-luong')
+                .then(r => r.json())
+                .then(d => {
+                    const badge = document.getElementById('badgeGioHangHeader');
+                    if (badge && d.tongSoLuong !== undefined) {
+                        badge.innerText = d.tongSoLuong;
+                    }
+                }).catch(() => {});
+        });
+
+        function hienThiToastChiTiet(message, type = 'success') {
+            const container = document.getElementById('toastContainerStorefront');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-slate-900 text-white border-slate-700' : (type === 'warning' ? 'bg-amber-600 text-white border-amber-500' : 'bg-rose-600 text-white border-rose-500');
+            const iconClass = type === 'success' ? 'fa-solid fa-circle-check text-emerald-400' : (type === 'warning' ? 'fa-solid fa-triangle-exclamation text-amber-200' : 'fa-solid fa-circle-exclamation text-rose-200');
+
+            toast.className = `${bgClass} border px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 transform translate-y-3 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="${iconClass} text-sm"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-3', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-3');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleYeuThichChiTiet(btn, spId) {
+            btn.disabled = true;
+            fetch(`/khach-hang/yeu-thich/toggle/${spId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    hienThiToastChiTiet('Vui lòng đăng nhập để lưu sản phẩm yêu thích!', 'warning');
+                    setTimeout(() => {
+                        window.location.href = '/khach-hang/dang-nhap';
+                    }, 1200);
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (!data) return;
+                if (data.thanhCong) {
+                    hienThiToastChiTiet(data.thongBao, 'success');
+                    const icon = btn.querySelector('i');
+                    const label = document.getElementById('labelYeuThichChiTiet');
+                    if (data.daYeuThich) {
+                        btn.className = 'px-4 py-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer text-rose-600 bg-rose-50 border-rose-300 ring-2 ring-rose-500/20';
+                        if (icon) icon.className = 'fa-solid fa-heart text-base text-rose-500';
+                        if (label) label.innerText = 'Đã thích';
+                        btn.title = 'Bỏ yêu thích';
+                    } else {
+                        btn.className = 'px-4 py-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer text-slate-600 bg-slate-50 border-slate-200 hover:border-rose-400 hover:text-rose-600';
+                        if (icon) icon.className = 'fa-regular fa-heart text-base';
+                        if (label) label.innerText = 'Yêu thích';
+                        btn.title = 'Thêm vào yêu thích (US14)';
+                    }
+                    const headerBadge = document.getElementById('badgeWishlistHeader');
+                    if (headerBadge) {
+                        headerBadge.innerText = data.tongSoYeuThich;
+                    }
+                } else {
+                    hienThiToastChiTiet(data.thongBao || 'Có lỗi xảy ra', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                hienThiToastChiTiet('Lỗi kết nối, vui lòng thử lại sau!', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
+
+        // ==========================================
+        // JS XỬ LÝ ĐÁNH GIÁ SẢN PHẨM (US15)
+        // ==========================================
+
+        const nhanXetSaoText = {
+            1: '1 sao - Rất tệ',
+            2: '2 sao - Chưa hài lòng',
+            3: '3 sao - Bình thường',
+            4: '4 sao - Hài lòng',
+            5: '5 sao - Cực kỳ hài lòng'
+        };
+
+        function chonSaoDanhGia(sao) {
+            document.getElementById('inputSoSaoRating').value = sao;
+            const stars = document.querySelectorAll('#cumNgoiSao i');
+            stars.forEach((s, idx) => {
+                if (idx < sao) {
+                    s.className = 'fa-solid fa-star text-amber-400 transition hover:scale-110';
+                } else {
+                    s.className = 'fa-solid fa-star text-slate-200 transition hover:scale-110';
+                }
+            });
+            const lbl = document.getElementById('labelMucDoHaiLong');
+            if (lbl) {
+                lbl.innerText = nhanXetSaoText[sao] || `${sao} sao`;
+            }
+        }
+
+        function kiemTraVaMoModalDanhGia() {
+            const spId = [[${sanPham.id}]];
+            fetch(`/khach-hang/danh-gia/kiem-tra-dieu-kien/${spId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.chuaDangNhap) {
+                        hienThiToastChiTiet(data.thongBao || 'Vui lòng đăng nhập để đánh giá!', 'warning');
+                        setTimeout(() => {
+                            window.location.href = '/khach-hang/dang-nhap';
+                        }, 1200);
+                        return;
+                    }
+
+                    if (!data.duDieuKien) {
+                        alert(data.thongBao || 'Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua và đơn hàng được giao thành công (HOAN_THANH)!');
+                        return;
+                    }
+
+                    // Đủ điều kiện: Nạp danh sách chi tiết đơn hàng vào select nếu có dữ liệu mới
+                    const select = document.getElementById('selectChiTietDonHang');
+                    if (data.danhSachChiTiet && data.danhSachChiTiet.length > 0) {
+                        select.innerHTML = '<option value="">-- Chọn đơn hàng bạn đã mua sản phẩm này --</option>';
+                        data.danhSachChiTiet.forEach(ct => {
+                            const opt = document.createElement('option');
+                            opt.value = ct.id;
+                            opt.text = `Đơn #${ct.maDonHangId} - ${ct.tenSanPham} (${ct.maSku}) - SL: ${ct.soLuong}`;
+                            select.appendChild(opt);
+                        });
+                        if (data.danhSachChiTiet.length === 1) {
+                            select.selectedIndex = 1;
+                        }
+                    }
+
+                    const modal = document.getElementById('modalVietDanhGia');
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    hienThiToastChiTiet('Lỗi kiểm tra điều kiện đánh giá, vui lòng thử lại sau!', 'error');
+                });
+        }
+
+        function dongModalVietDanhGia() {
+            const modal = document.getElementById('modalVietDanhGia');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function xemTruocAnhReview(e) {
+            const container = document.getElementById('previewAnhContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            const files = e.target.files;
+            if (!files) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                if (!f.type.startsWith('image/')) continue;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const img = document.createElement('img');
+                    img.src = evt.target.result;
+                    img.className = 'w-16 h-16 object-cover rounded-xl border border-slate-200 shadow-2xs';
+                    container.appendChild(img);
+                };
+                reader.readAsDataURL(f);
+            }
+        }
+    </script>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainerStorefront" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+</body>
+</html>

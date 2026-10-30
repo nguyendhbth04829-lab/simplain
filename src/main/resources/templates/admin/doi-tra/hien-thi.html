@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xét duyệt Yêu cầu Đổi/Trả (RMA - US25) | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('doi-tra')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-arrows-rotate text-indigo-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Xét duyệt Yêu cầu Đổi / Trả (RMA)</span>
+                        <span class="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full"
+                              th:text="${demTrangThai['TAT_CA'] + ' phiếu'}">0 phiếu</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Tiếp nhận RMA, xét duyệt Approve/Reject, bổ sung ghi chú kiểm định kho &amp; xử lý hoàn tiền (US25)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/don-hang/hien-thi"
+                   class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 transition">
+                    <i class="fa-solid fa-boxes-packing text-slate-500"></i>
+                    <span>Quản lý Đơn hàng (US21)</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. THẺ THỐNG KÊ NHANH KPI (US25) -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng số phiếu RMA</div>
+                    <div class="text-2xl font-black text-slate-900 mt-1" th:text="${demTrangThai['TAT_CA']}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Chờ CSKH duyệt</div>
+                    <div class="text-2xl font-black text-amber-600 mt-1" th:text="${demTrangThai['CHO_XU_LY']}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-purple-600 uppercase tracking-wider">Đang kiểm định kho</div>
+                    <div class="text-2xl font-black text-purple-600 mt-1" th:text="${demTrangThai['DANG_XU_LY']}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đã hoàn tất đổi/trả</div>
+                    <div class="text-2xl font-black text-emerald-600 mt-1" th:text="${demTrangThai['HOAN_THANH']}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TAB TRẠNG THÁI (TIÊU CHÍ 1) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div class="flex items-center overflow-x-auto border-b border-slate-100 text-xs font-bold text-slate-600">
+                <a th:href="@{/admin/doi-tra/hien-thi(trangThai='TAT_CA', loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                   class="px-5 py-3.5 border-b-2 hover:text-indigo-600 transition flex items-center gap-2 whitespace-nowrap"
+                   th:classappend="${trangThaiHienTai == 'TAT_CA'} ? 'border-indigo-600 text-indigo-600 bg-indigo-50/20' : 'border-transparent'">
+                    <span>Tất cả</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-100 text-slate-700" th:text="${demTrangThai['TAT_CA']}">0</span>
+                </a>
+
+                <a th:href="@{/admin/doi-tra/hien-thi(trangThai='CHO_XU_LY', loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                   class="px-5 py-3.5 border-b-2 hover:text-amber-600 transition flex items-center gap-2 whitespace-nowrap"
+                   th:classappend="${trangThaiHienTai == 'CHO_XU_LY'} ? 'border-amber-600 text-amber-600 bg-amber-50/20' : 'border-transparent'">
+                    <span>Chờ tiếp nhận</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-100 text-amber-800" th:text="${demTrangThai['CHO_XU_LY']}">0</span>
+                </a>
+
+                <a th:href="@{/admin/doi-tra/hien-thi(trangThai='DA_TIEP_NHAN', loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                   class="px-5 py-3.5 border-b-2 hover:text-blue-600 transition flex items-center gap-2 whitespace-nowrap"
+                   th:classappend="${trangThaiHienTai == 'DA_TIEP_NHAN'} ? 'border-blue-600 text-blue-600 bg-blue-50/20' : 'border-transparent'">
+                    <span>Đã tiếp nhận</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-100 text-blue-800" th:text="${demTrangThai['DA_TIEP_NHAN']}">0</span>
+                </a>
+
+                <a th:href="@{/admin/doi-tra/hien-thi(trangThai='DANG_XU_LY', loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                   class="px-5 py-3.5 border-b-2 hover:text-purple-600 transition flex items-center gap-2 whitespace-nowrap"
+                   th:classappend="${trangThaiHienTai == 'DANG_XU_LY'} ? 'border-purple-600 text-purple-600 bg-purple-50/20' : 'border-transparent'">
+                    <span>Đang kiểm định kho</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-100 text-purple-800" th:text="${demTrangThai['DANG_XU_LY']}">0</span>
+                </a>
+
+                <a th:href="@{/admin/doi-tra/hien-thi(trangThai='HOAN_THANH', loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                   class="px-5 py-3.5 border-b-2 hover:text-emerald-600 transition flex items-center gap-2 whitespace-nowrap"
+                   th:classappend="${trangThaiHienTai == 'HOAN_THANH'} ? 'border-emerald-600 text-emerald-600 bg-emerald-50/20' : 'border-transparent'">
+                    <span>Hoàn tất</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-100 text-emerald-800" th:text="${demTrangThai['HOAN_THANH']}">0</span>
+                </a>
+
+                <a th:href="@{/admin/doi-tra/hien-thi(trangThai='TU_CHOI', loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                   class="px-5 py-3.5 border-b-2 hover:text-rose-600 transition flex items-center gap-2 whitespace-nowrap"
+                   th:classappend="${trangThaiHienTai == 'TU_CHOI'} ? 'border-rose-600 text-rose-600 bg-rose-50/20' : 'border-transparent'">
+                    <span>Đã từ chối</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-100 text-rose-800" th:text="${demTrangThai['TU_CHOI']}">0</span>
+                </a>
+            </div>
+
+            <!-- THANH TÌM KIẾM & BỘ LỌC HÌNH THỨC -->
+            <div class="p-4 bg-slate-50/70 border-b border-slate-100">
+                <form th:action="@{/admin/doi-tra/hien-thi}" method="GET" class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <input type="hidden" name="trangThai" th:value="${trangThaiHienTai}" />
+
+                    <div class="flex-1 flex flex-col sm:flex-row gap-2.5 w-full">
+                        <div class="relative flex-1">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                                   placeholder="Tìm theo mã RMA, mã đơn hàng, tên khách, SĐT..."
+                                   class="w-full text-xs rounded-xl border border-slate-300 pl-9 pr-3 py-2 bg-white focus:ring-indigo-500 focus:border-indigo-500" />
+                        </div>
+
+                        <select name="loaiDoiTra" class="text-xs rounded-xl border border-slate-300 bg-white py-2 px-3 font-semibold text-slate-700 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="TAT_CA" th:selected="${loaiDoiTraHienTai == 'TAT_CA'}">-- Tất cả hình thức --</option>
+                            <option value="DOI_HANG" th:selected="${loaiDoiTraHienTai == 'DOI_HANG'}">Đổi sản phẩm mới (SKU)</option>
+                            <option value="TRA_HANG_HOAN_TIEN" th:selected="${loaiDoiTraHienTai == 'TRA_HANG_HOAN_TIEN'}">Trả hàng hoàn tiền</option>
+                        </select>
+
+                        <button type="submit" class="btn-primary text-xs px-4 py-2 rounded-xl">
+                            <i class="fa-solid fa-filter"></i> Lọc dữ liệu
+                        </button>
+
+                        <a th:if="${tuKhoa != '' || loaiDoiTraHienTai != 'TAT_CA'}"
+                           th:href="@{/admin/doi-tra/hien-thi(trangThai=${trangThaiHienTai})}"
+                           class="btn-outline text-xs px-3 py-2 rounded-xl text-slate-600 hover:text-slate-900">
+                            Xóa lọc
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- BẢNG DANH SÁCH RMA -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100/80 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-4">Mã Phiếu RMA</th>
+                            <th class="py-3 px-4">Đơn Hàng &amp; Khách Hàng</th>
+                            <th class="py-3 px-4">Hình Thức</th>
+                            <th class="py-3 px-4">Mặt Hàng Gửi Trả</th>
+                            <th class="py-3 px-4">Giá Trị / Tiền Hoàn</th>
+                            <th class="py-3 px-4">Ngày Tạo</th>
+                            <th class="py-3 px-4 text-center">Trạng Thái</th>
+                            <th class="py-3 px-4 text-right">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        <tr th:if="${#lists.isEmpty(trangRma.content)}">
+                            <td colspan="8" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-inbox text-3xl mb-2 block text-slate-300"></i>
+                                Không tìm thấy yêu cầu Đổi/Trả nào phù hợp với bộ lọc hiện tại.
+                            </td>
+                        </tr>
+
+                        <tr th:each="rma : ${trangRma.content}" class="hover:bg-slate-50/80 transition-colors">
+                            <!-- Mã RMA -->
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-1.5 font-mono font-bold text-slate-900">
+                                    <span th:text="${rma.yeuCauDoiTra.maYeuCauRma}">RMA-123</span>
+                                    <button type="button" th:data-copy="${rma.yeuCauDoiTra.maYeuCauRma}"
+                                            onclick="navigator.clipboard.writeText(this.getAttribute('data-copy')); alert('Đã sao chép: ' + this.getAttribute('data-copy'))"
+                                            class="text-slate-400 hover:text-indigo-600">
+                                        <i class="fa-regular fa-copy text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </td>
+
+                            <!-- Đơn hàng & Khách hàng -->
+                            <td class="py-3 px-4">
+                                <div class="font-mono font-semibold text-blue-600 hover:underline">
+                                    <a th:if="${rma.yeuCauDoiTra.donHang != null}"
+                                       th:href="@{'/admin/don-hang/hien-thi?tuKhoa=' + ${rma.yeuCauDoiTra.donHang.maDonHang}}"
+                                       th:text="${'#' + rma.yeuCauDoiTra.donHang.maDonHang}">#DH123</a>
+                                </div>
+                                <div class="text-[11px] font-bold text-slate-800"
+                                     th:text="${rma.yeuCauDoiTra.khachHang != null ? rma.yeuCauDoiTra.khachHang.hoTen : 'Khách vãng lai'}">Tên khách</div>
+                                <div class="text-[10px] text-slate-400"
+                                     th:text="${rma.yeuCauDoiTra.khachHang != null ? rma.yeuCauDoiTra.khachHang.soDienThoai : ''}">0987654321</div>
+                            </td>
+
+                            <!-- Hình thức -->
+                            <td class="py-3 px-4">
+                                <span th:if="${rma.yeuCauDoiTra.loaiDoiTra == 'DOI_HANG'}"
+                                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                    <i class="fa-solid fa-arrows-rotate text-[9px]"></i> Đổi hàng mới
+                                </span>
+                                <span th:if="${rma.yeuCauDoiTra.loaiDoiTra == 'TRA_HANG_HOAN_TIEN'}"
+                                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="fa-solid fa-money-bill-transfer text-[9px]"></i> Hoàn tiền
+                                </span>
+                            </td>
+
+                            <!-- Mặt hàng gửi trả -->
+                            <td class="py-3 px-4 max-w-xs">
+                                <div class="text-[11px] font-medium text-slate-800" th:text="${rma.tongSoLuongTra + ' món gửi đổi trả'}">1 món</div>
+                                <div class="text-[10px] text-slate-500 line-clamp-1 italic" th:text="${rma.yeuCauDoiTra.lyDo}">Lý do...</div>
+                            </td>
+
+                            <!-- Giá trị / Tiền hoàn -->
+                            <td class="py-3 px-4 font-mono font-bold text-slate-900">
+                                <span th:text="${#numbers.formatDecimal(rma.tongTienUocTinh, 0, 'COMMA', 0, 'POINT') + ' đ'}">250.000 đ</span>
+                            </td>
+
+                            <!-- Ngày tạo -->
+                            <td class="py-3 px-4 text-slate-500 text-[11px]"
+                                th:text="${#temporals.format(rma.yeuCauDoiTra.ngayTao, 'dd/MM/yyyy HH:mm')}">
+                                27/10/2026 14:00
+                            </td>
+
+                            <!-- Trạng thái Badge -->
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold border uppercase tracking-wider inline-flex items-center gap-1"
+                                      th:classappend="${rma.badgeClass}"
+                                      th:text="${rma.tenTrangThaiTiengViet}">
+                                    Chờ xử lý
+                                </span>
+                            </td>
+
+                            <!-- Thao tác Xét duyệt (Tiêu chí 2 & 3) -->
+                            <td class="py-3 px-4 text-right">
+                                <div class="flex items-center justify-end gap-1.5 flex-nowrap">
+                                    <!-- Nút Xem chi tiết / Kiểm định kho -->
+                                    <a th:href="@{'/admin/doi-tra/chi-tiet/' + ${rma.yeuCauDoiTra.id}}"
+                                       class="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition flex items-center gap-1 border border-indigo-200 shadow-2xs"
+                                       title="Xem chi tiết &amp; Kiểm định kho">
+                                        <i class="fa-solid fa-eye"></i> Chi tiết
+                                    </a>
+
+                                    <!-- Nút Tiếp nhận duyệt nhanh (nếu đang CHO_XU_LY - Bước 1 sang 2) -->
+                                    <button th:if="${rma.yeuCauDoiTra.trangThai == 'CHO_XU_LY'}"
+                                            type="button"
+                                            th:data-id="${rma.yeuCauDoiTra.id}"
+                                            th:data-rma="${rma.yeuCauDoiTra.maYeuCauRma}"
+                                            onclick="moModalDuyetNhanh(this.getAttribute('data-id'), this.getAttribute('data-rma'))"
+                                            class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition flex items-center gap-1 shadow-2xs"
+                                            title="Duyệt tiếp nhận yêu cầu (Bước 1 sang Bước 2)">
+                                        <i class="fa-solid fa-check"></i> Tiếp nhận
+                                    </button>
+
+                                    <!-- Nút Nhận hàng kho & Kiểm định (nếu đang DA_TIEP_NHAN - Bước 2 sang 3) -->
+                                    <a th:if="${rma.yeuCauDoiTra.trangThai == 'DA_TIEP_NHAN'}"
+                                       th:href="@{'/admin/doi-tra/chi-tiet/' + ${rma.yeuCauDoiTra.id}}"
+                                       class="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] transition flex items-center gap-1 shadow-2xs"
+                                       title="Nhận kiện hàng vào kho và bắt đầu kiểm định (Bước 2 sang Bước 3)">
+                                        <i class="fa-solid fa-box-open"></i> Nhận kho
+                                    </a>
+
+                                    <!-- Nút Nghiệm thu & Hoàn tất (nếu đang DANG_XU_LY - Bước 3 sang 4) -->
+                                    <a th:if="${rma.yeuCauDoiTra.trangThai == 'DANG_XU_LY'}"
+                                       th:href="@{'/admin/doi-tra/chi-tiet/' + ${rma.yeuCauDoiTra.id}}"
+                                       class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] transition flex items-center gap-1 shadow-2xs"
+                                       title="Kiểm định đạt chuẩn &amp; Hoàn tất đổi hàng/hoàn tiền (Bước 3 sang Bước 4)">
+                                        <i class="fa-solid fa-clipboard-check"></i> Nghiệm thu
+                                    </a>
+
+                                    <!-- Nút Từ chối nhanh (nếu chưa kết thúc) -->
+                                    <button th:if="${rma.yeuCauDoiTra.trangThai != 'HOAN_THANH' && rma.yeuCauDoiTra.trangThai != 'TU_CHOI'}"
+                                            type="button"
+                                            th:data-id="${rma.yeuCauDoiTra.id}"
+                                            th:data-rma="${rma.yeuCauDoiTra.maYeuCauRma}"
+                                            onclick="moModalTuChoiNhanh(this.getAttribute('data-id'), this.getAttribute('data-rma'))"
+                                            class="px-2 py-1.5 rounded-lg border border-rose-300 hover:bg-rose-50 text-rose-700 font-bold text-[11px] transition"
+                                            title="Từ chối yêu cầu (Reject)">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${trangRma.totalPages > 1}" class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 flex-wrap gap-2">
+                <div>
+                    Hiển thị trang <strong class="text-slate-800" th:text="${currentPage + 1}">1</strong> / 
+                    <strong class="text-slate-800" th:text="${trangRma.totalPages}">1</strong> 
+                    (Tổng <strong class="text-slate-800" th:text="${trangRma.totalElements}">0</strong> yêu cầu)
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/admin/doi-tra/hien-thi(page=${currentPage - 1}, size=${pageSize}, trangThai=${trangThaiHienTai}, loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-semibold transition">
+                        &laquo; Trước
+                    </a>
+
+                    <a th:if="${currentPage + 1 < trangRma.totalPages}"
+                       th:href="@{/admin/doi-tra/hien-thi(page=${currentPage + 1}, size=${pageSize}, trangThai=${trangThaiHienTai}, loaiDoiTra=${loaiDoiTraHienTai}, tuKhoa=${tuKhoa})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-semibold transition">
+                        Sau &raquo;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- =========================================================================
+         MODAL DUYỆT NHANH (APPROVE - TIẾP NHẬN YÊU CẦU - US25)
+         ========================================================================= -->
+    <div id="modalDuyetNhanh" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-emerald-50">
+                <div class="flex items-center gap-2 font-black text-sm text-emerald-800 uppercase tracking-wide">
+                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i> Duyệt Tiếp Nhận Yêu Cầu (Approve)
+                </div>
+                <button type="button" onclick="dongModalDuyetNhanh()" class="text-slate-400 hover:text-slate-700">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="formDuyetNhanh" method="POST" class="p-6 space-y-4 text-xs">
+                <input type="hidden" name="trangThaiMoi" value="DA_TIEP_NHAN" />
+
+                <p class="text-slate-600">
+                    Bạn đang xét duyệt tiếp nhận yêu cầu <strong id="rmaDuyetText" class="font-mono text-slate-900">#RMA</strong>.
+                    Hệ thống sẽ cập nhật trạng thái sang <strong>Đã tiếp nhận</strong> và thông báo cho khách hàng gửi hàng về kho.
+                </p>
+
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">Ghi chú phản hồi khách hàng (Tùy chọn):</label>
+                    <textarea name="ghiChuAdmin" rows="2"
+                              placeholder="VD: Đã tiếp nhận. Shipper Simplain sẽ qua thu hồi hàng trong 24h tới..."
+                              class="w-full text-xs rounded-xl border border-slate-300 p-2.5 focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="dongModalDuyetNhanh()"
+                            class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold uppercase">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase flex items-center gap-1.5 shadow-2xs">
+                        <i class="fa-solid fa-check"></i> Xác nhận duyệt
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL TỪ CHỐI NHANH (REJECT - US25 - FORM VALIDATION BẮT BUỘC LÝ DO)
+         ========================================================================= -->
+    <div id="modalTuChoiNhanh" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-rose-50">
+                <div class="flex items-center gap-2 font-black text-sm text-rose-800 uppercase tracking-wide">
+                    <i class="fa-solid fa-ban text-rose-600 text-base"></i> Từ Chối Yêu Cầu Đổi/Trả (Reject)
+                </div>
+                <button type="button" onclick="dongModalTuChoiNhanh()" class="text-slate-400 hover:text-slate-700">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="formTuChoiNhanh" method="POST" class="p-6 space-y-4 text-xs">
+                <input type="hidden" name="trangThaiMoi" value="TU_CHOI" />
+
+                <p class="text-slate-600">
+                    Bạn đang từ chối yêu cầu <strong id="rmaTuChoiText" class="font-mono text-slate-900">#RMA</strong>.
+                    Vui lòng cung cấp lý do từ chối rõ ràng và chuyên nghiệp gửi tới khách hàng.
+                </p>
+
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">
+                        Lý do từ chối chi tiết: <span class="text-rose-600">*</span>
+                    </label>
+                    <textarea name="ghiChuAdmin" id="txtLyDoTuChoi" rows="3" required minlength="5"
+                              placeholder="Nhập lý do từ chối (VD: Đơn hàng quá thời hạn 15 ngày, sản phẩm đã qua sử dụng và mất tem mác...)"
+                              class="w-full text-xs rounded-xl border border-rose-300 p-2.5 focus:ring-rose-500 focus:border-rose-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="dongModalTuChoiNhanh()"
+                            class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold uppercase">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase flex items-center gap-1.5 shadow-2xs">
+                        <i class="fa-solid fa-ban"></i> Xác nhận từ chối
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ĐIỀU KHIỂN MODAL -->
+    <script>
+        function moModalDuyetNhanh(id, rmaCode) {
+            const form = document.getElementById('formDuyetNhanh');
+            const txt = document.getElementById('rmaDuyetText');
+            const modal = document.getElementById('modalDuyetNhanh');
+            if (form && txt && modal) {
+                form.action = '/admin/doi-tra/xet-duyet/' + id;
+                txt.textContent = '#' + rmaCode;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dongModalDuyetNhanh() {
+            const modal = document.getElementById('modalDuyetNhanh');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+
+        function moModalTuChoiNhanh(id, rmaCode) {
+            const form = document.getElementById('formTuChoiNhanh');
+            const txt = document.getElementById('rmaTuChoiText');
+            const modal = document.getElementById('modalTuChoiNhanh');
+            if (form && txt && modal) {
+                form.action = '/admin/doi-tra/xet-duyet/' + id;
+                txt.textContent = '#' + rmaCode;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dongModalTuChoiNhanh() {
+            const modal = document.getElementById('modalTuChoiNhanh');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

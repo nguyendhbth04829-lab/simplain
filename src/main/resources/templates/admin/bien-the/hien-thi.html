@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Biến thể SKU &amp; Tồn kho | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('bien-the')}"></div>
+
+    <!-- Main Content Area: Căn lề trái 64 (256px) tương ứng chiều rộng Sidebar -->
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title bên trái + Nút Đen "+ Thêm biến thể" bên phải -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-neutral-900 text-white flex items-center justify-center text-lg border border-neutral-800">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý biến thể (SKU) &amp; Tồn kho</span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Map Màu sắc + Kích thước tạo SKU, quản lý Giá bán, Giá gốc, Tồn kho thực tế và Upload nhiều hình ảnh</p>
+                </div>
+            </div>
+
+            <!-- Cụm Nút Thêm Mới: Thêm nhanh hàng loạt (SIMPLAIN Matrix) & Thêm lẻ -->
+            <div class="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+                <!-- Nút Thêm nhanh hàng loạt SIMPLAIN Matrix -->
+                <button type="button"
+                        onclick="moModalThemNhanhSimplain()"
+                        class="btn-navy font-black text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-table-cells text-sm text-blue-400"></i>
+                    <span>+ Thêm nhanh hàng loạt (SIMPLAIN Matrix)</span>
+                </button>
+
+                <!-- Nút Thêm 1 biến thể đơn lẻ -->
+                <button type="button"
+                        onclick="moModal('modalThemBienThe')"
+                        class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus text-slate-600"></i>
+                    <span>+ Thêm 1 biến thể lẻ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. CARD BỘ LỌC TÌM KIẾM (Thu phóng được, giống chính xác ảnh thiết kế) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+            
+            <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleBoLoc()">
+                <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <span>Bộ lọc tìm kiếm</span>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i id="boLocIcon" class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+            </div>
+
+            <form id="boLocContent" action="/admin/bien-the/hien-thi" method="get" class="space-y-4 pt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Sản phẩm gốc -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Sản phẩm gốc</label>
+                        <select name="maSanPhamId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả sản phẩm</option>
+                            <option th:each="sp : ${listSanPham}"
+                                    th:value="${sp.id}"
+                                    th:selected="${maSanPhamLoc != null and maSanPhamLoc == sp.id}"
+                                    th:text="${sp.tenSanPham}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Màu sắc -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Màu sắc</label>
+                        <select name="maMauSacId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả màu sắc</option>
+                            <option th:each="ms : ${listMauSac}"
+                                    th:value="${ms.id}"
+                                    th:selected="${maMauSacLoc != null and maMauSacLoc == ms.id}"
+                                    th:text="${ms.tenMau}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Kích thước -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Kích thước</label>
+                        <select name="maKichThuocId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả kích thước</option>
+                            <option th:each="kt : ${listKichThuoc}"
+                                    th:value="${kt.id}"
+                                    th:selected="${maKichThuocLoc != null and maKichThuocLoc == kt.id}"
+                                    th:text="${kt.maKichThuoc}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Tìm kiếm từ khóa SKU -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mã SKU / Barcode</label>
+                        <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                               placeholder="Mã SKU, barcode..."
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    </div>
+
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer transition">
+                        <i class="fa-solid fa-filter text-xs"></i>
+                        <span>Lọc</span>
+                    </button>
+                    <a href="/admin/bien-the/hien-thi"
+                       class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                        <span>Bỏ lọc</span>
+                    </a>
+                </div>
+            </form>
+
+        </div>
+
+        <!-- Thanh Thao Tác Hàng Loạt (Bulk Action Bar) -->
+        <form id="formThaoTacHangLoat" method="post" th:action="@{/admin/bien-the/thao-tac-hang-loat}">
+            <div id="bulkActionBar" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-800">
+                        Đã chọn <span id="soLuongDaChon" class="font-black text-blue-600">0</span> biến thể SKU
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" name="hanhDong" value="KICH_HOAT"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn MỞ BÁN tất cả các biến thể SKU đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Chuyển thành: Đang mở bán</span>
+                    </button>
+                    <button type="submit" name="hanhDong" value="NGUNG_HOAT_DONG"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn TẠM NGỪNG tất cả các biến thể SKU đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-pause"></i>
+                        <span>Chuyển thành: Tạm ngừng</span>
+                    </button>
+                    <button type="button" onclick="boChonTatCa()"
+                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 text-xs font-bold transition cursor-pointer">
+                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ chọn
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. DATA TABLE CARD: Bảng dữ liệu SKU & Tồn kho chuẩn theo ảnh giao diện mẫu -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+                                <th class="py-3.5 px-3 w-10 text-center">
+                                    <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)"
+                                           class="rounded border-slate-300 text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
+                                           title="Chọn tất cả trên trang này">
+                                </th>
+                            <th class="py-3.5 px-2 w-8 text-center text-slate-400">⠿</th>
+                            <th class="py-3.5 px-4 font-bold">Mã SKU &amp; Ảnh</th>
+                            <th class="py-3.5 px-4">Sản phẩm gốc</th>
+                            <th class="py-3.5 px-4">Màu sắc</th>
+                            <th class="py-3.5 px-4">Kích thước</th>
+                            <th class="py-3.5 px-4 text-right">Giá bán</th>
+                            <th class="py-3.5 px-4 text-center">Tồn kho</th>
+                            <th class="py-3.5 px-4 text-center">Trạng thái</th>
+                            <th class="py-3.5 px-4 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        <tr th:each="bt : ${listBienThe}" class="hover:bg-slate-50/80 transition group items-center">
+                            
+                            <!-- Checkbox -->
+                            <td class="py-3.5 px-3 text-center">
+                                <input type="checkbox" name="ids" th:value="${bt.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                       class="item-checkbox rounded border-slate-300 text-[#2563eb] focus:ring-[#2563eb] cursor-pointer">
+                            </td>
+
+                            <!-- Drag handle -->
+                            <td class="py-3.5 px-2 text-center text-slate-300 group-hover:text-slate-500 cursor-grab">
+                                <i class="fa-solid fa-ellipsis-vertical"></i><i class="fa-solid fa-ellipsis-vertical"></i>
+                            </td>
+
+                            <!-- Cột SKU & Ảnh -->
+                            <td class="py-3.5 px-4 max-w-xs">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                        <img th:if="${bt.anhDaiDienUrl != null}" th:src="${bt.anhDaiDienUrl}" alt="SKU" class="w-full h-full object-cover">
+                                        <i th:if="${bt.anhDaiDienUrl == null}" class="fa-regular fa-image text-slate-400"></i>
+                                        <span class="absolute bottom-0 right-0 bg-black/80 text-white text-[8px] px-1 rounded-tl font-mono"
+                                              th:text="${#lists.size(bt.danhSachHinhAnh)}">1</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-mono font-bold text-slate-900 truncate hover:text-[#2563eb] transition" th:text="${bt.maSku}">
+                                            SP-01-DEN-L
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1 truncate">
+                                            <i class="fa-solid fa-barcode text-[9px]"></i>
+                                            <span th:text="${bt.maVachBarcode}">BC-001</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Cột Sản phẩm gốc -->
+                            <td class="py-3.5 px-4 max-w-[180px]">
+                                <div class="font-bold text-slate-800 truncate" th:text="${bt.tenSanPham}">Áo Polo Nam</div>
+                            </td>
+
+                            <!-- Cột Màu sắc -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 font-medium text-slate-700">
+                                    <span class="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0"
+                                          th:style="'background-color:' + (${bt.maMauHex != null and #strings.startsWith(bt.maMauHex, '#')} ? ${bt.maMauHex} : '#000000')"></span>
+                                    <span th:text="${bt.tenMauSac}">Đen</span>
+                                </span>
+                            </td>
+
+                            <!-- Cột Kích thước: Soft badge -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span class="badge-sky px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-block font-mono"
+                                      th:text="${bt.maKichThuoc}">
+                                    L
+                                </span>
+                            </td>
+
+                            <!-- Cột Giá bán -->
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap font-mono font-bold text-slate-900">
+                                <span th:text="${#numbers.formatDecimal(bt.giaBan, 0, 'POINT', 0, 'COMMA')}">299.000</span>₫
+                            </td>
+
+                            <!-- Cột Tồn kho: Soft purple badge -->
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <span th:if="${bt.soLuong > 10}"
+                                      class="badge-purple px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-box text-[9px]"></i>
+                                    <span th:text="${bt.soLuong}">50</span>
+                                </span>
+                                <span th:if="${bt.soLuong > 0 and bt.soLuong <= 10}"
+                                      class="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
+                                    <span>Còn <span th:text="${bt.soLuong}">5</span></span>
+                                </span>
+                                <span th:if="${bt.soLuong == 0}"
+                                      class="bg-red-50 text-red-600 border border-red-200 px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-block">
+                                    Hết hàng
+                                </span>
+                            </td>
+
+                            <!-- Cột Trạng thái: Hiển thị RÕ RÀNG để người dùng nhận biết -->
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <span th:if="${bt.kichHoat}" class="status-badge-active">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>Đang mở bán</span>
+                                </span>
+                                <span th:unless="${bt.kichHoat}" class="status-badge-inactive">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                                    <span>Tạm ngưng</span>
+                                </span>
+                            </td>
+
+                            <!-- Cột Thao tác: Bỏ nút xóa, thay bằng chuyển đổi trạng thái ngưng và còn hoạt động -->
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <a th:href="@{/admin/bien-the/view(id=${bt.id})}"
+                                       class="btn-outline px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                       title="Chỉnh sửa &amp; Quản lý album ảnh">
+                                        <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                        <span>Sửa</span>
+                                    </a>
+
+                                    <a th:if="${bt.kichHoat}"
+                                       th:href="@{/admin/bien-the/doi-trang-thai(id=${bt.id})}"
+                                       class="btn-toggle-inactive px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                       title="Bấm để tạm ngưng mở bán SKU này">
+                                        <i class="fa-solid fa-pause text-[10px]"></i>
+                                        <span>Tạm ngưng</span>
+                                    </a>
+                                    <a th:unless="${bt.kichHoat}"
+                                       th:href="@{/admin/bien-the/doi-trang-thai(id=${bt.id})}"
+                                       class="btn-toggle-active px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                       title="Bấm để kích hoạt mở bán lại">
+                                        <i class="fa-solid fa-play text-[10px]"></i>
+                                        <span>Mở bán</span>
+                                    </a>
+                                </div>
+                            </td>
+
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(listBienThe)}">
+                            <td colspan="10" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-boxes-stacked text-3xl mb-2 block text-slate-300"></i>
+                                Không có biến thể nào phù hợp. Bấm <strong>+ Thêm biến thể SKU</strong> ở trên để tạo mới!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="px-5 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500" th:if="${totalPages > 0}">
+                <div>
+                    Trang <span class="font-bold text-slate-900" th:text="${page + 1}">1</span> / <span th:text="${totalPages}">1</span>
+                    &bull; Tổng <span class="font-bold text-slate-900" th:text="${tongBienThe}">0</span> biến thể SKU
+                </div>
+                <div class="flex items-center gap-1">
+                    <a th:if="${page > 0}"
+                       th:href="@{/admin/bien-the/hien-thi(page=${page - 1}, tuKhoa=${tuKhoa}, maSanPhamId=${maSanPhamLoc}, maMauSacId=${maMauSacLoc}, maKichThuocId=${maKichThuocLoc})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                        &larr; Trước
+                    </a>
+                    <a th:if="${page + 1 < totalPages}"
+                       th:href="@{/admin/bien-the/hien-thi(page=${page + 1}, tuKhoa=${tuKhoa}, maSanPhamId=${maSanPhamLoc}, maMauSacId=${maMauSacLoc}, maKichThuocId=${maKichThuocLoc})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- =========================================================================
+         4.1. MODAL: THÊM NHANH MA TRẬN BIẾN THỂ HÀNG LOẠT (SIMPLAIN MATRIX)
+         ========================================================================= -->
+    <div id="modalThemNhanhSimplain"
+         data-modal
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full my-6 overflow-hidden border border-slate-200/90 flex flex-col max-h-[94vh]">
+            
+            <!-- Header Modal SIMPLAIN Matrix -->
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-50/80 via-white to-slate-50 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg font-bold shadow-md shadow-blue-900/20">
+                        <i class="fa-solid fa-table-cells text-blue-400"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-slate-900">Thêm Biến Thể Hàng Loạt</h3>
+                            <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 tracking-wider">SIMPLAIN Matrix Pro</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500">Tự động sinh mã SKU &amp; Mã vạch, nhân ma trận Màu sắc &times; Kích thước, chỉnh sửa trực tiếp Màu, Size, Giá, Tồn kho ngay tại bảng</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModalThemNhanhSimplain()"
+                        class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition focus:outline-none cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Body Modal: Cuộn dọc mượt mà -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+
+                <!-- BƯỚC 1: Chọn Sản phẩm gốc -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-black uppercase tracking-wider text-slate-800">
+                        1. Chọn Sản phẩm gốc <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select id="simplainSelectSP" onchange="capNhatSanPhamSimplain()"
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs font-semibold outline-none transition cursor-pointer text-slate-800">
+                            <option value="">-- Vui lòng chọn sản phẩm cần tạo biến thể --</option>
+                            <option th:each="sp : ${listSanPham}"
+                                    th:value="${sp.id}"
+                                    th:attr="data-masp=${sp.maSanPham},data-giacoban=${sp.giaCoBan},data-tensp=${sp.tenSanPham}"
+                                    th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 2: Phân loại 1 - Màu sắc (Multi-select Chips) -->
+                <div class="space-y-2 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-palette text-blue-600"></i>
+                            <span>Phân loại 1: Màu sắc sản phẩm</span>
+                            <span id="simplainDemMau" class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full ml-1">0 đã chọn</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="simplainChonTatCaMau(true)" class="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
+                                Chọn tất cả
+                            </button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" onclick="simplainChonTatCaMau(false)" class="text-[11px] font-bold text-slate-500 hover:underline cursor-pointer">
+                                Bỏ chọn
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách chip Màu sắc -->
+                    <div class="flex flex-wrap gap-2 pt-1" id="simplainKhungMauSac">
+                        <label th:each="ms : ${listMauSac}"
+                               class="simplain-chip-mau inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold transition select-none shadow-2xs">
+                            <input type="checkbox"
+                                   class="simplain-cb-mau sr-only"
+                                   th:value="${ms.id}"
+                                   th:attr="data-tenmau=${ms.tenMau},data-mamau=${ms.maMau}"
+                                   onchange="simplainToggleCheckboxMau(this)">
+                            <span class="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs inline-block flex-shrink-0"
+                                  th:style="'background-color: ' + ${ms.maMau}"></span>
+                            <span th:text="${ms.tenMau}">Màu</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 3: Phân loại 2 - Kích thước / Size (Multi-select Chips) -->
+                <div class="space-y-2 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-ruler-combined text-indigo-600"></i>
+                            <span>Phân loại 2: Kích thước (Size)</span>
+                            <span id="simplainDemSize" class="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full ml-1">0 đã chọn</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="simplainChonTatCaSize(true)" class="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
+                                Chọn tất cả
+                            </button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" onclick="simplainChonTatCaSize(false)" class="text-[11px] font-bold text-slate-500 hover:underline cursor-pointer">
+                                Bỏ chọn
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách chip Kích thước -->
+                    <div class="flex flex-wrap gap-2 pt-1" id="simplainKhungKichThuoc">
+                        <label th:each="kt : ${listKichThuoc}"
+                               class="simplain-chip-size inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-bold transition select-none shadow-2xs font-mono">
+                            <input type="checkbox"
+                                   class="simplain-cb-size sr-only"
+                                   th:value="${kt.id}"
+                                   th:attr="data-masize=${kt.maKichThuoc},data-tensize=${kt.tenKichThuoc}"
+                                   onchange="simplainToggleCheckboxSize(this)">
+                            <span th:text="${kt.maKichThuoc}">SIZE</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 3.5: NÚT XÁC NHẬN THÊM BIẾN THỂ VÀO BẢNG -->
+                <div class="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-white border-2 border-blue-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg font-bold shadow-md shadow-blue-200 flex-shrink-0">
+                            <i class="fa-solid fa-cart-plus"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black uppercase text-slate-900 tracking-wide">Xác nhận phân loại đã chọn</span>
+                                <span id="simplainBadgePreview" class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    0 biến thể sẵn sàng
+                                </span>
+                            </div>
+                            <p id="simplainMoTaPreview" class="text-[11px] text-slate-500 mt-0.5">
+                                Chọn Màu &amp; Size ở trên rồi bấm nút bên cạnh để thêm vào bảng biến thể bên dưới
+                            </p>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            id="btnThemVaoBangSimplain"
+                            onclick="simplainThemBienTheVaoBang()"
+                            class="w-full sm:w-auto btn-navy text-white font-black text-xs py-2.5 px-6 rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 flex-shrink-0">
+                        <i class="fa-solid fa-plus-circle text-sm text-blue-300"></i>
+                        <span>Thêm vào bảng</span>
+                    </button>
+                </div>
+
+                <!-- BƯỚC 4: THANH CÔNG CỤ ÁP DỤNG HÀNG LOẠT (BATCH APPLY BAR) -->
+                <div id="simplainBatchApplyBar" class="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50 border border-blue-200/90 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
+                            <span class="text-xs font-black uppercase text-slate-900 tracking-wide">Áp dụng chung cho tất cả dòng biến thể</span>
+                        </div>
+                        <span class="text-[11px] font-bold text-blue-700">Điền giá bán, giá gốc &amp; tồn kho tức thì 1-Click</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Giá bán chung (đ)</label>
+                            <input type="number" id="simplainGiaBanChung" placeholder="VD: 250000" min="0" step="1000"
+                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Giá gốc chung (đ)</label>
+                            <input type="number" id="simplainGiaGocChung" placeholder="VD: 300000" min="0" step="1000"
+                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Tồn kho chung (cái)</label>
+                            <input type="number" id="simplainTonKhoChung" placeholder="VD: 50" min="0" step="1"
+                                   class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <button type="button"
+                                    onclick="simplainApDungHangLoat()"
+                                    class="w-full btn-blue text-white font-extrabold text-xs py-2 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>Áp dụng tất cả</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 5: BẢNG MA TRẬN BIẾN THỂ (CHO PHÉP CHỈNH SỬA TRỰC TIẾP MÀU, SIZE, GIÁ, TỒN, SKU, BARCODE NGAY TẠI BẢNG) -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-900">Danh sách biến thể phân loại</h4>
+                            <span id="simplainTongSoBienTheBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">0 biến thể</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <!-- Nút Thêm 1 dòng biến thể tùy chỉnh thủ công -->
+                            <button type="button"
+                                    onclick="simplainThemDongThuCong()"
+                                    class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-plus-circle"></i>
+                                <span>+ Thêm 1 dòng phân loại</span>
+                            </button>
+
+                            <!-- Nút Xóa sạch bảng -->
+                            <button type="button"
+                                    onclick="simplainXoaSachBang()"
+                                    class="text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-xl border border-transparent transition flex items-center gap-1 cursor-pointer" title="Làm mới lại danh sách biến thể">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                <span>Đặt lại</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                        <div class="overflow-x-auto max-h-[380px] overflow-y-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100/95 text-slate-700 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200 shadow-2xs">
+                                    <tr>
+                                        <th class="px-3 py-2.5 min-w-[150px]">Sản phẩm gốc</th>
+                                        <th class="px-3 py-2.5 min-w-[130px]">Màu sắc (Chọn lại)</th>
+                                        <th class="px-3 py-2.5 min-w-[105px]">Kích thước (Chọn lại)</th>
+                                        <th class="px-3 py-2.5 min-w-[170px]">Mã SKU (Tự sinh/Sửa)</th>
+                                        <th class="px-3 py-2.5 min-w-[145px]">Mã Barcode (Tự sinh/Sửa)</th>
+                                        <th class="px-3 py-2.5 min-w-[110px]">Giá bán (đ) <span class="text-red-500">*</span></th>
+                                        <th class="px-3 py-2.5 min-w-[110px]">Giá gốc (đ)</th>
+                                        <th class="px-3 py-2.5 min-w-[85px]">Tồn kho <span class="text-red-500">*</span></th>
+                                        <th class="px-2 py-2.5 text-center">Bán</th>
+                                        <th class="px-2 py-2.5 text-center">Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="simplainMatrixBody" class="divide-y divide-slate-100 bg-white">
+                                    <tr>
+                                        <td colspan="10" class="px-4 py-8 text-center text-slate-400 italic">
+                                            Vui lòng chọn Sản phẩm gốc và ít nhất 1 Màu sắc &amp; 1 Kích thước ở trên rồi bấm nút "Thêm vào bảng".
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal SIMPLAIN Matrix -->
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
+                <div class="text-xs text-slate-500 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-check text-blue-600"></i>
+                    <span>Bạn có thể sửa trực tiếp Màu, Size, Giá, Tồn kho ngay tại bảng trước khi bấm Lưu.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button"
+                            onclick="dongModalThemNhanhSimplain()"
+                            class="btn-outline font-semibold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="button"
+                            id="btnLuuSimplainMatrix"
+                            onclick="luuTatCaBienTheSimplain()"
+                            class="btn-navy font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-check text-blue-400"></i>
+                        <span id="labelBtnLuuSimplain">Lưu tất cả biến thể</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =========================================================================
+         4.2. MODAL FORM: THÊM MỚI 1 BIẾN THỂ SKU ĐƠN LẺ
+         ========================================================================= -->
+    <div id="modalThemBienThe"
+         data-modal
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full my-8 overflow-hidden border border-slate-200/90 flex flex-col max-h-[90vh]">
+            
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">Tạo Biến thể SKU &amp; Tồn kho</h3>
+                        <p class="text-[11px] text-slate-500">Map Màu sắc + Kích thước, định giá, tồn kho và upload nhiều ảnh</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModal('modalThemBienThe')"
+                        class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition focus:outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form th:object="${bienThe}" action="/admin/bien-the/add" method="post" enctype="multipart/form-data" class="flex flex-col flex-grow overflow-hidden" novalidate>
+                
+                <div class="p-6 overflow-y-auto space-y-4 flex-grow">
+
+                    <!-- Chọn sản phẩm gốc -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Chọn Sản phẩm gốc <span class="text-red-500">*</span></label>
+                        <select id="selectSP" th:field="*{maSanPhamId}" onchange="tuDongGhepSku()"
+                                class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs bg-white transition">
+                            <option value="">-- Chọn sản phẩm gốc --</option>
+                            <option th:each="sp : ${listSanPham}"
+                                    th:value="${sp.id}"
+                                    th:attr="data-masp=${sp.maSanPham},data-giacoban=${sp.giaCoBan}"
+                                    th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}"></option>
+                        </select>
+                        <span class="error" th:if="${#fields.hasErrors('maSanPhamId')}" th:errors="*{maSanPhamId}"></span>
+                    </div>
+
+                    <!-- Map Màu sắc + Kích thước -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Màu sắc <span class="text-red-500">*</span></label>
+                            <select id="selectMau" th:field="*{maMauSacId}" onchange="tuDongGhepSku()"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-[#2563eb]">
+                                <option value="">-- Chọn Màu --</option>
+                                <option th:each="ms : ${listMauSac}"
+                                        th:value="${ms.id}"
+                                        th:attr="data-tenmau=${ms.tenMau}"
+                                        th:text="${ms.tenMau + ' (' + ms.maMau + ')'}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('maMauSacId')}" th:errors="*{maMauSacId}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Kích thước (Size) <span class="text-red-500">*</span></label>
+                            <select id="selectSize" th:field="*{maKichThuocId}" onchange="tuDongGhepSku()"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-[#2563eb]">
+                                <option value="">-- Chọn Size --</option>
+                                <option th:each="kt : ${listKichThuoc}"
+                                        th:value="${kt.id}"
+                                        th:attr="data-masize=${kt.maKichThuoc}"
+                                        th:text="${kt.maKichThuoc + ' - ' + kt.tenKichThuoc}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('maKichThuocId')}" th:errors="*{maKichThuocId}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Mã SKU & Barcode -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Mã SKU <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="tuDongGhepSku()" class="text-[10px] font-bold text-[#2563eb] hover:underline cursor-pointer">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>Tự ghép SKU
+                                </button>
+                            </div>
+                            <input type="text" id="inputMaSku" th:field="*{maSku}"
+                                   placeholder="VD: SP-01-DEN-L"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs font-mono uppercase transition">
+                            <span class="error" th:if="${#fields.hasErrors('maSku')}" th:errors="*{maSku}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Mã vạch Barcode</label>
+                            <input type="text" id="inputBarcode" th:field="*{maVachBarcode}"
+                                   placeholder="Để trống tự sinh BC-SKU"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs font-mono uppercase transition">
+                        </div>
+                    </div>
+
+                    <!-- Giá bán, Giá gốc & Tồn kho -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Giá bán (VNĐ) <span class="text-red-500">*</span></label>
+                            <input type="number" id="inputGiaBan" th:field="*{giaBan}" min="0" step="1000"
+                                   class="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono outline-none focus:border-[#2563eb]">
+                            <span class="error" th:if="${#fields.hasErrors('giaBan')}" th:errors="*{giaBan}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Giá gốc (VNĐ) <span class="text-red-500">*</span></label>
+                            <input type="number" th:field="*{giaGoc}" min="0" step="1000"
+                                   class="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono outline-none focus:border-[#2563eb]">
+                            <span class="error" th:if="${#fields.hasErrors('giaGoc')}" th:errors="*{giaGoc}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Tồn kho <span class="text-red-500">*</span></label>
+                            <input type="number" th:field="*{soLuong}" min="0" step="1"
+                                   class="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-mono font-bold outline-none focus:border-[#2563eb]">
+                            <span class="error" th:if="${#fields.hasErrors('soLuong')}" th:errors="*{soLuong}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Upload Nhiều Hình ảnh (US09 Tiêu chí 3) -->
+                    <div class="p-3.5 rounded-xl bg-blue-50/40 border border-purple-200/80 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-800">
+                                <i class="fa-solid fa-cloud-arrow-up text-[#2563eb] mr-1"></i>Upload Nhiều Hình ảnh
+                            </label>
+                            <span id="labelDemAnh" class="text-[10px] font-bold text-[#2563eb] bg-purple-100 px-2 py-0.5 rounded">0 ảnh</span>
+                        </div>
+                        <input type="file" name="filesAnh" id="inputMultiFiles" multiple accept="image/*"
+                               onchange="xemTruocAnhModal(this)"
+                               class="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#2563eb] file:text-white hover:file:bg-[#5b4cdb] cursor-pointer bg-white p-1 rounded-lg border border-slate-200">
+                        <div id="khungPreviewModal" class="hidden grid grid-cols-4 gap-2 pt-1"></div>
+                    </div>
+
+                    <!-- Kích hoạt mở bán -->
+                    <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-50">
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">Kích hoạt mở bán SKU</div>
+                            <div class="text-[10px] text-slate-400">Cho phép khách hàng lựa chọn Màu &amp; Size này</div>
+                        </div>
+                        <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer">
+                    </label>
+
+                </div>
+
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2.5 bg-slate-50/50 flex-shrink-0">
+                    <button type="button"
+                            onclick="dongModal('modalThemBienThe')"
+                            class="btn-outline font-semibold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-6 py-2.5 rounded-xl shadow-sm hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Lưu biến thể SKU</span>
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Xử lý Thao tác hàng loạt (Bulk Actions)
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            const count = checkedBoxes.length;
+            const bar = document.getElementById('bulkActionBar');
+            const countText = document.getElementById('soLuongDaChon');
+            const masterCheck = document.getElementById('checkAll');
+
+            if (countText) countText.innerText = count;
+
+            if (count > 0) {
+                if (bar) bar.classList.remove('hidden');
+            } else {
+                if (bar) bar.classList.add('hidden');
+            }
+
+            if (masterCheck && checkboxes.length > 0) {
+                masterCheck.checked = (count === checkboxes.length);
+                masterCheck.indeterminate = (count > 0 && count < checkboxes.length);
+            }
+        }
+
+        function boChonTatCa() {
+            const masterCheck = document.getElementById('checkAll');
+            if (masterCheck) masterCheck.checked = false;
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function xacNhanThaoTac(msg) {
+            const count = document.querySelectorAll('.item-checkbox:checked').length;
+            if (count === 0) {
+                alert('Vui lòng tích chọn ít nhất một biến thể SKU!');
+                return false;
+            }
+            return confirm(msg);
+        }
+
+        function tuDongGhepSku() {
+            const selectSP = document.getElementById('selectSP');
+            const selectMau = document.getElementById('selectMau');
+            const selectSize = document.getElementById('selectSize');
+
+            const optSP = selectSP ? selectSP.options[selectSP.selectedIndex] : null;
+            const optMau = selectMau ? selectMau.options[selectMau.selectedIndex] : null;
+            const optSize = selectSize ? selectSize.options[selectSize.selectedIndex] : null;
+
+            const maSP = optSP ? (optSP.getAttribute('data-masp') || '') : '';
+            const giaCoBan = optSP ? optSP.getAttribute('data-giacoban') : '';
+            const tenMau = optMau ? (optMau.getAttribute('data-tenmau') || '') : '';
+            const maSize = optSize ? (optSize.getAttribute('data-masize') || '') : '';
+
+            if (giaCoBan && document.getElementById('inputGiaBan') && !document.getElementById('inputGiaBan').value) {
+                document.getElementById('inputGiaBan').value = giaCoBan;
+            }
+
+            if (maSP) {
+                let skuMau = tenMau ? tenMau.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'D').replace(/[^A-Z0-9]/g, '') : 'COLOR';
+                let skuSize = maSize ? maSize.toUpperCase().replace(/[^A-Z0-9]/g, '') : 'SIZE';
+                const skuMoi = maSP.toUpperCase() + '-' + skuMau + '-' + skuSize;
+                if (document.getElementById('inputMaSku')) {
+                    document.getElementById('inputMaSku').value = skuMoi;
+                }
+                if (document.getElementById('inputBarcode')) {
+                    document.getElementById('inputBarcode').value = 'BC-' + skuMoi;
+                }
+            }
+        }
+
+        // =========================================================================
+        // LOGIC THÊM NHANH MA TRẬN BIẾN THỂ HÀNG LOẠT (SIMPLAIN MATRIX)
+        // =========================================================================
+        function layDanhSachMauSacTuDom() {
+            const list = [];
+            document.querySelectorAll('.simplain-cb-mau').forEach(cb => {
+                list.push({
+                    id: Number(cb.value),
+                    tenMau: cb.getAttribute('data-tenmau') || '',
+                    maMau: cb.getAttribute('data-mamau') || '#000000'
+                });
+            });
+            return list;
+        }
+
+        function layDanhSachKichThuocTuDom() {
+            const list = [];
+            document.querySelectorAll('.simplain-cb-size').forEach(cb => {
+                list.push({
+                    id: Number(cb.value),
+                    maKichThuoc: cb.getAttribute('data-masize') || '',
+                    tenKichThuoc: cb.getAttribute('data-tensize') || ''
+                });
+            });
+            return list;
+        }
+
+        function layDanhSachSanPhamTuDom() {
+            const list = [];
+            const selectSP = document.getElementById('simplainSelectSP');
+            if (selectSP) {
+                for (let i = 0; i < selectSP.options.length; i++) {
+                    const opt = selectSP.options[i];
+                    if (opt.value) {
+                        list.push({
+                            id: Number(opt.value),
+                            maSp: opt.getAttribute('data-masp') || ('SP' + opt.value),
+                            tenSp: opt.getAttribute('data-tensp') || opt.text,
+                            giaCoBan: opt.getAttribute('data-giacoban') || ''
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+
+        let DANH_SACH_SAN_PHAM = [];
+        let DANH_SACH_MAU_SAC = [];
+        let DANH_SACH_KICH_THUOC = [];
+
+        function damBaoDanhMucDuLieu() {
+            if (DANH_SACH_SAN_PHAM.length === 0) {
+                DANH_SACH_SAN_PHAM = layDanhSachSanPhamTuDom();
+            }
+            if (DANH_SACH_MAU_SAC.length === 0) {
+                DANH_SACH_MAU_SAC = layDanhSachMauSacTuDom();
+            }
+            if (DANH_SACH_KICH_THUOC.length === 0) {
+                DANH_SACH_KICH_THUOC = layDanhSachKichThuocTuDom();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', damBaoDanhMucDuLieu);
+
+        let danhSachDongMatrix = [];
+        // Tập hợp ghi nhớ các cặp đã bị người dùng bấm nút xóa (key: `${maMauId}_${maSizeId}`)
+        // Đảm bảo tuyệt đối: Dù chọn màu/size khác cũng KHÔNG BAO GIỜ tự sinh lại cặp đã xóa!
+        const tapHopCapDaXoaThuCong = new Set();
+        let nextRowId = 1;
+
+        function moModalThemNhanhSimplain() {
+            damBaoDanhMucDuLieu();
+            const modal = document.getElementById('modalThemNhanhSimplain');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+
+                // Tự chọn sản phẩm đang lọc nếu có
+                const spLoc = document.querySelector('select[name="maSanPhamId"]');
+                const simplainSP = document.getElementById('simplainSelectSP');
+                if (spLoc && spLoc.value && simplainSP && !simplainSP.value) {
+                    simplainSP.value = spLoc.value;
+                    capNhatSanPhamSimplain();
+                }
+                datLaiFormPhanLoai();
+                renderBangMatrix();
+            }
+        }
+
+        function dongModalThemNhanhSimplain() {
+            const modal = document.getElementById('modalThemNhanhSimplain');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function capNhatSanPhamSimplain() {
+            const selectSP = document.getElementById('simplainSelectSP');
+            const opt = selectSP ? selectSP.options[selectSP.selectedIndex] : null;
+            if (opt && opt.value) {
+                const giaCoBan = opt.getAttribute('data-giacoban');
+                if (giaCoBan) {
+                    const inputGia = document.getElementById('simplainGiaBanChung');
+                    const inputGoc = document.getElementById('simplainGiaGocChung');
+                    if (inputGia) inputGia.value = giaCoBan;
+                    if (inputGoc) inputGoc.value = giaCoBan;
+                }
+            }
+        }
+
+        function simplainToggleCheckboxMau(cb) {
+            capNhatGiaoDienChipMau();
+            capNhatThongTinChuanBiThem();
+        }
+
+        function simplainToggleCheckboxSize(cb) {
+            capNhatGiaoDienChipSize();
+            capNhatThongTinChuanBiThem();
+        }
+
+        function simplainChonTatCaMau(trangThai) {
+            const cbs = document.querySelectorAll('.simplain-cb-mau');
+            cbs.forEach(cb => cb.checked = trangThai);
+            capNhatGiaoDienChipMau();
+            capNhatThongTinChuanBiThem();
+        }
+
+        function simplainChonTatCaSize(trangThai) {
+            const cbs = document.querySelectorAll('.simplain-cb-size');
+            cbs.forEach(cb => cb.checked = trangThai);
+            capNhatGiaoDienChipSize();
+            capNhatThongTinChuanBiThem();
+        }
+
+        function capNhatGiaoDienChipMau() {
+            const cbsMau = document.querySelectorAll('.simplain-cb-mau');
+            let dem = 0;
+            cbsMau.forEach(cb => {
+                const label = cb.closest('.simplain-chip-mau');
+                if (cb.checked) {
+                    dem++;
+                    if (label) {
+                        label.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-800', 'ring-2', 'ring-blue-200');
+                        label.classList.remove('bg-white', 'border-slate-200');
+                    }
+                } else {
+                    if (label) {
+                        label.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-800', 'ring-2', 'ring-blue-200');
+                        label.classList.add('bg-white', 'border-slate-200');
+                    }
+                }
+            });
+            const demEl = document.getElementById('simplainDemMau');
+            if (demEl) demEl.innerText = dem + ' đã chọn';
+        }
+
+        function capNhatGiaoDienChipSize() {
+            const cbsSize = document.querySelectorAll('.simplain-cb-size');
+            let dem = 0;
+            cbsSize.forEach(cb => {
+                const label = cb.closest('.simplain-chip-size');
+                if (cb.checked) {
+                    dem++;
+                    if (label) {
+                        label.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-800', 'ring-2', 'ring-indigo-200');
+                        label.classList.remove('bg-white', 'border-slate-200');
+                    }
+                } else {
+                    if (label) {
+                        label.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-800', 'ring-2', 'ring-indigo-200');
+                        label.classList.add('bg-white', 'border-slate-200');
+                    }
+                }
+            });
+            const demEl = document.getElementById('simplainDemSize');
+            if (demEl) demEl.innerText = dem + ' đã chọn';
+        }
+
+        function capNhatThongTinChuanBiThem() {
+            const cbsMau = document.querySelectorAll('.simplain-cb-mau:checked');
+            const cbsSize = document.querySelectorAll('.simplain-cb-size:checked');
+            const demMau = cbsMau.length;
+            const demSize = cbsSize.length;
+            const tongSo = demMau * demSize;
+
+            const badge = document.getElementById('simplainBadgePreview');
+            const moTa = document.getElementById('simplainMoTaPreview');
+
+            if (badge) {
+                if (tongSo > 0) {
+                    badge.innerText = `${tongSo} biến thể sẵn sàng`;
+                    badge.className = 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
+                } else {
+                    badge.innerText = '0 biến thể sẵn sàng';
+                    badge.className = 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200';
+                }
+            }
+
+            if (moTa) {
+                if (demMau > 0 && demSize > 0) {
+                    moTa.innerText = `Đã chọn ${demMau} màu × ${demSize} kích thước (${tongSo} biến thể). Bấm nút "Thêm vào bảng" bên cạnh để tạo danh sách bên dưới.`;
+                } else if (demMau > 0) {
+                    moTa.innerText = `Đã chọn ${demMau} màu sắc. Vui lòng chọn thêm ít nhất 1 Kích thước (Size) ở Phân loại 2.`;
+                } else if (demSize > 0) {
+                    moTa.innerText = `Đã chọn ${demSize} kích thước. Vui lòng chọn thêm ít nhất 1 Màu sắc ở Phân loại 1.`;
+                } else {
+                    moTa.innerText = 'Chọn Màu & Size ở trên rồi bấm nút bên cạnh để thêm vào bảng biến thể bên dưới.';
+                }
+            }
+        }
+
+        function boDauTiengVietJs(str) {
+            if (!str) return '';
+            return str.toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, 'D')
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, '');
+        }
+
+        function layThongTinSanPhamHienTai() {
+            const selectSP = document.getElementById('simplainSelectSP');
+            const optSP = selectSP ? selectSP.options[selectSP.selectedIndex] : null;
+            const maSpId = optSP ? optSP.value : '';
+            const maSp = optSP ? (optSP.getAttribute('data-masp') || 'SP' + maSpId) : 'SP';
+            const tenSp = optSP ? (optSP.getAttribute('data-tensp') || optSP.text || '') : '';
+            const giaCoBan = optSP ? (optSP.getAttribute('data-giacoban') || '') : '';
+            return { maSpId, maSp, tenSp, giaCoBan };
+        }
+
+        function sinhSkuVaBarcode(maSp, tenMau, maSize) {
+            const skuMau = boDauTiengVietJs(tenMau) || 'COLOR';
+            const skuSize = (maSize || 'SIZE').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const prefixSp = (maSp || 'SP').toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            const sku = `${prefixSp}-${skuMau}-${skuSize}`;
+            const barcode = `BC-${sku}`;
+            return { sku, barcode };
+        }
+
+        // Người dùng chủ động bấm nút: "Thêm vào bảng"
+        function simplainThemBienTheVaoBang() {
+            damBaoDanhMucDuLieu();
+            const spInfo = layThongTinSanPhamHienTai();
+            const maSpId = spInfo.maSpId;
+            const maSp = spInfo.maSp;
+            const tenSp = spInfo.tenSp;
+            const giaCoBan = spInfo.giaCoBan;
+
+            if (!maSpId) {
+                alert('Vui lòng chọn Sản phẩm gốc ở Bước 1 trước!');
+                const selectSP = document.getElementById('simplainSelectSP');
+                if (selectSP) selectSP.focus();
+                return;
+            }
+
+            const cbsMauChecked = Array.from(document.querySelectorAll('.simplain-cb-mau:checked'));
+            const cbsSizeChecked = Array.from(document.querySelectorAll('.simplain-cb-size:checked'));
+
+            if (cbsMauChecked.length === 0) {
+                alert('Vui lòng chọn ít nhất 1 Màu sắc ở Phân loại 1!');
+                return;
+            }
+
+            if (cbsSizeChecked.length === 0) {
+                alert('Vui lòng chọn ít nhất 1 Kích thước (Size) ở Phân loại 2!');
+                return;
+            }
+
+            const giaBanChung = document.getElementById('simplainGiaBanChung').value || giaCoBan || '250000';
+            const giaGocChung = document.getElementById('simplainGiaGocChung').value || giaBanChung || '300000';
+            const tonKhoChung = document.getElementById('simplainTonKhoChung').value || '50';
+
+            let demThemMoi = 0;
+            let demDaCo = 0;
+
+            cbsMauChecked.forEach(cbMau => {
+                const mauId = Number(cbMau.value);
+                const tenMau = cbMau.getAttribute('data-tenmau') || '';
+                const maMau = cbMau.getAttribute('data-mamau') || '#000000';
+
+                cbsSizeChecked.forEach(cbSize => {
+                    const sizeId = Number(cbSize.value);
+                    const maSize = cbSize.getAttribute('data-masize') || '';
+                    const tenSize = cbSize.getAttribute('data-tensize') || '';
+
+                    const capKey = `${maSpId}_${mauId}_${sizeId}`;
+
+                    // Khi người dùng bấm nút "Thêm vào bảng", gỡ bỏ cờ đã xóa nếu có (cho phép thêm lại chủ động)
+                    tapHopCapDaXoaThuCong.delete(capKey);
+
+                    // Kiểm tra xem cặp (Sản phẩm + Màu + Size) này đã có trong bảng chưa
+                    const daCo = danhSachDongMatrix.some(item =>
+                        Number(item.maSanPhamId) === Number(maSpId) &&
+                        Number(item.maMauSacId) === mauId &&
+                        Number(item.maKichThuocId) === sizeId
+                    );
+
+                    if (!daCo) {
+                        const { sku, barcode } = sinhSkuVaBarcode(maSp, tenMau, maSize);
+                        const newItem = {
+                            uid: nextRowId++,
+                            maSanPhamId: Number(maSpId),
+                            maSanPham: maSp,
+                            tenSanPham: tenSp || ('SP #' + maSpId),
+                            maMauSacId: mauId,
+                            tenMau: tenMau,
+                            maMau: maMau,
+                            maKichThuocId: sizeId,
+                            maKichThuoc: maSize,
+                            tenKichThuoc: tenSize,
+                            maSku: sku,
+                            maVachBarcode: barcode,
+                            giaBan: giaBanChung,
+                            giaGoc: giaGocChung,
+                            soLuong: tonKhoChung,
+                            kichHoat: true,
+                            tuThemThuCong: false
+                        };
+                        danhSachDongMatrix.push(newItem);
+                        demThemMoi++;
+                    } else {
+                        demDaCo++;
+                    }
+                });
+            });
+
+            renderBangMatrix();
+
+            if (demThemMoi > 0) {
+                // Sau khi thêm vào bảng thành công, đặt lại các chip chọn ở form
+                datLaiFormPhanLoai();
+
+                // Cuộn mượt đến bảng
+                const tbl = document.getElementById('simplainMatrixBody');
+                if (tbl) tbl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else if (demDaCo > 0) {
+                alert('Tất cả các biến thể phân loại đã chọn của sản phẩm này hiện đã có trong bảng!');
+            }
+        }
+
+        // Đặt lại các chip chọn ở form Màu và Size về trạng thái ban đầu (0 đã chọn)
+        function datLaiFormPhanLoai() {
+            const cbsMau = document.querySelectorAll('.simplain-cb-mau');
+            cbsMau.forEach(cb => cb.checked = false);
+            const cbsSize = document.querySelectorAll('.simplain-cb-size');
+            cbsSize.forEach(cb => cb.checked = false);
+            capNhatGiaoDienChipMau();
+            capNhatGiaoDienChipSize();
+            capNhatThongTinChuanBiThem();
+        }
+
+        // Đồng bộ bỏ chọn chip Màu và Size khi người dùng xóa dòng tương ứng ở bảng
+        function dongBoBoChonChipTheoDongDaXoa(mauId, sizeId) {
+            const spInfo = layThongTinSanPhamHienTai();
+            const conMau = danhSachDongMatrix.some(it => Number(it.maSanPhamId) === Number(spInfo.maSpId) && Number(it.maMauSacId) === Number(mauId));
+            if (!conMau) {
+                const cbMau = document.querySelector(`.simplain-cb-mau[value="${mauId}"]`);
+                if (cbMau) cbMau.checked = false;
+            }
+            const conSize = danhSachDongMatrix.some(it => Number(it.maSanPhamId) === Number(spInfo.maSpId) && Number(it.maKichThuocId) === Number(sizeId));
+            if (!conSize) {
+                const cbSize = document.querySelector(`.simplain-cb-size[value="${sizeId}"]`);
+                if (cbSize) cbSize.checked = false;
+            }
+            capNhatGiaoDienChipMau();
+            capNhatGiaoDienChipSize();
+            capNhatThongTinChuanBiThem();
+        }
+
+        // Render toàn bộ bảng từ mảng `danhSachDongMatrix`
+        function renderBangMatrix() {
+            damBaoDanhMucDuLieu();
+            const tbody = document.getElementById('simplainMatrixBody');
+            const spInfo = layThongTinSanPhamHienTai();
+
+            if (danhSachDongMatrix.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-4 py-8 text-center text-slate-400 italic">
+                            ${!spInfo.maSpId ? 'Vui lòng chọn Sản phẩm gốc ở trên.' : 'Chưa có biến thể nào trong bảng. Chọn Màu sắc &amp; Size ở trên rồi bấm nút "Thêm vào bảng" hoặc "+ Thêm 1 dòng phân loại" bên dưới.'}
+                        </td>
+                    </tr>
+                `;
+                capNhatBadgeSoLuong();
+                return;
+            }
+
+            let html = '';
+            danhSachDongMatrix.forEach(item => {
+                // Tạo dropdown chọn Sản phẩm cho dòng này
+                let optSpHtml = '';
+                DANH_SACH_SAN_PHAM.forEach(s => {
+                    const selected = Number(s.id) === Number(item.maSanPhamId) ? 'selected' : '';
+                    optSpHtml += `<option value="${s.id}" data-masp="${s.maSp}" data-tensp="${s.tenSp}" ${selected}>${s.maSp} - ${s.tenSp}</option>`;
+                });
+
+                // Tạo dropdown chọn Màu sắc cho dòng này
+                let optMauHtml = '';
+                DANH_SACH_MAU_SAC.forEach(m => {
+                    const selected = Number(m.id) === Number(item.maMauSacId) ? 'selected' : '';
+                    optMauHtml += `<option value="${m.id}" data-tenmau="${m.tenMau}" data-mamau="${m.maMau}" ${selected}>${m.tenMau}</option>`;
+                });
+
+                // Tạo dropdown chọn Kích thước cho dòng này
+                let optSizeHtml = '';
+                DANH_SACH_KICH_THUOC.forEach(k => {
+                    const selected = Number(k.id) === Number(item.maKichThuocId) ? 'selected' : '';
+                    optSizeHtml += `<option value="${k.id}" data-masize="${k.maKichThuoc}" data-tensize="${k.tenKichThuoc}" ${selected}>${k.maKichThuoc}</option>`;
+                });
+
+                // Tìm mã màu hex hiện tại
+                const mauHienTai = DANH_SACH_MAU_SAC.find(m => Number(m.id) === Number(item.maMauSacId));
+                const colorHex = mauHienTai ? mauHienTai.maMau : (item.maMau || '#000000');
+
+                html += `
+                    <tr id="simplainRow-${item.uid}" class="hover:bg-blue-50/30 transition border-b border-slate-100">
+                        <!-- CỘT 0: Sản phẩm gốc (Chỉnh sửa trực tiếp qua Select Dropdown) -->
+                        <td class="px-2.5 py-2 min-w-[170px] max-w-[220px]">
+                            <select onchange="simplainDoiSanPhamDong(${item.uid}, this.value)"
+                                    class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-100 outline-none transition cursor-pointer truncate">
+                                ${optSpHtml}
+                            </select>
+                        </td>
+
+                        <!-- CỘT 1: Màu sắc (Chỉnh sửa trực tiếp qua Select Dropdown) -->
+                        <td class="px-2.5 py-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3.5 h-3.5 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
+                                      id="simplainDotMau-${item.uid}"
+                                      style="background-color: ${colorHex}"></span>
+                                <select onchange="simplainDoiMauDong(${item.uid}, this.value)"
+                                        class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold focus:border-blue-600 focus:ring-1 focus:ring-blue-100 outline-none transition cursor-pointer">
+                                    ${optMauHtml}
+                                </select>
+                            </div>
+                        </td>
+
+                        <!-- CỘT 2: Kích thước / Size (Chỉnh sửa trực tiếp qua Select Dropdown) -->
+                        <td class="px-2.5 py-2">
+                            <select onchange="simplainDoiSizeDong(${item.uid}, this.value)"
+                                    class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white font-mono font-bold text-xs text-blue-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-100 outline-none transition cursor-pointer">
+                                ${optSizeHtml}
+                            </select>
+                        </td>
+
+                        <!-- CỘT 3: Mã SKU (Tự sinh theo Màu + Size mới, chỉnh sửa trực tiếp) -->
+                        <td class="px-2.5 py-2">
+                            <input type="text"
+                                   id="simplainSku-${item.uid}"
+                                   value="${item.maSku || ''}"
+                                   oninput="simplainCapNhatTruong(${item.uid}, 'maSku', this.value)"
+                                   placeholder="Mã SKU..."
+                                   class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs uppercase focus:border-blue-600 outline-none bg-slate-50/60 focus:bg-white transition">
+                        </td>
+
+                        <!-- CỘT 4: Mã Barcode (Tự sinh theo SKU mới, chỉnh sửa trực tiếp) -->
+                        <td class="px-2.5 py-2">
+                            <input type="text"
+                                   id="simplainBarcode-${item.uid}"
+                                   value="${item.maVachBarcode || ''}"
+                                   oninput="simplainCapNhatTruong(${item.uid}, 'maVachBarcode', this.value)"
+                                   placeholder="Barcode..."
+                                   class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-mono text-xs uppercase focus:border-blue-600 outline-none bg-slate-50/60 focus:bg-white transition">
+                        </td>
+
+                        <!-- CỘT 5: Giá bán (Chỉnh sửa trực tiếp) -->
+                        <td class="px-2.5 py-2">
+                            <input type="number"
+                                   id="simplainGiaBan-${item.uid}"
+                                   value="${item.giaBan !== undefined ? item.giaBan : ''}"
+                                   min="0" step="1000"
+                                   oninput="simplainCapNhatTruong(${item.uid}, 'giaBan', this.value)"
+                                   class="w-full px-2 py-1.5 rounded-lg border border-slate-200 font-mono text-xs text-right focus:border-blue-600 outline-none transition font-semibold text-slate-900">
+                        </td>
+
+                        <!-- CỘT 6: Giá gốc (Chỉnh sửa trực tiếp) -->
+                        <td class="px-2.5 py-2">
+                            <input type="number"
+                                   id="simplainGiaGoc-${item.uid}"
+                                   value="${item.giaGoc !== undefined ? item.giaGoc : ''}"
+                                   min="0" step="1000"
+                                   oninput="simplainCapNhatTruong(${item.uid}, 'giaGoc', this.value)"
+                                   class="w-full px-2 py-1.5 rounded-lg border border-slate-200 font-mono text-xs text-right focus:border-blue-600 outline-none transition text-slate-500">
+                        </td>
+
+                        <!-- CỘT 7: Tồn kho (Chỉnh sửa trực tiếp) -->
+                        <td class="px-2.5 py-2">
+                            <input type="number"
+                                   id="simplainSoLuong-${item.uid}"
+                                   value="${item.soLuong !== undefined ? item.soLuong : ''}"
+                                   min="0" step="1"
+                                   oninput="simplainCapNhatTruong(${item.uid}, 'soLuong', this.value)"
+                                   class="w-full px-2 py-1.5 rounded-lg border border-slate-200 font-mono font-black text-xs text-center focus:border-blue-600 outline-none transition">
+                        </td>
+
+                        <!-- CỘT 8: Kích hoạt mở bán -->
+                        <td class="px-2 py-2 text-center">
+                            <input type="checkbox"
+                                   ${item.kichHoat !== false ? 'checked' : ''}
+                                   onchange="simplainCapNhatTruong(${item.uid}, 'kichHoat', this.checked)"
+                                   class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        </td>
+
+                        <!-- CỘT 9: Nút Xóa dòng -->
+                        <td class="px-2 py-2 text-center">
+                            <button type="button"
+                                    onclick="simplainXoaDong(${item.uid})"
+                                    title="Xóa biến thể này khỏi bảng"
+                                    class="w-7 h-7 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition cursor-pointer mx-auto">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            capNhatBadgeSoLuong();
+        }
+
+        function capNhatBadgeSoLuong() {
+            const count = danhSachDongMatrix.length;
+            const badge = document.getElementById('simplainTongSoBienTheBadge');
+            const labelBtn = document.getElementById('labelBtnLuuSimplain');
+            if (badge) badge.innerText = `${count} biến thể`;
+            if (labelBtn) labelBtn.innerText = `Lưu tất cả (${count}) biến thể`;
+        }
+
+        // Xóa một dòng khỏi bảng và GHI NHỚ để KHÔNG bao giờ tự sinh lại khi chọn màu khác
+        function simplainXoaDong(rowId) {
+            const idx = danhSachDongMatrix.findIndex(item => item.uid === rowId);
+            if (idx !== -1) {
+                const item = danhSachDongMatrix[idx];
+                if (item.maMauSacId && item.maKichThuocId) {
+                    tapHopCapDaXoaThuCong.add(`${item.maSanPhamId}_${item.maMauSacId}_${item.maKichThuocId}`);
+                }
+                danhSachDongMatrix.splice(idx, 1);
+                const tr = document.getElementById(`simplainRow-${rowId}`);
+                if (tr) tr.remove();
+                capNhatBadgeSoLuong();
+
+                // Đồng bộ bỏ chọn chip ở form nếu chip đó vừa bị xóa khỏi bảng VÀ cùng sản phẩm đang chọn
+                const spInfo = layThongTinSanPhamHienTai();
+                if (String(item.maSanPhamId) === String(spInfo.maSpId)) {
+                    dongBoBoChonChipTheoDongDaXoa(item.maMauSacId, item.maKichThuocId);
+                }
+
+                if (danhSachDongMatrix.length === 0) {
+                    datLaiFormPhanLoai();
+                    renderBangMatrix();
+                }
+            }
+        }
+
+        // Đổi sản phẩm trực tiếp trên dropdown của dòng
+        function simplainDoiSanPhamDong(rowId, newSpId) {
+            damBaoDanhMucDuLieu();
+            const item = danhSachDongMatrix.find(it => it.uid === rowId);
+            if (!item) return;
+
+            const spObj = DANH_SACH_SAN_PHAM.find(s => Number(s.id) === Number(newSpId));
+            if (spObj) {
+                item.maSanPhamId = Number(newSpId);
+                item.maSanPham = spObj.maSp;
+                item.tenSanPham = spObj.tenSp;
+
+                // Tự sinh lại SKU và Barcode tương ứng theo mã sản phẩm mới của dòng này
+                const { sku, barcode } = sinhSkuVaBarcode(spObj.maSp, item.tenMau, item.maKichThuoc);
+                item.maSku = sku;
+                item.maVachBarcode = barcode;
+
+                const inputSku = document.getElementById(`simplainSku-${rowId}`);
+                const inputBarcode = document.getElementById(`simplainBarcode-${rowId}`);
+                if (inputSku) inputSku.value = sku;
+                if (inputBarcode) inputBarcode.value = barcode;
+            }
+        }
+
+        // Đổi màu trực tiếp trên dropdown của dòng
+        function simplainDoiMauDong(rowId, newMauId) {
+            damBaoDanhMucDuLieu();
+            const item = danhSachDongMatrix.find(it => it.uid === rowId);
+            if (!item) return;
+
+            const mauObj = DANH_SACH_MAU_SAC.find(m => Number(m.id) === Number(newMauId));
+            if (mauObj) {
+                item.maMauSacId = Number(newMauId);
+                item.tenMau = mauObj.tenMau;
+                item.maMau = mauObj.maMau;
+
+                // Cập nhật chấm màu
+                const dot = document.getElementById(`simplainDotMau-${rowId}`);
+                if (dot) dot.style.backgroundColor = mauObj.maMau;
+
+                // Tự sinh lại SKU và Barcode tương ứng theo mã sản phẩm của chính dòng này
+                const maSpCuaDong = item.maSanPham || 'SP';
+                const { sku, barcode } = sinhSkuVaBarcode(maSpCuaDong, mauObj.tenMau, item.maKichThuoc);
+                item.maSku = sku;
+                item.maVachBarcode = barcode;
+
+                const inputSku = document.getElementById(`simplainSku-${rowId}`);
+                const inputBarcode = document.getElementById(`simplainBarcode-${rowId}`);
+                if (inputSku) inputSku.value = sku;
+                if (inputBarcode) inputBarcode.value = barcode;
+            }
+        }
+
+        // Đổi size trực tiếp trên dropdown của dòng
+        function simplainDoiSizeDong(rowId, newSizeId) {
+            damBaoDanhMucDuLieu();
+            const item = danhSachDongMatrix.find(it => it.uid === rowId);
+            if (!item) return;
+
+            const sizeObj = DANH_SACH_KICH_THUOC.find(k => Number(k.id) === Number(newSizeId));
+            if (sizeObj) {
+                item.maKichThuocId = Number(newSizeId);
+                item.maKichThuoc = sizeObj.maKichThuoc;
+                item.tenKichThuoc = sizeObj.tenKichThuoc;
+
+                // Tự sinh lại SKU và Barcode tương ứng theo mã sản phẩm của chính dòng này
+                const maSpCuaDong = item.maSanPham || 'SP';
+                const { sku, barcode } = sinhSkuVaBarcode(maSpCuaDong, item.tenMau, sizeObj.maKichThuoc);
+                item.maSku = sku;
+                item.maVachBarcode = barcode;
+
+                const inputSku = document.getElementById(`simplainSku-${rowId}`);
+                const inputBarcode = document.getElementById(`simplainBarcode-${rowId}`);
+                if (inputSku) inputSku.value = sku;
+                if (inputBarcode) inputBarcode.value = barcode;
+            }
+        }
+
+        function simplainCapNhatTruong(rowId, field, val) {
+            const item = danhSachDongMatrix.find(it => it.uid === rowId);
+            if (item) {
+                item[field] = val;
+            }
+        }
+
+        // Thêm 1 dòng phân loại tùy chỉnh thủ công ngay trên bảng
+        function simplainThemDongThuCong() {
+            damBaoDanhMucDuLieu();
+            const spInfo = layThongTinSanPhamHienTai();
+            const maSpId = spInfo.maSpId || (document.getElementById('simplainSelectSP')?.options[1]?.value) || '1';
+            const maSp = spInfo.maSp || 'SP';
+            const tenSp = spInfo.tenSp || 'Sản phẩm';
+
+            const mauMacDinh = DANH_SACH_MAU_SAC.length > 0 ? DANH_SACH_MAU_SAC[0] : { id: 1, tenMau: 'Đen', maMau: '#000000' };
+            const sizeMacDinh = DANH_SACH_KICH_THUOC.length > 0 ? DANH_SACH_KICH_THUOC[0] : { id: 1, maKichThuoc: 'M', tenKichThuoc: 'Size M' };
+
+            const giaBanChung = document.getElementById('simplainGiaBanChung').value || spInfo.giaCoBan || '250000';
+            const giaGocChung = document.getElementById('simplainGiaGocChung').value || giaBanChung || '300000';
+            const tonKhoChung = document.getElementById('simplainTonKhoChung').value || '50';
+
+            const { sku, barcode } = sinhSkuVaBarcode(maSp, mauMacDinh.tenMau, sizeMacDinh.maKichThuoc);
+
+            const newItem = {
+                uid: nextRowId++,
+                maSanPhamId: Number(maSpId),
+                maSanPham: maSp,
+                tenSanPham: tenSp,
+                maMauSacId: mauMacDinh.id,
+                tenMau: mauMacDinh.tenMau,
+                maMau: mauMacDinh.maMau,
+                maKichThuocId: sizeMacDinh.id,
+                maKichThuoc: sizeMacDinh.maKichThuoc,
+                tenKichThuoc: sizeMacDinh.tenKichThuoc,
+                maSku: sku,
+                maVachBarcode: barcode,
+                giaBan: giaBanChung,
+                giaGoc: giaGocChung,
+                soLuong: tonKhoChung,
+                kichHoat: true,
+                tuThemThuCong: true
+            };
+
+            danhSachDongMatrix.push(newItem);
+            renderBangMatrix();
+        }
+
+        // Xóa sạch bảng và xóa danh sách đã xóa để bắt đầu lại
+        function simplainXoaSachBang() {
+            if (confirm('Bạn có chắc chắn muốn đặt lại toàn bộ danh sách biến thể trong bảng?')) {
+                danhSachDongMatrix = [];
+                tapHopCapDaXoaThuCong.clear();
+                datLaiFormPhanLoai();
+                renderBangMatrix();
+            }
+        }
+
+        // Áp dụng hàng loạt cho tất cả các dòng hiện có
+        function simplainApDungHangLoat() {
+            const giaBan = document.getElementById('simplainGiaBanChung').value;
+            const giaGoc = document.getElementById('simplainGiaGocChung').value;
+            const tonKho = document.getElementById('simplainTonKhoChung').value;
+
+            if (!giaBan && !giaGoc && !tonKho) {
+                alert('Vui lòng nhập ít nhất Giá bán, Giá gốc hoặc Tồn kho để áp dụng hàng loạt!');
+                return;
+            }
+
+            if (danhSachDongMatrix.length === 0) {
+                alert('Chưa có dòng biến thể nào trong bảng để áp dụng!');
+                return;
+            }
+
+            danhSachDongMatrix.forEach(item => {
+                if (giaBan) {
+                    item.giaBan = giaBan;
+                    const el = document.getElementById(`simplainGiaBan-${item.uid}`);
+                    if (el) el.value = giaBan;
+                }
+                if (giaGoc) {
+                    item.giaGoc = giaGoc;
+                    const el = document.getElementById(`simplainGiaGoc-${item.uid}`);
+                    if (el) el.value = giaGoc;
+                }
+                if (tonKho) {
+                    item.soLuong = tonKho;
+                    const el = document.getElementById(`simplainSoLuong-${item.uid}`);
+                    if (el) el.value = tonKho;
+                }
+            });
+
+            // Hiệu ứng phản hồi visual
+            const bar = document.getElementById('simplainBatchApplyBar');
+            if (bar) {
+                bar.classList.add('ring-2', 'ring-emerald-500');
+                setTimeout(() => bar.classList.remove('ring-2', 'ring-emerald-500'), 800);
+            }
+        }
+
+        // Lưu tất cả biến thể trong bảng
+        async function luuTatCaBienTheSimplain() {
+            const spInfo = layThongTinSanPhamHienTai();
+            const maSanPhamId = spInfo.maSpId;
+
+            if (danhSachDongMatrix.length === 0) {
+                alert('Danh sách biến thể đang trống, vui lòng chọn Màu & Size và bấm "Thêm vào bảng" hoặc bấm "+ Thêm 1 dòng phân loại"!');
+                return;
+            }
+
+            // Validate các dòng trước khi gửi
+            for (let i = 0; i < danhSachDongMatrix.length; i++) {
+                const item = danhSachDongMatrix[i];
+                if (!item.maSanPhamId && !maSanPhamId) {
+                    alert(`Dòng thứ ${i + 1} chưa xác định được Sản phẩm gốc!`);
+                    return;
+                }
+                if (!item.maMauSacId) {
+                    alert(`Dòng thứ ${i + 1} chưa chọn Màu sắc!`);
+                    return;
+                }
+                if (!item.maKichThuocId) {
+                    alert(`Dòng thứ ${i + 1} chưa chọn Kích thước (Size)!`);
+                    return;
+                }
+                if (item.giaBan === undefined || item.giaBan === '' || Number(item.giaBan) < 0) {
+                    alert(`Vui lòng nhập Giá bán hợp lệ cho dòng thứ ${i + 1} (SKU: ${item.maSku || 'Mới'})!`);
+                    return;
+                }
+                if (item.soLuong === undefined || item.soLuong === '' || Number(item.soLuong) < 0) {
+                    alert(`Vui lòng nhập Số lượng tồn kho hợp lệ cho dòng thứ ${i + 1} (SKU: ${item.maSku || 'Mới'})!`);
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('btnLuuSimplainMatrix');
+            const label = document.getElementById('labelBtnLuuSimplain');
+            btn.disabled = true;
+            label.innerText = 'Đang lưu vào hệ thống...';
+
+            try {
+                const defaultMaSpId = maSanPhamId ? Number(maSanPhamId) : (danhSachDongMatrix[0]?.maSanPhamId ? Number(danhSachDongMatrix[0].maSanPhamId) : null);
+                const payload = {
+                    maSanPhamId: defaultMaSpId,
+                    danhSachBienThe: danhSachDongMatrix.map(item => ({
+                        maSanPhamId: Number(item.maSanPhamId || defaultMaSpId),
+                        maSanPham: item.maSanPham,
+                        tenSanPham: item.tenSanPham,
+                        maMauSacId: Number(item.maMauSacId),
+                        tenMau: item.tenMau,
+                        maHex: item.maMau,
+                        maKichThuocId: Number(item.maKichThuocId),
+                        maKichThuoc: item.maKichThuoc,
+                        tenKichThuoc: item.tenKichThuoc,
+                        maSku: item.maSku,
+                        maVachBarcode: item.maVachBarcode,
+                        giaBan: Number(item.giaBan),
+                        giaGoc: item.giaGoc ? Number(item.giaGoc) : Number(item.giaBan),
+                        soLuong: Number(item.soLuong),
+                        kichHoat: item.kichHoat !== false
+                    }))
+                };
+
+                const res = await fetch('/admin/bien-the/api/them-hang-loat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    alert(data.message || 'Thêm nhanh biến thể thành công!');
+                    danhSachDongMatrix = [];
+                    window.location.href = '/admin/bien-the/hien-thi';
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi lưu biến thể!');
+                    btn.disabled = false;
+                    label.innerText = `Lưu tất cả (${danhSachDongMatrix.length}) biến thể`;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi kết nối máy chủ, vui lòng thử lại!');
+                btn.disabled = false;
+                label.innerText = `Lưu tất cả (${danhSachDongMatrix.length}) biến thể`;
+            }
+        }
+
+        function xemTruocAnhModal(input) {
+            const khung = document.getElementById('khungPreviewModal');
+            const lbl = document.getElementById('labelDemAnh');
+            khung.innerHTML = '';
+            if (input.files && input.files.length > 0) {
+                lbl.innerText = input.files.length + ' ảnh đã chọn';
+                khung.classList.remove('hidden');
+                Array.from(input.files).forEach(f => {
+                    const r = new FileReader();
+                    r.onload = e => {
+                        const d = document.createElement('div');
+                        d.className = 'w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-white';
+                        d.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                        khung.appendChild(d);
+                    };
+                    r.readAsDataURL(f);
+                });
+            } else {
+                lbl.innerText = '0 ảnh';
+                khung.classList.add('hidden');
+            }
+        }
+    </script>
+
+    <script th:if="${thongBaoLoi != null}">
+        window.addEventListener('DOMContentLoaded', function() {
+            moModal('modalThemBienThe');
+        });
+    </script>
+
+</body>
+</html>
+

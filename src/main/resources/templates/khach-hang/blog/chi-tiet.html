@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${blog.tieuDe} + ' | SIMPLAIN BLOG'">Chi tiết bài viết Blog | SIMPLAIN STORE</title>
+    <meta name="description" th:content="${blog.moTaNgan}">
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: subpixel-antialiased;
+        }
+        /* Style nội dung Rich Text bài viết */
+        .blog-content h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+        .blog-content h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .blog-content p {
+            margin-bottom: 1.125rem;
+            line-height: 1.8;
+            color: #334155;
+            font-size: 0.95rem;
+        }
+        .blog-content ul, .blog-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.8;
+            color: #334155;
+        }
+        .blog-content ul { list-style-type: disc; }
+        .blog-content ol { list-style-type: decimal; }
+        .blog-content img {
+            border-radius: 1rem;
+            margin: 1.5rem auto;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900 min-h-screen flex flex-col">
+
+    <!-- Header Storefront Khách hàng -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+        <div class="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-6">
+                <a href="/cua-hang" class="flex items-center space-x-2">
+                    <span class="text-xl sm:text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN STORE<span class="text-blue-600">.</span></span>
+                    <span class="hidden sm:inline-block text-[10px] font-extrabold bg-blue-600 text-white px-2 py-0.5 rounded uppercase tracking-wider shadow-xs shadow-blue-500/20">Blog</span>
+                </a>
+
+                <nav class="hidden md:flex items-center space-x-1 text-xs font-bold uppercase tracking-wider">
+                    <a href="/cua-hang" class="px-3 py-2 rounded-xl text-slate-600 hover:text-[#0f172a] hover:bg-slate-100 transition">
+                        Cửa hàng
+                    </a>
+                    <a href="/blog" class="px-3 py-2 rounded-xl text-blue-600 bg-blue-50 font-black transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-newspaper text-amber-500"></i>
+                        <span>Blog &amp; Tin tức</span>
+                    </a>
+                    <a href="/khach-hang/voucher" class="px-3 py-2 rounded-xl text-slate-600 hover:text-[#0f172a] hover:bg-slate-100 transition">
+                        Khuyến mãi
+                    </a>
+                </nav>
+            </div>
+
+            <div class="flex items-center space-x-2 text-xs font-bold">
+                <a href="/cua-hang" class="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span>Xem sản phẩm</span>
+                </a>
+                <a href="/blog" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Tất cả bài viết</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- BREADCRUMB CHUẨN SEO -->
+    <div class="bg-white border-b border-slate-100 py-3 px-4 sm:px-8 lg:px-12">
+        <div class="max-w-5xl mx-auto flex items-center gap-2 text-xs text-slate-500 font-medium overflow-x-auto whitespace-nowrap">
+            <a href="/cua-hang" class="hover:text-blue-600">Trang chủ</a>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+            <a href="/blog" class="hover:text-blue-600">Blog</a>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+            <a th:href="@{/blog(chuyenMuc=${blog.chuyenMuc})}" th:text="${blog.chuyenMuc}" class="hover:text-blue-600 text-blue-600 font-bold">Chuyên mục</a>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+            <span class="text-slate-800 font-bold truncate max-w-xs" th:text="${blog.tieuDe}">Tiêu đề bài viết</span>
+        </div>
+    </div>
+
+    <!-- NỘI DUNG BÀI VIẾT BLOG -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex-grow w-full space-y-8">
+
+        <!-- HEADER BÀI VIẾT -->
+        <article class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-2xs space-y-6">
+
+            <!-- Chuyên mục & Ngày tháng -->
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-extrabold text-xs border border-blue-200 uppercase tracking-wider"
+                      th:text="${blog.chuyenMuc}">
+                    Thời trang nam
+                </span>
+
+                <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-regular fa-calendar-check text-blue-500"></i>
+                        <span th:text="${blog.ngayXuatBan != null ? #temporals.format(blog.ngayXuatBan, 'dd/MM/yyyy HH:mm') : 'Mới xuất bản'}">27/10/2026</span>
+                    </span>
+                    <span>&bull;</span>
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-feather-pointed text-amber-500"></i>
+                        <span th:text="${blog.tenTacGia != null ? blog.tenTacGia : 'Simplain Editorial'}">Admin</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tiêu đề chính H1 -->
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight"
+                th:text="${blog.tieuDe}">
+                Tiêu đề bài viết Blog SEO Friendly
+            </h1>
+
+            <!-- Thẻ đường dẫn tĩnh Slug SEO -->
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-500">
+                <i class="fa-solid fa-link text-emerald-600 text-xs"></i>
+                <span>URL Tĩnh: /blog/<b class="text-emerald-700" th:text="${blog.duongDanSlug}">duong-dan-slug-seo</b></span>
+            </div>
+
+            <!-- Tóm tắt ngắn (Lead) -->
+            <div th:if="${blog.moTaNgan != null && !blog.moTaNgan.isBlank()}"
+                 class="p-4 sm:p-5 rounded-2xl bg-blue-50/70 border-l-4 border-blue-600 text-slate-700 text-sm sm:text-base font-medium italic leading-relaxed"
+                 th:text="${blog.moTaNgan}">
+                Mô tả ngắn gọn tóm lược nội dung bài viết...
+            </div>
+
+            <!-- Ảnh Bìa Đại Diện -->
+            <div th:if="${blog.anhDaiDienUrl != null && !blog.anhDaiDienUrl.isBlank()}"
+                 class="rounded-2xl overflow-hidden aspect-video bg-slate-100 border border-slate-200 shadow-sm">
+                <img th:src="${blog.anhDaiDienUrl}"
+                     th:alt="${blog.tieuDe}"
+                     class="w-full h-full object-cover">
+            </div>
+
+            <!-- NỘI DUNG BÀI VIẾT CHÍNH (HTML RICH TEXT) -->
+            <div class="blog-content pt-4 border-t border-slate-100" th:utext="${blog.noiDungHtml}">
+                <p>Nội dung bài viết...</p>
+            </div>
+
+            <!-- FOOTER BÀI VIẾT: TAGS & CHIA SẺ -->
+            <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500">Chuyên mục:</span>
+                    <a th:href="@{/blog(chuyenMuc=${blog.chuyenMuc})}"
+                       th:text="${blog.chuyenMuc}"
+                       class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 font-bold text-xs text-slate-700 transition">
+                        Chuyên mục
+                    </a>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500">Chia sẻ:</span>
+                    <button type="button" onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép link bài viết vào bộ nhớ tạm!');"
+                            class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-copy text-blue-600"></i>
+                        <span>Sao chép link</span>
+                    </button>
+                </div>
+            </div>
+
+        </article>
+
+        <!-- BÀI VIẾT LIÊN QUAN -->
+        <section th:if="${danhSachLienQuan != null && !danhSachLienQuan.isEmpty()}" class="space-y-4">
+            <h3 class="text-base font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-blue-600"></i>
+                <span>Bài viết cùng chuyên mục</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <article th:each="lq : ${danhSachLienQuan}"
+                         class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md hover:border-blue-300 transition duration-300 flex flex-col group">
+                    <a th:href="@{'/blog/' + ${lq.duongDanSlug}}" class="block aspect-video overflow-hidden bg-slate-100">
+                        <img th:src="${lq.anhDaiDienUrl != null && !lq.anhDaiDienUrl.isBlank() ? lq.anhDaiDienUrl : '/images/placeholder.jpg'}"
+                             alt="Thumbnail"
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                             onerror="this.onerror=null; this.src='/images/placeholder.jpg';">
+                    </a>
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-2">
+                        <h4 class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition line-clamp-2 leading-snug">
+                            <a th:href="@{'/blog/' + ${lq.duongDanSlug}}" th:text="${lq.tieuDe}">
+                                Tiêu đề bài viết liên quan
+                            </a>
+                        </h4>
+                        <div class="text-[10px] text-slate-400 font-mono"
+                             th:text="${lq.ngayXuatBan != null ? #temporals.format(lq.ngayXuatBan, 'dd/MM/yyyy') : ''}">
+                            27/10/2026
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER CHUNG -->
+    <footer class="bg-white border-t border-slate-200 py-8 px-4 sm:px-8 mt-12 text-slate-500 text-xs">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <span class="font-black text-slate-900">SIMPLAIN STORE</span> &bull; Nền tảng thời trang nam tối giản &bull; &copy; 2026 Simplain.
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/cua-hang" class="hover:text-blue-600 transition">Cửa hàng</a>
+                <a href="/blog" class="hover:text-blue-600 font-bold text-blue-600 transition">Bài viết Blog</a>
+                <a href="/khach-hang/voucher" class="hover:text-blue-600 transition">Khuyến mãi</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

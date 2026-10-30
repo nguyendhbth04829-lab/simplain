@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa Nhân viên | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-black text-white text-xs py-2 text-center font-medium tracking-wide">
+        Hệ thống Quản trị SIMPLAIN STORE &bull; Cập nhật thông tin Nhân sự &amp; Phân quyền Vai trò
+    </div>
+
+    <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('nhan-vien')}"></div>
+
+    <!-- Main Container -->
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-8 bg-[#f8fafc]">
+        <div class="w-full space-y-6">
+
+        <!-- Card Thông tin & Form chỉnh sửa -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10 space-y-6">
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 gap-4">
+                <div class="flex items-center space-x-4">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl font-black shadow-sm">
+                        <span th:text="${#strings.substring(nhanVien.hoTen, 0, 1)}">N</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full inline-block">Hồ sơ Nhân sự (US04)</span>
+                            <span th:if="${nhanVien.trangThai == 1}" class="status-badge-active">
+                                <span class="pulse-dot bg-emerald-500"></span>
+                                Còn hoạt động
+                            </span>
+                            <span th:if="${nhanVien.trangThai != 1}" class="status-badge-inactive">
+                                <span class="pulse-dot bg-neutral-400"></span>
+                                Tạm ngưng
+                            </span>
+                        </div>
+                        <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1" th:text="${nhanVien.hoTen}">Họ và Tên Nhân Viên</h1>
+                        <p class="text-xs text-slate-500">
+                            Mã NV: <span class="font-mono font-bold text-slate-800" th:text="${nhanVien.maNhanVien}">NV001</span> &bull;
+                            Username: <span class="font-mono font-bold text-slate-800" th:text="${nhanVien.tenDangNhap}">superadmin</span> &bull;
+                            ID: <span class="font-mono" th:text="${nhanVien.id}">1</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <a th:href="@{'/admin/nhan-vien/doi-trang-thai/' + ${nhanVien.id}}"
+                       th:class="${nhanVien.trangThai == 1} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                       class="px-4 py-2.5 rounded-xl text-xs font-bold inline-flex items-center transition shadow-2xs">
+                        <i th:class="${nhanVien.trangThai == 1} ? 'fa-solid fa-lock mr-1.5' : 'fa-solid fa-lock-open mr-1.5'"></i>
+                        <span th:text="${nhanVien.trangThai == 1} ? 'Khóa tài khoản này' : 'Kích hoạt lại tài khoản'">Khóa/Mở</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Alert Thông báo Lỗi -->
+            <div th:if="${thongBaoLoi}" class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center">
+                <i class="fa-solid fa-circle-exclamation text-base mr-2 text-red-500 flex-shrink-0"></i>
+                <span th:text="${thongBaoLoi}"></span>
+            </div>
+
+            <!-- Form cập nhật -->
+            <form th:action="@{'/admin/nhan-vien/sua/' + ${nhanVien.id}}" th:object="${nhanVienRequest}" method="post" class="space-y-5">
+                
+                <input type="hidden" th:field="*{id}">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Mã nhân viên -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                            Mã nhân viên <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" th:field="*{maNhanVien}"
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs font-mono uppercase transition">
+                        <p class="text-red-500 text-[11px] mt-1" th:if="${#fields.hasErrors('maNhanVien')}" th:errors="*{maNhanVien}"></p>
+                    </div>
+
+                    <!-- Họ và tên -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                            Họ và tên <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" th:field="*{hoTen}"
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs transition">
+                        <p class="text-red-500 text-[11px] mt-1" th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Tên đăng nhập -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                            Tên đăng nhập CMS <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" th:field="*{tenDangNhap}"
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs font-mono transition">
+                        <p class="text-red-500 text-[11px] mt-1" th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}"></p>
+                    </div>
+
+                    <!-- Gán Vai trò (Tiêu chí 2) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+                            Vai trò phân quyền <span class="text-red-500">*</span>
+                        </label>
+                        <select th:field="*{maVaiTroId}" class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs transition bg-white font-medium">
+                            <option th:each="vt : ${danhSachVaiTro}"
+                                    th:value="${vt.id}"
+                                    th:text="${vt.tenVaiTro + ' (' + vt.maVaiTro + ')'}">
+                            </option>
+                        </select>
+                        <p class="text-red-500 text-[11px] mt-1" th:if="${#fields.hasErrors('maVaiTroId')}" th:errors="*{maVaiTroId}"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Số điện thoại -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">Số điện thoại</label>
+                        <input type="text" th:field="*{soDienThoai}" placeholder="VD: 0901234567"
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs font-mono transition">
+                        <p class="text-red-500 text-[11px] mt-1" th:if="${#fields.hasErrors('soDienThoai')}" th:errors="*{soDienThoai}"></p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">Địa chỉ Email</label>
+                        <input type="email" th:field="*{email}" placeholder="VD: nhanvien@simplain.vn"
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs transition">
+                        <p class="text-red-500 text-[11px] mt-1" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+                    </div>
+                </div>
+
+                <!-- Đổi mật khẩu mới (Nếu có nhu cầu) -->
+                <div class="p-4 rounded-xl bg-neutral-50 border border-neutral-200 space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                        <i class="fa-solid fa-key text-amber-500 mr-1.5"></i>Đặt lại Mật khẩu mới
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="inputMatKhauSua" th:field="*{matKhau}" placeholder="Để trống nếu không muốn đổi mật khẩu"
+                               class="w-full pl-3.5 pr-9 py-2 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs transition bg-white">
+                        <button type="button" onclick="togglePasswordVisibility('inputMatKhauSua', 'eyeSuaIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black">
+                            <i id="eyeSuaIcon" class="fa-regular fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-neutral-400">Nếu để trống, mật khẩu hiện tại của nhân viên sẽ được giữ nguyên không đổi.</p>
+                </div>
+
+                <!-- Trạng thái nhân viên -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2">
+                        Trạng thái tài khoản (Active/Deactive)
+                    </label>
+                    <div class="flex items-center space-x-8 text-xs">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" th:field="*{trangThai}" value="1" class="text-black focus:ring-black w-4 h-4">
+                            <span class="ml-2 font-bold text-green-700 flex items-center">
+                                <i class="fa-solid fa-circle-check text-xs mr-1 text-green-600"></i>Đang làm (Kích hoạt đăng nhập)
+                            </span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" th:field="*{trangThai}" value="0" class="text-black focus:ring-black w-4 h-4">
+                            <span class="ml-2 font-bold text-red-700 flex items-center">
+                                <i class="fa-solid fa-ban text-xs mr-1 text-red-600"></i>Đã nghỉ / Khóa (Chặn đăng nhập)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Nút thao tác -->
+                <div class="flex items-center space-x-3 pt-5 border-t border-slate-100">
+                    <button type="submit" class="flex-1 btn-navy font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Lưu thay đổi</span>
+                    </button>
+                    <a href="/admin/nhan-vien/hien-thi" class="flex-1 text-center btn-outline font-semibold py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Quay lại</span>
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+        </div>
+    </main>
+
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+
+</body>
+</html>

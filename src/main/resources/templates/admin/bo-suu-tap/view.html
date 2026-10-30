@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật &amp; Quản lý Sản phẩm BST | SIMPLAIN CMS</title>
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('bo-suu-tap')}"></div>
+
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-8 space-y-6">
+        <div class="max-w-4xl mx-auto space-y-6">
+
+            <!-- Thông báo Thành công / Lỗi -->
+            <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+                <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                    <span th:text="${thongBaoThanhCong}">Thành công!</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+                <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                    <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                    <span th:text="${thongBaoLoi}">Dữ liệu chưa hợp lệ!</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- =========================================================================
+                 1. CARD THÔNG TIN BỘ SƯU TẬP & BANNER CHIẾN DỊCH
+                 ========================================================================= -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xs border border-slate-200/90 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0">
+                            <i class="fa-solid fa-images"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                    Chiến dịch tiếp thị
+                                </span>
+                                <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-mono" th:text="'ID: #' + ${boSuuTap.id}">ID: #1</span>
+                            </div>
+                            <h2 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight mt-1" th:text="'Cập nhật: ' + ${boSuuTap.tenBoSuuTap}">
+                                Cập nhật Bộ sưu tập
+                            </h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                        <a th:href="@{/bo-suu-tap/{slug}(slug=${boSuuTap.duongDanSlug})}" target="_blank"
+                           class="btn-outline px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[11px] text-blue-600"></i>
+                            <span>Xem trang khách</span>
+                        </a>
+                        <a href="/admin/bo-suu-tap/hien-thi" class="btn-outline px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                            <i class="fa-solid fa-arrow-left mr-1"></i>Quay lại danh sách
+                        </a>
+                    </div>
+                </div>
+
+                <form th:object="${boSuuTap}" action="/admin/bo-suu-tap/update" method="post" enctype="multipart/form-data" class="space-y-4.5" novalidate>
+                    <input type="hidden" th:field="*{id}">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Tên bộ sưu tập -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên bộ sưu tập <span class="text-rose-500 font-bold">*</span></label>
+                            <input type="text" id="tenBoSuuTapInput" th:field="*{tenBoSuuTap}" oninput="tuDongTaoSlugBoSuuTap(this.value)"
+                                   class="w-full rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs p-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <span class="error" th:if="${#fields.hasErrors('tenBoSuuTap')}" th:errors="*{tenBoSuuTap}"></span>
+                        </div>
+
+                        <!-- Slug -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Đường dẫn Slug (URL) <span class="text-rose-500 font-bold">*</span></label>
+                                <button type="button" onclick="taiLaiSlugTheoTen()" class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer">
+                                    <i class="fa-solid fa-arrows-rotate mr-1"></i>Tạo lại từ tên
+                                </button>
+                            </div>
+                            <input type="text" id="duongDanSlugBstInput" th:field="*{duongDanSlug}"
+                                   class="w-full rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono p-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Ảnh Banner -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Hình Banner chiến dịch hiện tại</label>
+                        <input type="hidden" th:field="*{hinhBannerUrl}">
+                        <div class="mt-2 mb-3">
+                            <div th:if="${boSuuTap.hinhBannerUrl != null and boSuuTap.hinhBannerUrl != ''}"
+                                 class="relative h-44 w-full rounded-2xl overflow-hidden border border-slate-200 shadow-2xs group">
+                                <img id="anhBannerHienTai"
+                                     th:src="${boSuuTap.hinhBannerUrl}" alt="Current Banner"
+                                     class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-2">
+                                    <i class="fa-solid fa-eye"></i><span>Banner hiển thị trên trang khách</span>
+                                </div>
+                            </div>
+                            <div th:unless="${boSuuTap.hinhBannerUrl != null and boSuuTap.hinhBannerUrl != ''}"
+                                 class="h-28 w-full rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-400 text-xs">
+                                <i class="fa-solid fa-image text-2xl mb-1 text-slate-300"></i>
+                                <span>Chưa có ảnh banner. Hãy tải ảnh lên từ máy tính bên dưới!</span>
+                            </div>
+                        </div>
+
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Chọn ảnh Banner mới từ máy tính (để trống nếu giữ nguyên)</label>
+                        <input type="file" name="fileBanner" accept="image/*"
+                               onchange="xemTruocAnhCapNhat(this)"
+                               class="w-full text-xs text-slate-700 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-blue-600 cursor-pointer border border-slate-300 p-1.5 rounded-xl bg-slate-50/60 transition">
+                    </div>
+
+                    <!-- Trạng thái -->
+                    <div class="p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">Trạng thái hoạt động</div>
+                            <div class="text-[10px] text-slate-400">Cho phép hiển thị bộ sưu tập trên Storefront để khách xem và mua</div>
+                        </div>
+                        <div class="flex items-center space-x-6 text-xs font-semibold">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" th:field="*{kichHoat}" value="true" class="text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                                <span class="ml-1.5 text-slate-700">Còn hoạt động</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" th:field="*{kichHoat}" value="false" class="text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                                <span class="ml-1.5 text-slate-700">Tạm ngưng</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Thao tác Lưu thông tin BST -->
+                    <div class="pt-4 flex gap-3 border-t border-slate-100">
+                        <button type="submit" class="flex-1 btn-navy font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Lưu thông tin bộ sưu tập</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- =========================================================================
+                 2. SECTION QUẢN LÝ SẢN PHẨM TRONG BỘ SƯU TẬP (ADD & REMOVE PRODUCTS)
+                 ========================================================================= -->
+            <div id="sanPhamSection" class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xs border border-slate-200/90 space-y-4">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold border border-blue-100">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-black uppercase tracking-wider text-slate-900">
+                                    Sản phẩm trong Bộ sưu tập
+                                </h3>
+                                <span class="bg-blue-600 text-white font-black text-xs px-2.5 py-0.5 rounded-full"
+                                      th:text="${#lists.size(danhSachSanPhamTrongBST)}">0</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Các sản phẩm này sẽ được hiển thị khi khách truy cập vào trang Bộ sưu tập</p>
+                        </div>
+                    </div>
+
+                    <!-- Nút mở Modal "+ Thêm sản phẩm vào BST" -->
+                    <button type="button"
+                            onclick="moModal('modalThemSanPhamVaoBST')"
+                            class="btn-navy text-xs font-bold px-4 py-2 rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer transition self-start sm:self-auto">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>+ Thêm sản phẩm vào BST</span>
+                    </button>
+                </div>
+
+                <!-- Bảng danh sách sản phẩm hiện có trong BST -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                <th class="py-3 px-3">Sản phẩm</th>
+                                <th class="py-3 px-3">Danh mục</th>
+                                <th class="py-3 px-3 text-right">Giá cơ bản</th>
+                                <th class="py-3 px-3 text-center">Tồn kho</th>
+                                <th class="py-3 px-3 text-center">Trạng thái</th>
+                                <th class="py-3 px-3 text-right">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            <tr th:each="sp : ${danhSachSanPhamTrongBST}" class="hover:bg-slate-50 transition">
+                                
+                                <!-- Sản phẩm (Hình + Mã + Tên) -->
+                                <td class="py-3 px-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-11 h-11 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
+                                            <img th:src="${sp.anhDaiDienUrl}" th:alt="${sp.tenSanPham}" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="min-w-0 max-w-xs">
+                                            <div class="text-[10px] font-mono text-slate-400 font-semibold" th:text="${sp.maSanPham}">SP-001</div>
+                                            <div class="font-bold text-slate-900 truncate hover:text-blue-600" th:text="${sp.tenSanPham}">Tên sản phẩm</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Danh mục -->
+                                <td class="py-3 px-3 whitespace-nowrap">
+                                    <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold"
+                                          th:text="${sp.tenDanhMuc != null ? sp.tenDanhMuc : 'Chưa phân loại'}">
+                                        Áo Polo
+                                    </span>
+                                </td>
+
+                                <!-- Giá -->
+                                <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap"
+                                    th:text="${#numbers.formatDecimal(sp.giaCoBan, 0, 'POINT', 0, 'COMMA') + ' ₫'}">
+                                    299.000 ₫
+                                </td>
+
+                                <!-- Tồn kho -->
+                                <td class="py-3 px-3 text-center whitespace-nowrap">
+                                    <span th:if="${sp.tongTonKho > 0}" class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px]">
+                                        <span th:text="${sp.tongTonKho}">45</span> SP
+                                    </span>
+                                    <span th:unless="${sp.tongTonKho > 0}" class="text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-bold text-[10px]">
+                                        Hết hàng
+                                    </span>
+                                </td>
+
+                                <!-- Trạng thái -->
+                                <td class="py-3 px-3 text-center whitespace-nowrap">
+                                    <span th:if="${sp.kichHoat}" class="status-badge-active text-[10px]">Đang bán</span>
+                                    <span th:unless="${sp.kichHoat}" class="status-badge-inactive text-[10px]">Tạm ngưng</span>
+                                </td>
+
+                                <!-- Nút Gỡ khỏi BST -->
+                                <td class="py-3 px-3 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-2">
+                                        <a th:href="@{/admin/san-pham/view(id=${sp.id})}" target="_blank"
+                                           class="text-blue-600 hover:text-blue-800 font-bold text-[11px]" title="Xem chi tiết sản phẩm">
+                                            Sửa
+                                        </a>
+                                        <a th:href="@{/admin/bo-suu-tap/xoa-san-pham(boSuuTapId=${boSuuTap.id}, sanPhamId=${sp.id})}"
+                                           onclick="return confirm('Bạn có chắc chắn muốn gỡ sản phẩm này khỏi bộ sưu tập?');"
+                                           class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-[11px] font-bold transition flex items-center gap-1">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                                            <span>Gỡ khỏi BST</span>
+                                        </a>
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(danhSachSanPhamTrongBST)}">
+                                <td colspan="6" class="py-10 text-center text-slate-400">
+                                    <i class="fa-solid fa-shirt text-3xl mb-2 block text-slate-300"></i>
+                                    Chưa có sản phẩm nào trong bộ sưu tập này.<br>
+                                    Bấm nút <strong>"+ Thêm sản phẩm vào BST"</strong> ở trên để bắt đầu thêm sản phẩm cho khách xem và mua!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- =========================================================================
+         3. MODAL POPUP: THÊM SẢN PHẨM VÀO BỘ SƯU TẬP
+         ========================================================================= -->
+    <div id="modalThemSanPhamVaoBST"
+         data-modal
+         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full my-8 overflow-hidden border border-slate-200/90 flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-shirt"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">
+                            Thêm sản phẩm vào Bộ sưu tập
+                        </h3>
+                        <p class="text-[11px] text-slate-500" th:text="'Gán sản phẩm cho: ' + ${boSuuTap.tenBoSuuTap}">Gán sản phẩm</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModal('modalThemSanPhamVaoBST')"
+                        class="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition focus:outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Form Thêm sản phẩm -->
+            <form action="/admin/bo-suu-tap/them-san-pham" method="post" class="flex flex-col flex-1 overflow-hidden">
+                <input type="hidden" name="boSuuTapId" th:value="${boSuuTap.id}">
+
+                <!-- Thanh tìm kiếm & lọc nhanh trong Modal -->
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center gap-3">
+                    <div class="relative flex-1 w-full">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="modalTimKiemSpInput" onkeyup="locDanhSachModalSp()"
+                               placeholder="Tìm theo mã hoặc tên sản phẩm..."
+                               class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-100 text-slate-800 transition">
+                    </div>
+
+                    <div class="w-full sm:w-56">
+                        <select id="modalLocDanhMucSelect" onchange="locDanhSachModalSp()"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-100 text-slate-800 transition">
+                            <option value="">Tất cả danh mục</option>
+                            <option th:each="dm : ${danhSachDanhMuc}" th:value="${dm.id}" th:text="${dm.tenDanhMuc}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Danh sách sản phẩm dạng bảng cuộn được -->
+                <div class="flex-1 overflow-y-auto p-4">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-100/70 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                <th class="py-2.5 px-3 w-10 text-center">
+                                    <input type="checkbox" id="checkAllModalSp" onchange="toggleSelectAllModal(this)"
+                                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </th>
+                                <th class="py-2.5 px-3">Sản phẩm</th>
+                                <th class="py-2.5 px-3">Danh mục</th>
+                                <th class="py-2.5 px-3">BST hiện tại</th>
+                                <th class="py-2.5 px-3 text-right">Giá cơ bản</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalSpTbody" class="divide-y divide-slate-100 text-slate-700">
+                            <tr th:each="sp : ${danhSachSanPhamKhaDung}"
+                                class="modal-sp-row hover:bg-blue-50/40 transition cursor-pointer"
+                                th:data-ten="${#strings.toLowerCase(sp.tenSanPham)}"
+                                th:data-ma="${#strings.toLowerCase(sp.maSanPham)}"
+                                th:data-danhmuc="${sp.maDanhMucId}"
+                                onclick="toggleDongSpCheckbox(event, this)">
+                                
+                                <td class="py-2.5 px-3 text-center">
+                                    <input type="checkbox" name="sanPhamIds" th:value="${sp.id}"
+                                           class="modal-sp-checkbox rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                           onchange="capNhatSoLuongChonModal()">
+                                </td>
+
+                                <td class="py-2.5 px-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-9 h-9 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
+                                            <img th:src="${sp.anhDaiDienUrl}" th:alt="${sp.tenSanPham}" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="min-w-0 max-w-xs">
+                                            <div class="text-[10px] font-mono text-slate-400 font-semibold" th:text="${sp.maSanPham}">SP-001</div>
+                                            <div class="font-bold text-slate-900 truncate" th:text="${sp.tenSanPham}">Áo Polo</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="py-2.5 px-3 whitespace-nowrap">
+                                    <span class="text-slate-600 text-[11px]" th:text="${sp.tenDanhMuc}">Danh mục</span>
+                                </td>
+
+                                <td class="py-2.5 px-3 whitespace-nowrap">
+                                    <span th:if="${sp.tenBoSuuTap != null}"
+                                          class="text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-semibold"
+                                          th:text="${sp.tenBoSuuTap}">
+                                        BST Cũ
+                                    </span>
+                                    <span th:unless="${sp.tenBoSuuTap != null}" class="text-slate-400 text-[10px] italic">
+                                        Chưa gán BST
+                                    </span>
+                                </td>
+
+                                <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap"
+                                    th:text="${#numbers.formatDecimal(sp.giaCoBan, 0, 'POINT', 0, 'COMMA') + ' ₫'}">
+                                    299.000 ₫
+                                </td>
+
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(danhSachSanPhamKhaDung)}">
+                                <td colspan="5" class="py-8 text-center text-slate-400">
+                                    Không có sản phẩm nào khả dụng để thêm.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                    <div class="text-xs font-bold text-slate-700">
+                        Đã chọn: <span id="soSpDaChonText" class="text-blue-600 font-black text-sm">0</span> sản phẩm
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="dongModal('modalThemSanPhamVaoBST')"
+                                class="btn-outline font-semibold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                            Hủy bỏ
+                        </button>
+                        <button type="submit" id="btnSubmitThemSp" disabled
+                                class="btn-navy font-bold text-xs px-6 py-2.5 rounded-xl shadow-xs flex items-center gap-1.5 opacity-50 cursor-not-allowed transition">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Xác nhận thêm vào BST</span>
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT HỖ TRỢ XEM TRƯỚC BANNER, AUTO SLUG & LỌC MODAL SP -->
+    <script>
+        function xemTruocAnhCapNhat(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let img = document.getElementById('anhBannerHienTai');
+                    if (img) {
+                        img.src = e.target.result;
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function tuDongTaoSlugBoSuuTap(str) {
+            const slugInput = document.getElementById('duongDanSlugBstInput');
+            if (!slugInput || slugInput.dataset.daSuaThuCong === 'true') return;
+            slugInput.value = taoSlug(str);
+        }
+
+        function taiLaiSlugTheoTen() {
+            const ten = document.getElementById('tenBoSuuTapInput')?.value || '';
+            const slugInput = document.getElementById('duongDanSlugBstInput');
+            if (slugInput) {
+                slugInput.dataset.daSuaThuCong = 'false';
+                slugInput.value = taoSlug(ten);
+            }
+        }
+
+        function taoSlug(str) {
+            return str.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+        }
+
+        document.getElementById('duongDanSlugBstInput')?.addEventListener('input', function() {
+            this.dataset.daSuaThuCong = 'true';
+        });
+
+        // Xử lý Modal chọn Sản phẩm vào BST
+        function toggleSelectAllModal(master) {
+            const visibleCheckboxes = document.querySelectorAll('.modal-sp-row:not(.hidden) .modal-sp-checkbox');
+            visibleCheckboxes.forEach(cb => cb.checked = master.checked);
+            capNhatSoLuongChonModal();
+        }
+
+        function toggleDongSpCheckbox(event, row) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'LABEL') {
+                return;
+            }
+            const cb = row.querySelector('.modal-sp-checkbox');
+            if (cb) {
+                cb.checked = !cb.checked;
+                capNhatSoLuongChonModal();
+            }
+        }
+
+        function capNhatSoLuongChonModal() {
+            const count = document.querySelectorAll('.modal-sp-checkbox:checked').length;
+            const text = document.getElementById('soSpDaChonText');
+            const btn = document.getElementById('btnSubmitThemSp');
+            if (text) text.innerText = count;
+            if (btn) {
+                if (count > 0) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function locDanhSachModalSp() {
+            const tk = (document.getElementById('modalTimKiemSpInput')?.value || '').trim().toLowerCase();
+            const dmId = document.getElementById('modalLocDanhMucSelect')?.value || '';
+            const rows = document.querySelectorAll('.modal-sp-row');
+
+            rows.forEach(row => {
+                const ten = row.getAttribute('data-ten') || '';
+                const ma = row.getAttribute('data-ma') || '';
+                const danhmuc = row.getAttribute('data-danhmuc') || '';
+
+                const matchText = !tk || ten.includes(tk) || ma.includes(tk);
+                const matchDm = !dmId || danhmuc === dmId;
+
+                if (matchText && matchDm) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

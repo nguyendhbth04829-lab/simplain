@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đơn hàng của tôi (US23) | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+        .tab-item.active {
+            color: #1e3a8a;
+            border-bottom: 3px solid #2563eb;
+            font-weight: 800;
+        }
+        .tab-item:not(.active) {
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-item:not(.active):hover {
+            color: #0f172a;
+            border-bottom-color: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-[#0a192f] text-slate-200 text-xs py-2 text-center font-medium tracking-wide border-b border-slate-800 px-4">
+        Simplain Hub: Theo dõi hành trình đơn hàng trực tiếp &bull; Hotline CSKH 24/7: 1900.272737
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+        <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="/cua-hang" class="flex items-center space-x-2">
+                    <span class="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN<span class="text-blue-600">.</span></span>
+                </a>
+                <span class="hidden sm:inline-block text-slate-300">|</span>
+                <span class="text-xs font-extrabold uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-box-archive text-blue-600"></i> Đơn Hàng Của Tôi
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs font-semibold">
+                <a href="/khach-hang/doi-tra" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-arrows-rotate text-blue-600"></i> Đổi/Trả (US24)
+                </a>
+                <a href="/cua-hang" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-store text-blue-600"></i> Cửa hàng
+                </a>
+                <a href="/khach-hang/thong-tin" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-user text-slate-600"></i> Tài khoản
+                </a>
+                <a href="/gio-hang" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-cart-shopping text-slate-600"></i> Giỏ hàng
+                </a>
+                <a href="/khach-hang/dang-xuat" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 px-3 py-1.5 rounded-xl transition flex items-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+        <!-- Breadcrumb & User Info Summary Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <nav class="flex items-center gap-2 text-xs text-slate-500 mb-1">
+                    <a href="/cua-hang" class="hover:text-blue-600">Trang chủ</a>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                    <a href="/khach-hang/thong-tin" class="hover:text-blue-600">Tài khoản</a>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                    <span class="font-bold text-slate-900">Lịch sử đơn hàng (US23)</span>
+                </nav>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <span>Đơn Hàng Của Tôi</span>
+                    <span class="text-xs font-mono font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full"
+                          th:text="${totalElements + ' đơn hàng'}">0 đơn hàng</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="bg-white border border-slate-200 rounded-2xl px-3.5 py-2 flex items-center gap-2.5 shadow-2xs">
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div class="text-left text-xs">
+                        <div class="font-bold text-slate-900" th:text="${thongTin.hoTen}">Khách hàng</div>
+                        <div class="text-[11px] text-slate-500 font-mono" th:text="${thongTin.soDienThoai}">0912345678</div>
+                    </div>
+                </div>
+
+                <a href="/khach-hang/hoi-vien" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl px-3.5 py-2 flex items-center gap-2 shadow-2xs hover:from-amber-600 hover:to-amber-700 transition" title="Điểm thưởng tích lũy">
+                    <i class="fa-solid fa-coins text-amber-200"></i>
+                    <div class="text-left text-xs">
+                        <div class="text-[10px] uppercase font-extrabold text-amber-100">Điểm thưởng</div>
+                        <div class="font-black font-mono" th:text="${hoiVien != null ? #numbers.formatDecimal(hoiVien.soDuCoolcash, 0, 'COMMA', 0, 'POINT') + ' đ' : '0 đ'}">0 đ</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Alert Banners -->
+        <div th:if="${thongBaoThanhCong}" class="mb-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-2xs">
+            <div class="flex items-center space-x-3 text-xs">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span class="font-bold" th:text="${thongBaoThanhCong}">Thao tác thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div th:if="${loiTruyCap}" class="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-2xs">
+            <div class="flex items-center space-x-3 text-xs">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span class="font-bold" th:text="${loiTruyCap}">Không tìm thấy đơn hàng!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Shopee-style Horizontal Status Filter Tabs -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs mb-6 overflow-hidden">
+            <div class="flex items-center border-b border-slate-200 overflow-x-auto text-xs font-semibold scrollbar-none">
+                <a th:href="@{/khach-hang/don-hang(trangThai='TAT_CA', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == null or trangThaiHienTai == 'TAT_CA'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Tất cả</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['TAT_CA'] : 0}">0</span>
+                </a>
+                <a th:href="@{/khach-hang/don-hang(trangThai='CHO_XAC_NHAN', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == 'CHO_XAC_NHAN'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-regular fa-clock text-amber-500"></i>
+                    <span>Chờ xác nhận</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['CHO_XAC_NHAN'] : 0}">0</span>
+                </a>
+                <a th:href="@{/khach-hang/don-hang(trangThai='DANG_XU_LY', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == 'DANG_XU_LY'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-box-open text-blue-500"></i>
+                    <span>Đang chuẩn bị</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['DANG_XU_LY'] : 0}">0</span>
+                </a>
+                <a th:href="@{/khach-hang/don-hang(trangThai='DANG_GIAO', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == 'DANG_GIAO'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-truck-fast text-purple-500"></i>
+                    <span>Đang giao hàng</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['DANG_GIAO'] : 0}">0</span>
+                </a>
+                <a th:href="@{/khach-hang/don-hang(trangThai='HOAN_THANH', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == 'HOAN_THANH'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                    <span>Hoàn thành</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['HOAN_THANH'] : 0}">0</span>
+                </a>
+                <a th:href="@{/khach-hang/don-hang(trangThai='DA_HUY', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == 'DA_HUY'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-circle-xmark text-rose-500"></i>
+                    <span>Đã hủy</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['DA_HUY'] : 0}">0</span>
+                </a>
+                <a th:href="@{/khach-hang/don-hang(trangThai='DANG_DOI_TRA', q=${tuKhoaHienTai})}"
+                   th:classappend="${trangThaiHienTai == 'DANG_DOI_TRA'} ? ' active' : ''"
+                   class="tab-item px-5 py-3.5 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-arrows-rotate text-amber-600"></i>
+                    <span>Đổi / Trả</span>
+                    <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300 font-mono"
+                          th:text="${demTrangThai != null ? demTrangThai['DANG_DOI_TRA'] : 0}">0</span>
+                </a>
+            </div>
+
+            <!-- Search Bar in Order List -->
+            <form method="get" action="/khach-hang/don-hang" class="p-3.5 bg-slate-50/70 flex flex-col sm:flex-row items-center gap-2.5">
+                <input type="hidden" name="trangThai" th:value="${trangThaiHienTai}" />
+                <div class="relative flex-1 w-full">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" name="q" th:value="${tuKhoaHienTai}"
+                           placeholder="Tìm kiếm theo Mã đơn hàng, Tên người nhận, Số điện thoại hoặc Mã vận đơn..."
+                           class="w-full pl-9 pr-4 py-2 bg-white rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs font-medium" />
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="submit"
+                            class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-filter text-[11px]"></i> Tìm kiếm
+                    </button>
+                    <a th:if="${tuKhoaHienTai != null and !tuKhoaHienTai.empty}"
+                       th:href="@{/khach-hang/don-hang(trangThai=${trangThaiHienTai})}"
+                       class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1" title="Xóa tìm kiếm">
+                        <i class="fa-solid fa-xmark"></i> Xóa lọc
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Order Cards List (Shopee-like Feed) -->
+        <div th:if="${danhSachDonHang != null and !danhSachDonHang.empty}" class="space-y-4">
+
+            <div th:each="dhDto : ${danhSachDonHang.content}"
+                 class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-md transition overflow-hidden">
+
+                <!-- Card Header: Mã đơn, Thời gian, Badge Loại đơn & Trạng thái vận đơn -->
+                <div class="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <a th:href="@{'/khach-hang/don-hang/' + ${dhDto.donHang.maDonHang}}"
+                           class="font-black text-slate-900 hover:text-blue-600 font-mono text-sm tracking-tight flex items-center gap-1 group">
+                            <span th:text="${'#' + dhDto.donHang.maDonHang}">#DH123456</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 group-hover:text-blue-600"></i>
+                        </a>
+
+                        <span class="text-slate-300">•</span>
+                        <span class="text-slate-500 font-medium flex items-center gap-1">
+                            <i class="fa-regular fa-calendar-days text-[11px]"></i>
+                            <span th:text="${#temporals.format(dhDto.donHang.ngayTao, 'dd/MM/yyyy HH:mm')}">26/10/2026 15:30</span>
+                        </span>
+
+                        <span class="text-slate-300">•</span>
+                        <span th:if="${dhDto.donHang.loaiDonHang == 'TAI_QUAY'}"
+                              class="px-2 py-0.5 rounded-md font-bold text-[10px] uppercase bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                            <i class="fa-solid fa-shop text-[9px]"></i> Mua tại quầy
+                        </span>
+                        <span th:unless="${dhDto.donHang.loaiDonHang == 'TAI_QUAY'}"
+                              class="px-2 py-0.5 rounded-md font-bold text-[10px] uppercase bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                            <i class="fa-solid fa-truck text-[9px]"></i> Giao hàng Online
+                        </span>
+                    </div>
+
+                    <!-- Right Header: Mã Vận Đơn & Trạng Thái -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <!-- Tracking Code Badge (Mã Vận Đơn) -->
+                        <div th:if="${dhDto.donHang.maVanDon != null and !dhDto.donHang.maVanDon.empty}"
+                             class="px-2.5 py-1 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-mono font-bold text-[11px] flex items-center gap-1.5 shadow-2xs">
+                            <i class="fa-solid fa-barcode text-xs"></i>
+                            <span class="text-[10px] uppercase text-purple-500 font-sans">Vận đơn:</span>
+                            <span th:text="${dhDto.donHang.maVanDon}">SMPL-VD123456</span>
+                        </div>
+
+                        <!-- Status Badge -->
+                        <span th:if="${dhDto.donHang.trangThaiDonHang != null}"
+                              th:style="${dhDto.donHang.trangThaiDonHang.maMauHex != null ? 'background-color: ' + dhDto.donHang.trangThaiDonHang.maMauHex + '15; color: ' + dhDto.donHang.trangThaiDonHang.maMauHex + '; border-color: ' + dhDto.donHang.trangThaiDonHang.maMauHex + '30' : ''}"
+                              class="px-3 py-1 rounded-full font-extrabold text-xs border uppercase tracking-wider flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full" th:style="${'background-color: ' + (dhDto.donHang.trangThaiDonHang.maMauHex != null ? dhDto.donHang.trangThaiDonHang.maMauHex : '#3b82f6')}"></span>
+                            <span th:text="${dhDto.donHang.trangThaiDonHang.tenTrangThai}">Chờ xác nhận</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Card Body: Danh Sách Mặt Hàng (Products Preview) -->
+                <div class="divide-y divide-slate-100">
+                    <div th:each="it : ${dhDto.danhSachItem}" class="p-4 sm:p-5 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <!-- Thumbnail Sản Phẩm -->
+                            <div class="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center">
+                                <img th:if="${it.hinhAnhUrl != null and !it.hinhAnhUrl.empty}"
+                                     th:src="${it.hinhAnhUrl}" alt="Product"
+                                     class="w-full h-full object-cover" />
+                                <i th:unless="${it.hinhAnhUrl != null and !it.hinhAnhUrl.empty}"
+                                   class="fa-solid fa-shirt text-slate-300 text-2xl"></i>
+                            </div>
+
+                            <div class="space-y-1">
+                                <h3 class="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1" th:text="${it.tenSanPham}">
+                                    Áo Thun Nam Simplain Cao Cấp
+                                </h3>
+                                <div class="flex items-center gap-2 flex-wrap text-[11px] text-slate-500">
+                                    <span th:if="${it.tenMau != null and !it.tenMau.empty}" class="bg-slate-100 px-2 py-0.5 rounded font-medium text-slate-700" th:text="${'Màu: ' + it.tenMau}">Đen</span>
+                                    <span th:if="${it.tenKichThuoc != null and !it.tenKichThuoc.empty}" class="bg-slate-100 px-2 py-0.5 rounded font-medium text-slate-700" th:text="${'Size: ' + it.tenKichThuoc}">L</span>
+                                    <span class="font-mono text-slate-400" th:text="${'SKU: ' + it.maSku}">SKU-123</span>
+                                </div>
+                                <div class="text-[11px] text-slate-600 font-medium">
+                                    Số lượng: <strong class="text-slate-900 font-bold" th:text="${'x' + it.soLuong}">x1</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Đơn giá & Thành tiền item -->
+                        <div class="text-right flex-shrink-0">
+                            <div class="font-black text-slate-900 text-xs sm:text-sm font-mono"
+                                 th:text="${#numbers.formatDecimal(it.thanhTien, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                250.000 đ
+                            </div>
+                            <div class="text-[10px] text-slate-400 font-mono"
+                                 th:if="${it.soLuong > 1}"
+                                 th:text="${'(' + #numbers.formatDecimal(it.donGia, 0, 'COMMA', 0, 'POINT') + ' đ/cái)'}">
+                                (250.000 đ/cái)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Footer: Thanh Toán & Nút Thao Tác (Actions) -->
+                <div class="px-5 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="text-xs text-slate-500 space-y-0.5">
+                        <div class="flex items-center gap-1.5 text-slate-700">
+                            <i class="fa-solid fa-credit-card text-blue-600"></i>
+                            <span>Phương thức: </span>
+                            <strong class="font-bold text-slate-900"
+                                    th:text="${dhDto.donHang.phuongThucThanhToan != null ? dhDto.donHang.phuongThucThanhToan.tenPhuongThuc : 'Thanh toán trực tiếp'}">Tiền mặt</strong>
+                        </div>
+                        <div th:if="${dhDto.donHang.tienCoolcashDung != null and dhDto.donHang.tienCoolcashDung > 0}"
+                             class="text-amber-600 font-bold flex items-center gap-1 text-[11px]">
+                            <i class="fa-solid fa-coins"></i>
+                            <span th:text="${'Đã dùng ' + #numbers.formatDecimal(dhDto.donHang.tienCoolcashDung, 0, 'COMMA', 0, 'POINT') + ' điểm'}">Đã dùng 20.000 điểm</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end gap-4">
+                        <div class="text-right">
+                            <span class="text-[11px] text-slate-500 font-medium block">Tổng thanh toán:</span>
+                            <span class="text-base sm:text-lg font-black text-blue-900 font-mono"
+                                  th:text="${#numbers.formatDecimal(dhDto.donHang.tongThanhToan, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                250.000 đ
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <!-- Nút Xem chi tiết -->
+                            <a th:href="@{'/khach-hang/don-hang/' + ${dhDto.donHang.maDonHang}}"
+                               class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-receipt"></i>
+                                <span>Chi tiết</span>
+                            </a>
+
+                            <!-- Nút Yêu cầu Đổi/Trả (Nếu đơn đã HOAN_THANH - US24) -->
+                            <a th:if="${dhDto.donHang.trangThaiDonHang != null && (dhDto.donHang.trangThaiDonHang.maTrangThai == 'HOAN_THANH' || dhDto.donHang.trangThaiDonHang.id == 4)}"
+                               th:href="@{'/khach-hang/don-hang/' + ${dhDto.donHang.maDonHang} + '/doi-tra'}"
+                               class="px-3.5 py-2 rounded-xl border border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-bold text-xs uppercase tracking-wider transition flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                                <span>Đổi/Trả</span>
+                            </a>
+
+                            <!-- Nút Hủy đơn (chỉ khi Chờ xác nhận) -->
+                            <a th:if="${dhDto.coTheHuy}"
+                               th:href="@{'/khach-hang/don-hang/' + ${dhDto.donHang.maDonHang} + '#modalHuyDon'}"
+                               class="px-3 py-2 rounded-xl border border-rose-300 hover:bg-rose-50 text-rose-700 font-bold text-xs uppercase transition flex items-center gap-1">
+                                <i class="fa-solid fa-ban"></i>
+                                <span>Hủy đơn</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Phân Trang (Pagination) -->
+            <div th:if="${totalPages > 1}" class="pt-6 flex items-center justify-center gap-2">
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/khach-hang/don-hang(trangThai=${trangThaiHienTai}, q=${tuKhoaHienTai}, page=${currentPage - 1})}"
+                   class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-chevron-left"></i> Trước
+                </a>
+
+                <span class="px-4 py-2 rounded-xl bg-blue-50 text-blue-700 font-black text-xs font-mono">
+                    Trang <span th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages}">5</span>
+                </span>
+
+                <a th:if="${currentPage + 1 < totalPages}"
+                   th:href="@{/khach-hang/don-hang(trangThai=${trangThaiHienTai}, q=${tuKhoaHienTai}, page=${currentPage + 1})}"
+                   class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition">
+                    Sau <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Empty State (Khi chưa có đơn hàng nào) -->
+        <div th:if="${danhSachDonHang == null or danhSachDonHang.empty}"
+             class="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-2xs max-w-lg mx-auto my-8">
+            <div class="w-20 h-20 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 mb-1">Chưa tìm thấy đơn hàng nào!</h3>
+            <p class="text-xs text-slate-500 mb-6 max-w-xs mx-auto">
+                Bạn chưa có đơn hàng nào trong danh mục này hoặc không khớp với từ khóa tìm kiếm.
+            </p>
+            <div class="flex items-center justify-center gap-3">
+                <a href="/cua-hang" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-bag-shopping"></i> Khám phá mua sắm ngay
+                </a>
+                <a th:if="${tuKhoaHienTai != null and !tuKhoaHienTai.empty}"
+                   th:href="@{/khach-hang/don-hang(trangThai='TAT_CA')}"
+                   class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs uppercase transition">
+                    Xem tất cả đơn
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-slate-200 py-6 text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+            <span>&copy; 2026 SIMPLAIN STORE &bull; Nền tảng thời trang nam tối giản.</span>
+        </div>
+    </footer>
+
+</body>
+</html>

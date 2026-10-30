@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo hệ thống | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header Navy & White -->
+    <header class="bg-[#0b192c] text-white border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/cua-hang" class="flex items-center space-x-2">
+                <span class="text-xl font-black tracking-wider uppercase text-white">SIMPLAIN STORE<span class="text-blue-500">.</span></span>
+            </a>
+            <div class="flex items-center space-x-4 text-xs font-semibold">
+                <a href="/cua-hang" class="text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-store text-blue-400"></i>
+                    <span>Cửa hàng</span>
+                </a>
+                <a href="/admin/dashboard" class="text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-gauge text-blue-400"></i>
+                    <span>Quản trị CMS</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Card Error Container -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6 my-8">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-8 sm:p-10 text-center space-y-6">
+            
+            <!-- Icon Trạng thái -->
+            <div class="w-20 h-20 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center mx-auto text-3xl shadow-xs">
+                <i th:if="${status == 404}" class="fa-solid fa-compass"></i>
+                <i th:if="${status != 404}" class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+            </div>
+
+            <!-- Tiêu đề & Mã lỗi -->
+            <div class="space-y-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                    <span class="w-2 h-2 rounded-full" th:classappend="${status == 404 ? 'bg-blue-500' : 'bg-amber-500'}"></span>
+                    <span>Mã lỗi HTTP: <strong th:text="${status != null ? status : '500'}">500</strong></span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
+                    <span th:if="${status == 404}">Trang yêu cầu không tồn tại</span>
+                    <span th:if="${status != 404}">Hệ thống đang xử lý yêu cầu</span>
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto"
+                   th:text="${message != null and !message.empty ? message : 'Yêu cầu của bạn tạm thời gặp sự cố hoặc trang bạn đang tìm kiếm đã được chuyển đổi. Hãy thử quay lại trang trước hoặc vào trang chủ cửa hàng.'}">
+                    Yêu cầu của bạn tạm thời gặp sự cố hoặc trang bạn đang tìm kiếm đã được chuyển đổi.
+                </p>
+            </div>
+
+            <!-- Chi tiết kỹ thuật (ẩn bớt nếu quá dài) -->
+            <div th:if="${error != null or path != null}" class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-left text-xs font-mono text-slate-600 space-y-1">
+                <div th:if="${path != null}">
+                    <span class="text-slate-400">Đường dẫn:</span> <span class="font-bold text-[#0f172a]" th:text="${path}">/cua-hang</span>
+                </div>
+                <div th:if="${error != null}">
+                    <span class="text-slate-400">Thông báo:</span> <span class="text-slate-700" th:text="${error}">Internal Server Error</span>
+                </div>
+            </div>
+
+            <!-- Các nút hành động chính -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <a href="/cua-hang"
+                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition shadow-sm shadow-blue-500/20">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span>Về Cửa hàng Simplain</span>
+                </a>
+                <a href="/admin/dashboard"
+                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#0b192c] hover:bg-[#0f172a] text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl transition">
+                    <i class="fa-solid fa-gauge"></i>
+                    <span>Trang Quản trị CMS</span>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer Navy -->
+    <footer class="bg-[#0b192c] text-slate-400 border-t border-slate-800 py-6 text-xs text-center">
+        <div class="max-w-6xl mx-auto px-4">
+            <span class="text-white font-black uppercase tracking-wider">SIMPLAIN STORE<span class="text-blue-500">.</span></span>
+            <span class="ml-2">&copy; 2026 Hệ thống Bán lẻ &amp; Quản trị Thời trang Nam.</span>
+        </div>
+    </footer>
+
+</body>
+</html>

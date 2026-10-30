@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Banner Quảng Cáo (US30) | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('banner')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. TABS ĐIỀU HƯỚNG MODULE NỘI DUNG (US30) -->
+        <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+            <a href="/admin/noi-dung/blog"
+               class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition flex items-center gap-2">
+                <i class="fa-solid fa-newspaper"></i>
+                <span>1. Bài viết Blog (SEO friendly)</span>
+            </a>
+            <a href="/admin/noi-dung/banner"
+               class="px-4 py-2 text-sm font-black text-blue-600 border-b-2 border-blue-600 flex items-center gap-2">
+                <i class="fa-solid fa-images"></i>
+                <span>2. Banner Quảng cáo Web</span>
+            </a>
+        </div>
+
+        <!-- 2. PAGE HEADER & NÚT TẠO MỚI (US30) -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-panorama"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Quản Lý Banner Quảng Cáo
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Thiết lập hình ảnh banner, đường dẫn liên kết đích tại các vị trí hiển thị chiến lược trên Web (US30 - Mod 6).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/noi-dung/banner/tao-moi"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-600/20 transition transform active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tạo Banner mới</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+            <form th:action="@{/admin/noi-dung/banner}" method="get" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <!-- Tìm kiếm từ khóa -->
+                <div class="sm:col-span-4 space-y-1">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Từ khóa tìm kiếm</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                               placeholder="Tìm theo tiêu đề banner..."
+                               class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-medium">
+                    </div>
+                </div>
+
+                <!-- Lọc vị trí hiển thị -->
+                <div class="sm:col-span-3 space-y-1">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Vị trí hiển thị</label>
+                    <select name="viTri"
+                            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-medium bg-white">
+                        <option value="TAT_CA" th:selected="${viTriHienTai == null || viTriHienTai == 'TAT_CA'}">-- Tất cả vị trí --</option>
+                        <option value="HERO_SLIDER" th:selected="${viTriHienTai == 'HERO_SLIDER'}">Slide chính Trang chủ (Hero)</option>
+                        <option value="HOME_MIDDLE" th:selected="${viTriHienTai == 'HOME_MIDDLE'}">Banner giữa Trang chủ</option>
+                        <option value="STORE_TOP" th:selected="${viTriHienTai == 'STORE_TOP'}">Banner Cửa hàng / Danh mục</option>
+                        <option value="POPUP" th:selected="${viTriHienTai == 'POPUP'}">Popup Khuyến mãi</option>
+                        <option value="FOOTER" th:selected="${viTriHienTai == 'FOOTER'}">Banner Chân trang (Footer)</option>
+                    </select>
+                </div>
+
+                <!-- Lọc trạng thái kích hoạt -->
+                <div class="sm:col-span-3 space-y-1">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Trạng thái</label>
+                    <select name="kichHoat"
+                            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-medium bg-white">
+                        <option value="" th:selected="${kichHoatHienTai == null}">-- Tất cả trạng thái --</option>
+                        <option value="true" th:selected="${kichHoatHienTai != null && kichHoatHienTai == true}">Đang hiển thị (Bật)</option>
+                        <option value="false" th:selected="${kichHoatHienTai != null && kichHoatHienTai == false}">Đã tắt (Tạm dừng)</option>
+                    </select>
+                </div>
+
+                <!-- Nút bấm Lọc & Reset -->
+                <div class="sm:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                            class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-filter text-xs"></i>
+                        <span>Lọc</span>
+                    </button>
+                    <a th:href="@{/admin/noi-dung/banner}"
+                       class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-xl transition flex items-center justify-center"
+                       title="Đặt lại bộ lọc">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. BẢNG DANH SÁCH BANNER QUẢNG CÁO -->
+        <div class="rounded-2xl bg-white border border-slate-200 shadow-2xs overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700">
+                    Danh sách Banner Quảng Cáo (<span th:text="${trangBanner.totalElements}">0</span> banner)
+                </span>
+                <span class="text-[11px] font-semibold text-slate-400">
+                    Trang <span th:text="${currentPage + 1}">1</span> / <span th:text="${trangBanner.totalPages == 0 ? 1 : trangBanner.totalPages}">1</span>
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                            <th class="py-3 px-4 w-12 text-center">ID</th>
+                            <th class="py-3 px-4 w-40 text-center">Hình ảnh Banner</th>
+                            <th class="py-3 px-4 min-w-[220px]">Tiêu đề &amp; Liên kết đích</th>
+                            <th class="py-3 px-4 w-48">Vị trí hiển thị</th>
+                            <th class="py-3 px-4 w-32 text-center">Trạng thái</th>
+                            <th class="py-3 px-4 w-28 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium">
+                        <tr th:if="${trangBanner.empty}">
+                            <td colspan="6" class="text-center py-12 text-slate-400">
+                                <i class="fa-solid fa-images text-3xl mb-2 text-slate-300 block"></i>
+                                Chưa có banner quảng cáo nào trong hệ thống.
+                            </td>
+                        </tr>
+
+                        <tr th:each="banner : ${trangBanner.content}" class="hover:bg-slate-50/80 transition group">
+                            <!-- ID -->
+                            <td class="py-3 px-4 text-center font-bold text-slate-400" th:text="${banner.id}">1</td>
+
+                            <!-- Hình ảnh Banner -->
+                            <td class="py-3 px-4 text-center">
+                                <div class="w-32 h-14 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden mx-auto flex items-center justify-center">
+                                    <img th:src="${banner.hinhAnhUrl}"
+                                         alt="Banner"
+                                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                         onerror="this.onerror=null; this.src='/images/placeholder.jpg';">
+                                </div>
+                            </td>
+
+                            <!-- Tiêu đề & Liên kết đích -->
+                            <td class="py-3 px-4 space-y-1">
+                                <div class="font-extrabold text-slate-900 group-hover:text-blue-600 transition text-sm leading-snug line-clamp-1"
+                                     th:text="${banner.tieuDe}">
+                                    Khuyến Mãi Siêu Tiệc Cuối Năm 2026
+                                </div>
+                                <div th:if="${banner.duongDanDich != null && !banner.duongDanDich.isBlank()}"
+                                     class="flex items-center gap-1.5">
+                                    <a th:href="${banner.duongDanDich}" target="_blank"
+                                       class="inline-flex items-center gap-1 text-[11px] font-mono text-blue-600 hover:text-blue-800 underline truncate max-w-xs"
+                                       title="Xem trang đích liên kết">
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                        <span th:text="${banner.duongDanDich}">/cua-hang?khuyen-mai=true</span>
+                                    </a>
+                                </div>
+                                <div th:unless="${banner.duongDanDich != null && !banner.duongDanDich.isBlank()}"
+                                     class="text-[10px] text-slate-400 italic">
+                                    Không có link liên kết đích
+                                </div>
+                            </td>
+
+                            <!-- Vị trí hiển thị (Badge phân loại) -->
+                            <td class="py-3 px-4">
+                                <span th:if="${banner.viTriHienThi == 'HERO_SLIDER'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[11px] border border-indigo-200">
+                                    <i class="fa-solid fa-film text-[10px]"></i>
+                                    Slide Hero Trang chủ
+                                </span>
+                                <span th:if="${banner.viTriHienThi == 'HOME_MIDDLE'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold text-[11px] border border-sky-200">
+                                    <i class="fa-solid fa-table-cells-large text-[10px]"></i>
+                                    Banner giữa Trang chủ
+                                </span>
+                                <span th:if="${banner.viTriHienThi == 'STORE_TOP'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-bold text-[11px] border border-amber-200">
+                                    <i class="fa-solid fa-store text-[10px]"></i>
+                                    Banner Cửa hàng
+                                </span>
+                                <span th:if="${banner.viTriHienThi == 'POPUP'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 font-bold text-[11px] border border-purple-200">
+                                    <i class="fa-solid fa-window-restore text-[10px]"></i>
+                                    Popup Khuyến mãi
+                                </span>
+                                <span th:if="${banner.viTriHienThi == 'FOOTER'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200">
+                                    <i class="fa-solid fa-shoe-prints text-[10px]"></i>
+                                    Banner Chân trang
+                                </span>
+                                <span th:unless="${banner.viTriHienThi == 'HERO_SLIDER' or banner.viTriHienThi == 'HOME_MIDDLE' or banner.viTriHienThi == 'STORE_TOP' or banner.viTriHienThi == 'POPUP' or banner.viTriHienThi == 'FOOTER'}"
+                                      class="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200"
+                                      th:text="${banner.viTriHienThi}">
+                                    Vị trí khác
+                                </span>
+                            </td>
+
+                            <!-- Trạng thái kích hoạt (Toggle) -->
+                            <td class="py-3 px-4 text-center">
+                                <form th:action="@{'/admin/noi-dung/banner/doi-trang-thai/' + ${banner.id}}" method="post" class="inline">
+                                    <button type="submit"
+                                            th:title="${banner.kichHoat ? 'Nhấn để tạm dừng hiển thị' : 'Nhấn để kích hoạt hiển thị'}"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition"
+                                            th:classappend="${banner.kichHoat} ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'">
+                                        <span class="w-1.5 h-1.5 rounded-full" th:classappend="${banner.kichHoat} ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                                        <span th:text="${banner.kichHoat ? 'Đang bật' : 'Tạm dừng'}">Đang bật</span>
+                                    </button>
+                                </form>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="py-3 px-4 text-center">
+                                <div class="inline-flex items-center gap-1">
+                                    <!-- Nút Sửa -->
+                                    <a th:href="@{'/admin/noi-dung/banner/chinh-sua/' + ${banner.id}}"
+                                       class="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                                       title="Chỉnh sửa Banner">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                    <!-- Nút Xóa -->
+                                    <form th:action="@{'/admin/noi-dung/banner/xoa/' + ${banner.id}}"
+                                          method="post"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa banner quảng cáo này không?');"
+                                          class="inline">
+                                        <button type="submit"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                                title="Xóa Banner">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${trangBanner.totalPages > 1}" class="px-5 py-3 border-t border-slate-200 flex items-center justify-between">
+                <div class="text-xs text-slate-500">
+                    Hiển thị <span th:text="${trangBanner.numberOfElements}">10</span> / <span th:text="${trangBanner.totalElements}">10</span> banner
+                </div>
+                <div class="flex items-center gap-1">
+                    <a th:href="@{/admin/noi-dung/banner(page=${currentPage - 1}, size=${pageSize}, tuKhoa=${tuKhoa}, viTri=${viTriHienTai}, kichHoat=${kichHoatHienTai})}"
+                       th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-100'"
+                       class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                    </a>
+                    <span th:each="p : ${#numbers.sequence(0, trangBanner.totalPages - 1)}"
+                          th:if="${p >= currentPage - 2 && p <= currentPage + 2}">
+                        <a th:href="@{/admin/noi-dung/banner(page=${p}, size=${pageSize}, tuKhoa=${tuKhoa}, viTri=${viTriHienTai}, kichHoat=${kichHoatHienTai})}"
+                           th:text="${p + 1}"
+                           th:classappend="${p == currentPage} ? 'bg-blue-600 text-white font-bold border-blue-600' : 'text-slate-600 hover:bg-slate-100 border-slate-200'"
+                           class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition inline-block">1</a>
+                    </span>
+                    <a th:href="@{/admin/noi-dung/banner(page=${currentPage + 1}, size=${pageSize}, tuKhoa=${tuKhoa}, viTri=${viTriHienTai}, kichHoat=${kichHoatHienTai})}"
+                       th:classappend="${currentPage + 1 >= trangBanner.totalPages} ? 'pointer-events-none opacity-40' : 'hover:bg-slate-100'"
+                       class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition">
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

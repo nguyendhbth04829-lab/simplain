@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quét mã QR thanh toán | Simplain Menswear</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts Plus Jakarta Sans -->
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .btn-navy {
+            background-color: #0f172a;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .btn-navy:hover {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header tối giản -->
+    <header class="w-full bg-white border-b border-slate-200/80 py-4 shadow-2xs">
+        <div class="max-w-4xl mx-auto px-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <span class="text-xl font-black tracking-tighter text-[#0f172a]">SIMPLAIN</span>
+                <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                    Cổng Thanh Toán QR (US20)
+                </span>
+            </a>
+            <div class="text-xs text-slate-500 flex items-center gap-2">
+                <i class="fa-solid fa-lock text-emerald-600"></i>
+                <span class="font-medium">Thanh toán an toàn SSL</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+
+            <!-- Banner Header của Card -->
+            <div class="bg-gradient-to-r from-[#0f172a] to-slate-800 text-white p-6 sm:p-7 text-center relative">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold mb-2.5">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span th:text="${paymentInfo.tenPhuongThuc}">Cổng thanh toán trực tuyến</span>
+                </div>
+                <h1 class="text-lg sm:text-xl font-extrabold tracking-tight">Quét mã QR để Thanh Toán</h1>
+                <p class="text-xs text-slate-300 mt-1">Sử dụng ứng dụng Ngân hàng hoặc Ví điện tử để quét mã thanh toán tức thì</p>
+
+                <!-- Số tiền nổi bật -->
+                <div class="mt-4 bg-white/10 backdrop-blur-md rounded-2xl py-3 px-4 border border-white/15 max-w-xs mx-auto">
+                    <div class="text-[11px] text-slate-300 uppercase tracking-wider font-semibold">Số tiền cần thanh toán</div>
+                    <div class="text-2xl font-black text-amber-300 font-mono mt-0.5"
+                         th:text="${#numbers.formatDecimal(paymentInfo.soTien, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                        270.000 đ
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khung hiển thị Mã QR -->
+            <div class="p-6 sm:p-8 space-y-6 text-center">
+
+                <div class="relative inline-block bg-slate-50 p-4 rounded-3xl border-2 border-dashed border-blue-300 shadow-inner">
+                    <img th:src="${paymentInfo.qrCodeUrl}"
+                         alt="Mã QR Thanh Toán"
+                         class="w-56 h-56 sm:w-64 sm:h-64 object-contain mx-auto rounded-2xl bg-white shadow-xs">
+                    
+                    <div class="mt-2.5 flex items-center justify-center gap-2 text-[11px] font-bold text-slate-500">
+                        <i class="fa-solid fa-camera text-blue-600"></i>
+                        <span>Quét bằng App Ngân Hàng / VNPay / MoMo</span>
+                    </div>
+                </div>
+
+                <!-- Đồng hồ đếm ngược -->
+                <div class="flex items-center justify-center gap-2 text-xs font-bold text-slate-600 bg-amber-50 border border-amber-200 py-2.5 px-4 rounded-xl max-w-sm mx-auto">
+                    <i class="fa-regular fa-clock text-amber-600"></i>
+                    <span>Mã QR sẽ hết hạn sau:</span>
+                    <span id="countdownTimer" class="font-mono text-rose-600 font-extrabold text-sm">15:00</span>
+                </div>
+
+                <!-- Thông tin đơn hàng & Người nhận -->
+                <div class="bg-slate-50 rounded-2xl p-4 text-xs text-left space-y-2 border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Mã đơn hàng:</span>
+                        <span class="font-bold text-[#0f172a] font-mono text-sm" th:text="${'#' + donHang.maDonHang}">#DH123456</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Người nhận hàng:</span>
+                        <span class="font-semibold text-slate-800" th:text="${donHang.tenNguoiNhan}">Nguyễn Văn A</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Số điện thoại:</span>
+                        <span class="font-semibold font-mono text-slate-800" th:text="${donHang.soDienThoaiNhan}">0987654321</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-200/60 pt-2">
+                        <span class="text-slate-500">Trạng thái giao dịch:</span>
+                        <span id="trangThaiGiaoDich" class="inline-flex items-center gap-1.5 font-bold text-amber-600">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span>Đang chờ bạn quét mã...</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Các nút hành động chính -->
+                <div class="space-y-3 pt-2">
+                    
+                    <!-- Nút 1: Chuyển tiếp tới trang thanh toán của cổng (VNPay/MoMo Web Gateway) -->
+                    <a th:href="${paymentInfo.paymentUrl}" target="_blank"
+                       class="w-full py-3.5 px-4 rounded-xl btn-navy font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>Chuyển Tiếp Cổng <span th:text="${paymentInfo.tenPhuongThuc}">VNPay</span> Trực Tiếp</span>
+                    </a>
+
+                    <!-- Nút 2: Giả lập thanh toán thành công (Sandbox Dev Test) -->
+                    <button type="button" onclick="giaLapThanhToanThanhCong()"
+                            class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Giả Lập Quét QR Thành Công (Sandbox Test)</span>
+                    </button>
+
+                    <!-- Nút 3: Hủy quay lại giỏ hàng -->
+                    <a href="/gio-hang" class="block text-center text-xs text-slate-500 hover:text-slate-800 font-semibold pt-1 transition">
+                        &larr; Hủy giao dịch &amp; Quay lại giỏ hàng
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="w-full bg-white border-t border-slate-200/80 py-6 text-xs text-slate-400 text-center">
+        &copy; 2026 SIMPLAIN Menswear. Hệ thống Cổng thanh toán Tích hợp An toàn.
+    </footer>
+
+    <!-- JavaScript Auto-polling & Timer -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const maDonHang = /*[[${donHang.maDonHang}]]*/ '';
+        let giayConLai = 15 * 60; // 15 phút
+
+        // 1. Đồng hồ đếm ngược
+        const timerInterval = setInterval(function() {
+            giayConLai--;
+            if (giayConLai <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('countdownTimer').innerText = '00:00 (Hết hạn)';
+                document.getElementById('trangThaiGiaoDich').innerHTML = '<span class="text-rose-500 font-bold">Mã QR đã hết hạn! Vui lòng đặt lại đơn.</span>';
+                return;
+            }
+
+            const phut = Math.floor(giayConLai / 60);
+            const giay = giayConLai % 60;
+            document.getElementById('countdownTimer').innerText = 
+                (phut < 10 ? '0' : '') + phut + ':' + (giay < 10 ? '0' : '') + giay;
+        }, 1000);
+
+        // 2. Polling kiểm tra trạng thái thanh toán tự động mỗi 3 giây (US20 - AC 2)
+        const pollInterval = setInterval(function() {
+            if (!maDonHang) return;
+
+            fetch('/thanh-toan/kiem-tra-trang-thai/' + maDonHang)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.daThanhCong) {
+                        clearInterval(pollInterval);
+                        clearInterval(timerInterval);
+                        document.getElementById('trangThaiGiaoDich').innerHTML = '<span class="text-emerald-600 font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Đã thanh toán thành công! Đang chuyển hướng...</span>';
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl || ('/thanh-toan/thanh-cong/' + maDonHang);
+                        }, 1000);
+                    }
+                })
+                .catch(err => console.log('Polling check error:', err));
+        }, 3000);
+
+        // 3. Giả lập thanh toán Sandbox tức thì
+        function giaLapThanhToanThanhCong() {
+            if (!confirm('Bạn có muốn giả lập thanh toán QR thành công qua cổng Sandbox không?')) {
+                return;
+            }
+
+            fetch('/thanh-toan/gia-lap-thanh-cong/' + maDonHang, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    window.location.href = data.redirectUrl || ('/thanh-toan/thanh-cong/' + maDonHang);
+                } else {
+                    alert('Lỗi: ' + (data ? data.message : 'Không thể giả lập'));
+                }
+            })
+            .catch(err => {
+                alert('Có lỗi xảy ra: ' + err);
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

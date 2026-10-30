@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho Voucher &amp; Ví Giảm Giá &bull; Simplain Store</title>
+
+    <!-- Tailwind CSS qua CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+
+    <!-- Font Awesome Pro / Free Icons -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Font Inter -->
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Hiệu ứng vé Voucher đục lỗ hai bên (Shopee/Lazada Ticket Style) */
+        .ticket-sawtooth {
+            position: relative;
+        }
+        .ticket-sawtooth::before, .ticket-sawtooth::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #f8fafc;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+        .ticket-sawtooth::before {
+            left: -8px;
+        }
+        .ticket-sawtooth::after {
+            right: -8px;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- 1. HEADER STOREFRONT SIMPLAIN (CHUẨN ĐỒNG BỘ TOÀN HỆ THỐNG) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Logo Simplain -->
+            <div class="flex items-center gap-6">
+                <a href="/cua-hang" class="flex items-center space-x-2 group">
+                    <span class="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN STORE<span class="text-blue-600">.</span></span>
+                    <span class="hidden sm:inline-block text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded tracking-widest uppercase">Nam</span>
+                </a>
+
+                <nav class="hidden md:flex items-center space-x-6 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <a href="/cua-hang" class="hover:text-blue-600 transition">Tất cả sản phẩm</a>
+                    <a href="/khach-hang/voucher" class="text-blue-600 flex items-center gap-1">
+                        <i class="fa-solid fa-ticket text-xs"></i>Mã giảm giá
+                    </a>
+                    <a href="/khach-hang/yeu-thich" class="hover:text-rose-600 transition flex items-center gap-1">
+                        <i class="fa-solid fa-heart text-xs"></i>Yêu thích
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Cụm Tài khoản Khách hàng & Wishlist Badge -->
+            <div class="flex items-center space-x-2.5 text-xs font-bold">
+                <!-- Nút Ví Voucher (Active) -->
+                <a href="/khach-hang/voucher?tab=vi-cua-toi"
+                   class="relative px-3 py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1.5"
+                   title="Ví voucher của bạn">
+                    <i class="fa-solid fa-ticket text-blue-600"></i>
+                    <span class="hidden md:inline">Ví Voucher</span>
+                    <span id="badgeVoucherHeader"
+                          th:text="${tongVoucherKhaDung != null ? tongVoucherKhaDung : 0}"
+                          class="px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[10px] font-black">
+                        0
+                    </span>
+                </a>
+
+                <!-- Nút Yêu thích -->
+                <a href="/khach-hang/yeu-thich"
+                   class="relative px-3 py-2 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 hover:bg-rose-50 hover:text-rose-600 transition flex items-center gap-1.5"
+                   title="Danh sách yêu thích">
+                    <i class="fa-solid fa-heart text-rose-500"></i>
+                    <span class="hidden md:inline">Yêu thích</span>
+                    <span th:text="${soLuongYeuThich != null ? soLuongYeuThich : 0}"
+                          class="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 text-[10px] font-black">
+                        0
+                    </span>
+                </a>
+
+                <!-- Giỏ hàng -->
+                <a href="/gio-hang"
+                   class="px-3 py-2 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1.5"
+                   title="Giỏ hàng">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="hidden md:inline">Giỏ hàng</span>
+                </a>
+
+                <!-- Hồ sơ cá nhân hoặc Đăng nhập -->
+                <a th:if="${khachHangDangNhap != null}" href="/khach-hang/thong-tin"
+                   class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1.5" title="Hồ sơ tài khoản">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span class="hidden md:inline" th:text="${khachHangDangNhap.hoTen}">Tài khoản</span>
+                </a>
+                <a th:if="${khachHangDangNhap == null}" href="/khach-hang/dang-nhap?redirect=/khach-hang/voucher"
+                   class="px-3.5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Đăng nhập</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. PHẦN THÂN TRANG (MAIN CONTENT) -->
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow space-y-6">
+
+        <!-- BANNER HERO VOUCHER: THÔNG TIN TỔNG QUAN & Ô NHẬP MÃ NHANH -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0a192f] via-slate-900 to-blue-950 text-white p-6 sm:p-8 lg:p-10 shadow-xl border border-slate-800">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold tracking-wide">
+                        <i class="fa-solid fa-gift"></i>
+                        <span>SIMPLAIN REWARDS &bull; MÃ GIẢM GIÁ</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+                        Kho Voucher &amp; Ví Giảm Giá
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300 max-w-xl">
+                        Thu thập các mã giảm giá hấp dẫn để tiết kiệm tối đa chi phí mua sắm tại Simplain Store. Kiểm tra và áp dụng dễ dàng khi đặt hàng!
+                    </p>
+                </div>
+
+                <!-- Ô NHẬP MÃ VOUCHER NHANH ĐỂ THU THẬP -->
+                <div class="w-full md:w-auto bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20">
+                    <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
+                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Có mã bí mật? Nhập để lưu ngay:
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="inputMaCodeNhanh" placeholder="Nhập mã voucher (VD: COOL20)..."
+                               class="px-3.5 py-2 rounded-xl bg-white text-slate-800 font-mono font-bold text-xs uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-60 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400">
+                        <button type="button" onclick="thuThapMaNhanh()"
+                                class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-black text-xs uppercase tracking-wider transition whitespace-nowrap shadow-md">
+                            Lưu Ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Họa tiết trang trí nền -->
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute left-1/2 -top-10 w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        </div>
+
+        <!-- THANH ĐIỀU HƯỚNG TABS CHÍNH: KHO SẴN CÓ VS VÍ VOUCHER CỦA TÔI -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-2">
+            <div class="flex items-center gap-2">
+                <a th:href="@{/khach-hang/voucher(tab='san-co')}"
+                   th:classappend="${tabHienTai == 'san-co' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}"
+                   class="px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-tags"></i>
+                    <span>Kho Voucher Sẵn Có</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                          th:classappend="${tabHienTai == 'san-co' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}"
+                          th:text="${#lists.size(dsSanCo)}">
+                        0
+                    </span>
+                </a>
+
+                <a th:href="@{/khach-hang/voucher(tab='vi-cua-toi')}"
+                   th:classappend="${tabHienTai == 'vi-cua-toi' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}"
+                   class="px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Ví Voucher Của Tôi</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                          th:classappend="${tabHienTai == 'vi-cua-toi' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700'}"
+                          th:text="${tongVoucherKhaDung}">
+                        0
+                    </span>
+                </a>
+            </div>
+
+            <!-- SUB-TABS TRONG VÍ CỦA TÔI -->
+            <div th:if="${tabHienTai == 'vi-cua-toi'}" class="flex items-center gap-1.5 text-xs font-bold">
+                <a th:href="@{/khach-hang/voucher(tab='vi-cua-toi', subTab='KHA_DUNG')}"
+                   th:classappend="${subTabHienTai == 'KHA_DUNG' ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-slate-600 hover:bg-slate-100 border-transparent'}"
+                   class="px-3 py-1.5 rounded-xl border transition">
+                    Khả Dụng
+                </a>
+                <a th:href="@{/khach-hang/voucher(tab='vi-cua-toi', subTab='DA_DUNG')}"
+                   th:classappend="${subTabHienTai == 'DA_DUNG' ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-slate-600 hover:bg-slate-100 border-transparent'}"
+                   class="px-3 py-1.5 rounded-xl border transition">
+                    Đã Dùng
+                </a>
+                <a th:href="@{/khach-hang/voucher(tab='vi-cua-toi', subTab='HET_HAN')}"
+                   th:classappend="${subTabHienTai == 'HET_HAN' ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-slate-600 hover:bg-slate-100 border-transparent'}"
+                   class="px-3 py-1.5 rounded-xl border transition">
+                    Hết Hạn
+                </a>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: DANH SÁCH VOUCHER SẴN CÓ ĐỂ THU THẬP                         -->
+        <!-- =================================================================== -->
+        <div th:if="${tabHienTai == 'san-co'}" class="space-y-4">
+            
+            <div th:if="${#lists.isEmpty(dsSanCo)}" class="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-2xs space-y-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-ticket-simple"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">Hiện tại chưa có mã giảm giá mới</h3>
+                <p class="text-xs text-slate-500 max-w-md mx-auto">
+                    Các chương trình khuyến mãi đang được đội ngũ Simplain chuẩn bị. Bạn vui lòng quay lại sau nhé!
+                </p>
+                <a href="/cua-hang" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm">
+                    <i class="fa-solid fa-basket-shopping"></i> Mua sắm sản phẩm hot
+                </a>
+            </div>
+
+            <!-- Lưới thẻ Voucher Sẵn Có (2 Cột trên màn hình lớn) -->
+            <div th:unless="${#lists.isEmpty(dsSanCo)}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div th:each="vc : ${dsSanCo}"
+                     th:id="'the-voucher-' + ${vc.voucherId}"
+                     class="ticket-sawtooth bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition overflow-hidden flex flex-col sm:flex-row items-stretch">
+                    
+                    <!-- Phần bên trái: Huy hiệu giá trị giảm -->
+                    <div class="sm:w-32 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-4 flex flex-col justify-center items-center text-center relative border-r border-dashed border-blue-300/40">
+                        <i class="fa-solid fa-ticket text-xl text-blue-200 mb-1"></i>
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-blue-100">Giảm</span>
+                        <div class="text-xl font-black font-mono tracking-tight"
+                             th:text="${vc.giaTriGiamFormatted}">
+                            20%
+                        </div>
+                        <span th:if="${vc.giamToiDaFormatted != null and !vc.giamToiDaFormatted.isEmpty()}"
+                              class="text-[9px] text-blue-200 mt-0.5"
+                              th:text="${vc.giamToiDaFormatted}">
+                            Tối đa 50k
+                        </span>
+                    </div>
+
+                    <!-- Phần ở giữa: Thông tin chi tiết & Điều kiện -->
+                    <div class="flex-grow p-4 flex flex-col justify-between space-y-2">
+                        <div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-mono font-black text-xs text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-lg tracking-wider"
+                                      th:text="${vc.maCode}">
+                                    COOL20
+                                </span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                      th:classappend="${vc.trangThaiBadgeClass}"
+                                      th:text="${vc.trangThaiLabel}">
+                                    Sẵn có
+                                </span>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-800 mt-1 line-clamp-1" th:text="${vc.tenVoucher}">
+                                Tên chiến dịch voucher
+                            </h3>
+                            <p class="text-[11px] text-slate-500 font-medium mt-0.5" th:text="${vc.dieuKienApDung}">
+                                Đơn tối thiểu 200,000 đ
+                            </p>
+                        </div>
+
+                        <!-- Hạn sử dụng & Nút hành động -->
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <div class="text-[10px] text-slate-400">
+                                <span>HSD:</span>
+                                <strong class="text-slate-600 font-mono" th:text="${vc.hanSuDungFormatted}">30/11/2026</strong>
+                            </div>
+
+                            <!-- Nút Thu thập hoặc Trạng thái đã lưu -->
+                            <div>
+                                <!-- Đã thu thập rồi: Nút Dùng Ngay -->
+                                <a th:if="${vc.daThuThap}" href="/cua-hang"
+                                   class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold text-[11px] transition inline-flex items-center gap-1 border border-slate-200">
+                                    <i class="fa-solid fa-check text-emerald-600"></i> Dùng Ngay
+                                </a>
+
+                                <!-- Hết lượt: Nút Disabled -->
+                                <button th:if="${!vc.daThuThap and !vc.khaDung}" disabled
+                                        class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-[11px] cursor-not-allowed">
+                                    Hết Lượt
+                                </button>
+
+                                <!-- Chưa thu thập và còn lượt: Nút Thu Thập -->
+                                <button th:if="${!vc.daThuThap and vc.khaDung}"
+                                        type="button"
+                                        th:data-voucher-id="${vc.voucherId}"
+                                        th:data-ma-code="${vc.maCode}"
+                                        onclick="thuThapVoucherAjax(this)"
+                                        class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-[11px] transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa-solid fa-arrow-down-to-bracket"></i> Thu Thập
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: VÍ VOUCHER CỦA TÔI (voucher_so_huu)                          -->
+        <!-- =================================================================== -->
+        <div th:if="${tabHienTai == 'vi-cua-toi'}" class="space-y-4">
+
+            <!-- Cảnh báo nếu chưa đăng nhập -->
+            <div th:if="${khachHangDangNhap == null}" class="bg-amber-50 rounded-3xl p-8 text-center border border-amber-200 space-y-3">
+                <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 mx-auto flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-sm font-bold text-amber-900">Vui lòng đăng nhập để xem Ví Voucher cá nhân</h3>
+                <p class="text-xs text-amber-700 max-w-md mx-auto">
+                    Đăng nhập tài khoản Simplain của bạn để quản lý các mã giảm giá đã lưu và sử dụng khi thanh toán đơn hàng.
+                </p>
+                <a href="/khach-hang/dang-nhap?redirect=/khach-hang/voucher?tab=vi-cua-toi"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm">
+                    <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập ngay
+                </a>
+            </div>
+
+            <!-- Nếu đã đăng nhập: Hiển thị danh sách voucher trong ví -->
+            <div th:if="${khachHangDangNhap != null}">
+                
+                <div th:if="${#lists.isEmpty(dsViCuaToi)}" class="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-2xs space-y-4">
+                    <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-800">Ví Voucher của bạn đang trống</h3>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">
+                        Bạn chưa có mã giảm giá nào trong mục này. Hãy ghé thăm Kho Voucher để thu thập các mã ưu đãi mới nhất nhé!
+                    </p>
+                    <a th:href="@{/khach-hang/voucher(tab='san-co')}"
+                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm">
+                        <i class="fa-solid fa-tags"></i> Khám phá Kho Voucher ngay
+                    </a>
+                </div>
+
+                <!-- Lưới Voucher trong Ví -->
+                <div th:unless="${#lists.isEmpty(dsViCuaToi)}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div th:each="v : ${dsViCuaToi}"
+                         class="ticket-sawtooth bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition overflow-hidden flex flex-col sm:flex-row items-stretch"
+                         th:classappend="${!v.khaDung ? 'opacity-70 bg-slate-50/80' : ''}">
+                        
+                        <!-- Cột giá trị giảm -->
+                        <div class="sm:w-32 p-4 flex flex-col justify-center items-center text-center relative border-r border-dashed text-white"
+                             th:classappend="${v.khaDung ? 'bg-gradient-to-br from-emerald-600 to-teal-700 border-emerald-300/40' : 'bg-slate-400 border-slate-300'}">
+                            <i class="fa-solid fa-ticket text-xl mb-1 text-white/80"></i>
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-white/80">Giảm</span>
+                            <div class="text-xl font-black font-mono tracking-tight"
+                                 th:text="${v.giaTriGiamFormatted}">
+                                20%
+                            </div>
+                            <span th:if="${v.giamToiDaFormatted != null and !v.giamToiDaFormatted.isEmpty()}"
+                                  class="text-[9px] text-white/80 mt-0.5"
+                                  th:text="${v.giamToiDaFormatted}">
+                                Tối đa 50k
+                            </span>
+                        </div>
+
+                        <!-- Cột nội dung chi tiết -->
+                        <div class="flex-grow p-4 flex flex-col justify-between space-y-2">
+                            <div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-mono font-black text-xs px-2.5 py-0.5 rounded-lg tracking-wider"
+                                          th:classappend="${v.khaDung ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100 border border-slate-200'}"
+                                          th:text="${v.maCode}">
+                                        COOL20
+                                    </span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                          th:classappend="${v.trangThaiBadgeClass}"
+                                          th:text="${v.trangThaiLabel}">
+                                        Khả dụng
+                                    </span>
+                                </div>
+                                <h3 class="text-xs sm:text-sm font-bold text-slate-800 mt-1 line-clamp-1" th:text="${v.tenVoucher}">
+                                    Tên voucher
+                                </h3>
+                                <p class="text-[11px] text-slate-500 font-medium mt-0.5" th:text="${v.dieuKienApDung}">
+                                    Đơn tối thiểu 200,000 đ
+                                </p>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                                <div class="text-[10px] text-slate-400">
+                                    <span>HSD:</span>
+                                    <strong class="text-slate-600 font-mono" th:text="${v.hanSuDungFormatted}">30/11/2026</strong>
+                                </div>
+
+                                <div class="flex items-center gap-1.5">
+                                    <!-- Nút Sao chép mã -->
+                                    <button type="button"
+                                            th:data-ma-code="${v.maCode}"
+                                            onclick="saoChepMaCode(this.getAttribute('data-ma-code'))"
+                                            class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                            title="Sao chép mã voucher">
+                                        <i class="fa-regular fa-copy"></i> Copy
+                                    </button>
+
+                                    <!-- Nút Dùng Ngay nếu còn khả dụng -->
+                                    <a th:if="${v.khaDung}" href="/cua-hang"
+                                       class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] transition shadow-xs flex items-center gap-1">
+                                        <i class="fa-solid fa-cart-shopping"></i> Dùng Ngay
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- 3. FOOTER ĐỒNG BỘ SIMPLAIN STORE -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-slate-800 uppercase tracking-tighter">SIMPLAIN STORE</span>
+                <span>&bull; Hệ thống thời trang nam tối giản cao cấp &bull; US27 (Mod 6 / Voucher)</span>
+            </div>
+            <div>
+                <span>Tổng đài CSKH: <strong class="text-blue-600">1900 6868</strong> (8:30 - 22:00)</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- TOAST THÔNG BÁO NỔI GÓC DƯỚI MÀN HÌNH -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT XỬ LÝ THU THẬP & VALIDATE REALTIME (US27) -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+
+        function hienThiToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-xl text-xs font-bold transition-all duration-300 transform translate-y-3 opacity-0 flex items-center gap-2.5 max-w-sm border ${
+                type === 'success' 
+                    ? 'bg-emerald-900/90 text-white border-emerald-500/50 backdrop-blur-md' 
+                    : (type === 'warning'
+                        ? 'bg-amber-900/90 text-white border-amber-500/50 backdrop-blur-md'
+                        : 'bg-rose-900/90 text-white border-rose-500/50 backdrop-blur-md')
+            }`;
+
+            const iconClass = type === 'success' 
+                ? 'fa-solid fa-circle-check text-emerald-400 text-sm' 
+                : (type === 'warning'
+                    ? 'fa-solid fa-triangle-exclamation text-amber-400 text-sm'
+                    : 'fa-solid fa-circle-xmark text-rose-400 text-sm');
+
+            toast.innerHTML = `<i class="${iconClass}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-3', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-3');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Sao chép mã code vào Clipboard
+        function saoChepMaCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                hienThiToast(`Đã sao chép mã '${code}' vào bộ nhớ tạm!`, 'success');
+            }).catch(() => {
+                hienThiToast(`Không thể sao chép mã, vui lòng copy thủ công: ${code}`, 'warning');
+            });
+        }
+
+        // Thu thập voucher theo ID qua AJAX
+        function thuThapVoucherAjax(btn) {
+            const voucherId = btn.getAttribute('data-voucher-id');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...`;
+
+            fetch(`/khach-hang/api/voucher/thu-thap/${voucherId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (res.status === 401 || data.yeuCauDangNhap) {
+                    hienThiToast(data.thongBao || 'Vui lòng đăng nhập để thu thập mã giảm giá!', 'warning');
+                    setTimeout(() => {
+                        window.location.href = `/khach-hang/dang-nhap?redirect=/khach-hang/voucher`;
+                    }, 1200);
+                    return;
+                }
+
+                if (res.ok && data.thanhCong) {
+                    hienThiToast(data.thongBao, 'success');
+                    
+                    // Cập nhật số lượng trên Header
+                    const badgeHeader = document.getElementById('badgeVoucherHeader');
+                    if (badgeHeader && data.tongSoVoucherTrongVi !== undefined) {
+                        badgeHeader.innerText = data.tongSoVoucherTrongVi;
+                    }
+
+                    // Chuyển nút sang "Dùng Ngay"
+                    btn.outerHTML = `
+                        <a href="/cua-hang" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold text-[11px] transition inline-flex items-center gap-1 border border-slate-200">
+                            <i class="fa-solid fa-check text-emerald-600"></i> Dùng Ngay
+                        </a>
+                    `;
+                } else {
+                    hienThiToast(data.thongBao || 'Không thể thu thập voucher này!', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-arrow-down-to-bracket"></i> Thu Thập`;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                hienThiToast('Lỗi kết nối máy chủ, vui lòng thử lại sau!', 'error');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-arrow-down-to-bracket"></i> Thu Thập`;
+            });
+        }
+
+        // Thu thập nhanh bằng mã code nhập tay
+        function thuThapMaNhanh() {
+            const input = document.getElementById('inputMaCodeNhanh');
+            const code = input ? input.value.trim() : '';
+            if (!code) {
+                hienThiToast('Vui lòng nhập mã voucher cần lưu!', 'warning');
+                if (input) input.focus();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('maCode', code);
+
+            fetch('/khach-hang/api/voucher/thu-thap-ma', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (res.status === 401 || data.yeuCauDangNhap) {
+                    hienThiToast(data.thongBao || 'Vui lòng đăng nhập để lưu mã giảm giá!', 'warning');
+                    setTimeout(() => {
+                        window.location.href = `/khach-hang/dang-nhap?redirect=/khach-hang/voucher`;
+                    }, 1200);
+                    return;
+                }
+
+                if (res.ok && data.thanhCong) {
+                    hienThiToast(data.thongBao, 'success');
+                    input.value = '';
+                    const badgeHeader = document.getElementById('badgeVoucherHeader');
+                    if (badgeHeader && data.tongSoVoucherTrongVi !== undefined) {
+                        badgeHeader.innerText = data.tongSoVoucherTrongVi;
+                    }
+                    setTimeout(() => {
+                        window.location.href = '/khach-hang/voucher?tab=vi-cua-toi';
+                    }, 1500);
+                } else {
+                    hienThiToast(data.thongBao || 'Mã voucher không hợp lệ!', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                hienThiToast('Lỗi kết nối máy chủ, vui lòng thử lại sau!', 'error');
+            });
+        }
+
+        /*]]>*/
+    </script>
+</body>
+</html>

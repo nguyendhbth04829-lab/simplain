@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khung giờ Flash Sale (US29) | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            text-rendering: optimizeLegibility;
+        }
+        /* Chống rung giật và làm nét chữ */
+        * {
+            -webkit-font-smoothing: subpixel-antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        table {
+            table-layout: fixed !important;
+        }
+        table tr, table td, table th, table button {
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+        }
+        .live-dot {
+            position: relative;
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+            background-color: #e11d48;
+            box-shadow: 0 0 0 2px #ffe4e6;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('flash-sale')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER & NÚT TẠO MỚI (US29) -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Quản Lý Khung Giờ Flash Sale
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Thiết lập khung giờ vàng, gán giá sốc và giới hạn số lượng mở bán cho từng biến thể SKU (US29 - Mod 6).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/flash-sale/tao-moi"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-600/20 transition transform active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Thiết lập Flash Sale mới</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. THỐNG KÊ NHANH TIÊU CHÍ US29 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tổng đợt Flash Sale</div>
+                    <div class="text-xl font-black text-slate-900" th:text="${trangFlashSale.totalElements}">0</div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tiêu chí 1</div>
+                    <div class="text-xs font-extrabold text-slate-700">Khung giờ Bắt đầu / Kết thúc</div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-tags"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tiêu chí 2</div>
+                    <div class="text-xs font-extrabold text-slate-700">Gán giá sốc &amp; Mở bán SKU</div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-shield-check"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kiểm soát chặt chẽ</div>
+                    <div class="text-xs font-extrabold text-slate-700">Giá sốc &lt; Giá bán, SL &le; Kho</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CARD TÌM KIẾM VÀ LỌC DỮ LIỆU -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs">
+            <form method="get" action="/admin/flash-sale/hien-thi" class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="relative flex-1 w-full text-xs">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                           placeholder="Tìm kiếm theo tiêu đề đợt Flash Sale..."
+                           class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs outline-none focus:border-blue-600 transition">
+                </div>
+
+                <div class="w-full sm:w-56 text-xs">
+                    <select name="trangThai" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs outline-none focus:border-blue-600 transition font-medium">
+                        <option value="TAT_CA" th:selected="${trangThaiHienTai == 'TAT_CA'}">Tất cả trạng thái</option>
+                        <option value="DANG_HOAT_DONG" th:selected="${trangThaiHienTai == 'DANG_HOAT_DONG'}">Đang kích hoạt</option>
+                        <option value="TAM_DUNG" th:selected="${trangThaiHienTai == 'TAM_DUNG'}">Đang tạm dừng</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="submit" class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-2xs transition">
+                        <i class="fa-solid fa-filter mr-1.5"></i> Lọc
+                    </button>
+                    <a href="/admin/flash-sale/hien-thi" class="flex-1 sm:flex-none px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition text-center">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. BẢNG DANH SÁCH FLASH SALE -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <th class="py-3.5 px-4 w-12 text-center">#</th>
+                            <th class="py-3.5 px-4 min-w-[200px]">Tiêu Đề Flash Sale</th>
+                            <th class="py-3.5 px-4 w-64 text-center">Khung Giờ (Bắt Đầu &rarr; Kết Thúc)</th>
+                            <th class="py-3.5 px-4 w-36 text-center">Trạng Thái</th>
+                            <th class="py-3.5 px-4 w-28 text-center">Số Biến Thể</th>
+                            <th class="py-3.5 px-4 w-40 text-center">Tiến Độ Mở Bán</th>
+                            <th class="py-3.5 px-4 w-28 text-right">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr th:if="${trangFlashSale.empty}">
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3 text-slate-300 text-2xl">
+                                    <i class="fa-solid fa-bolt-slash"></i>
+                                </div>
+                                <p class="font-bold text-slate-600">Chưa có khung giờ Flash Sale nào</p>
+                                <p class="text-xs text-slate-400 mt-1">Hãy nhấn nút "Thiết lập Flash Sale mới" để bắt đầu kích cầu bán hàng!</p>
+                            </td>
+                        </tr>
+
+                        <tr th:each="fs, iter : ${trangFlashSale.content}" class="hover:bg-slate-50/70 transition">
+                            <!-- STT -->
+                            <td class="py-4 px-4 text-center font-bold text-slate-400"
+                                th:text="${(currentPage * pageSize) + iter.index + 1}">1</td>
+
+                            <!-- Tiêu đề -->
+                            <td class="py-4 px-4">
+                                <div class="font-black text-slate-900 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-bolt text-amber-500"></i>
+                                    <span th:text="${fs.tieuDe}">Deal Sốc Giữa Trưa</span>
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">ID: #<span th:text="${fs.id}">1</span></div>
+                            </td>
+
+                            <!-- Khung giờ Bắt đầu & Kết thúc -->
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-2 font-mono text-xs">
+                                    <span class="px-2 py-1 rounded-md bg-slate-100 font-bold text-slate-800"
+                                          th:text="${#temporals.format(fs.thoiGianBatDau, 'HH:mm dd/MM/yyyy')}">12:00 28/10/2026</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px] text-slate-400"></i>
+                                    <span class="px-2 py-1 rounded-md bg-slate-100 font-bold text-slate-800"
+                                          th:text="${#temporals.format(fs.thoiGianKetThuc, 'HH:mm dd/MM/yyyy')}">14:00 28/10/2026</span>
+                                </div>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td class="py-4 px-4 text-center whitespace-nowrap">
+                                <span th:if="${fs.trangThai == 'DANG_DIEN_RA'}"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+                                    <span class="live-dot"></span>
+                                    ĐANG DIỄN RA
+                                </span>
+                                <span th:if="${fs.trangThai == 'SAP_DIEN_RA'}"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
+                                    <i class="fa-regular fa-clock"></i>
+                                    SẮP DIỄN RA
+                                </span>
+                                <span th:if="${fs.trangThai == 'DA_KET_THUC'}"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                    <i class="fa-solid fa-check"></i>
+                                    ĐÃ KẾT THÚC
+                                </span>
+                                <span th:if="${fs.trangThai == 'TAM_DUNG'}"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <i class="fa-solid fa-pause"></i>
+                                    TẠM DỪNG
+                                </span>
+                            </td>
+
+                            <!-- Số biến thể SKU -->
+                            <td class="py-4 px-4 text-center">
+                                <span class="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 font-black text-xs">
+                                    <span th:text="${fs.soLuongBienThe}">3</span> SKU
+                                </span>
+                            </td>
+
+                            <!-- Tiến độ mở bán -->
+                            <td class="py-4 px-4 text-center">
+                                <div class="max-w-[140px] mx-auto">
+                                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
+                                        <span><span th:text="${fs.tongSoLuongDaBan}">0</span>/<span th:text="${fs.tongSoLuongMoBan}">50</span></span>
+                                        <span class="text-blue-600" th:text="${#numbers.formatDecimal(fs.tiLeDaBanPhanTram, 1, 0) + '%'}">0%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                        <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                             th:style="'width: ' + ${fs.tiLeDaBanPhanTram} + '%'"></div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="py-4 px-4 text-right">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <a th:href="@{'/admin/flash-sale/chinh-sua/' + ${fs.id}}"
+                                       class="p-2 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 transition"
+                                       title="Chỉnh sửa Flash Sale">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </a>
+
+                                    <form th:action="@{'/admin/flash-sale/toggle/' + ${fs.id}}" method="post" class="inline">
+                                        <button type="submit"
+                                                th:classappend="${fs.kichHoat} ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'"
+                                                class="p-2 rounded-lg bg-slate-100 transition"
+                                                th:title="${fs.kichHoat} ? 'Tạm dừng đợt Flash Sale' : 'Kích hoạt lại đợt Flash Sale'">
+                                            <i th:class="${fs.kichHoat} ? 'fa-solid fa-toggle-on text-base' : 'fa-solid fa-toggle-off text-base'"></i>
+                                        </button>
+                                    </form>
+
+                                    <form th:action="@{'/admin/flash-sale/xoa/' + ${fs.id}}" method="post" class="inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa đợt Flash Sale này không? Dữ liệu chi tiết các biến thể gán giá sốc sẽ bị xóa.');">
+                                        <button type="submit"
+                                                class="p-2 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition"
+                                                title="Xóa Flash Sale">
+                                            <i class="fa-regular fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân Trang Pagination -->
+            <div th:if="${trangFlashSale.totalPages > 1}" class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <div class="text-xs text-slate-500 font-medium">
+                    Hiển thị trang <span class="font-bold text-slate-800" th:text="${currentPage + 1}">1</span> / <span class="font-bold text-slate-800" th:text="${trangFlashSale.totalPages}">1</span>
+                    (Tổng <span class="font-bold text-slate-800" th:text="${trangFlashSale.totalElements}">0</span> đợt)
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <a th:href="@{/admin/flash-sale/hien-thi(page=${currentPage - 1}, tuKhoa=${tuKhoa}, trangThai=${trangThaiHienTai})}"
+                       th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40 bg-slate-100' : 'hover:bg-slate-200 bg-white'"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 transition">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Trước
+                    </a>
+
+                    <a th:href="@{/admin/flash-sale/hien-thi(page=${currentPage + 1}, tuKhoa=${tuKhoa}, trangThai=${trangThaiHienTai})}"
+                       th:classappend="${currentPage + 1 >= trangFlashSale.totalPages} ? 'pointer-events-none opacity-40 bg-slate-100' : 'hover:bg-slate-200 bg-white'"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 transition">
+                        Sau <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

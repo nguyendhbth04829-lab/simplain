@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Form dáng | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('form-dang')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title bên trái + Nút Đen "+ Thêm form dáng" bên phải -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-person-rays text-indigo-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Form dáng (Fit)</span>
+                        <span class="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full" th:text="${tongFormDang + ' form dáng'}">0 form dáng</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Danh mục Form dáng sản phẩm chuẩn kết nối trực tiếp với Sản phẩm Simplain Store</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/san-pham/hien-thi"
+                   class="btn-outline font-semibold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                    <i class="fa-solid fa-shirt"></i>
+                    <span>Sản phẩm</span>
+                </a>
+                <a href="/admin/chat-lieu/hien-thi"
+                   class="btn-outline font-semibold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                    <i class="fa-solid fa-scroll text-blue-600"></i>
+                    <span>Chất liệu vải</span>
+                </a>
+                <button type="button"
+                        onclick="moModalThemMoi()"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>+ Thêm form dáng</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. BỘ LỌC TÌM KIẾM VÀ PHÂN LOẠI TRẠNG THÁI (CHUẨN SIMPLAIN) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5">
+            <form action="/admin/form-dang/hien-thi" method="get" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <div class="sm:col-span-6">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1"></i>Tìm kiếm theo từ khóa
+                    </label>
+                    <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                           placeholder="Nhập tên form dáng (Regular, Slim, Oversized, Boxy...) hoặc mô tả đặc điểm..."
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        <i class="fa-solid fa-toggle-on text-slate-400 mr-1"></i>Trạng thái sử dụng
+                    </label>
+                    <select name="kichHoat" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true" th:selected="${kichHoatLoc != null and kichHoatLoc == true}">Đang sử dụng</option>
+                        <option value="false" th:selected="${kichHoatLoc != null and kichHoatLoc == false}">Ngưng sử dụng</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-3 flex items-center gap-2">
+                    <button type="submit"
+                            class="flex-1 btn-navy font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition">
+                        <i class="fa-solid fa-filter text-xs"></i>
+                        <span>Lọc kết quả</span>
+                    </button>
+                    <a href="/admin/form-dang/hien-thi"
+                       title="Đặt lại bộ lọc"
+                       class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center justify-center shadow-xs transition">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Thanh Thao Tác Hàng Loạt (Bulk Action Bar) -->
+        <form id="formThaoTacHangLoat" method="post" th:action="@{/admin/form-dang/thao-tac-hang-loat}">
+            <div id="bulkActionBar" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-800">
+                        Đã chọn <span id="soLuongDaChon" class="font-black text-blue-600">0</span> form dáng
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" name="hanhDong" value="KICH_HOAT"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn KÍCH HOẠT tất cả các form dáng đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Chuyển thành: Kích hoạt</span>
+                    </button>
+                    <button type="submit" name="hanhDong" value="NGUNG_HOAT_DONG"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn NGƯNG SỬ DỤNG tất cả các form dáng đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-pause"></i>
+                        <span>Chuyển thành: Ngưng sử dụng</span>
+                    </button>
+                    <button type="button" onclick="boChonTatCa()"
+                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 text-xs font-bold transition cursor-pointer">
+                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ chọn
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. BẢNG DỮ LIỆU FORM DÁNG -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-indigo-600"></i>
+                        <span>Danh sách Form dáng (<span th:text="${pageData != null ? pageData.totalElements : #lists.size(listFormDang)}">0</span>)</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-medium">
+                        Trang <strong th:text="${page + 1}">1</strong> / <strong th:text="${totalPages > 0 ? totalPages : 1}">1</strong>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-3 w-10 text-center">
+                                    <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)"
+                                           class="rounded border-slate-300 text-black focus:ring-black cursor-pointer"
+                                           title="Chọn tất cả trên trang này">
+                                </th>
+                                <th class="py-3 px-4 w-16">ID</th>
+                                <th class="py-3 px-4">Tên form dáng (Fit)</th>
+                                <th class="py-3 px-4">Đặc điểm / Phong cách</th>
+                                <th class="py-3 px-4 text-center w-36">Sản phẩm gắn</th>
+                                <th class="py-3 px-4 w-36 text-center">Trạng thái</th>
+                                <th class="py-3 px-4 w-44 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr th:each="fd : ${listFormDang}" class="hover:bg-slate-50/80 transition">
+                                <td class="py-3.5 px-3 text-center">
+                                    <input type="checkbox" name="ids" th:value="${fd.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                           class="item-checkbox rounded border-slate-300 text-black focus:ring-black cursor-pointer">
+                                </td>
+                                <td class="py-3.5 px-4 font-mono font-bold text-slate-400" th:text="${fd.id}">1</td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-slate-900 text-sm block" th:text="${fd.tenFormDang}">Regular Fit</span>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-600" th:text="${fd.moTa != null and !#strings.isEmpty(fd.moTa) ? fd.moTa : '-'}">
+                                Dáng suông vừa vặn chuẩn tỉ lệ nam giới Việt
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono"
+                                      th:classappend="${fd.soSanPhamSuDung > 0} ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-500'">
+                                    <i class="fa-solid fa-shirt text-[10px]"></i>
+                                    <span th:text="${fd.soSanPhamSuDung + ' SP'}">0 SP</span>
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${fd.kichHoat}" class="status-badge-active">
+                                    <i class="fa-solid fa-circle text-[6px]"></i>Đang sử dụng
+                                </span>
+                                <span th:unless="${fd.kichHoat}" class="status-badge-inactive">
+                                    <i class="fa-solid fa-circle text-[6px]"></i>Ngưng sử dụng
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <!-- Nút Sửa (Mở Modal sửa) -->
+                                    <button type="button"
+                                            onclick="moModalSuaBtn(this)"
+                                            th:data-id="${fd.id}"
+                                            th:data-ten="${fd.tenFormDang}"
+                                            th:data-mo-ta="${fd.moTa != null ? fd.moTa : ''}"
+                                            th:data-kich-hoat="${fd.kichHoat}"
+                                            class="btn-outline px-2.5 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs"
+                                            title="Chỉnh sửa form dáng">
+                                        <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                        <span>Sửa</span>
+                                    </button>
+
+                                    <!-- Nút Đổi trạng thái -->
+                                    <a th:href="@{/admin/form-dang/doi-trang-thai(id=${fd.id})}"
+                                       th:classappend="${fd.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                       class="px-2.5 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 transition shadow-2xs"
+                                       th:title="${fd.kichHoat} ? 'Bấm để ngưng sử dụng' : 'Bấm để kích hoạt'">
+                                        <i th:class="${fd.kichHoat} ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]'"></i>
+                                        <span th:text="${fd.kichHoat} ? 'Ngưng' : 'Kích hoạt'">Đổi</span>
+                                    </a>
+
+                                    <!-- Nút Xóa (Chỉ cho phép khi chưa có sản phẩm liên kết) -->
+                                    <a th:if="${fd.soSanPhamSuDung == 0}"
+                                       th:href="@{/admin/form-dang/delete(id=${fd.id})}"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa form dáng này?');"
+                                       class="btn-danger-outline px-2 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs"
+                                       title="Xóa form dáng">
+                                        <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(listFormDang)}">
+                            <td colspan="7" class="py-12 text-center text-slate-400 italic">
+                                <i class="fa-solid fa-inbox text-3xl mb-2 text-slate-300 block"></i>
+                                Không tìm thấy form dáng nào phù hợp với bộ lọc hiện tại!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang Pagination -->
+            <div th:if="${totalPages > 1}" class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-slate-500">
+                    Hiển thị <strong th:text="${#lists.size(listFormDang)}">0</strong> trên tổng số <strong th:text="${pageData.totalElements}">0</strong> form dáng
+                </div>
+
+                <div class="flex items-center gap-1">
+                    <a th:if="${page > 0}"
+                       th:href="@{/admin/form-dang/hien-thi(page=${page - 1}, tuKhoa=${tuKhoa}, kichHoat=${kichHoatLoc})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition text-xs font-semibold">
+                        &larr; Trước
+                    </a>
+
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/admin/form-dang/hien-thi(page=${i}, tuKhoa=${tuKhoa}, kichHoat=${kichHoatLoc})}"
+                           th:text="${i + 1}"
+                           th:classappend="${i == page} ? 'bg-[#0f172a] text-white font-bold' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'"
+                           class="w-8 h-8 rounded-lg flex items-center justify-center text-xs transition">
+                            1
+                        </a>
+                    </th:block>
+
+                    <a th:if="${page + 1 < totalPages}"
+                       th:href="@{/admin/form-dang/hien-thi(page=${page + 1}, tuKhoa=${tuKhoa}, kichHoat=${kichHoatLoc})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition text-xs font-semibold">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+        </form>
+
+    </main>
+
+    <!-- 4. MODAL THÊM MỚI FORM DÁNG -->
+    <div id="modalThemFormDang" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+                        <i class="fa-solid fa-person-rays text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">Thêm Mới Form Dáng (Fit)</h3>
+                        <p class="text-[11px] text-slate-400">Tạo chuẩn form dáng may mặc thời trang</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalThemFormDang')" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/form-dang/add}" th:object="${formDang}" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Tên form dáng (Fit) <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input type="text" th:field="*{tenFormDang}"
+                           placeholder="VD: Oversized Fit"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('tenFormDang')}" th:errors="*{tenFormDang}"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Mô tả đặc điểm / Phong cách
+                    </label>
+                    <input type="text" th:field="*{moTa}"
+                           placeholder="VD: Rộng rãi thoải mái, tôn dáng trẻ trung cá tính"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition font-medium">
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="checkKichHoatThem" th:field="*{kichHoat}" checked class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+                    <label for="checkKichHoatThem" class="text-xs font-semibold text-slate-700 cursor-pointer">Kích hoạt sử dụng ngay</label>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="dongModal('modalThemFormDang')"
+                            class="btn-outline px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit"
+                            class="btn-navy px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Lưu form dáng</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. MODAL CẬP NHẬT FORM DÁNG -->
+    <div id="modalSuaFormDang" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+                        <i class="fa-solid fa-pen-to-square text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">Cập Nhật Form Dáng</h3>
+                        <p class="text-[11px] text-slate-400">Chỉnh sửa thông số form dáng cắt may</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalSuaFormDang')" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/form-dang/update}" method="post" class="space-y-4">
+                <input type="hidden" id="editFormDangId" name="id">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Tên form dáng (Fit) <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input type="text" id="editTenFormDang" name="tenFormDang" required
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Mô tả đặc điểm / Phong cách
+                    </label>
+                    <input type="text" id="editMoTa" name="moTa"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none transition font-medium">
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="editKichHoat" name="kichHoat" value="true" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+                    <label for="editKichHoat" class="text-xs font-semibold text-slate-700 cursor-pointer">Đang kích hoạt sử dụng</label>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="dongModal('modalSuaFormDang')"
+                            class="btn-outline px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit"
+                            class="btn-navy px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Cập nhật thay đổi</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function moModalThemMoi() {
+            document.getElementById('modalThemFormDang').classList.remove('hidden');
+        }
+        function dongModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        function moModalSuaBtn(btn) {
+            document.getElementById('editFormDangId').value = btn.getAttribute('data-id');
+            document.getElementById('editTenFormDang').value = btn.getAttribute('data-ten');
+            document.getElementById('editMoTa').value = btn.getAttribute('data-mo-ta') || '';
+            const kh = btn.getAttribute('data-kich-hoat');
+            document.getElementById('editKichHoat').checked = (kh === true || kh === 'true');
+            document.getElementById('modalSuaFormDang').classList.remove('hidden');
+        }
+        function moModalSua(id, ten, moTa, kichHoat) {
+            document.getElementById('editFormDangId').value = id;
+            document.getElementById('editTenFormDang').value = ten;
+            document.getElementById('editMoTa').value = moTa || '';
+            document.getElementById('editKichHoat').checked = (kichHoat === true || kichHoat === 'true');
+            document.getElementById('modalSuaFormDang').classList.remove('hidden');
+        }
+
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+            const bar = document.getElementById('bulkActionBar');
+            const countSpan = document.getElementById('soLuongDaChon');
+            const checkAll = document.getElementById('checkAll');
+
+            if (countSpan) countSpan.textContent = checkedCount;
+
+            if (checkedCount > 0) {
+                if (bar) bar.classList.remove('hidden');
+            } else {
+                if (bar) bar.classList.add('hidden');
+            }
+
+            if (checkAll && checkboxes.length > 0) {
+                checkAll.checked = (checkedCount === checkboxes.length);
+                checkAll.indeterminate = (checkedCount > 0 && checkedCount < checkboxes.length);
+            }
+        }
+
+        function boChonTatCa() {
+            const checkAll = document.getElementById('checkAll');
+            if (checkAll) checkAll.checked = false;
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function xacNhanThaoTac(message) {
+            const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+            if (checkedCount === 0) {
+                alert('Vui lòng chọn ít nhất một form dáng để thao tác!');
+                return false;
+            }
+            return confirm(message);
+        }
+    </script>
+</body>
+</html>

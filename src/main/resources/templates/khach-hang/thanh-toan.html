@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán đơn hàng | Simplain</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts Plus Jakarta Sans -->
+    <!-- Dữ liệu Địa giới hành chính Việt Nam (Tỉnh - Huyện - Xã) -->
+    <script src="/js/vietnam-address.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* Design System Button & Card */
+        .btn-navy {
+            background-color: #0f172a;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .btn-navy:hover {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .btn-outline {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        .btn-outline:hover {
+            border-color: #94a3b8;
+            background-color: #f8fafc;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+
+    <!-- Header Navigation Bar -->
+    <header class="w-full bg-white border-b border-slate-200/80 sticky top-0 z-50 backdrop-blur-md bg-white/95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-6">
+                <a href="/cua-hang" class="flex items-center gap-2 group">
+                    <span class="w-9 h-9 rounded-xl bg-[#0f172a] text-white flex items-center justify-center font-black text-lg shadow-sm group-hover:scale-105 transition-transform">S</span>
+                    <div class="flex flex-col">
+                        <span class="font-extrabold text-base tracking-wider text-[#0f172a] leading-none uppercase">Simplain</span>
+                        <span class="text-[9px] font-semibold text-slate-400 tracking-widest uppercase">Namwear</span>
+                    </div>
+                </a>
+
+                <nav class="hidden md:flex items-center space-x-6 text-xs font-bold uppercase tracking-wider text-slate-600">
+                    <a href="/cua-hang" class="hover:text-blue-600 transition">Cửa hàng</a>
+                    <a href="/gio-hang" class="hover:text-blue-600 transition">Giỏ hàng</a>
+                    <a href="/khach-hang/yeu-thich" class="hover:text-rose-600 transition">Yêu thích</a>
+                </nav>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                <a href="/gio-hang" class="text-xs font-bold text-slate-600 hover:text-blue-600 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                    <span>Quay lại giỏ hàng</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+
+        <!-- Breadcrumb & Header Title -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <nav class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+                    <a href="/cua-hang" class="hover:text-slate-600 transition">Cửa hàng</a>
+                    <span>/</span>
+                    <a href="/gio-hang" class="hover:text-slate-600 transition">Giỏ hàng</a>
+                    <span>/</span>
+                    <span class="text-blue-600 font-bold">Thanh toán (US19)</span>
+                </nav>
+                <h1 class="text-2xl font-black text-[#0f172a] tracking-tight flex items-center gap-3">
+                    <span>Xác Nhận &amp; Thanh Toán Đơn Hàng</span>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold">
+                        Checkout
+                    </span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                <i class="fa-solid fa-shield-check text-emerald-600 text-sm"></i>
+                <span class="font-medium">Thanh toán bảo mật &amp; Đổi trả 60 ngày</span>
+            </div>
+        </div>
+
+        <!-- Thông báo lỗi (nếu có) -->
+        <div th:if="${thongBaoLoi}" class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-3 shadow-xs">
+            <i class="fa-solid fa-circle-exclamation text-base flex-shrink-0 text-rose-500"></i>
+            <span class="font-bold" th:text="${thongBaoLoi}">Đã xảy ra lỗi trong quá trình đặt hàng!</span>
+        </div>
+
+        <!-- FORM ĐẶT HÀNG (POST /thanh-toan/dat-hang) -->
+        <form th:action="@{/thanh-toan/dat-hang}" th:object="${datHangRequest}" method="post" id="formCheckout">
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <!-- ============================================================== -->
+                <!-- CỘT TRÁI (7/12): THÔNG TIN GIAO HÀNG & PHƯƠNG THỨC THANH TOÁN (AC 2) -->
+                <!-- ============================================================== -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- KHỐI 1: XÁC NHẬN ĐỊA CHỈ GIAO HÀNG (US13) -->
+                    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-sm font-extrabold text-[#0f172a] uppercase tracking-wide">1. Địa chỉ nhận hàng</h2>
+                                    <p class="text-[11px] text-slate-500">Thông tin giao nhận bưu phẩm cho Shipper</p>
+                                </div>
+                            </div>
+
+                            <a th:if="${daDangNhap}" href="/khach-hang/so-dia-chi?redirect=/thanh-toan"
+                               class="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 shadow-2xs">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>Thêm địa chỉ mới vào Sổ</span>
+                            </a>
+                        </div>
+
+                        <!-- Nếu khách hàng đã đăng nhập và có sổ địa chỉ -->
+                        <div th:if="${dsDiaChi != null and not #lists.isEmpty(dsDiaChi)}" class="space-y-3">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                Chọn nhanh từ Sổ địa chỉ đã lưu:
+                            </label>
+                            <div class="grid grid-cols-1 gap-2.5">
+                                <div th:each="dc : ${dsDiaChi}"
+                                     th:data-id="${dc.id}"
+                                     th:data-ten="${dc.tenNguoiNhan}"
+                                     th:data-sdt="${dc.soDienThoai}"
+                                     th:data-tinh="${dc.tinhThanh}"
+                                     th:data-huyen="${dc.quanHuyen}"
+                                     th:data-xa="${dc.phuongXa}"
+                                     th:data-chitiet="${dc.diaChiChiTiet}"
+                                     th:data-daydu="${dc.diaChiDayDu}"
+                                     onclick="chonDiaChiTuCard(this)"
+                                     class="p-3.5 rounded-2xl border transition cursor-pointer flex items-start gap-3 dia-chi-card hover:border-blue-400 hover:bg-blue-50/20"
+                                     th:classappend="${datHangRequest.diaChiId == dc.id or (datHangRequest.diaChiId == null and dc.laMacDinh)} ? 'border-blue-600 bg-blue-50/40 ring-2 ring-blue-100' : 'border-slate-200 bg-white'">
+                                    <input type="radio" name="diaChiRadio" th:value="${dc.id}"
+                                           th:checked="${datHangRequest.diaChiId == dc.id or (datHangRequest.diaChiId == null and dc.laMacDinh)}"
+                                           class="mt-1 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 pointer-events-none">
+                                    <div class="flex-1 text-xs">
+                                        <div class="flex items-center gap-2 font-bold text-slate-900">
+                                            <span th:text="${dc.tenNguoiNhan}">Nguyễn Văn A</span>
+                                            <span class="text-slate-400">|</span>
+                                            <span class="text-slate-600 font-normal font-mono" th:text="${dc.soDienThoai}">0987654321</span>
+                                            <span th:if="${dc.laMacDinh}" class="px-2 py-0.2 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">
+                                                Mặc định
+                                            </span>
+                                        </div>
+                                        <div class="text-slate-700 font-semibold mt-1" th:text="${dc.diaChiChiTiet}">Số nhà...</div>
+                                        <div class="text-slate-500 text-[11px] mt-0.5" th:text="${dc.phuongXa + ', ' + dc.quanHuyen + ', ' + dc.tinhThanh}">Phường..., Quận..., Tỉnh...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" th:field="*{diaChiId}" id="inputDiaChiId">
+
+                        <!-- Các trường nhập thông tin người nhận -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                    Họ và tên người nhận <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="text" th:field="*{tenNguoiNhan}" id="inputTenNguoiNhan" required
+                                       placeholder="VD: Nguyễn Văn A"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                <span th:if="${#fields.hasErrors('tenNguoiNhan')}" th:errors="*{tenNguoiNhan}" class="text-[11px] text-rose-500 mt-1 block"></span>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                    Số điện thoại nhận hàng <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="tel" th:field="*{soDienThoaiNhan}" id="inputSoDienThoaiNhan" required
+                                       placeholder="VD: 0987654321"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                <span th:if="${#fields.hasErrors('soDienThoaiNhan')}" th:errors="*{soDienThoaiNhan}" class="text-[11px] text-rose-500 mt-1 block"></span>
+                            </div>
+                        </div>
+
+                        <!-- CỤM DROPDOWN PHÂN CẤP ĐẦY ĐỦ: TỈNH / THÀNH PHỐ -> QUẬN / HUYỆN -> PHƯỜNG / XÃ (US13) -->
+                        <div class="space-y-3 pt-2">
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                                <span>Địa chỉ nhận hàng phân cấp hành chính</span>
+                                <span class="text-[10px] text-blue-600 font-semibold">Tỉnh/Thành &rarr; Quận/Huyện &rarr; Phường/Xã</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                                        Tỉnh / Thành phố <span class="text-rose-500">*</span>
+                                    </label>
+                                    <select id="selectTinhCheckout" th:field="*{tinhThanh}" th:data-init="*{tinhThanh}" required
+                                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                        <option value="">-- Chọn Tỉnh / Thành --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                                        Quận / Huyện <span class="text-rose-500">*</span>
+                                    </label>
+                                    <select id="selectHuyenCheckout" th:field="*{quanHuyen}" th:data-init="*{quanHuyen}" required
+                                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                        <option value="">-- Chọn Quận / Huyện --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                                        Phường / Xã <span class="text-rose-500">*</span>
+                                    </label>
+                                    <select id="selectXaCheckout" th:field="*{phuongXa}" th:data-init="*{phuongXa}" required
+                                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                        <option value="">-- Chọn Phường / Xã --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                Số nhà, tòa nhà, ngõ/ngách, tên đường <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="text" th:field="*{diaChiChiTiet}" id="inputDiaChiChiTiet" required
+                                   placeholder="VD: Số 25 ngõ 12 đường Trần Duy Hưng"
+                                   oninput="capNhatDiaChiGiaoHangDayDu()"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        </div>
+
+                        <!-- Preview Địa chỉ giao hàng đầy đủ & Hidden Input -->
+                        <div class="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-200/80 text-xs">
+                            <div class="text-[11px] font-bold text-blue-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-truck-ramp-box text-blue-600"></i>
+                                <span>Địa chỉ giao hàng hoàn chỉnh (in trên nhãn bưu phẩm):</span>
+                            </div>
+                            <div id="previewDiaChiDayDu" class="font-bold text-slate-800 text-xs"
+                                 th:text="${datHangRequest.diaChiGiaoHang != null and not #strings.isEmpty(datHangRequest.diaChiGiaoHang) ? datHangRequest.diaChiGiaoHang : 'Chưa thiết lập địa chỉ cụ thể'}">
+                                Chưa thiết lập địa chỉ cụ thể
+                            </div>
+                            <input type="hidden" th:field="*{diaChiGiaoHang}" id="inputDiaChiGiaoHang">
+                            <span th:if="${#fields.hasErrors('diaChiGiaoHang')}" th:errors="*{diaChiGiaoHang}" class="text-[11px] text-rose-500 mt-1 block font-semibold"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                Ghi chú cho đơn hàng (Tùy chọn)
+                            </label>
+                            <textarea th:field="*{ghiChu}" rows="2"
+                                      placeholder="VD: Giao hàng vào giờ hành chính, gọi trước khi giao..."
+                                      class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- KHỐI 2: XÁC NHẬN PHƯƠNG THỨC THANH TOÁN (US18 - DANH SÁCH CỔNG KÍCH HOẠT) -->
+                    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
+                        <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-extrabold text-[#0f172a] uppercase tracking-wide">2. Phương thức thanh toán</h2>
+                                <p class="text-[11px] text-slate-500">Các cổng thanh toán đang hoạt động trên hệ thống</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-3">
+                            <div th:each="pt, iter : ${dsPhuongThuc}"
+                                 th:data-id="${pt.id}"
+                                 onclick="chonPhuongThuc(this.getAttribute('data-id'))"
+                                 class="p-4 rounded-2xl border transition cursor-pointer flex items-center gap-4 pttt-card hover:border-blue-500 hover:bg-blue-50/20"
+                                 th:classappend="${(datHangRequest.phuongThucThanhToanId == pt.id) or (datHangRequest.phuongThucThanhToanId == null and iter.first)} ? 'border-blue-600 bg-blue-50/40 ring-2 ring-blue-100' : 'border-slate-200 bg-white'">
+
+                                <input type="radio" name="phuongThucThanhToanId" th:value="${pt.id}"
+                                       th:id="${'pttt_' + pt.id}"
+                                       th:checked="${(datHangRequest.phuongThucThanhToanId == pt.id) or (datHangRequest.phuongThucThanhToanId == null and iter.first)}"
+                                       class="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 pointer-events-none">
+
+                                <!-- Logo / Icon Cổng thanh toán (Hỗ trợ ảnh upload từ máy hoặc icon) -->
+                                <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1.5 flex items-center justify-center flex-shrink-0 shadow-2xs overflow-hidden">
+                                    <img th:if="${pt.bieuTuong != null and (pt.bieuTuong.startsWith('/uploads/') or pt.bieuTuong.startsWith('http') or pt.bieuTuong.contains('.'))}"
+                                         th:src="${pt.bieuTuong}" alt="Logo" class="w-full h-full object-contain">
+                                    <i th:unless="${pt.bieuTuong != null and (pt.bieuTuong.startsWith('/uploads/') or pt.bieuTuong.startsWith('http') or pt.bieuTuong.contains('.'))}"
+                                       th:class="${pt.bieuTuong != null ? pt.bieuTuong : 'fa-solid fa-money-bill-wave text-emerald-600 text-xl'}"></i>
+                                </div>
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs sm:text-sm font-bold text-slate-900" th:text="${pt.tenPhuongThuc}">
+                                            Thanh toán khi nhận hàng (COD)
+                                        </span>
+                                        <span th:if="${pt.laTrucTuyen}" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            Online
+                                        </span>
+                                        <span th:unless="${pt.laTrucTuyen}" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            COD
+                                        </span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-1"
+                                       th:text="${pt.moTa != null ? pt.moTa : 'Thanh toán trực tiếp bằng tiền mặt khi shipper giao hàng tận nơi'}">
+                                        Mô tả phương thức thanh toán
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- CỘT PHẢI (5/12): TÓM TẮT ĐƠN HÀNG, VOUCHER, ĐIỂM & TỔNG TIỀN (AC 1) -->
+                <!-- ============================================================== -->
+                <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+
+                    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <h2 class="text-sm font-extrabold text-[#0f172a] uppercase tracking-wide">Tóm tắt đơn hàng</h2>
+                            <span class="text-xs font-semibold text-slate-500" th:text="${gioHang.tongSoLuongItem + ' sản phẩm'}">
+                                0 sản phẩm
+                            </span>
+                        </div>
+
+                        <!-- Danh sách sản phẩm thu gọn trong giỏ -->
+                        <div class="divide-y divide-slate-100 max-h-64 overflow-y-auto pr-1 space-y-3">
+                            <!-- Danh sách mục lẻ -->
+                            <div th:each="it : ${gioHang.danhSachItemLe}" class="pt-3 first:pt-0 flex items-center justify-between gap-3 text-xs">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <img th:src="${it.anhDaiDien}" alt="" class="w-12 h-14 object-cover rounded-xl border border-slate-200 flex-shrink-0 bg-slate-50">
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-slate-900 truncate" th:text="${it.tenSanPham}">Tên sản phẩm</div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5">
+                                            <span th:text="${it.tenMau}">Đen</span> / <span th:text="${it.tenKichThuoc}">L</span>
+                                            <span class="mx-1">x</span>
+                                            <span class="font-bold text-slate-800" th:text="${it.soLuong}">1</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="font-bold text-slate-900 whitespace-nowrap"
+                                     th:text="${#numbers.formatDecimal(it.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                    0 đ
+                                </div>
+                            </div>
+
+                            <!-- Danh sách Bó Combo -->
+                            <div th:each="cb : ${gioHang.danhSachBocCombo}" class="pt-3 flex flex-col gap-2 text-xs">
+                                <div class="flex items-center justify-between font-bold text-indigo-700">
+                                    <span class="flex items-center gap-1.5 truncate">
+                                        <i class="fa-solid fa-boxes-packing text-[11px]"></i>
+                                        <span th:text="${'[Combo] ' + cb.tenCombo + ' (x' + cb.soLuong + ')'}">Combo Khuyến Mãi</span>
+                                    </span>
+                                    <span th:text="${#numbers.formatDecimal(cb.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}">0 đ</span>
+                                </div>
+                                <div th:each="mc : ${cb.danhSachMonCon}" class="pl-4 text-[11px] text-slate-500 flex items-center justify-between">
+                                    <span class="truncate" th:text="${'- ' + mc.tenSanPham + ' (' + mc.tenMau + '/' + mc.tenKichThuoc + ')'}">Món con</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 1. KHỐI NHẬP MÃ VOUCHER GIẢM GIÁ (AC 1 & US27) -->
+                        <div class="pt-4 border-t border-slate-100 space-y-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                <i class="fa-solid fa-ticket text-blue-600 mr-1"></i> Mã Voucher giảm giá
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <div class="relative flex-1">
+                                    <input type="text" th:field="*{maVoucher}" id="inputMaVoucher" placeholder="Nhập mã voucher (VD: COOL20)"
+                                           oninput="xuLyNhapMaVoucher(this.value)"
+                                           class="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 uppercase font-mono font-bold text-slate-800">
+                                    <button type="button" id="btnXoaNhanhVoucher" onclick="boChonVoucher()" title="Bỏ chọn mã"
+                                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 font-bold hidden transition cursor-pointer p-1">
+                                        <i class="fa-solid fa-circle-xmark text-sm"></i>
+                                    </button>
+                                </div>
+                                <button type="button" onclick="apDungVoucher()"
+                                        class="btn-navy px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xs cursor-pointer">
+                                    Áp dụng
+                                </button>
+                                <button type="button" id="btnBoChonVoucher" onclick="boChonVoucher()"
+                                        class="hidden px-3.5 py-2.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition cursor-pointer items-center gap-1 shadow-2xs">
+                                    <i class="fa-solid fa-xmark"></i> Bỏ chọn
+                                </button>
+                            </div>
+
+                            <!-- Gợi ý mã & Nút mở popup Ví voucher (US27) -->
+                            <div class="flex items-center justify-between flex-wrap gap-1.5 pt-1 text-[10px]">
+                                <div class="flex items-center flex-wrap gap-1.5">
+                                    <span class="text-slate-400 font-semibold">Gợi ý:</span>
+                                    <button type="button" onclick="dienNhanhVoucher('COOL20')" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-mono font-bold hover:bg-blue-100 transition cursor-pointer">
+                                        COOL20
+                                    </button>
+                                    <button type="button" onclick="dienNhanhVoucher('FREESHIP30K')" class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold hover:bg-emerald-100 transition cursor-pointer">
+                                        FREESHIP30K
+                                    </button>
+                                </div>
+                                <button type="button" onclick="moModalChonVoucher()" class="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-wallet"></i> Chọn từ Ví Voucher
+                                </button>
+                            </div>
+                            <div id="thongBaoVoucher" class="text-xs font-semibold p-2.5 rounded-xl border hidden transition"></div>
+                        </div>
+
+                        <!-- 2. KHỐI SỬ DỤNG ĐIỂM TÍCH LŨY THÀNH VIÊN (AC 1 & US16) -->
+                        <div class="pt-4 border-t border-slate-100 space-y-2.5" th:if="${daDangNhap}">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-coins text-amber-500 text-sm"></i>
+                                    <span>Dùng điểm tích lũy thành viên</span>
+                                </label>
+                                <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200"
+                                      th:text="${'Số dư: ' + #numbers.formatDecimal(soDuCoolcash, 0, 'POINT', 0, 'COMMA') + ' điểm'}">
+                                    Số dư: 0 điểm
+                                </span>
+                            </div>
+
+                            <div th:if="${soDuCoolcash > 0}" class="flex items-center gap-2">
+                                <input type="number" th:field="*{soDiemCoolcash}" id="inputSoDiemCoolcash" min="0" th:max="${soDuCoolcash}"
+                                       placeholder="Số điểm muốn dùng (1 điểm = 1 đ)"
+                                       oninput="tinhPhiAsync()"
+                                       class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 font-medium text-slate-800">
+                                <button type="button" th:data-sodu="${soDuCoolcash}" onclick="dungToiDaCoolcash(this.getAttribute('data-sodu'))"
+                                        class="btn-outline px-3 py-2.5 rounded-xl text-xs font-bold shadow-2xs whitespace-nowrap cursor-pointer">
+                                    Dùng tối đa
+                                </button>
+                            </div>
+                            <p th:if="${soDuCoolcash <= 0}" class="text-[11px] text-slate-400 italic">
+                                Bạn chưa có điểm thưởng tích lũy. Hãy hoàn thành đơn hàng để được tích điểm lên tới 5%!
+                            </p>
+                        </div>
+
+                        <!-- 3. BẢNG TÍNH TIỀN THEO CÔNG THỨC AC 1: Tổng = Hàng - Voucher - Điểm + Ship -->
+                        <div class="pt-4 border-t border-slate-200/80 space-y-3 text-xs">
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>Tiền hàng:</span>
+                                <span class="font-bold text-slate-900" id="hienThiTienHang"
+                                      th:text="${#numbers.formatDecimal(chiPhi.tongTienHang, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                    0 đ
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-emerald-600" id="dongVoucherGiam">
+                                <span class="flex items-center gap-1">
+                                    <i class="fa-solid fa-tag text-[10px]"></i> Giảm giá Voucher:
+                                </span>
+                                <span class="font-bold" id="hienThiTienVoucher"
+                                      th:text="${'- ' + #numbers.formatDecimal(chiPhi.tienGiamGia, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                    - 0 đ
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-amber-600" id="dongCoolcashGiam" th:if="${daDangNhap}">
+                                <span class="flex items-center gap-1">
+                                    <i class="fa-solid fa-coins text-[10px]"></i> Trừ điểm tích lũy:
+                                </span>
+                                <span class="font-bold" id="hienThiTienCoolcash"
+                                      th:text="${'- ' + #numbers.formatDecimal(chiPhi.tienCoolcashDung, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                    - 0 đ
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span>Phí vận chuyển:</span>
+                                <span class="font-bold text-slate-900" id="hienThiPhiShip"
+                                      th:text="${chiPhi.phiVanChuyen > 0 ? (#numbers.formatDecimal(chiPhi.phiVanChuyen, 0, 'POINT', 0, 'COMMA') + ' đ') : 'MIỄN PHÍ'}">
+                                    MIỄN PHÍ
+                                </span>
+                            </div>
+
+                            <!-- TỔNG CỘNG THANH TOÁN (AC 1) -->
+                            <div class="pt-3 border-t border-slate-200/80 flex items-baseline justify-between">
+                                <div>
+                                    <div class="text-xs font-black text-slate-800 uppercase tracking-wide">Tổng thanh toán:</div>
+                                    <div class="text-[10px] text-slate-400 font-medium">Hàng - Voucher - Điểm + Ship</div>
+                                </div>
+                                <div class="text-2xl font-black text-blue-600" id="hienThiTongThanhToan"
+                                     th:text="${#numbers.formatDecimal(chiPhi.tongThanhToan, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                    0 đ
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút Xác nhận Đặt hàng -->
+                        <button type="submit" id="btnDatHang"
+                                class="w-full py-4 px-5 rounded-2xl btn-navy font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-bag-shopping text-sm"></i>
+                            <span>Xác Nhận &amp; Đặt Hàng Ngay</span>
+                        </button>
+
+                        <div class="text-center text-[10px] text-slate-400">
+                            Bằng cách đặt hàng, bạn đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của Simplain.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-slate-200/80 py-8 text-xs text-slate-500 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-extrabold text-[#0f172a]">SIMPLAIN</span>
+                <span>&copy; 2026 Simplain Menswear. All rights reserved.</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <span>Hotline: 1900 6868</span>
+                <span>Email: hotro@simplain.vn</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Xử lý Tương tác Checkout Động -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Khởi tạo cụm 3 Dropdown Tỉnh/Huyện/Xã liên cấp (US13)
+            if (typeof khoiTaoDropdownDiaChi === 'function') {
+                khoiTaoDropdownDiaChi('selectTinhCheckout', 'selectHuyenCheckout', 'selectXaCheckout');
+
+                // Lấy giá trị khởi tạo sẵn từ model
+                const elTinh = document.getElementById('selectTinhCheckout');
+                const elHuyen = document.getElementById('selectHuyenCheckout');
+                const elXa = document.getElementById('selectXaCheckout');
+
+                const initTinh = elTinh ? elTinh.getAttribute('data-init') : '';
+                const initHuyen = elHuyen ? elHuyen.getAttribute('data-init') : '';
+                const initXa = elXa ? elXa.getAttribute('data-init') : '';
+
+                if (initTinh && elTinh) {
+                    elTinh.value = initTinh;
+                    if (typeof napQuanHuyen === 'function') {
+                        napQuanHuyen(elTinh, elHuyen, elXa, initTinh, initHuyen, initXa);
+                    }
+                }
+            }
+
+            // 2. Lắng nghe sự kiện thay đổi trên 3 dropdown & số nhà chi tiết để tự động cập nhật chuỗi địa chỉ giao hàng
+            const selTinh = document.getElementById('selectTinhCheckout');
+            const selHuyen = document.getElementById('selectHuyenCheckout');
+            const selXa = document.getElementById('selectXaCheckout');
+            const inputCT = document.getElementById('inputDiaChiChiTiet');
+
+            if (selTinh) selTinh.addEventListener('change', () => capNhatDiaChiGiaoHangDayDu());
+            if (selHuyen) selHuyen.addEventListener('change', () => capNhatDiaChiGiaoHangDayDu());
+            if (selXa) selXa.addEventListener('change', () => capNhatDiaChiGiaoHangDayDu());
+            if (inputCT) inputCT.addEventListener('input', () => capNhatDiaChiGiaoHangDayDu());
+
+            // Đảm bảo cập nhật chuỗi địa chỉ đầy đủ ban đầu
+            capNhatDiaChiGiaoHangDayDu();
+
+            // Lắng nghe submit form checkout để chắc chắn dữ liệu địa chỉ đã đồng bộ
+            const formCheckout = document.getElementById('formCheckout');
+            if (formCheckout) {
+                formCheckout.addEventListener('submit', function() {
+                    capNhatDiaChiGiaoHangDayDu();
+                });
+            }
+        });
+
+        // Hàm ghép địa chỉ giao hàng đầy đủ & cập nhật khung preview
+        function capNhatDiaChiGiaoHangDayDu() {
+            const elTinh = document.getElementById('selectTinhCheckout');
+            const elHuyen = document.getElementById('selectHuyenCheckout');
+            const elXa = document.getElementById('selectXaCheckout');
+            const elCT = document.getElementById('inputDiaChiChiTiet');
+
+            const tinh = elTinh ? elTinh.value.trim() : '';
+            const huyen = elHuyen ? elHuyen.value.trim() : '';
+            const xa = elXa ? elXa.value.trim() : '';
+            const chitiet = elCT ? elCT.value.trim() : '';
+
+            const parts = [];
+            if (chitiet) parts.push(chitiet);
+            if (xa) parts.push(xa);
+            if (huyen) parts.push(huyen);
+            if (tinh) parts.push(tinh);
+
+            const dayDu = parts.join(', ');
+            const inputHidden = document.getElementById('inputDiaChiGiaoHang');
+            const preview = document.getElementById('previewDiaChiDayDu');
+
+            if (inputHidden) {
+                inputHidden.value = dayDu;
+            }
+            if (preview) {
+                preview.innerText = dayDu || 'Chưa thiết lập địa chỉ cụ thể';
+            }
+        }
+
+        // Chọn nhanh địa chỉ từ thẻ card Sổ địa chỉ (US13)
+        function chonDiaChiTuCard(element) {
+            if (!element) return;
+            const id = element.getAttribute('data-id');
+            const ten = element.getAttribute('data-ten');
+            const sdt = element.getAttribute('data-sdt');
+            const tinh = element.getAttribute('data-tinh') || '';
+            const huyen = element.getAttribute('data-huyen') || '';
+            const xa = element.getAttribute('data-xa') || '';
+            const chiTiet = element.getAttribute('data-chitiet') || '';
+            const dayDu = element.getAttribute('data-daydu') || '';
+
+            // 1. Điền các ô thông tin
+            const inputId = document.getElementById('inputDiaChiId');
+            const inputTen = document.getElementById('inputTenNguoiNhan');
+            const inputSdt = document.getElementById('inputSoDienThoaiNhan');
+            const inputChiTiet = document.getElementById('inputDiaChiChiTiet');
+
+            if (inputId) inputId.value = id;
+            if (inputTen) inputTen.value = ten || '';
+            if (inputSdt) inputSdt.value = sdt || '';
+            if (inputChiTiet) inputChiTiet.value = chiTiet || '';
+
+            // 2. Đồng bộ 3 Dropdown Tỉnh - Quận - Xã
+            const elTinh = document.getElementById('selectTinhCheckout');
+            const elHuyen = document.getElementById('selectHuyenCheckout');
+            const elXa = document.getElementById('selectXaCheckout');
+            if (elTinh && elHuyen && elXa) {
+                elTinh.value = tinh;
+                if (typeof napQuanHuyen === 'function') {
+                    napQuanHuyen(elTinh, elHuyen, elXa, tinh, huyen, xa);
+                }
+            }
+
+            // 3. Cập nhật chuỗi địa chỉ giao hàng và Preview
+            const chuoiChuan = dayDu || [chiTiet, xa, huyen, tinh].filter(Boolean).join(', ');
+            const inputHidden = document.getElementById('inputDiaChiGiaoHang');
+            const preview = document.getElementById('previewDiaChiDayDu');
+
+            if (inputHidden) inputHidden.value = chuoiChuan;
+            if (preview) preview.innerText = chuoiChuan || 'Chưa thiết lập địa chỉ cụ thể';
+
+            // 4. Cập nhật trạng thái Active giao diện Card & Radio
+            document.querySelectorAll('.dia-chi-card').forEach(card => {
+                card.classList.remove('border-blue-600', 'bg-blue-50/40', 'ring-2', 'ring-blue-100');
+                card.classList.add('border-slate-200', 'bg-white');
+            });
+            element.classList.remove('border-slate-200', 'bg-white');
+            element.classList.add('border-blue-600', 'bg-blue-50/40', 'ring-2', 'ring-blue-100');
+
+            const radio = element.querySelector('input[name="diaChiRadio"]');
+            if (radio) radio.checked = true;
+        }
+
+        // Chọn phương thức thanh toán
+        function chonPhuongThuc(id) {
+            const radio = document.getElementById('pttt_' + id);
+            if (radio) radio.checked = true;
+
+            document.querySelectorAll('.pttt-card').forEach(card => {
+                card.classList.remove('border-blue-600', 'bg-blue-50/40', 'ring-2', 'ring-blue-100');
+                card.classList.add('border-slate-200', 'bg-white');
+            });
+
+            const currentCard = radio.closest('.pttt-card');
+            if (currentCard) {
+                currentCard.classList.remove('border-slate-200', 'bg-white');
+                currentCard.classList.add('border-blue-600', 'bg-blue-50/40', 'ring-2', 'ring-blue-100');
+            }
+        }
+
+        // Điền nhanh mã voucher từ danh sách gợi ý
+        function dienNhanhVoucher(code) {
+            document.getElementById('inputMaVoucher').value = code;
+            capNhatTrangThaiNutBoChon(true);
+            apDungVoucher();
+        }
+
+        // Lắng nghe người dùng gõ mã voucher
+        function xuLyNhapMaVoucher(val) {
+            const coChu = val && val.trim().length > 0;
+            const btnXoaNhanh = document.getElementById('btnXoaNhanhVoucher');
+            if (btnXoaNhanh) {
+                if (coChu) {
+                    btnXoaNhanh.classList.remove('hidden');
+                } else {
+                    btnXoaNhanh.classList.add('hidden');
+                    capNhatTrangThaiNutBoChon(false);
+                }
+            }
+        }
+
+        // Cập nhật hiển thị nút Bỏ chọn voucher
+        function capNhatTrangThaiNutBoChon(daCoMa) {
+            const btnBoChon = document.getElementById('btnBoChonVoucher');
+            const btnXoaNhanh = document.getElementById('btnXoaNhanhVoucher');
+            if (btnBoChon) {
+                if (daCoMa) {
+                    btnBoChon.classList.remove('hidden');
+                    btnBoChon.classList.add('inline-flex');
+                } else {
+                    btnBoChon.classList.add('hidden');
+                    btnBoChon.classList.remove('inline-flex');
+                }
+            }
+            if (btnXoaNhanh) {
+                if (daCoMa) {
+                    btnXoaNhanh.classList.remove('hidden');
+                } else {
+                    btnXoaNhanh.classList.add('hidden');
+                }
+            }
+        }
+
+        // Áp dụng mã Voucher
+        function apDungVoucher() {
+            tinhPhiAsync(true);
+        }
+
+        // Bỏ chọn Voucher đã áp dụng
+        function boChonVoucher() {
+            const input = document.getElementById('inputMaVoucher');
+            if (input) {
+                input.value = '';
+            }
+            capNhatTrangThaiNutBoChon(false);
+
+            // Gọi API tính toán lại chi phí đơn hàng khi không còn voucher
+            tinhPhiAsync(false);
+
+            // Cập nhật thông báo đã hủy voucher
+            const tbVoucher = document.getElementById('thongBaoVoucher');
+            if (tbVoucher) {
+                tbVoucher.innerText = 'Đã bỏ chọn mã giảm giá thành công.';
+                tbVoucher.classList.remove('hidden', 'text-emerald-700', 'text-rose-700', 'bg-emerald-50', 'bg-rose-50', 'border-emerald-200', 'border-rose-200');
+                tbVoucher.classList.add('text-slate-600', 'bg-slate-50', 'border', 'border-slate-200');
+                setTimeout(() => {
+                    const currentInput = document.getElementById('inputMaVoucher');
+                    if (currentInput && !currentInput.value.trim()) {
+                        tbVoucher.classList.add('hidden');
+                    }
+                }, 3000);
+            }
+        }
+
+        // Sử dụng tối đa điểm tích lũy thành viên
+        function dungToiDaCoolcash(soDu) {
+            const input = document.getElementById('inputSoDiemCoolcash');
+            if (input) {
+                input.value = soDu;
+                tinhPhiAsync();
+            }
+        }
+
+        // Tính toán chi phí động qua AJAX (AC 1)
+        function tinhPhiAsync(laBamVoucher = false) {
+            const maVoucher = document.getElementById('inputMaVoucher') ? document.getElementById('inputMaVoucher').value.trim() : '';
+            const inputCoolcash = document.getElementById('inputSoDiemCoolcash');
+            const soDiem = inputCoolcash && inputCoolcash.value ? inputCoolcash.value : 0;
+
+            const params = new URLSearchParams();
+            if (maVoucher) params.append('maVoucher', maVoucher);
+            if (soDiem) params.append('soDiemCoolcash', soDiem);
+
+            fetch('/thanh-toan/tinh-phi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Cập nhật số tiền hiển thị
+                document.getElementById('hienThiTienHang').innerText = dinhDangTien(data.tongTienHang);
+                document.getElementById('hienThiTienVoucher').innerText = '- ' + dinhDangTien(data.tienGiamGia);
+                if (document.getElementById('hienThiTienCoolcash')) {
+                    document.getElementById('hienThiTienCoolcash').innerText = '- ' + dinhDangTien(data.tienCoolcashDung);
+                }
+
+                if (data.phiVanChuyen > 0) {
+                    document.getElementById('hienThiPhiShip').innerText = dinhDangTien(data.phiVanChuyen);
+                    document.getElementById('hienThiPhiShip').classList.remove('text-emerald-600');
+                    document.getElementById('hienThiPhiShip').classList.add('text-slate-900');
+                } else {
+                    document.getElementById('hienThiPhiShip').innerText = 'MIỄN PHÍ';
+                    document.getElementById('hienThiPhiShip').classList.remove('text-slate-900');
+                    document.getElementById('hienThiPhiShip').classList.add('text-emerald-600');
+                }
+
+                document.getElementById('hienThiTongThanhToan').innerText = dinhDangTien(data.tongThanhToan);
+
+                // Cập nhật trạng thái nút Bỏ chọn Voucher
+                if (data.hopLe && data.tienGiamGia > 0) {
+                    capNhatTrangThaiNutBoChon(true);
+                } else if (!maVoucher) {
+                    capNhatTrangThaiNutBoChon(false);
+                }
+
+                // Cập nhật thông báo voucher nếu người dùng bấm nút với thông báo lỗi rõ ràng (US27)
+                const tbVoucher = document.getElementById('thongBaoVoucher');
+                if (tbVoucher && (laBamVoucher || maVoucher)) {
+                    tbVoucher.innerText = data.thongBao;
+                    tbVoucher.classList.remove('hidden', 'text-emerald-700', 'text-rose-700', 'text-slate-600', 'bg-emerald-50', 'bg-rose-50', 'bg-slate-50', 'border-emerald-200', 'border-rose-200', 'border-slate-200');
+                    if (data.hopLe && data.tienGiamGia > 0) {
+                        tbVoucher.classList.add('text-emerald-700', 'bg-emerald-50', 'border', 'border-emerald-200');
+                    } else {
+                        tbVoucher.classList.add('text-rose-700', 'bg-rose-50', 'border', 'border-rose-200');
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Lỗi tính phí Checkout:', err);
+            });
+        }
+
+        function dinhDangTien(so) {
+            if (so === null || so === undefined) return '0 đ';
+            return new Intl.NumberFormat('vi-VN').format(so) + ' đ';
+        }
+
+        // Xử lý Modal chọn Voucher từ Ví cá nhân (US27)
+        function moModalChonVoucher() {
+            const modal = document.getElementById('modalChonVoucher');
+            const container = document.getElementById('danhSachVoucherModal');
+            if (modal) modal.classList.remove('hidden');
+
+            const maDangDung = document.getElementById('inputMaVoucher') ? document.getElementById('inputMaVoucher').value.trim().toUpperCase() : '';
+
+            // Cập nhật nút Bỏ chọn ở footer modal
+            const footerBoChon = document.getElementById('modalFooterBoChon');
+            if (footerBoChon) {
+                if (maDangDung) {
+                    footerBoChon.classList.remove('hidden');
+                    footerBoChon.classList.add('inline-flex');
+                } else {
+                    footerBoChon.classList.add('hidden');
+                    footerBoChon.classList.remove('inline-flex');
+                }
+            }
+
+            fetch('/khach-hang/api/voucher/vi-voucher')
+                .then(res => {
+                    if (res.status === 401) {
+                        container.innerHTML = `
+                            <div class="text-center py-6 space-y-2">
+                                <i class="fa-solid fa-lock text-amber-500 text-2xl"></i>
+                                <p class="text-xs text-slate-600 font-medium">Vui lòng đăng nhập để xem các voucher trong ví!</p>
+                                <a href="/khach-hang/dang-nhap?redirect=/thanh-toan" class="inline-block px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs">Đăng nhập</a>
+                            </div>
+                        `;
+                        return null;
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    if (!Array.isArray(data) || data.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-6 space-y-2">
+                                <i class="fa-solid fa-ticket-simple text-slate-300 text-2xl"></i>
+                                <p class="text-xs text-slate-500">Ví của bạn chưa có mã giảm giá nào khả dụng.</p>
+                                <a href="/khach-hang/voucher" target="_blank" class="inline-block px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs">Mở Kho Voucher để thu thập</a>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '';
+                    data.forEach(vc => {
+                        const laDangDung = maDangDung && (maDangDung === vc.maCode.toUpperCase());
+                        html += `
+                            <div class="p-3 rounded-2xl border ${laDangDung ? 'border-blue-500 bg-blue-50/50 ring-2 ring-blue-100' : 'border-slate-200 bg-white'} hover:border-blue-300 transition flex items-center justify-between gap-3 shadow-2xs">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono font-black text-xs text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">${vc.maCode}</span>
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">${vc.trangThaiLabel}</span>
+                                        ${laDangDung ? '<span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1"><i class="fa-solid fa-check"></i> Đang chọn</span>' : ''}
+                                    </div>
+                                    <h4 class="text-xs font-bold text-slate-800">${vc.tenVoucher}</h4>
+                                    <p class="text-[11px] text-slate-500">${vc.dieuKienApDung}</p>
+                                    <div class="text-[10px] text-slate-400">HSD: <span class="font-mono">${vc.hanSuDungFormatted}</span></div>
+                                </div>
+                                <div>
+                                    ${laDangDung ? `
+                                        <button type="button" onclick="boChonVoucherTuModal()" class="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs whitespace-nowrap shadow-xs cursor-pointer flex items-center gap-1">
+                                            <i class="fa-solid fa-xmark"></i> Bỏ chọn
+                                        </button>
+                                    ` : `
+                                        <button type="button" onclick="chonVoucherTuModal('${vc.maCode}')" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs whitespace-nowrap shadow-xs cursor-pointer">
+                                            Áp dụng
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    container.innerHTML = `<p class="text-xs text-rose-500 text-center py-4">Không thể tải ví voucher. Vui lòng thử lại sau!</p>`;
+                });
+        }
+
+        function dongModalChonVoucher() {
+            const modal = document.getElementById('modalChonVoucher');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function chonVoucherTuModal(code) {
+            document.getElementById('inputMaVoucher').value = code;
+            capNhatTrangThaiNutBoChon(true);
+            dongModalChonVoucher();
+            apDungVoucher();
+        }
+
+        function boChonVoucherTuModal() {
+            dongModalChonVoucher();
+            boChonVoucher();
+        }
+
+        // Tự động kiểm tra trạng thái ban đầu khi tải trang
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputVc = document.getElementById('inputMaVoucher');
+            if (inputVc && inputVc.value.trim().length > 0) {
+                capNhatTrangThaiNutBoChon(true);
+            }
+        });
+    </script>
+
+    <!-- MODAL CHỌN VOUCHER TỪ VÍ CÁ NHÂN (US27) -->
+    <div id="modalChonVoucher" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-800">Ví Voucher Của Bạn</h3>
+                </div>
+                <button type="button" onclick="dongModalChonVoucher()" class="text-slate-400 hover:text-slate-700 text-sm p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Danh sách Voucher trong Ví tải qua API -->
+            <div id="danhSachVoucherModal" class="p-4 overflow-y-auto space-y-3 flex-grow max-h-[60vh]">
+                <div class="text-center py-6 text-slate-400 text-xs">
+                    <i class="fa-solid fa-spinner fa-spin text-base mb-2"></i>
+                    <p>Đang tải danh sách voucher khả dụng...</p>
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs">
+                <a href="/khach-hang/voucher" target="_blank" class="text-blue-600 font-bold hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Mở Kho Voucher để tìm thêm
+                </a>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="modalFooterBoChon" onclick="boChonVoucherTuModal()" class="hidden px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs cursor-pointer items-center gap-1">
+                        <i class="fa-solid fa-xmark"></i> Bỏ chọn voucher đang dùng
+                    </button>
+                    <button type="button" onclick="dongModalChonVoucher()" class="px-4 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-200 font-bold text-slate-700 cursor-pointer">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

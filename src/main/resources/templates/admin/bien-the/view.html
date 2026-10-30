@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Biến thể SKU &amp; Quản lý Hình ảnh | SIMPLAIN STORE CMS</title>
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-black text-white text-xs py-2 text-center font-medium tracking-wide">
+        Hệ thống Quản trị SIMPLAIN STORE &bull; Chi tiết Biến thể SKU, Tồn kho &amp; Thư viện Hình ảnh (US09)
+    </div>
+
+    <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('bien-the')}"></div>
+
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-8 bg-[#f8fafc]">
+        <div class="w-full space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-base">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <div>
+                    <span class="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">US09 &bull; Chỉnh sửa SKU &amp; Hình ảnh</span>
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight mt-1">
+                        Cập nhật Biến thể SKU: <span class="font-mono text-blue-600" th:text="${bienThe.maSku}">SP-01</span>
+                    </h2>
+                </div>
+            </div>
+            <a href="/admin/bien-the/hien-thi" class="btn-outline px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-arrow-left mr-1.5"></i>Quay lại danh sách SKU
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- CỘT TRÁI (7/12): FORM CẬP NHẬT THÔNG TIN SKU, MÀU + SIZE, GIÁ & TỒN KHO -->
+            <div class="lg:col-span-7 bg-white p-7 sm:p-8 rounded-3xl shadow-sm border border-slate-200/90 h-fit">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-900 mb-5 border-b border-slate-100 pb-3 flex items-center">
+                    <i class="fa-solid fa-sliders text-blue-600 mr-2"></i>Thông tin Biến thể (Màu + Size) &amp; Tồn kho
+                </h3>
+
+                <form th:object="${bienThe}" action="/admin/bien-the/update" method="post" enctype="multipart/form-data" class="space-y-4" novalidate>
+                    <input type="hidden" th:field="*{id}">
+
+                    <!-- Sản phẩm gốc -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Sản phẩm gốc <span class="text-rose-500 font-bold">*</span></label>
+                        <select th:field="*{maSanPhamId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-slate-800 transition font-medium">
+                            <option value="">-- Chọn sản phẩm gốc --</option>
+                            <option th:each="sp : ${listSanPham}"
+                                    th:value="${sp.id}"
+                                    th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}"></option>
+                        </select>
+                        <span class="error" th:if="${#fields.hasErrors('maSanPhamId')}" th:errors="*{maSanPhamId}"></span>
+                    </div>
+
+                    <!-- Màu sắc + Kích thước -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Màu sắc <span class="text-rose-500 font-bold">*</span></label>
+                            <select th:field="*{maMauSacId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-slate-800 transition font-medium">
+                                <option value="">-- Chọn Màu --</option>
+                                <option th:each="ms : ${listMauSac}"
+                                        th:value="${ms.id}"
+                                        th:text="${ms.tenMau + ' (' + ms.maMau + ')'}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('maMauSacId')}" th:errors="*{maMauSacId}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Kích thước (Size) <span class="text-rose-500 font-bold">*</span></label>
+                            <select th:field="*{maKichThuocId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-slate-800 transition font-medium">
+                                <option value="">-- Chọn Size --</option>
+                                <option th:each="kt : ${listKichThuoc}"
+                                        th:value="${kt.id}"
+                                        th:text="${kt.maKichThuoc + ' - ' + kt.tenKichThuoc}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('maKichThuocId')}" th:errors="*{maKichThuocId}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Mã SKU & Barcode -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Mã SKU <span class="text-red-500">*</span></label>
+                            <input type="text" th:field="*{maSku}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black outline-none text-xs font-mono uppercase">
+                            <span class="error" th:if="${#fields.hasErrors('maSku')}" th:errors="*{maSku}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Mã vạch Barcode</label>
+                            <input type="text" th:field="*{maVachBarcode}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black outline-none text-xs font-mono uppercase">
+                            <span class="error" th:if="${#fields.hasErrors('maVachBarcode')}" th:errors="*{maVachBarcode}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Giá bán, Giá gốc & Số lượng tồn kho -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Giá bán (VNĐ) <span class="text-red-500">*</span></label>
+                            <input type="number" th:field="*{giaBan}" min="0" step="1000"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-neutral-300 bg-white focus:border-black outline-none text-xs font-mono font-bold">
+                            <span class="error" th:if="${#fields.hasErrors('giaBan')}" th:errors="*{giaBan}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Giá gốc (VNĐ) <span class="text-red-500">*</span></label>
+                            <input type="number" th:field="*{giaGoc}" min="0" step="1000"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-neutral-300 bg-white focus:border-black outline-none text-xs font-mono">
+                            <span class="error" th:if="${#fields.hasErrors('giaGoc')}" th:errors="*{giaGoc}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Tồn kho <span class="text-red-500">*</span></label>
+                            <input type="number" th:field="*{soLuong}" min="0" step="1"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-neutral-300 bg-white focus:border-black outline-none text-xs font-mono font-black text-emerald-700">
+                            <span class="error" th:if="${#fields.hasErrors('soLuong')}" th:errors="*{soLuong}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Upload kèm thêm nhiều ảnh khi Lưu cập nhật -->
+                    <div class="p-4 rounded-xl bg-blue-50/40 border border-blue-200/80 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-neutral-700">
+                                <i class="fa-solid fa-images text-blue-600 mr-1"></i>Tải thêm nhiều hình ảnh khi cập nhật (Tùy chọn)
+                            </label>
+                            <span id="badgeDemAnhLeft" class="text-[10px] font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">Đã chọn: 0 ảnh</span>
+                        </div>
+                        <input type="file" name="filesAnh" id="filesAnhLeftInput" multiple accept="image/*"
+                               onchange="congDonAnhLeft(this)"
+                               class="w-full text-xs text-neutral-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-black file:text-white hover:file:bg-neutral-800 cursor-pointer bg-white p-1.5 rounded-lg border border-neutral-300">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button type="button" onclick="document.getElementById('filesAnhLeftInput').click()"
+                                    class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition cursor-pointer">
+                                <i class="fa-solid fa-images mr-1"></i>+ Chọn cộng dồn thêm ảnh
+                            </button>
+                            <button type="button" onclick="themOChonFileLeft()"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-neutral-300 hover:border-black text-neutral-700 text-[11px] font-bold transition cursor-pointer">
+                                <i class="fa-solid fa-plus mr-1"></i>+ Thêm ô chọn file riêng
+                            </button>
+                        </div>
+                        <div id="danhSachOChonFilePhuLeft" class="space-y-1.5"></div>
+                        <div id="khungXemTruocAnhLeft" class="hidden grid grid-cols-4 gap-2 pt-1"></div>
+                        <input type="text" name="duongDanAnhUrl"
+                               placeholder="Hoặc dán thêm URL ảnh mới (phân cách bằng dấu phẩy)..."
+                               class="w-full px-3 py-1.5 rounded-lg border border-neutral-300 bg-white focus:border-black outline-none text-xs font-mono">
+                    </div>
+
+                    <!-- Trạng thái mở bán -->
+                    <div class="p-3.5 rounded-xl border border-neutral-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-neutral-800">Trạng thái Mở bán Biến thể SKU</div>
+                            <div class="text-[11px] text-neutral-400">Cho phép khách hàng đặt mua phiên bản Màu + Size này</div>
+                        </div>
+                        <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer">
+                    </div>
+
+                    <div class="flex items-center space-x-3 pt-4 border-t border-slate-100">
+                        <button type="submit" class="flex-1 btn-navy font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Lưu Cập nhật Biến thể SKU</span>
+                        </button>
+                        <a href="/admin/bien-the/hien-thi" class="flex-1 text-center btn-outline font-semibold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Quay lại</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CỘT PHẢI (5/12): QUẢN LÝ ALBUM NHIỀU HÌNH ẢNH CỦA BIẾN THỂ (hinh_anh) -->
+            <div class="lg:col-span-5 bg-white p-6 sm:p-7 rounded-3xl shadow-sm border border-slate-200/90 space-y-5 h-fit">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">
+                            <i class="fa-solid fa-photo-film text-blue-600 mr-1.5"></i>Album Hình ảnh SKU
+                        </h3>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Chọn ảnh đại diện chính hoặc xóa từng ảnh của biến thể</p>
+                    </div>
+                    <span class="text-xs font-mono font-bold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-xl border border-blue-200"
+                          th:text="${#lists.size(bienThe.danhSachHinhAnh) + ' ảnh'}">0 ảnh</span>
+                </div>
+
+                <!-- Danh sách ảnh hiện có của SKU -->
+                <div th:if="${not #lists.isEmpty(bienThe.danhSachHinhAnh)}" class="grid grid-cols-2 gap-3">
+                    <div th:each="anh : ${bienThe.danhSachHinhAnh}"
+                         th:classappend="${anh.laAnhDaiDien} ? 'border-[#2563eb] ring-2 ring-[#2563eb]/20' : 'border-neutral-200'"
+                         class="relative rounded-xl overflow-hidden border bg-neutral-50 group">
+                        <div class="h-36 w-full bg-neutral-100 overflow-hidden">
+                            <img th:src="${anh.duongDanAnh}" alt="SKU Gallery" class="w-full h-full object-cover">
+                        </div>
+
+                        <!-- Nhãn Ảnh đại diện -->
+                        <div th:if="${anh.laAnhDaiDien}" class="absolute top-2 left-2 bg-[#2563eb] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow">
+                            <i class="fa-solid fa-star mr-1 text-[9px]"></i>Ảnh đại diện
+                        </div>
+
+                        <!-- Thanh nút thao tác trên từng ảnh -->
+                        <div class="p-2 bg-white border-t border-neutral-100 flex items-center justify-between gap-1">
+                            <a th:if="${!anh.laAnhDaiDien}"
+                               th:href="@{/admin/bien-the/chon-anh-dai-dien(hinhAnhId=${anh.id}, bienTheId=${bienThe.id})}"
+                               class="text-[10px] font-bold text-[#2563eb] hover:underline">
+                                Đặt làm đại diện
+                            </a>
+                            <span th:if="${anh.laAnhDaiDien}" class="text-[10px] font-semibold text-emerald-600">Đang hiển thị chính</span>
+
+                            <a th:href="@{/admin/bien-the/xoa-anh(hinhAnhId=${anh.id}, bienTheId=${bienThe.id})}"
+                               onclick="return confirm('Xóa hình ảnh này khỏi biến thể SKU?');"
+                               class="w-6 h-6 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center text-[10px] transition"
+                               title="Xóa ảnh này">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(bienThe.danhSachHinhAnh)}" class="py-10 text-center border border-dashed border-neutral-300 rounded-xl bg-neutral-50 text-neutral-400 text-xs">
+                    <i class="fa-regular fa-images text-2xl mb-1.5 block"></i>
+                    Biến thể SKU này chưa có hình ảnh nào.
+                </div>
+
+                <!-- Form Upload Nhanh Nhiều Ảnh trực tiếp tại cột phải -->
+                <form action="/admin/bien-the/upload-anh" method="post" enctype="multipart/form-data"
+                      class="p-4 rounded-xl bg-neutral-50 border border-neutral-200 space-y-3">
+                    <input type="hidden" name="id" th:value="${bienThe.id}">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-bold text-neutral-800">
+                            <i class="fa-solid fa-cloud-arrow-up text-[#2563eb] mr-1"></i>Upload Nhanh Thêm Nhiều Ảnh
+                        </div>
+                        <span id="badgeDemAnhView" class="text-[10px] font-extrabold text-[#2563eb] bg-purple-100 px-2 py-0.5 rounded">Đã chọn: 0 ảnh</span>
+                    </div>
+
+                    <p class="text-[11px] text-neutral-500 leading-snug">
+                        Bấm chọn ảnh nhiều lần liên tiếp để cộng dồn, giữ <b>Ctrl / Shift</b> quét chọn nhiều ảnh, hoặc bấm <b>"+ Thêm ô chọn file riêng"</b>:
+                    </p>
+
+                    <input type="file" name="filesAnh" id="filesAnhViewInput" multiple accept="image/*"
+                           onchange="congDonAnhView(this)"
+                           class="w-full text-xs text-neutral-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#2563eb] file:text-white hover:file:bg-[#5b4cdb] cursor-pointer bg-white p-1 rounded-lg border border-neutral-300">
+
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button type="button" onclick="document.getElementById('filesAnhViewInput').click()"
+                                class="px-2.5 py-1.5 rounded-lg bg-[#2563eb] hover:bg-[#5b4cdb] text-white text-[11px] font-bold transition cursor-pointer">
+                            <i class="fa-solid fa-images mr-1"></i>+ Chọn cộng dồn thêm ảnh
+                        </button>
+                        <button type="button" onclick="themOChonFileView()"
+                                class="px-2.5 py-1.5 rounded-lg bg-white border border-neutral-300 hover:border-black text-neutral-700 text-[11px] font-bold transition cursor-pointer">
+                            <i class="fa-solid fa-plus mr-1"></i>+ Thêm ô chọn file riêng
+                        </button>
+                    </div>
+
+                    <div id="danhSachOChonFilePhuView" class="space-y-1.5"></div>
+                    <div id="khungXemTruocAnhView" class="hidden grid grid-cols-3 gap-2 pt-1"></div>
+
+                    <input type="text" name="duongDanAnhUrl"
+                           placeholder="Hoặc dán thêm nhiều URL hình ảnh (cách nhau dấu phẩy)..."
+                           class="w-full px-3 py-1.5 rounded-lg border border-neutral-300 bg-white focus:border-black outline-none text-xs font-mono">
+                    <button type="submit" class="w-full btn-navy font-bold py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
+                        <i class="fa-solid fa-upload mr-1"></i>Tải Tất Cả Ảnh Đã Chọn Lên Album SKU
+                    </button>
+                </form>
+
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <script>
+        let boNhoFileView = new DataTransfer();
+
+        function congDonAnhView(input) {
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach(fileNew => {
+                    const daCo = Array.from(boNhoFileView.files).some(
+                        f => f.name === fileNew.name && f.size === fileNew.size && f.lastModified === fileNew.lastModified
+                    );
+                    if (!daCo) {
+                        boNhoFileView.items.add(fileNew);
+                    }
+                });
+                input.files = boNhoFileView.files;
+            }
+            veXemTruocView();
+        }
+
+        function xoaMotAnhView(idxCanXoa) {
+            const dtMoi = new DataTransfer();
+            Array.from(boNhoFileView.files).forEach((f, idx) => {
+                if (idx !== idxCanXoa) dtMoi.items.add(f);
+            });
+            boNhoFileView = dtMoi;
+            const input = document.getElementById('filesAnhViewInput');
+            if (input) input.files = boNhoFileView.files;
+            veXemTruocView();
+        }
+
+        function themOChonFileView() {
+            const container = document.getElementById('danhSachOChonFilePhuView');
+            if (!container) return;
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-1.5';
+            row.innerHTML = `
+                <input type="file" name="filesAnh" multiple accept="image/*"
+                       onchange="capNhatDemView()"
+                       class="flex-1 text-xs text-neutral-600 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-neutral-800 file:text-white cursor-pointer bg-white p-1 rounded-lg border border-neutral-300">
+                <button type="button" onclick="this.parentElement.remove(); capNhatDemView();"
+                        class="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white text-xs flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function capNhatDemView() {
+            let tong = boNhoFileView.files.length;
+            document.querySelectorAll('#danhSachOChonFilePhuView input[type="file"]').forEach(inp => {
+                if (inp.files) tong += inp.files.length;
+            });
+            const badge = document.getElementById('badgeDemAnhView');
+            if (badge) badge.textContent = 'Đã chọn: ' + tong + ' ảnh';
+        }
+
+        function veXemTruocView() {
+            const container = document.getElementById('khungXemTruocAnhView');
+            capNhatDemView();
+            if (!container) return;
+            container.innerHTML = '';
+            if (boNhoFileView.files.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            Array.from(boNhoFileView.files).forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative rounded-lg overflow-hidden border border-neutral-300 h-16 bg-white';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <span class="absolute top-0.5 left-0.5 bg-black/80 text-white text-[9px] font-bold px-1 rounded">#${idx + 1}</span>
+                        <button type="button" onclick="xoaMotAnhView(${idx})"
+                                class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] flex items-center justify-center shadow cursor-pointer">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    container.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        let boNhoFileLeft = new DataTransfer();
+
+        function congDonAnhLeft(input) {
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach(fileNew => {
+                    const daCo = Array.from(boNhoFileLeft.files).some(
+                        f => f.name === fileNew.name && f.size === fileNew.size && f.lastModified === fileNew.lastModified
+                    );
+                    if (!daCo) {
+                        boNhoFileLeft.items.add(fileNew);
+                    }
+                });
+                input.files = boNhoFileLeft.files;
+            }
+            veXemTruocLeft();
+        }
+
+        function xoaMotAnhLeft(idxCanXoa) {
+            const dtMoi = new DataTransfer();
+            Array.from(boNhoFileLeft.files).forEach((f, idx) => {
+                if (idx !== idxCanXoa) dtMoi.items.add(f);
+            });
+            boNhoFileLeft = dtMoi;
+            const input = document.getElementById('filesAnhLeftInput');
+            if (input) input.files = boNhoFileLeft.files;
+            veXemTruocLeft();
+        }
+
+        function themOChonFileLeft() {
+            const container = document.getElementById('danhSachOChonFilePhuLeft');
+            if (!container) return;
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-1.5';
+            row.innerHTML = `
+                <input type="file" name="filesAnh" multiple accept="image/*"
+                       onchange="capNhatDemLeft()"
+                       class="flex-1 text-xs text-neutral-600 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-neutral-800 file:text-white cursor-pointer bg-white p-1 rounded-lg border border-neutral-300">
+                <button type="button" onclick="this.parentElement.remove(); capNhatDemLeft();"
+                        class="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white text-xs flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function capNhatDemLeft() {
+            let tong = boNhoFileLeft.files.length;
+            document.querySelectorAll('#danhSachOChonFilePhuLeft input[type="file"]').forEach(inp => {
+                if (inp.files) tong += inp.files.length;
+            });
+            const badge = document.getElementById('badgeDemAnhLeft');
+            if (badge) badge.textContent = 'Đã chọn: ' + tong + ' ảnh';
+        }
+
+        function veXemTruocLeft() {
+            const container = document.getElementById('khungXemTruocAnhLeft');
+            capNhatDemLeft();
+            if (!container) return;
+            container.innerHTML = '';
+            if (boNhoFileLeft.files.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            Array.from(boNhoFileLeft.files).forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative rounded-lg overflow-hidden border border-neutral-300 h-16 bg-white';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <span class="absolute top-0.5 left-0.5 bg-black/80 text-white text-[9px] font-bold px-1 rounded">#${idx + 1}</span>
+                        <button type="button" onclick="xoaMotAnhLeft(${idx})"
+                                class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] flex items-center justify-center shadow cursor-pointer">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    container.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
+</body>
+</html>
+

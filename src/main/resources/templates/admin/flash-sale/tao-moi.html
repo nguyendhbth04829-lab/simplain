@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEditMode ? 'Chỉnh sửa đợt Flash Sale #' + req.id : 'Thiết lập Khung Giờ Flash Sale Mới (US29)'} + ' | SIMPLAIN CMS'">Thiết lập Flash Sale | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            text-rendering: optimizeLegibility;
+        }
+        * {
+            -webkit-font-smoothing: subpixel-antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        .input-error { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
+        /* Cố định layout bảng và tắt triệt để transition/animation gây giật font */
+        table {
+            table-layout: fixed !important;
+        }
+        table tr, table td, table th, table button, table input, table select {
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('flash-sale')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Lỗi Chung -->
+        <div th:if="${thongBaoLoi}" class="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight"
+                        th:text="${isEditMode ? 'Chỉnh Sửa Khung Giờ Flash Sale' : 'Thiết Lập Khung Giờ Flash Sale Mới'}">
+                        Thiết Lập Khung Giờ Flash Sale
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Thiết lập khung giờ Bắt đầu / Kết thúc và gán giá sốc, số lượng mở bán cho từng biến thể SKU (US29 - Mod 6).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/flash-sale/hien-thi"
+                   class="px-4 py-2.5 border border-slate-200 hover:bg-slate-100 font-bold text-xs text-slate-700 rounded-xl transition">
+                    <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại
+                </a>
+                <button type="submit" form="formFlashSale"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-600/20 transition transform active:scale-95 flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span th:text="${isEditMode ? 'Lưu Thay Đổi' : 'Kích Hoạt Flash Sale'}">Lưu đợt Flash Sale</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- FORM CHÍNH -->
+        <form id="formFlashSale"
+              th:action="${isEditMode} ? @{'/admin/flash-sale/chinh-sua/' + ${req.id}} : @{/admin/flash-sale/tao-moi}"
+              th:object="${req}"
+              method="post"
+              class="space-y-6">
+
+            <input type="hidden" th:if="${isEditMode}" th:field="*{id}">
+
+            <!-- PHẦN 1: THIẾT LẬP KHUNG GIỜ FLASH SALE (US29 - TIÊU CHÍ 1) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-black uppercase tracking-wider text-slate-900">1. Cấu Hình Khung Giờ Flash Sale</h2>
+                            <p class="text-[11px] text-slate-400">Thiết lập thời gian bắt đầu và kết thúc khung giờ vàng giá sốc</p>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Kích Hoạt -->
+                    <div class="flex items-center gap-3">
+                        <label for="kichHoatSwitch" class="text-xs font-bold text-slate-700 cursor-pointer select-none">Kích hoạt ngay</label>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" th:field="*{kichHoat}" id="kichHoatSwitch" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <!-- Tiêu đề đợt Flash Sale -->
+                    <div class="space-y-1.5 md:col-span-3">
+                        <label class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <span>Tiêu đề chương trình Flash Sale</span>
+                            <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="text" th:field="*{tieuDe}"
+                               placeholder="Ví dụ: Deal Sốc Giữa Trưa 12h - 14h, Flash Sale Cuối Tuần..."
+                               th:classappend="${#fields.hasErrors('tieuDe')} ? 'input-error' : ''"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs outline-none focus:border-blue-600 font-medium">
+                        <p th:if="${#fields.hasErrors('tieuDe')}" th:errors="*{tieuDe}" class="text-[11px] text-rose-500 font-semibold"></p>
+                    </div>
+
+                    <!-- Thời gian bắt đầu -->
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <span>Thời gian bắt đầu</span>
+                            <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="datetime-local" th:field="*{thoiGianBatDau}" id="inputThoiGianBatDau"
+                               th:classappend="${#fields.hasErrors('thoiGianBatDau')} ? 'input-error' : ''"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs outline-none focus:border-blue-600 font-mono font-bold text-slate-800">
+                        <p th:if="${#fields.hasErrors('thoiGianBatDau')}" th:errors="*{thoiGianBatDau}" class="text-[11px] text-rose-500 font-semibold"></p>
+                    </div>
+
+                    <!-- Thời gian kết thúc -->
+                    <div class="space-y-1.5">
+                        <label class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <span>Thời gian kết thúc</span>
+                            <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="datetime-local" th:field="*{thoiGianKetThuc}" id="inputThoiGianKetThuc"
+                               th:classappend="${#fields.hasErrors('thoiGianKetThuc')} ? 'input-error' : ''"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs outline-none focus:border-blue-600 font-mono font-bold text-slate-800">
+                        <p th:if="${#fields.hasErrors('thoiGianKetThuc')}" th:errors="*{thoiGianKetThuc}" class="text-[11px] text-rose-500 font-semibold"></p>
+                    </div>
+
+                    <!-- Tóm tắt thời lượng -->
+                    <div class="space-y-1.5 flex flex-col justify-end">
+                        <div id="boxThoiLuong" class="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-800 text-[11px] font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-hourglass-half text-blue-600"></i>
+                            <span>Khung giờ diễn ra chuẩn theo mốc thời gian</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHẦN 2: GÁN GIÁ SỐC & GIỚI HẠN SỐ LƯỢNG BIẾN THỂ (US29 - TIÊU CHÍ 2) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-black uppercase tracking-wider text-slate-900">2. Gán Giá Sốc &amp; Giới Hạn Mở Bán Cho Biến Thể SKU</h2>
+                            <p class="text-[11px] text-slate-400">Chọn các SKU tham gia đợt sale, đặt giá sốc và giới hạn số lượng mở bán (&le; tồn kho)</p>
+                        </div>
+                    </div>
+
+                    <!-- Nút Mở Modal Thêm Biến Thể -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="moModalChonBienThe()"
+                                class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-2xs cursor-pointer">
+                            <i class="fa-solid fa-plus-circle text-amber-400"></i>
+                            <span>Chọn biến thể tham gia</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cảnh báo lỗi nếu chưa chọn biến thể -->
+                <div th:if="${#fields.hasErrors('danhSachChiTiet')}"
+                     class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-base"></i>
+                    <span th:errors="*{danhSachChiTiet}">Vui lòng chọn ít nhất 1 biến thể SKU</span>
+                </div>
+
+                <!-- Bảng Danh Sách Biến Thể Đã Gán Vào Flash Sale -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                    <table class="w-full text-left border-collapse text-xs table-fixed">
+                        <thead class="bg-slate-100/90 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="py-3 px-3 w-14 text-center">Ảnh</th>
+                                <th class="py-3 px-3 w-auto min-w-[200px]">Mã SKU &amp; Tên Sản Phẩm</th>
+                                <th class="py-3 px-3 w-36 text-center whitespace-nowrap">Phân Loại</th>
+                                <th class="py-3 px-3 w-28 text-right whitespace-nowrap">Giá Gốc</th>
+                                <th class="py-3 px-3 w-20 text-center whitespace-nowrap">Tồn Kho</th>
+                                <th class="py-3 px-3 text-center w-44 whitespace-nowrap">
+                                    <span>Giá Flash Sale (VNĐ)</span>
+                                    <span class="text-rose-500">*</span>
+                                </th>
+                                <th class="py-3 px-3 text-center w-28 whitespace-nowrap">
+                                    <span>SL Mở Bán</span>
+                                    <span class="text-rose-500">*</span>
+                                </th>
+                                <th class="py-3 px-3 text-center w-12">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bangBienTheBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                            <!-- Dữ liệu render từ Thymeleaf nếu có sẵn (chế độ edit hoặc reload validation) -->
+                            <tr th:each="item, stat : *{danhSachChiTiet}" th:id="'row-sku-' + ${item.maBienTheId}" class="hover:bg-slate-50/50">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].maBienTheId}" class="input-ma-bien-the">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].maSku}" class="input-ma-sku">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].tenSanPham}" class="input-ten-san-pham">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].tenMauSac}">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].maMauHex}">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].tenKichThuoc}">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].giaBanGoc}" class="input-gia-ban-goc">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].tonKhoHienTai}" class="input-ton-kho">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].anhDaiDienUrl}">
+                                <input type="hidden" th:field="*{danhSachChiTiet[__${stat.index}__].soLuongDaBan}">
+
+                                <!-- Ảnh đại diện -->
+                                <td class="py-3 px-3 text-center">
+                                    <img th:src="${item.anhDaiDienUrl != null ? item.anhDaiDienUrl : '/images/default-product.png'}"
+                                         class="w-10 h-10 object-cover rounded-lg border border-slate-200 mx-auto"
+                                         onerror="this.src='/images/default-product.png'">
+                                </td>
+
+                                <!-- Mã SKU & Tên sản phẩm -->
+                                <td class="py-3 px-3">
+                                    <div class="font-bold text-slate-900 truncate" th:text="${item.tenSanPham}">Áo Thun Nam</div>
+                                    <div class="font-mono text-[11px] text-blue-600 font-bold" th:text="${item.maSku}">SP-POLO-DEN-L</div>
+                                </td>
+
+                                <!-- Phân loại Màu / Size: Badge gọn gàng, chuyên nghiệp -->
+                                <td class="py-3 px-3 text-center">
+                                    <div class="inline-flex items-center justify-center gap-1.5 flex-wrap">
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-semibold whitespace-nowrap shadow-2xs">
+                                            <span th:if="${item.maMauHex != null}" class="w-2.5 h-2.5 rounded-full border border-black/10 shadow-2xs flex-shrink-0"
+                                                  th:style="'background-color: ' + ${item.maMauHex}"></span>
+                                            <span th:text="${item.tenMauSac}">Đen</span>
+                                        </span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-black whitespace-nowrap shadow-2xs"
+                                              th:text="${item.tenKichThuoc}">L</span>
+                                    </div>
+                                </td>
+
+                                <!-- Giá bán thường -->
+                                <td class="py-3 px-3 text-right font-mono font-bold text-slate-500">
+                                    <span th:text="${#numbers.formatDecimal(item.giaBanGoc, 0, 'POINT', 0, 'COMMA')}">250.000</span> đ
+                                </td>
+
+                                <!-- Tồn kho -->
+                                <td class="py-3 px-3 text-center">
+                                    <span class="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[11px]"
+                                          th:text="${item.tonKhoHienTai}">50</span>
+                                </td>
+
+                                <!-- Input Giá Sốc Flash Sale -->
+                                <td class="py-3 px-3 text-center">
+                                    <div class="relative">
+                                        <input type="number" step="1000" min="1000"
+                                               th:field="*{danhSachChiTiet[__${stat.index}__].giaFlashSale}"
+                                               oninput="tinhPhanTramGiamGiaRow(this)"
+                                               placeholder="Nhập giá sốc..."
+                                               class="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-center font-mono font-bold text-rose-600 focus:border-rose-500 outline-none text-xs">
+                                        <div class="text-[10px] text-rose-500 font-bold mt-0.5 label-phan-tram-giam min-h-[16px] leading-tight"
+                                             th:text="'-' + ${item.phanTramGiamGia} + '%'">-20%</div>
+                                    </div>
+                                </td>
+
+                                <!-- Input Số Lượng Mở Bán -->
+                                <td class="py-3 px-3 text-center">
+                                    <div class="flex items-center gap-1 justify-center">
+                                        <input type="number" min="1" th:max="${item.tonKhoHienTai}"
+                                               th:field="*{danhSachChiTiet[__${stat.index}__].soLuongMoBan}"
+                                               placeholder="SL"
+                                               class="w-16 px-1.5 py-1.5 rounded-lg border border-slate-300 bg-white text-center font-mono font-bold text-slate-800 focus:border-blue-500 outline-none text-xs">
+                                        <button type="button" onclick="dienMaxTonKho(this)"
+                                                class="px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold cursor-pointer"
+                                                title="Điền tối đa tồn kho">Max</button>
+                                    </div>
+                                </td>
+
+                                <!-- Xóa -->
+                                <td class="py-3 px-3 text-center">
+                                    <button type="button" onclick="xoaDongBienThe(this)"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Dòng placeholder khi chưa có biến thể nào -->
+                            <tr id="emptyRowMessage" th:classappend="*{!danhSachChiTiet.empty} ? 'hidden' : ''">
+                                <td colspan="8" class="py-10 text-center text-slate-400">
+                                    <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
+                                    <p class="font-bold text-slate-600">Chưa có biến thể SKU nào được thêm</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Nhấn nút <b>"Chọn biến thể tham gia"</b> ở góc trên bên phải để bắt đầu</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- NÚT HÀNH ĐỘNG CUỐI TRANG -->
+            <div class="flex items-center justify-end gap-3 pt-3">
+                <a href="/admin/flash-sale/hien-thi"
+                   class="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 font-bold text-xs text-slate-700 transition">
+                    Hủy bỏ
+                </a>
+                <button type="submit"
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 transition transform active:scale-95 flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span th:text="${isEditMode ? 'Lưu Cập Nhật Flash Sale' : 'Hoàn Tất Thiết Lập Flash Sale'}">Lưu đợt Flash Sale</span>
+                </button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL CHỌN BIẾN THỂ SKU THAM GIA FLASH SALE -->
+    <!-- ========================================================================= -->
+    <div id="modalChonBienThe" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header Modal -->
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Chọn Biến Thể SKU Tham Gia Flash Sale</h3>
+                        <p class="text-[11px] text-slate-400">Chỉ hiển thị các SKU còn tồn kho khả dụng (&gt; 0)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalChonBienThe()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Thanh Tìm Kiếm Trong Modal -->
+            <div class="p-4 border-b border-slate-100 flex items-center gap-3">
+                <div class="relative flex-1 text-xs">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="timKiemSkuModalInput" oninput="locSkuTrongModal()"
+                           placeholder="Tìm theo mã SKU, tên sản phẩm hoặc màu sắc..."
+                           class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs outline-none focus:border-blue-600 font-medium">
+                </div>
+                <div class="text-xs text-slate-400 font-bold">
+                    Khả dụng: <span id="soLuongSkuKhaDungText" class="text-blue-600" th:text="${danhSachBienTheKhaDung != null ? danhSachBienTheKhaDung.size() : 0}">0</span> SKU
+                </div>
+            </div>
+
+            <!-- Danh Sách SKU (Table) -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <table class="w-full text-left border-collapse text-xs table-fixed">
+                    <thead class="sticky top-0 bg-slate-100 z-10 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 w-14 text-center">Ảnh</th>
+                            <th class="py-2.5 px-3 w-auto min-w-[200px]">Mã SKU &amp; Sản Phẩm</th>
+                            <th class="py-2.5 px-3 w-36 text-center">Phân Loại</th>
+                            <th class="py-2.5 px-3 w-28 text-right">Giá Gốc</th>
+                            <th class="py-2.5 px-3 w-20 text-center">Tồn Kho</th>
+                            <th class="py-2.5 px-3 text-center w-24">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bangModalSkuBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr th:each="bt : ${danhSachBienTheKhaDung}" class="hover:bg-blue-50/40 row-modal-sku"
+                            th:data-search="${bt.maSku + ' ' + bt.tenSanPham + ' ' + bt.tenMauSac + ' ' + bt.tenKichThuoc}">
+                            <!-- Ảnh -->
+                            <td class="py-2.5 px-3 text-center">
+                                <img th:src="${bt.anhDaiDienUrl}" class="w-9 h-9 object-cover rounded-lg border border-slate-200 mx-auto"
+                                     onerror="this.src='/images/default-product.png'">
+                            </td>
+
+                            <!-- SKU & Tên -->
+                            <td class="py-2.5 px-3">
+                                <div class="font-bold text-slate-900 truncate" th:text="${bt.tenSanPham}">Áo Polo Nam</div>
+                                <div class="font-mono text-[11px] text-blue-600 font-bold" th:text="${bt.maSku}">SP-POLO-TRANG-M</div>
+                            </td>
+
+                            <!-- Phân loại Màu / Size: Badge gọn gàng -->
+                            <td class="py-2.5 px-3 text-center">
+                                <div class="inline-flex items-center justify-center gap-1.5 flex-wrap">
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-semibold whitespace-nowrap shadow-2xs">
+                                        <span th:if="${bt.maMauHex != null}" class="w-2 h-2 rounded-full border border-black/10 shadow-2xs flex-shrink-0"
+                                              th:style="'background-color: ' + ${bt.maMauHex}"></span>
+                                        <span th:text="${bt.tenMauSac}">Trắng</span>
+                                    </span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-black whitespace-nowrap shadow-2xs"
+                                          th:text="${bt.tenKichThuoc}">M</span>
+                                </div>
+                            </td>
+
+                            <!-- Giá bán -->
+                            <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-700">
+                                <span th:text="${#numbers.formatDecimal(bt.giaBanGoc, 0, 'POINT', 0, 'COMMA')}">199.000</span> đ
+                            </td>
+
+                            <!-- Tồn kho -->
+                            <td class="py-2.5 px-3 text-center">
+                                <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[11px]" th:text="${bt.tonKhoHienTai}">35</span>
+                            </td>
+
+                            <!-- Nút Thêm -->
+                            <td class="py-2.5 px-3 text-center">
+                                <button type="button"
+                                        th:onclick="'themBienTheVaoBang(' + ${bt.maBienTheId} + ')'"
+                                        th:id="'btn-add-sku-' + ${bt.maBienTheId}"
+                                        class="w-20 h-7 inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer select-none">
+                                    + Chọn
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+                <button type="button" onclick="dongModalChonBienThe()"
+                        class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT CLIENT LOGIC -->
+    <script>
+        function moModalChonBienThe() {
+            capNhatTrangThaiNutTrongModal();
+            document.getElementById('modalChonBienThe').classList.remove('hidden');
+        }
+
+        function dongModalChonBienThe() {
+            document.getElementById('modalChonBienThe').classList.add('hidden');
+        }
+
+        function locSkuTrongModal() {
+            const query = (document.getElementById('timKiemSkuModalInput').value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('.row-modal-sku');
+            rows.forEach(r => {
+                const text = (r.getAttribute('data-search') || '').toLowerCase();
+                r.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function capNhatTrangThaiNutTrongModal() {
+            const tableBody = document.getElementById('bangBienTheBody');
+            const inputs = tableBody.querySelectorAll('.input-ma-bien-the');
+            const addedIds = new Set();
+            inputs.forEach(inp => addedIds.add(inp.value));
+
+            document.querySelectorAll('[id^="btn-add-sku-"]').forEach(btn => {
+                const id = btn.id.replace('btn-add-sku-', '');
+                if (addedIds.has(id)) {
+                    btn.disabled = true;
+                    btn.className = 'w-20 h-7 inline-flex items-center justify-center rounded-lg bg-slate-200 text-slate-400 font-bold text-xs cursor-not-allowed select-none';
+                    btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã chọn';
+                } else {
+                    btn.disabled = false;
+                    btn.className = 'w-20 h-7 inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer select-none';
+                    btn.innerHTML = '+ Chọn';
+                }
+            });
+        }
+
+        function themBienTheVaoBang(bienTheId) {
+            if (document.getElementById(`row-sku-${bienTheId}`)) {
+                return;
+            }
+
+            // Cập nhật trạng thái nút tức thì để không bị delay hay giật chữ
+            const btn = document.getElementById('btn-add-sku-' + bienTheId);
+            if (btn) {
+                btn.disabled = true;
+                btn.className = 'w-20 h-7 inline-flex items-center justify-center rounded-lg bg-slate-200 text-slate-400 font-bold text-xs cursor-not-allowed select-none';
+                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã chọn';
+            }
+
+            fetch(`/admin/flash-sale/api/bien-the/${bienTheId}`)
+                .then(res => res.json())
+                .then(item => {
+                    const tableBody = document.getElementById('bangBienTheBody');
+                    const emptyMsg = document.getElementById('emptyRowMessage');
+                    if (emptyMsg) emptyMsg.classList.add('hidden');
+
+                    const newIndex = tableBody.querySelectorAll('tr:not(#emptyRowMessage)').length;
+
+                    const rowHtml = `
+                        <tr id="row-sku-${item.maBienTheId}" class="hover:bg-slate-50/50">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].maBienTheId" value="${item.maBienTheId}" class="input-ma-bien-the">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].maSku" value="${item.maSku}" class="input-ma-sku">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].tenSanPham" value="${item.tenSanPham}" class="input-ten-san-pham">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].tenMauSac" value="${item.tenMauSac || ''}">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].maMauHex" value="${item.maMauHex || ''}">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].tenKichThuoc" value="${item.tenKichThuoc || ''}">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].giaBanGoc" value="${item.giaBanGoc}" class="input-gia-ban-goc">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].tonKhoHienTai" value="${item.tonKhoHienTai}" class="input-ton-kho">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].anhDaiDienUrl" value="${item.anhDaiDienUrl}">
+                            <input type="hidden" name="danhSachChiTiet[${newIndex}].soLuongDaBan" value="0">
+
+                            <td class="py-3 px-3 text-center">
+                                <img src="${item.anhDaiDienUrl || '/images/default-product.png'}"
+                                     class="w-10 h-10 object-cover rounded-lg border border-slate-200 mx-auto"
+                                     onerror="this.src='/images/default-product.png'">
+                            </td>
+
+                            <td class="py-3 px-3">
+                                <div class="font-bold text-slate-900 truncate">${item.tenSanPham}</div>
+                                <div class="font-mono text-[11px] text-blue-600 font-bold">${item.maSku}</div>
+                            </td>
+
+                            <td class="py-3 px-3 text-center">
+                                <div class="inline-flex items-center justify-center gap-1.5 flex-wrap">
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-semibold whitespace-nowrap shadow-2xs">
+                                        ${item.maMauHex ? `<span class="w-2.5 h-2.5 rounded-full border border-black/10 shadow-2xs flex-shrink-0" style="background-color: ${item.maMauHex}"></span>` : ''}
+                                        <span>${item.tenMauSac || ''}</span>
+                                    </span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-black whitespace-nowrap shadow-2xs">
+                                        ${item.tenKichThuoc || ''}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td class="py-3 px-3 text-right font-mono font-bold text-slate-500">
+                                ${new Intl.NumberFormat('vi-VN').format(item.giaBanGoc)} đ
+                            </td>
+
+                            <td class="py-3 px-3 text-center">
+                                <span class="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[11px]">${item.tonKhoHienTai}</span>
+                            </td>
+
+                            <td class="py-3 px-3 text-center">
+                                <div class="relative">
+                                    <input type="number" step="1000" min="1000"
+                                           name="danhSachChiTiet[${newIndex}].giaFlashSale"
+                                           value="${item.giaFlashSale || Math.round(item.giaBanGoc * 0.8)}"
+                                           oninput="tinhPhanTramGiamGiaRow(this)"
+                                           placeholder="Nhập giá sốc..."
+                                           class="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-center font-mono font-bold text-rose-600 focus:border-rose-500 outline-none text-xs">
+                                    <div class="text-[10px] text-rose-500 font-bold mt-0.5 label-phan-tram-giam min-h-[16px] leading-tight">-20%</div>
+                                </div>
+                            </td>
+
+                            <td class="py-3 px-3 text-center">
+                                <div class="flex items-center gap-1 justify-center">
+                                    <input type="number" min="1" max="${item.tonKhoHienTai}"
+                                           name="danhSachChiTiet[${newIndex}].soLuongMoBan"
+                                           value="${Math.min(item.tonKhoHienTai, 10)}"
+                                           placeholder="SL"
+                                           class="w-16 px-1.5 py-1.5 rounded-lg border border-slate-300 bg-white text-center font-mono font-bold text-slate-800 focus:border-blue-500 outline-none text-xs">
+                                    <button type="button" onclick="dienMaxTonKho(this)"
+                                            class="px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold cursor-pointer"
+                                            title="Điền tối đa tồn kho">Max</button>
+                                </div>
+                            </td>
+
+                            <td class="py-3 px-3 text-center">
+                                <button type="button" onclick="xoaDongBienThe(this)"
+                                        class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+
+                    tableBody.insertAdjacentHTML('beforeend', rowHtml);
+                    danhLaiIndexCacDong();
+                })
+                .catch(err => {
+                    alert("Không thể tải thông tin biến thể: " + err);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.className = 'w-20 h-7 inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer select-none';
+                        btn.innerHTML = '+ Chọn';
+                    }
+                });
+        }
+
+        function xoaDongBienThe(btn) {
+            const row = btn.closest('tr');
+            if (row) {
+                row.remove();
+                danhLaiIndexCacDong();
+                capNhatTrangThaiNutTrongModal();
+
+                const remainingRows = document.querySelectorAll('#bangBienTheBody tr:not(#emptyRowMessage)');
+                if (remainingRows.length === 0) {
+                    const emptyMsg = document.getElementById('emptyRowMessage');
+                    if (emptyMsg) emptyMsg.classList.remove('hidden');
+                }
+            }
+        }
+
+        function dienMaxTonKho(btn) {
+            const row = btn.closest('tr');
+            const tonKhoInput = row.querySelector('.input-ton-kho');
+            const moBanInput = row.querySelector('input[name$=".soLuongMoBan"]');
+            if (tonKhoInput && moBanInput) {
+                moBanInput.value = tonKhoInput.value;
+            }
+        }
+
+        function tinhPhanTramGiamGiaRow(input) {
+            const row = input.closest('tr');
+            const giaGocInput = row.querySelector('.input-gia-ban-goc');
+            const label = row.querySelector('.label-phan-tram-giam');
+            if (!giaGocInput || !label) return;
+
+            const giaGoc = parseFloat(giaGocInput.value) || 0;
+            const giaFlash = parseFloat(input.value) || 0;
+
+            if (giaGoc > 0 && giaFlash > 0 && giaFlash < giaGoc) {
+                const pct = Math.round(((giaGoc - giaFlash) / giaGoc) * 100);
+                label.innerText = `-${pct}% (Tiết kiệm ${new Intl.NumberFormat('vi-VN').format(giaGoc - giaFlash)} đ)`;
+                label.classList.remove('text-slate-400');
+                label.classList.add('text-rose-600');
+            } else if (giaFlash >= giaGoc) {
+                label.innerText = `Lỗi: Giá Flash Sale phải nhỏ hơn giá bán (${new Intl.NumberFormat('vi-VN').format(giaGoc)} đ)`;
+                label.classList.remove('text-rose-600');
+                label.classList.add('text-rose-500');
+            } else {
+                label.innerText = '';
+            }
+        }
+
+        function danhLaiIndexCacDong() {
+            const rows = document.querySelectorAll('#bangBienTheBody tr:not(#emptyRowMessage)');
+            rows.forEach((row, idx) => {
+                row.querySelectorAll('input').forEach(inp => {
+                    const name = inp.getAttribute('name');
+                    if (name) {
+                        inp.setAttribute('name', name.replace(/\[\d+\]/, `[${idx}]`));
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('#bangBienTheBody input[name$=".giaFlashSale"]').forEach(inp => {
+                tinhPhanTramGiamGiaRow(inp);
+            });
+        });
+    </script>
+</body>
+</html>

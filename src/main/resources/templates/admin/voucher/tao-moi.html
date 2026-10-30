@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEditMode != null and isEditMode ? 'Chỉnh sửa Mã giảm giá: ' + taoRequest.maCode : 'Tạo chương trình Mã giảm giá (US26) | SIMPLAIN CMS'}">
+        Tạo chương trình Mã giảm giá | SIMPLAIN CMS
+    </title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Răng cưa thẻ voucher kiểu Shopee */
+        .voucher-ticket {
+            position: relative;
+            background: radial-gradient(circle at 0 50%, transparent 8px, #ffffff 9px),
+                        radial-gradient(circle at 100% 50%, transparent 8px, #ffffff 9px);
+            background-size: 100% 100%;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('voucher')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Lỗi tổng thể nếu có -->
+        <div th:if="${thongBaoLoi}" class="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- BREADCRUMBS & TIÊU ĐỀ TRANG -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold mb-1">
+                    <a href="/admin/dashboard" class="hover:text-blue-600">Admin</a>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    <a href="/admin/voucher/hien-thi" class="hover:text-blue-600">Quản lý Voucher</a>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    <span class="text-slate-800" th:text="${(isEditMode != null and isEditMode) ? 'Chỉnh sửa' : 'Tạo mới'}">Tạo mới</span>
+                </nav>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight"
+                            th:text="${(isEditMode != null and isEditMode) ? 'Chỉnh Sửa Mã Giảm Giá: ' + taoRequest.maCode : 'Tạo Chương Trình Mã Giảm Giá Mới'}">
+                            Tạo Chương Trình Mã Giảm Giá Mới
+                        </h1>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            US26 (Mod 6 / Voucher) &bull; Thiết lập voucher chiết khấu theo % hoặc Tiền mặt kèm giới hạn ngân sách &amp; lượt dùng.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/voucher/hien-thi"
+                   class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+                </a>
+            </div>
+        </div>
+
+        <!-- FORM CHÍNH: CHIA LÀM 2 CỘT (Cột trái 2/3: Form nhập; Cột phải 1/3: Live Preview Thẻ Voucher) -->
+        <form th:action="${(isEditMode != null and isEditMode) ? '/admin/voucher/chinh-sua/' + voucherId : '/admin/voucher/tao-moi'}"
+              th:object="${taoRequest}" method="POST" id="formVoucher" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+            <!-- CỘT TRÁI (2/3): THÔNG TIN THIẾT LẬP CHƯƠNG TRÌNH -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- CARD 1: THÔNG TIN CƠ BẢN -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
+                            <h2 class="font-bold text-sm text-slate-900 uppercase tracking-wider">Thông Tin Cơ Bản</h2>
+                        </div>
+                        <span class="text-[11px] text-slate-400 font-medium">Bắt buộc</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <!-- Mã Voucher Code -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1 flex items-center justify-between">
+                                <span>Mã Voucher: <span class="text-rose-600">*</span></span>
+                                <button type="button" onclick="tuDongSinhMaVoucher()"
+                                        class="text-[10px] text-blue-600 hover:text-blue-800 font-extrabold flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Sinh mã tự động
+                                </button>
+                            </label>
+                            <div class="relative">
+                                <input type="text" th:field="*{maCode}" id="txtMaCode" required
+                                       placeholder="VD: SIMPLAIN20, SALE50K"
+                                       oninput="capNhatLivePreview(); kiemTraMaCodeRealtime(this.value);"
+                                       class="w-full uppercase font-mono font-black text-slate-900 rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span id="iconCheckCode" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none hidden">
+                                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                </span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('maCode')}" th:errors="*{maCode}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi mã</span>
+                            <span id="txtThongBaoCode" class="text-[10px] block mt-1 font-semibold text-slate-400">Chữ in hoa, số và dấu gạch nối (3 - 30 ký tự)</span>
+                        </div>
+
+                        <!-- Trạng thái Kích hoạt Switch -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1">
+                                Trạng thái chương trình:
+                            </label>
+                            <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                                <div class="text-[11px]">
+                                    <strong class="font-bold text-slate-800 block">Kích hoạt áp dụng</strong>
+                                    <span class="text-[10px] text-slate-500">Cho phép khách hàng áp dụng voucher này</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" th:field="*{kichHoat}" id="chkKichHoat" onchange="capNhatLivePreview()" class="sr-only peer" />
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Tên chương trình Voucher -->
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-slate-800 mb-1">
+                                Tên chương trình ưu đãi: <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="text" th:field="*{tenVoucher}" id="txtTenVoucher" required
+                                   placeholder="VD: Ưu đãi chào hè giảm 20% cho đơn hàng thời trang nam từ 200k"
+                                   oninput="capNhatLivePreview()"
+                                   class="w-full text-xs font-semibold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                            <span th:if="${#fields.hasErrors('tenVoucher')}" th:errors="*{tenVoucher}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi tên</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: HÌNH THỨC & MỨC ĐỘ GIẢM GIÁ (TIÊU CHÍ 1) -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">2</span>
+                            <h2 class="font-bold text-sm text-slate-900 uppercase tracking-wider">Hình Thức &amp; Giá Trị Giảm (Tiêu chí 1)</h2>
+                        </div>
+                        <span class="text-[11px] text-indigo-600 font-bold uppercase tracking-wider">% hoặc Tiền mặt</span>
+                    </div>
+
+                    <!-- Chọn Loại giảm giá (Button Radio dạng Card to rõ) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <label id="cardLoaiPercent" onclick="chonLoaiGiamGia('PERCENT')"
+                               class="border-2 rounded-2xl p-4 cursor-pointer transition flex items-center gap-3 bg-white border-blue-500 ring-2 ring-blue-500/10">
+                            <input type="radio" th:field="*{loaiGiamGia}" value="PERCENT" id="radioPercent" class="sr-only" onchange="thayDoiLoaiHinh()" />
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-base font-black shrink-0">
+                                <i class="fa-solid fa-percent"></i>
+                            </div>
+                            <div>
+                                <strong class="font-extrabold text-slate-900 block text-sm">Giảm theo Phần Trăm (%)</strong>
+                                <span class="text-[11px] text-slate-500">Chiết khấu theo tỷ lệ %, kèm hạn mức giảm tối đa</span>
+                            </div>
+                        </label>
+
+                        <label id="cardLoaiFixed" onclick="chonLoaiGiamGia('FIXED_AMOUNT')"
+                               class="border-2 rounded-2xl p-4 cursor-pointer transition flex items-center gap-3 bg-white border-slate-200 hover:border-slate-300">
+                            <input type="radio" th:field="*{loaiGiamGia}" value="FIXED_AMOUNT" id="radioFixed" class="sr-only" onchange="thayDoiLoaiHinh()" />
+                            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base font-black shrink-0">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                            </div>
+                            <div>
+                                <strong class="font-extrabold text-slate-900 block text-sm">Giảm Tiền Mặt Cố Định</strong>
+                                <span class="text-[11px] text-slate-500">Khấu trừ trực tiếp số tiền (VD: 30k, 50k, 100k)</span>
+                            </div>
+                        </label>
+                    </div>
+                    <span th:if="${#fields.hasErrors('loaiGiamGia')}" th:errors="*{loaiGiamGia}" class="text-[10px] text-rose-600 font-semibold block">Lỗi loại</span>
+
+                    <!-- Ô nhập giá trị giảm -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1" id="lblGiaTriGiam">
+                                Tỷ lệ giảm (%): <span class="text-rose-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" th:field="*{giaTriGiam}" id="txtGiaTriGiam" required min="1" step="any"
+                                       placeholder="VD: 20"
+                                       oninput="capNhatLivePreview()"
+                                       class="w-full text-xs font-mono font-bold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span id="donViGiaTriGiam" class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
+                                    %
+                                </span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('giaTriGiam')}" th:errors="*{giaTriGiam}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi giá trị</span>
+                            <span id="hintGiaTriGiam" class="text-[10px] text-slate-400 mt-1 block">Tỷ lệ chiết khấu từ 1% đến 100%</span>
+                        </div>
+
+                        <!-- Giảm tối đa (Chỉ áp dụng với PERCENT để chặn lỗ lớn) -->
+                        <div id="boxGiamToiDa">
+                            <label class="block font-bold text-slate-800 mb-1 flex items-center justify-between">
+                                <span>Giảm tối đa (VNĐ): <span class="text-rose-600">*</span></span>
+                                <span class="text-[10px] text-amber-600 font-bold"><i class="fa-solid fa-shield-halved"></i> Kiểm soát rủi ro</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" th:field="*{giamToiDa}" id="txtGiamToiDa" min="1000" step="1000"
+                                       placeholder="VD: 50000"
+                                       oninput="capNhatLivePreview()"
+                                       class="w-full text-xs font-mono font-bold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">đ</span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('giamToiDa')}" th:errors="*{giamToiDa}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi giảm tối đa</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Mức tiền trần tối đa được chiết khấu</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: ĐẶT GIỚI HẠN NGÂN SÁCH, LƯỢT DÙNG & ĐƠN TỐI THIỂU (TIÊU CHÍ 2) -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">3</span>
+                            <h2 class="font-bold text-sm text-slate-900 uppercase tracking-wider">Hạn Mức Ngân Sách &amp; Điều Kiện Đơn Hàng (Tiêu chí 2)</h2>
+                        </div>
+                        <span class="text-[11px] text-amber-700 font-bold uppercase tracking-wider">Chống thất thoát</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <!-- Đơn tối thiểu -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1">
+                                Giá trị đơn hàng tối thiểu: <span class="text-rose-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" th:field="*{giaTriDonToiThieu}" id="txtGiaTriDonToiThieu" required min="0" step="10000"
+                                       placeholder="0"
+                                       oninput="capNhatLivePreview()"
+                                       class="w-full text-xs font-mono font-bold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">đ</span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('giaTriDonToiThieu')}" th:errors="*{giaTriDonToiThieu}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Nhập 0 nếu áp dụng cho mọi giá trị đơn hàng</span>
+                        </div>
+
+                        <!-- Giới hạn Ngân sách chương trình -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1 flex items-center justify-between">
+                                <span>Giới hạn ngân sách tối đa:</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Tùy chọn</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" th:field="*{nganSach}" id="txtNganSach" min="1000" step="500000"
+                                       placeholder="VD: 10000000 (10 triệu)"
+                                       oninput="capNhatLivePreview()"
+                                       class="w-full text-xs font-mono font-bold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">đ</span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('nganSach')}" th:errors="*{nganSach}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Hệ thống tự động tạm ngưng khi hết ngân sách chi</span>
+                        </div>
+
+                        <!-- Tổng lượt dùng tối đa -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1 flex items-center justify-between">
+                                <span>Tổng lượt dùng tối đa (Toàn hệ thống):</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Tùy chọn</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" th:field="*{tongSoLuong}" id="txtTongSoLuong" min="1" step="10"
+                                       placeholder="VD: 500 (bỏ trống nếu không giới hạn)"
+                                       oninput="capNhatLivePreview()"
+                                       class="w-full text-xs font-mono font-bold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">lượt</span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('tongSoLuong')}" th:errors="*{tongSoLuong}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Tự động kết thúc voucher khi chạm số lượng này</span>
+                        </div>
+
+                        <!-- Giới hạn mỗi User -->
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1">
+                                Lượt dùng tối đa / 1 khách hàng: <span class="text-rose-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" th:field="*{gioiHanMoiUser}" id="txtGioiHanMoiUser" required min="1" max="100"
+                                       placeholder="1"
+                                       class="w-full text-xs font-mono font-bold rounded-xl border border-slate-300 py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">lần / khách</span>
+                            </div>
+                            <span th:if="${#fields.hasErrors('gioiHanMoiUser')}" th:errors="*{gioiHanMoiUser}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">Khuyên dùng 1 lần để chống gom mã</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 4: THỜI GIAN ÁP DỤNG & ĐIỀU KHOẢN -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">4</span>
+                            <h2 class="font-bold text-sm text-slate-900 uppercase tracking-wider">Thời Gian Hiệu Lực &amp; Điều Khoản</h2>
+                        </div>
+                        <!-- Nút chọn nhanh thời gian -->
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="setNhanhThoiGian(7)"
+                                    class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition">
+                                +7 ngày
+                            </button>
+                            <button type="button" onclick="setNhanhThoiGian(30)"
+                                    class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition">
+                                +30 ngày
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1">
+                                Ngày giờ bắt đầu: <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="datetime-local" th:field="*{ngayBatDau}" id="txtNgayBatDau" required
+                                   onchange="capNhatLivePreview()"
+                                   class="w-full text-xs font-semibold rounded-xl border border-slate-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                            <span th:if="${#fields.hasErrors('ngayBatDau')}" th:errors="*{ngayBatDau}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-800 mb-1">
+                                Ngày giờ kết thúc: <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="datetime-local" th:field="*{ngayKetThuc}" id="txtNgayKetThuc" required
+                                   onchange="capNhatLivePreview()"
+                                   class="w-full text-xs font-semibold rounded-xl border border-slate-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs" />
+                            <span th:if="${#fields.hasErrors('ngayKetThuc')}" th:errors="*{ngayKetThuc}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                        </div>
+
+                        <!-- Mô tả / Ghi chú -->
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-slate-800 mb-1 flex items-center justify-between">
+                                <span>Mô tả &amp; Điều khoản áp dụng:</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Tối đa 500 ký tự</span>
+                            </label>
+                            <textarea th:field="*{moTa}" id="txtMoTa" rows="3"
+                                      placeholder="VD: Mã giảm giá chỉ áp dụng cho đơn hàng thanh toán online hoặc tại quầy, không áp dụng chung với flash sale..."
+                                      class="w-full text-xs rounded-xl border border-slate-300 p-3 focus:ring-blue-500 focus:border-blue-500 shadow-2xs"></textarea>
+                            <span th:if="${#fields.hasErrors('moTa')}" th:errors="*{moTa}" class="text-[10px] text-rose-600 font-semibold block mt-1">Lỗi</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CỘT PHẢI (1/3): LIVE PREVIEW THẺ VOUCHER CHUẨN SHOPEE & TỔNG KẾT DỰ TOÁN -->
+            <div class="space-y-6 lg:sticky lg:top-24">
+
+                <!-- CARD PREVIEW THẺ VOUCHER -->
+                <div class="bg-gradient-to-br from-[#0a192f] via-[#0f172a] to-[#1e293b] rounded-3xl p-6 text-white shadow-xl border border-slate-800 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-extrabold tracking-widest text-amber-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-eye"></i> Xem Trước Thẻ Voucher
+                        </span>
+                        <span id="badgeTrangThaiPreview" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            Hoạt động
+                        </span>
+                    </div>
+
+                    <!-- THẺ VOUCHER SHOPEE STYLE -->
+                    <div class="voucher-ticket rounded-2xl p-4 text-slate-900 border border-amber-300/40 shadow-lg relative overflow-hidden bg-white">
+                        <div class="flex items-start justify-between gap-3 pb-3 border-b border-dashed border-slate-200">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                                    SMPL
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 id="previewTenVoucher" class="font-extrabold text-xs text-slate-900 line-clamp-1 leading-snug">
+                                        Tên chương trình ưu đãi
+                                    </h4>
+                                    <span id="previewMucGiam" class="text-sm font-black text-rose-600 block">
+                                        Giảm 20%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 space-y-2 text-[11px]">
+                            <div class="flex items-center justify-between text-slate-500">
+                                <span>Đơn tối thiểu:</span>
+                                <strong id="previewDonToiThieu" class="text-slate-800 font-bold">0 đ</strong>
+                            </div>
+                            <div id="previewRowGiamToiDa" class="flex items-center justify-between text-slate-500">
+                                <span>Giảm tối đa:</span>
+                                <strong id="previewGiamToiDa" class="text-slate-800 font-bold">50,000 đ</strong>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-500">
+                                <span>Hạn sử dụng:</span>
+                                <strong id="previewHsd" class="text-slate-800 font-medium font-mono text-[10px]">Đang cập nhật</strong>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Mã code:</span>
+                                <span id="previewMaCode" class="font-mono font-black text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg tracking-wider text-xs">
+                                    SIMPLAIN20
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- THÔNG SỐ TÓM TẮT DỰ TOÁN -->
+                    <div class="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-xs space-y-2">
+                        <div class="flex items-center justify-between text-slate-400 text-[11px]">
+                            <span>Dự toán ngân sách:</span>
+                            <strong id="previewNganSach" class="text-amber-300 font-mono font-bold">Không giới hạn</strong>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-400 text-[11px]">
+                            <span>Số lượng phát hành:</span>
+                            <strong id="previewTongSoLuong" class="text-white font-mono font-bold">Không giới hạn</strong>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-400 text-[11px]">
+                            <span>Giới hạn mỗi user:</span>
+                            <strong id="previewGioiHanUser" class="text-white font-mono font-bold">1 lần / khách</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KHỐI HÀNH ĐỘNG SUBMIT -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-3">
+                    <button type="submit"
+                            class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs uppercase tracking-wider transition shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span th:text="${(isEditMode != null and isEditMode) ? 'Lưu Thay Đổi Mã Giảm Giá' : 'Lưu & Phát Hành Voucher'}">Lưu &amp; Phát Hành Voucher</span>
+                    </button>
+
+                    <a href="/admin/voucher/hien-thi"
+                       class="w-full py-3 rounded-2xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-xmark"></i> Hủy Bỏ
+                    </a>
+                </div>
+
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- JavaScript Xử Lý Tương Tác, Sinh Mã & Live Preview (US26) -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+
+        function chonLoaiGiamGia(loai) {
+            const radPercent = document.getElementById('radioPercent');
+            const radFixed = document.getElementById('radioFixed');
+            if (loai === 'PERCENT') {
+                if (radPercent) radPercent.checked = true;
+            } else {
+                if (radFixed) radFixed.checked = true;
+            }
+            thayDoiLoaiHinh();
+            capNhatLivePreview();
+        }
+
+        function thayDoiLoaiHinh() {
+            const radPercent = document.getElementById('radioPercent');
+            const cardPercent = document.getElementById('cardLoaiPercent');
+            const cardFixed = document.getElementById('cardLoaiFixed');
+            const lblGiaTri = document.getElementById('lblGiaTriGiam');
+            const donVi = document.getElementById('donViGiaTriGiam');
+            const hint = document.getElementById('hintGiaTriGiam');
+            const boxGiamToiDa = document.getElementById('boxGiamToiDa');
+            const txtGiamToiDa = document.getElementById('txtGiamToiDa');
+            const txtGiaTri = document.getElementById('txtGiaTriGiam');
+
+            const isPercent = radPercent && radPercent.checked;
+
+            if (isPercent) {
+                // UI thẻ
+                cardPercent.className = 'border-2 rounded-2xl p-4 cursor-pointer transition flex items-center gap-3 bg-white border-blue-500 ring-2 ring-blue-500/10';
+                cardFixed.className = 'border-2 rounded-2xl p-4 cursor-pointer transition flex items-center gap-3 bg-white border-slate-200 hover:border-slate-300';
+
+                lblGiaTri.innerHTML = 'Tỷ lệ giảm (%): <span class="text-rose-600">*</span>';
+                donVi.textContent = '%';
+                hint.textContent = 'Tỷ lệ chiết khấu từ 1% đến 100%';
+                if (txtGiaTri) txtGiaTri.placeholder = 'VD: 20';
+
+                boxGiamToiDa.classList.remove('hidden');
+                if (txtGiamToiDa) txtGiamToiDa.setAttribute('required', 'required');
+            } else {
+                cardFixed.className = 'border-2 rounded-2xl p-4 cursor-pointer transition flex items-center gap-3 bg-white border-emerald-500 ring-2 ring-emerald-500/10';
+                cardPercent.className = 'border-2 rounded-2xl p-4 cursor-pointer transition flex items-center gap-3 bg-white border-slate-200 hover:border-slate-300';
+
+                lblGiaTri.innerHTML = 'Số tiền giảm (VNĐ): <span class="text-rose-600">*</span>';
+                donVi.textContent = 'đ';
+                hint.textContent = 'Số tiền giảm trực tiếp từ 1,000 đ trở lên';
+                if (txtGiaTri) txtGiaTri.placeholder = 'VD: 50000';
+
+                boxGiamToiDa.classList.add('hidden');
+                if (txtGiamToiDa) txtGiamToiDa.removeAttribute('required');
+            }
+        }
+
+        // Tự động sinh mã voucher ngẫu nhiên
+        function tuDongSinhMaVoucher() {
+            const radPercent = document.getElementById('radioPercent');
+            const loai = (radPercent && radPercent.checked) ? 'PERCENT' : 'FIXED_AMOUNT';
+            const val = document.getElementById('txtGiaTriGiam').value || '10';
+
+            fetch(`/admin/voucher/api/sinh-ma?loaiGiamGia=${loai}&giaTriGiam=${val}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success && data.maCode) {
+                        const txt = document.getElementById('txtMaCode');
+                        if (txt) {
+                            txt.value = data.maCode;
+                            kiemTraMaCodeRealtime(data.maCode);
+                            capNhatLivePreview();
+                        }
+                    }
+                })
+                .catch(() => {
+                    // Fallback
+                    const rnd = Math.floor(1000 + Math.random() * 9000);
+                    const code = (loai === 'PERCENT') ? `SMPL${val || '20'}-${rnd}` : `SMPL-${rnd}`;
+                    const txt = document.getElementById('txtMaCode');
+                    if (txt) {
+                        txt.value = code;
+                        capNhatLivePreview();
+                    }
+                });
+        }
+
+        // Kiểm tra mã voucher trùng lặp thời gian thực
+        let timerCheckCode;
+        function kiemTraMaCodeRealtime(code) {
+            clearTimeout(timerCheckCode);
+            const iconCheck = document.getElementById('iconCheckCode');
+            const msg = document.getElementById('txtThongBaoCode');
+            if (!code || code.trim().length < 3) {
+                if (iconCheck) iconCheck.classList.add('hidden');
+                if (msg) {
+                    msg.textContent = 'Chữ in hoa, số và dấu gạch nối (3 - 30 ký tự)';
+                    msg.className = 'text-[10px] block mt-1 font-semibold text-slate-400';
+                }
+                return;
+            }
+
+            timerCheckCode = setTimeout(() => {
+                const voucherId = /*[[${voucherId}]]*/ null;
+                const url = `/admin/voucher/api/kiem-tra-ma?maCode=${encodeURIComponent(code)}` + (voucherId ? `&excludeId=${voucherId}` : '');
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.exists) {
+                            if (iconCheck) iconCheck.classList.add('hidden');
+                            if (msg) {
+                                msg.textContent = `❌ Mã "${code}" đã tồn tại trên hệ thống, vui lòng đổi mã khác!`;
+                                msg.className = 'text-[10px] block mt-1 font-bold text-rose-600';
+                            }
+                        } else {
+                            if (iconCheck) iconCheck.classList.remove('hidden');
+                            if (msg) {
+                                msg.textContent = `✓ Mã "${code}" hợp lệ và khả dụng!`;
+                                msg.className = 'text-[10px] block mt-1 font-bold text-emerald-600';
+                            }
+                        }
+                    });
+            }, 300);
+        }
+
+        // Đặt nhanh khoảng thời gian hiệu lực
+        function setNhanhThoiGian(soNgay) {
+            const startInput = document.getElementById('txtNgayBatDau');
+            const endInput = document.getElementById('txtNgayKetThuc');
+            const now = new Date();
+            const future = new Date();
+            future.setDate(future.getDate() + soNgay);
+            future.setHours(23, 59, 0, 0);
+
+            const formatIso = d => {
+                const pad = n => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            };
+
+            if (startInput) startInput.value = formatIso(now);
+            if (endInput) endInput.value = formatIso(future);
+            capNhatLivePreview();
+        }
+
+        // Cập nhật Live Preview Thẻ Voucher
+        function capNhatLivePreview() {
+            const txtMa = document.getElementById('txtMaCode');
+            const txtTen = document.getElementById('txtTenVoucher');
+            const radPercent = document.getElementById('radioPercent');
+            const txtGiaTri = document.getElementById('txtGiaTriGiam');
+            const txtGiamMax = document.getElementById('txtGiamToiDa');
+            const txtDonMin = document.getElementById('txtGiaTriDonToiThieu');
+            const txtNganSach = document.getElementById('txtNganSach');
+            const txtTongLuot = document.getElementById('txtTongSoLuong');
+            const txtGioiHanUser = document.getElementById('txtGioiHanMoiUser');
+            const txtStart = document.getElementById('txtNgayBatDau');
+            const txtEnd = document.getElementById('txtNgayKetThuc');
+            const chkActive = document.getElementById('chkKichHoat');
+
+            // 1. Mã Code
+            const ma = (txtMa && txtMa.value.trim()) ? txtMa.value.trim().toUpperCase() : 'SIMPLAIN_VOUCHER';
+            document.getElementById('previewMaCode').textContent = ma;
+
+            // 2. Tên
+            const ten = (txtTen && txtTen.value.trim()) ? txtTen.value.trim() : 'Ưu đãi mua sắm SIMPLAIN STORE';
+            document.getElementById('previewTenVoucher').textContent = ten;
+
+            // 3. Mức giảm
+            const isPercent = radPercent && radPercent.checked;
+            const val = txtGiaTri && txtGiaTri.value ? parseFloat(txtGiaTri.value) : 0;
+            const elMucGiam = document.getElementById('previewMucGiam');
+            const rowMax = document.getElementById('previewRowGiamToiDa');
+
+            if (isPercent) {
+                elMucGiam.textContent = `Giảm ${val}%`;
+                if (rowMax) rowMax.classList.remove('hidden');
+                const maxVal = txtGiamMax && txtGiamMax.value ? parseFloat(txtGiamMax.value) : 0;
+                document.getElementById('previewGiamToiDa').textContent = maxVal > 0 ? (new Intl.NumberFormat('vi-VN').format(maxVal) + ' đ') : 'Không giới hạn';
+            } else {
+                elMucGiam.textContent = `Giảm ${new Intl.NumberFormat('vi-VN').format(val)} đ`;
+                if (rowMax) rowMax.classList.add('hidden');
+            }
+
+            // 4. Đơn tối thiểu
+            const donMin = txtDonMin && txtDonMin.value ? parseFloat(txtDonMin.value) : 0;
+            document.getElementById('previewDonToiThieu').textContent = donMin > 0 ? (new Intl.NumberFormat('vi-VN').format(donMin) + ' đ') : '0 đ (Mọi đơn)';
+
+            // 5. Ngân sách & Số lượng
+            const ns = txtNganSach && txtNganSach.value ? parseFloat(txtNganSach.value) : 0;
+            document.getElementById('previewNganSach').textContent = ns > 0 ? (new Intl.NumberFormat('vi-VN').format(ns) + ' đ') : 'Không giới hạn';
+
+            const qty = txtTongLuot && txtTongLuot.value ? parseInt(txtTongLuot.value) : 0;
+            document.getElementById('previewTongSoLuong').textContent = qty > 0 ? (new Intl.NumberFormat('vi-VN').format(qty) + ' lượt') : 'Không giới hạn';
+
+            const limitUser = txtGioiHanUser && txtGioiHanUser.value ? parseInt(txtGioiHanUser.value) : 1;
+            document.getElementById('previewGioiHanUser').textContent = `${limitUser} lần / khách`;
+
+            // 6. HSD
+            if (txtEnd && txtEnd.value) {
+                const d = new Date(txtEnd.value);
+                document.getElementById('previewHsd').textContent = d.toLocaleString('vi-VN', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+            } else {
+                document.getElementById('previewHsd').textContent = 'Chưa chọn';
+            }
+
+            // 7. Badge
+            const badge = document.getElementById('badgeTrangThaiPreview');
+            if (chkActive && !chkActive.checked) {
+                badge.textContent = 'Tạm ngưng';
+                badge.className = 'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-500/20 text-slate-300 border border-slate-500/30';
+            } else {
+                badge.textContent = 'Kích hoạt';
+                badge.className = 'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            thayDoiLoaiHinh();
+            capNhatLivePreview();
+        });
+
+        /*]]>*/
+    </script>
+</body>
+</html>
