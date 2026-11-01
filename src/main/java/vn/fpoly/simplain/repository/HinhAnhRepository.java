@@ -16,7 +16,7 @@ public interface HinhAnhRepository extends JpaRepository<HinhAnh, Long> {
      * Lấy danh sách hình ảnh của một biến thể theo thứ tự ưu tiên (ảnh đại diện lên đầu).
      */
     List<HinhAnh> findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(Long maBienTheId);
-
+//
     /**
      * Lấy danh sách hình ảnh của một sản phẩm gốc theo thứ tự ưu tiên.
      */

@@ -17,7 +17,7 @@ import java.util.Optional;
  */
 @Repository
 public interface SanPhamRepository extends JpaRepository<SanPham, Long> {
-
+//
     /**
      * Tìm kiếm phân trang sản phẩm theo từ khóa (mã SP, tên SP, slug, chất liệu, form dáng),
      * lọc theo danh mục, bộ sưu tập, form dáng và trạng thái kinh doanh.

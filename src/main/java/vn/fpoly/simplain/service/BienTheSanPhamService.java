@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class BienTheSanPhamService {
-
+//
     private static final long DUNG_LUONG_ANH_TOI_DA = 5L * 1024 * 1024; // 5MB / ảnh
     private static final List<String> DUOI_ANH_HOP_LE = Arrays.asList(".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg");
 

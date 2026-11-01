@@ -24,7 +24,7 @@ public interface VideoSanPhamRepository extends JpaRepository<VideoSanPham, Long
     Optional<VideoSanPham> findByMaSanPhamIdAndKichHoatTrue(Long maSanPhamId);
 
     List<VideoSanPham> findByKichHoatTrue(Sort sort);
-
+//
     boolean existsByMaSanPhamId(Long maSanPhamId);
 
     boolean existsByMaSanPhamIdAndIdNot(Long maSanPhamId, Long id);

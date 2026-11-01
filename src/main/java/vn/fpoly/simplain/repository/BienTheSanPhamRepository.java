@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 @Repository
 public interface BienTheSanPhamRepository extends JpaRepository<BienTheSanPham, Long> {
-
+//
     /**
      * Tìm kiếm phân trang biến thể SKU theo từ khóa (mã SKU, mã vạch barcode),
      * lọc theo sản phẩm gốc, màu sắc, kích thước và trạng thái kích hoạt.
