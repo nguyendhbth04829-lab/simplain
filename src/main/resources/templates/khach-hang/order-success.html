@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đặt hàng thành công — Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="mx-auto max-w-2xl p-6 md:p-12">
+    <section class="rounded-2xl bg-white p-8 text-center shadow-sm">
+        <div class="text-5xl text-emerald-600">✓</div>
+        <h1 class="mt-4 text-2xl font-bold">Đã tiếp nhận đơn hàng</h1>
+        <p class="mt-2 text-slate-600">Mã đơn: <strong th:text="${donHang.maDonHang}"></strong></p>
+        <p class="mt-2 text-slate-600">Tổng thanh toán:
+            <strong th:text="${#numbers.formatDecimal(donHang.tongThanhToan, 0, 'POINT', 0, 'COMMA') + ' đ'}"></strong>
+        </p>
+        <div th:each="item : ${danhSachChiTiet}" class="mt-3 flex justify-between gap-4 border-t pt-3 text-left text-sm">
+            <span><span th:text="${item.tenSanPham}"></span> × <span th:text="${item.soLuong}"></span></span>
+            <span th:text="${#numbers.formatDecimal(item.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+        </div>
+        <p class="mt-2 text-sm text-slate-500" th:text="${donHang.trangThaiDonHang.tenTrangThai}"></p>
+        <a href="/gio-hang" class="mt-6 inline-block rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white">Tiếp tục mua sắm</a>
+    </section>
+</main>
+</body>
+</html>

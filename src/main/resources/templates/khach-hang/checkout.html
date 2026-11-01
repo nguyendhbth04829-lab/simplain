@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thanh toán đơn hàng — Simplain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="mx-auto max-w-5xl p-6 md:p-10">
+    <a href="/gio-hang" class="text-sm text-blue-700">← Quay lại giỏ hàng</a>
+    <h1 class="mt-4 text-3xl font-bold">Xác nhận đơn hàng</h1>
+    <p th:if="${thongBaoLoi}" th:text="${thongBaoLoi}" class="mt-4 rounded bg-red-50 p-3 text-red-700"></p>
+
+    <div class="mt-8 grid gap-8 md:grid-cols-2">
+        <form th:action="@{/thanh-toan/dat-hang}" th:object="${datHangRequest}" method="post"
+              class="space-y-4 rounded-xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Thông tin nhận hàng</h2>
+            <label class="block text-sm">Người nhận
+                <input th:field="*{tenNguoiNhan}" required class="mt-1 w-full rounded border p-3">
+            </label>
+            <label class="block text-sm">Số điện thoại
+                <input th:field="*{soDienThoaiNhan}" required class="mt-1 w-full rounded border p-3">
+            </label>
+            <label class="block text-sm">Địa chỉ giao hàng
+                <textarea th:field="*{diaChiGiaoHang}" required rows="3" class="mt-1 w-full rounded border p-3"></textarea>
+            </label>
+            <label class="block text-sm">Ghi chú
+                <textarea th:field="*{ghiChu}" rows="2" class="mt-1 w-full rounded border p-3"></textarea>
+            </label>
+            <label class="block text-sm">Phương thức thanh toán
+                <select th:field="*{phuongThucThanhToanId}" required class="mt-1 w-full rounded border p-3">
+                    <option value="">Chọn phương thức</option>
+                    <option th:each="pt : ${dsPhuongThuc}" th:value="${pt.id}" th:text="${pt.tenPhuongThuc}"></option>
+                </select>
+            </label>
+            <button type="submit" class="w-full rounded-lg bg-slate-900 p-3 font-semibold text-white hover:bg-blue-700">
+                Đặt hàng
+            </button>
+        </form>
+
+        <section class="h-fit rounded-xl bg-white p-6 shadow-sm">
+            <h2 class="text-xl font-semibold">Tóm tắt đơn hàng</h2>
+            <div th:each="item : ${gioHang.danhSachItemLe}" class="flex justify-between gap-4 border-b py-3 text-sm">
+                <span><span th:text="${item.tenSanPham}"></span> × <span th:text="${item.soLuong}"></span></span>
+                <span th:text="${#numbers.formatDecimal(item.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+            </div>
+            <div th:each="combo : ${gioHang.danhSachBocCombo}" class="flex justify-between gap-4 border-b py-3 text-sm">
+                <span><span th:text="${combo.tenCombo}"></span> × <span th:text="${combo.soLuong}"></span></span>
+                <span th:text="${#numbers.formatDecimal(combo.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+            </div>
+            <div class="mt-5 flex justify-between text-sm">
+                <span>Tiền hàng</span>
+                <span th:text="${#numbers.formatDecimal(chiPhi.tongTienHang, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+            </div>
+            <div class="mt-2 flex justify-between text-sm">
+                <span>Phí vận chuyển</span>
+                <span th:text="${#numbers.formatDecimal(chiPhi.phiVanChuyen, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+            </div>
+            <div class="mt-4 flex justify-between border-t pt-4 font-bold">
+                <span>Tổng thanh toán</span>
+                <span th:text="${#numbers.formatDecimal(chiPhi.tongThanhToan, 0, 'POINT', 0, 'COMMA') + ' đ'}"></span>
+            </div>
+        </section>
+    </div>
+</main>
+</body>
+</html>
