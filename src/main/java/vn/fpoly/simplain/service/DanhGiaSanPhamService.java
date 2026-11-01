@@ -22,9 +22,10 @@ import java.util.stream.Collectors;
 
 /**
  * Service xử lý nghiệp vụ Đánh giá sản phẩm đã mua (US15).
- * 1. Check điều kiện ma_chi_tiet_don_hang_id đã hoàn thành.
- * 2. Upload JSON ảnh.
- * 3. Rating 1-5 sao.
+ * Tiêu chí cốt lõi:
+ * 1. Check điều kiện chi tiết đơn hàng đã giao thành công và hoàn thành.
+ * 2. Upload danh sách hình ảnh đánh giá lưu dưới dạng chuỗi JSON.
+ * 3. Đánh giá số sao rating từ 1 đến 5 sao kèm bình luận nhận xét.
  */
 @Service
 public class DanhGiaSanPhamService {
