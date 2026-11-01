@@ -65,3 +65,7 @@ application-secret.properties
 
 # --- Opencode / AI ---
 .opencode/
+
+# --- File nhi phan / Binary / Uploads ---
+*.exe
+uploads/
