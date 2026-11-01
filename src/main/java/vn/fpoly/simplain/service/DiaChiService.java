@@ -12,6 +12,10 @@ import java.util.List;
 
 /**
  * Service xử lý nghiệp vụ Quản lý Sổ địa chỉ giao hàng của Khách hàng (US13).
+ * Tiêu chí cốt lõi:
+ * 1. CRUD Sổ địa chỉ (thêm, sửa, xóa).
+ * 2. Render dropdown Tỉnh/Thành, Quận/Huyện, Phường/Xã.
+ * 3. Thiết lập cờ địa chỉ nhận hàng mặc định.
  */
 @Service
 public class DiaChiService {
