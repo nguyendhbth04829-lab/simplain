@@ -15,6 +15,9 @@ import java.util.stream.Collectors;
 
 /**
  * Service xử lý nghiệp vụ Thêm / Bỏ yêu thích và Quản lý danh sách Wishlist (US14).
+ * Tiêu chí cốt lõi:
+ * 1. Nhấn tim sản phẩm (lưu và cập nhật bảng san_pham_yeu_thich).
+ * 2. Hiển thị trang Danh sách yêu thích với trạng thái tồn kho và giá bán.
  */
 @Service
 public class SanPhamYeuThichService {
