@@ -16,8 +16,9 @@ import java.util.List;
 
 /**
  * Service quản lý Hội viên, Tự động tích điểm Loyalty (Coolcash) và Thăng hạng thành viên (US16).
- * Tiêu chí 1: Đơn hàng hoàn thành cộng % điểm (so_du_coolcash).
- * Tiêu chí 2: Đạt mốc tự động lên Hạng (hang_thanh_vien).
+ * Tiêu chí cốt lõi:
+ * 1. Đơn hàng hoàn thành tự động tích luỹ phần trăm điểm thưởng (so_du_coolcash).
+ * 2. Đạt mốc chi tiêu tích luỹ trong năm tự động thăng Hạng thành viên (hang_thanh_vien).
  */
 @Slf4j
 @Service
