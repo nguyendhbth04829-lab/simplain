@@ -120,15 +120,12 @@ public class MoMoService {
                 }
             }
         } catch (Exception e) {
-            log.warn("Không thể gọi MoMo API Sandbox trực tiếp ({}), sử dụng MoMo Gateway giả lập nội bộ.", e.getMessage());
+            log.warn("Không thể gọi MoMo API Sandbox trực tiếp: {}", e.getMessage());
         }
 
         // 2. Fallback an toàn: Sử dụng trang MoMo Gateway của hệ thống để không bao giờ bị lỗi 404/405
         if (paymentUrl == null || paymentUrl.isBlank()) {
-            paymentUrl = "/thanh-toan/momo-gateway?orderId=" + orderId
-                    + "&amount=" + amount
-                    + "&maDonHang=" + donHang.getMaDonHang()
-                    + "&returnUrl=" + URLEncoderWrapper(returnUrl);
+            throw new IllegalStateException("Không tạo được liên kết thanh toán MoMo. Vui lòng thử lại sau.");
         }
 
         // 3. Fallback mã QR Ví điện tử MoMo

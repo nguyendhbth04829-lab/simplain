@@ -26,7 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminPaymentInterceptor)
-                .addPathPatterns("/admin/phuong-thuc-thanh-toan/**");
+                .addPathPatterns("/admin/phuong-thuc-thanh-toan/**", "/admin/giao-dich-thanh-toan/**");
     }
 
 }

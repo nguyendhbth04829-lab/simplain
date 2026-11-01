@@ -373,10 +373,23 @@ public class GiaoDichThanhToanService {
         }
 
         // Xác thực chữ ký MoMo
-        boolean valid = moMoService.xacThucChuKy(momoParams, null);
+        boolean valid = moMoService.xacThucChuKy(momoParams, laySecretKeyMoMo(donHang.getPhuongThucThanhToan()));
         if (!valid) {
             response.put("status", 400);
             response.put("message", "Invalid signature");
+            return response;
+        }
+
+        try {
+            BigDecimal amount = new BigDecimal(momoParams.get("amount"));
+            if (donHang.getTongThanhToan() == null || donHang.getTongThanhToan().compareTo(amount) != 0) {
+                response.put("status", 400);
+                response.put("message", "Invalid amount");
+                return response;
+            }
+        } catch (Exception e) {
+            response.put("status", 400);
+            response.put("message", "Invalid amount");
             return response;
         }
 
@@ -411,39 +424,6 @@ public class GiaoDichThanhToanService {
         response.put("status", 204);
         response.put("message", "Received");
         return response;
-    }
-
-    /**
-     * Giả lập Quét QR Thanh toán Thành công (Dành cho kiểm thử Sandbox nhanh trên localhost) (US20).
-     */
-    @Transactional
-    public GiaoDichThanhToan giaLapThanhToanThanhCong(String maDonHang) {
-        DonHang donHang = donHangRepository.findByMaDonHang(maDonHang)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng #" + maDonHang));
-
-        GiaoDichThanhToan giaoDich = giaoDichRepository.findTopByDonHangIdOrderByIdDesc(donHang.getId())
-                .orElseGet(() -> {
-                    PhuongThucThanhToan pttt = donHang.getPhuongThucThanhToan() != null
-                            ? donHang.getPhuongThucThanhToan()
-                            : phuongThucThanhToanRepository.findAll().get(0);
-                    return khoiTaoGiaoDich(donHang, pttt);
-                });
-
-        giaoDich.setTrangThai(TRANG_THAI_THANH_CONG);
-        giaoDich.setMaGiaoDichCong("SIM_TEST_" + System.currentTimeMillis());
-        giaoDich.setDuLieuPhanHoi("{\"simulated\": true, \"message\": \"Giả lập thanh toán QR thành công qua Sandbox\", \"time\": \"" + LocalDateTime.now() + "\"}");
-        GiaoDichThanhToan savedGiaoDich = giaoDichRepository.save(giaoDich);
-
-        // Chuyển trạng thái đơn hàng sang ĐANG_XU_LY (Đã thanh toán)
-        TrangThaiDonHang ttDangXuLy = trangThaiDonHangRepository.findByMaTrangThai("DANG_XU_LY")
-                .orElseGet(() -> trangThaiDonHangRepository.findById(2L).orElse(null));
-        if (ttDangXuLy != null) {
-            donHang.setTrangThaiDonHang(ttDangXuLy);
-            donHangRepository.save(donHang);
-        }
-
-        log.info("Giả lập thanh toán thành công cho đơn hàng #{}", maDonHang);
-        return savedGiaoDich;
     }
 
     /**
@@ -493,6 +473,29 @@ public class GiaoDichThanhToanService {
             }
         }
         return VNPayService.VNP_DEFAULT_HASH_SECRET;
+    }
+
+    private String laySecretKeyMoMo(PhuongThucThanhToan pttt) {
+        if (pttt != null && pttt.getCauHinh() != null && !pttt.getCauHinh().isBlank()) {
+            try {
+                com.fasterxml.jackson.databind.JsonNode json = objectMapper.readTree(pttt.getCauHinh());
+                if (json.has("secret_key") && !json.get("secret_key").asText().isBlank()) {
+                    return json.get("secret_key").asText().trim();
+                }
+                if (json.has("secretKey") && !json.get("secretKey").asText().isBlank()) {
+                    return json.get("secretKey").asText().trim();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return MoMoService.MOMO_DEFAULT_SECRET_KEY;
+    }
+
+    public String layMaDonHangTuMaGiaoDich(String maGiaoDichNoiBo) {
+        if (maGiaoDichNoiBo == null || maGiaoDichNoiBo.isBlank()) return null;
+        return giaoDichRepository.findByMaGiaoDichNoiBo(maGiaoDichNoiBo)
+                .map(giaoDich -> giaoDich.getDonHang().getMaDonHang())
+                .orElse(null);
     }
 
     private String layIpClient(HttpServletRequest request) {
