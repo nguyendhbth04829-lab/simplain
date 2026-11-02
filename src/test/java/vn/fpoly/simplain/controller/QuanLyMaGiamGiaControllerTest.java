@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US26: Quan ly chuong trinh Ma giam gia
 package vn.fpoly.simplain.controller;
 
 import jakarta.persistence.EntityManager;
