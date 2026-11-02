@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US28: Thiet lap Goi Combo kich cau
 package vn.fpoly.simplain.controller;
 
 import jakarta.persistence.EntityManager;
