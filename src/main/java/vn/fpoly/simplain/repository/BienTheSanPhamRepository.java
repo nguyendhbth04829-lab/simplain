@@ -3,11 +3,13 @@ package vn.fpoly.simplain.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.fpoly.simplain.entity.BienTheSanPham;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +47,14 @@ public interface BienTheSanPhamRepository extends JpaRepository<BienTheSanPham, 
      * Tìm biến thể theo mã SKU (không phân biệt hoa thường).
      */
     Optional<BienTheSanPham> findByMaSkuIgnoreCase(String maSku);
+
+    /**
+     * Khóa biến thể theo SKU trong suốt transaction nhập kho.
+     * Khóa bi quan ngăn hai phiếu nhập đồng thời cùng đọc một mức tồn và ghi đè lẫn nhau.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT bt FROM BienTheSanPham bt WHERE LOWER(bt.maSku) = LOWER(:maSku)")
+    Optional<BienTheSanPham> findByMaSkuIgnoreCaseForUpdate(@Param("maSku") String maSku);
 
     /**
      * Tìm biến thể theo mã vạch Barcode.

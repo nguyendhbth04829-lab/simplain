@@ -75,7 +75,7 @@ class NhanVienControllerTest {
                         .param("tenDangNhap", "superadmin")
                         .param("matKhau", "hashed_pass_123"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/dashboard"))
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"))
                 .andExpect(cookie().exists(NhanVienController.COOKIE_ADMIN_TOKEN))
                 .andReturn();
 
@@ -83,9 +83,8 @@ class NhanVienControllerTest {
         assertNotNull(adminCookie);
 
         mockMvc.perform(get("/admin/dashboard").cookie(adminCookie))
-                .andExpect(status().isOk())
-                .andExpect(view().name("admin/dashboard"))
-                .andExpect(model().attributeExists("nhanVien"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"));
     }
 
     @Test
@@ -95,7 +94,7 @@ class NhanVienControllerTest {
                         .param("tenDangNhap", "cskh_01")
                         .param("matKhau", "hashed_pass_456"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/dashboard"))
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"))
                 .andExpect(cookie().exists(NhanVienController.COOKIE_ADMIN_TOKEN));
     }
 

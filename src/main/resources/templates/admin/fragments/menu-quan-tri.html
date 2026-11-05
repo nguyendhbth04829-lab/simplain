@@ -250,7 +250,7 @@
         
         <!-- Sidebar Brand Logo -->
         <div class="h-16 flex items-center justify-between px-5 border-b border-[#1e293b] flex-shrink-0">
-            <a href="/admin/dashboard" class="flex items-center space-x-2.5">
+            <a href="/admin/nha-cung-cap" class="flex items-center space-x-2.5">
                 <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-blue-500/30">
                     S
                 </div>
@@ -270,17 +270,24 @@
         <!-- Sidebar Navigation Items -->
         <div class="flex-grow overflow-y-auto sidebar-scroll py-4 px-3 space-y-6 text-xs">
 
-            <!-- NHÓM 1: TỔNG QUAN -->
-            <div class="space-y-1" th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('DASHBOARD')}">
+            <!-- NGUỒN HÀNG & NHẬP KHO: ĐIỀU HƯỚNG THEO PHÂN HỆ NGHIỆP VỤ -->
+            <div class="space-y-1">
                 <div class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                    Tổng quan
+                    Nguồn hàng &amp; Nhập kho
                 </div>
 
-                <a href="/admin/dashboard"
-                   th:classappend="${menuActive == 'dashboard'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                <a href="/admin/nha-cung-cap"
+                   th:classappend="${menuActive == 'nha-cung-cap'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150">
-                    <i class="fa-solid fa-chart-pie w-4 text-center"></i>
-                    <span class="text-xs">Báo cáo Dashboard</span>
+                    <i class="fa-solid fa-industry w-4 text-center"></i>
+                    <span>Nhà cung cấp &amp; Xưởng may</span>
+                </a>
+
+                <a href="/admin/lay-hang"
+                   th:classappend="${menuActive == 'lay-hang'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150">
+                    <i class="fa-solid fa-truck-ramp-box w-4 text-center"></i>
+                    <span>Nhập hàng vào kho</span>
                 </a>
             </div>
 
@@ -631,7 +638,8 @@
             <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <span class="text-slate-400">Quản trị CMS</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
-                <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px]" th:text="${menuActive}">Module</span>
+                <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px]"
+                      th:text="${menuActive == 'nha-cung-cap' ? 'Nhà cung cấp &amp; Xưởng may' : (menuActive == 'lay-hang' ? 'Nhập hàng vào kho' : menuActive)}">Module</span>
             </div>
         </div>
 

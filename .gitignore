@@ -65,3 +65,4 @@ application-secret.properties
 
 # --- Opencode / AI ---
 .opencode/
+tmp

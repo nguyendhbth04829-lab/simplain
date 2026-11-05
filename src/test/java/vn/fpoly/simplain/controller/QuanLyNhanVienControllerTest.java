@@ -256,7 +256,7 @@ class QuanLyNhanVienControllerTest {
                         .param("tenDangNhap", TEST_USERNAME_1)
                         .param("matKhau", "PassLock123"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/dashboard"));
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"));
     }
 
     @Test
@@ -364,12 +364,12 @@ class QuanLyNhanVienControllerTest {
             jakarta.servlet.http.Cookie tokenCookie = loginResult.getResponse().getCookie(NhanVienController.COOKIE_ADMIN_TOKEN);
             jakarta.servlet.http.HttpSession loginSession = loginResult.getRequest().getSession();
 
-            // 4. Truy cập Dashboard với tài khoản thu ngân bán hàng
+            // 4. Truy cập Dashboard (Redirect về phân hệ nguồn hàng mặc định)
             mockMvc.perform(get("/admin/dashboard")
                             .cookie(tokenCookie)
                             .session((org.springframework.mock.web.MockHttpSession) loginSession))
-                    .andExpect(status().isOk())
-                    .andExpect(view().name("admin/dashboard"));
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/admin/nha-cung-cap"));
         }
     }
 }

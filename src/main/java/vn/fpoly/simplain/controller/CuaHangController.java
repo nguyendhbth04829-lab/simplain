@@ -16,6 +16,7 @@ import vn.fpoly.simplain.dto.ThongKeDanhGiaResponse;
 import vn.fpoly.simplain.dto.ThongTinKhachHangResponse;
 import vn.fpoly.simplain.dto.VoucherKhachHangDto;
 import vn.fpoly.simplain.entity.*;
+import vn.fpoly.simplain.inbound.PhanBoTonKhoService;
 import vn.fpoly.simplain.service.*;
 
 import java.math.BigDecimal;
@@ -44,6 +45,7 @@ public class CuaHangController {
     private final DanhGiaSanPhamService danhGiaSanPhamService;
     private final LoyaltyHoiVienService loyaltyHoiVienService;
     private final VoucherKhachHangService voucherKhachHangService;
+    private final PhanBoTonKhoService phanBoTonKhoService;
     private BannerQuangCaoService bannerQuangCaoService;
     private GoiComboService goiComboService;
     private FlashSaleService flashSaleService;
@@ -74,7 +76,8 @@ public class CuaHangController {
                              SanPhamYeuThichService sanPhamYeuThichService,
                              DanhGiaSanPhamService danhGiaSanPhamService,
                              LoyaltyHoiVienService loyaltyHoiVienService,
-                             VoucherKhachHangService voucherKhachHangService) {
+                             VoucherKhachHangService voucherKhachHangService,
+                             PhanBoTonKhoService phanBoTonKhoService) {
         this.sanPhamService = sanPhamService;
         this.danhMucService = danhMucService;
         this.boSuuTapService = boSuuTapService;
@@ -86,6 +89,7 @@ public class CuaHangController {
         this.danhGiaSanPhamService = danhGiaSanPhamService;
         this.loyaltyHoiVienService = loyaltyHoiVienService;
         this.voucherKhachHangService = voucherKhachHangService;
+        this.phanBoTonKhoService = phanBoTonKhoService;
     }
 
     /**
@@ -390,9 +394,11 @@ public class CuaHangController {
                 ? bienTheDangChon.getAnhDaiDienUrl()
                 : sp.getAnhDaiDienUrl();
 
-        int soLuongTonKhoHienThi = (bienTheDangChon != null && bienTheDangChon.getSoLuong() != null)
-                ? bienTheDangChon.getSoLuong()
-                : sp.getTongTonKho();
+        // Web Online chỉ thấy lượng tồn đã qua policy phân bổ dùng chung với kệ Offline.
+        int soLuongTonKhoHienThi = (bienTheDangChon != null)
+                ? phanBoTonKhoService.phanBo(bienTheDangChon, Boolean.TRUE.equals(sp.getKichHoat()))
+                        .soLuongWebOnline()
+                : Math.max(0, sp.getTongTonKho());
 
         BigDecimal giaBanHienThi = (bienTheDangChon != null && bienTheDangChon.getGiaBan() != null)
                 ? bienTheDangChon.getGiaBan()

@@ -79,9 +79,9 @@ public class PhanQuyenAdminInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // Chuyển hướng về Dashboard với thông báo cảnh báo
+        // Chuyển hướng về phân hệ nguồn hàng mặc định với thông báo cảnh báo
         String thongBao = URLEncoder.encode("Tài khoản quyền [" + nhanVien.getTenVaiTro() + "] không có quyền truy cập module này!", StandardCharsets.UTF_8);
-        response.sendRedirect("/admin/dashboard?tuChoiQuyen=" + thongBao);
+        response.sendRedirect("/admin/nha-cung-cap?tuChoiQuyen=" + thongBao);
         return false;
     }
 

@@ -103,7 +103,7 @@ public class NhanVienController {
         if (token != null) {
             try {
                 nhanVienService.layThongTinNhanVienTuToken(token);
-                return "redirect:/admin/dashboard";
+                return "redirect:/admin/nha-cung-cap";
             } catch (Exception ignored) {
             }
         }
@@ -138,7 +138,7 @@ public class NhanVienController {
             response.addCookie(cookie);
 
             session.setAttribute("nhanVienHienTai", xacThuc);
-            return "redirect:/admin/dashboard";
+            return "redirect:/admin/nha-cung-cap";
         } catch (IllegalStateException e) {
             // Trường hợp tài khoản nhân viên bị khóa hoặc vai trò bị vô hiệu hóa
             model.addAttribute("loiKhoaTaiKhoan", e.getMessage());
@@ -153,24 +153,20 @@ public class NhanVienController {
     }
 
     /**
-     * Điều hướng trang gốc /admin về Dashboard CMS.
+     * Điều hướng trang gốc /admin về phân hệ nguồn hàng mặc định của khu vực vận hành.
      */
     @GetMapping({"", "/"})
     public String dieuHuongTrangChuAdmin() {
-        return "redirect:/admin/dashboard";
+        return "redirect:/admin/nha-cung-cap";
     }
 
     /**
-     * Màn hình Biểu đồ Dashboard tổng quan SIMPLAIN STORE (US02 & US05).
-     * Thống kê tổng số lượng người dùng, đơn hàng hôm nay, doanh thu trong ngày và biểu đồ trực quan.
+     * Endpoint Dashboard cũ đã được lưu trữ (Archive).
+     * Giữ route này để bookmark cũ không bị lỗi và chuyển về phân hệ nguồn hàng.
      */
     @GetMapping("/dashboard")
     public String hienThiDashboard(
-            @RequestParam(name = "ngayThongKe", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngayThongKe,
-            @RequestParam(name = "soNgayBieuDo", required = false, defaultValue = "7") Integer soNgayBieuDo,
-            @RequestParam(name = "tuChoiQuyen", required = false) String tuChoiQuyen,
             HttpServletRequest request,
-            Model model,
             RedirectAttributes redirectAttributes) {
 
         String token = layTokenTuCookie(request);
@@ -179,33 +175,7 @@ public class NhanVienController {
             return "redirect:/admin/dang-nhap";
         }
 
-        XacThucNhanVienResponse nhanVien;
-        try {
-            nhanVien = nhanVienService.layThongTinNhanVienTuToken(token);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("loiDangNhap", "Phiên làm việc đã hết hạn hoặc tài khoản bị khóa, vui lòng đăng nhập lại");
-            return "redirect:/admin/dang-nhap";
-        }
-
-        model.addAttribute("nhanVien", nhanVien);
-        model.addAttribute("jwtToken", token);
-
-        if (tuChoiQuyen != null && !tuChoiQuyen.trim().isEmpty()) {
-            model.addAttribute("thongBaoTuChoiQuyen", tuChoiQuyen.trim());
-        }
-
-        // Đếm số lượng RMA chờ xử lý cho CSKH / Admin
-        long soRmaChoXuLy = 0;
-        if (yeuCauDoiTraRepository != null) {
-            try {
-                soRmaChoXuLy = yeuCauDoiTraRepository.countByTrangThai("CHO_XU_LY");
-            } catch (Exception ignored) {
-            }
-        }
-        model.addAttribute("soRmaChoXuLy", soRmaChoXuLy);
-
-        napDuLieuThongKeVaoModel(ngayThongKe, soNgayBieuDo, model);
-        return "admin/dashboard";
+        return "redirect:/admin/nha-cung-cap";
     }
 
     /**
@@ -234,26 +204,18 @@ public class NhanVienController {
         }
 
         if (result.hasErrors()) {
-            model.addAttribute("nhanVien", nhanVien);
-            model.addAttribute("jwtToken", token);
-            model.addAttribute("moModalTaoDon", true);
-            model.addAttribute("thongBaoLoiDashboard", "Dữ liệu đơn hàng chưa hợp lệ, vui lòng kiểm tra lại các trường báo đỏ!");
-            napDuLieuThongKeVaoModel(LocalDate.now(), 7, model);
-            return "admin/dashboard";
+            redirectAttributes.addFlashAttribute("thongBaoLoi", "Dữ liệu đơn hàng chưa hợp lệ!");
+            return "redirect:/admin/nha-cung-cap";
         }
 
         try {
             DonHang donHangMoi = dashboardService.taoDonHangNhanh(taoDonHangNhanhRequest);
-            redirectAttributes.addFlashAttribute("thongBaoThanhCongDashboard",
-                    "Đã tạo đơn hàng [" + donHangMoi.getMaDonHang() + "] thành công! Doanh thu và biểu đồ hôm nay đã được cập nhật.");
-            return "redirect:/admin/dashboard";
+            redirectAttributes.addFlashAttribute("thongBaoThanhCong",
+                    "Đã tạo đơn hàng [" + donHangMoi.getMaDonHang() + "] thành công!");
+            return "redirect:/admin/nha-cung-cap";
         } catch (IllegalArgumentException e) {
-            model.addAttribute("nhanVien", nhanVien);
-            model.addAttribute("jwtToken", token);
-            model.addAttribute("moModalTaoDon", true);
-            model.addAttribute("thongBaoLoiDashboard", e.getMessage());
-            napDuLieuThongKeVaoModel(LocalDate.now(), 7, model);
-            return "admin/dashboard";
+            redirectAttributes.addFlashAttribute("thongBaoLoi", e.getMessage());
+            return "redirect:/admin/nha-cung-cap";
         }
     }
 

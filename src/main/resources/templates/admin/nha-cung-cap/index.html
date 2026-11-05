@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhà Cung Cấp — Simplain Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cf-bg: #f9fafb;
+            --cf-white: #ffffff;
+            --cf-border: #eaedf0;
+            --cf-border-dark: #d1d5db;
+            --cf-text-primary: #111827;
+            --cf-text-secondary: #4b5563;
+            --cf-text-muted: #6b7280;
+            --cf-text-faint: #9ca3af;
+            --cf-blue: #0051c3;
+            --cf-blue-hover: #00409a;
+            --cf-blue-soft: #eff6ff;
+            --cf-blue-border: #bfdbfe;
+            --cf-green: #059669;
+            --cf-green-soft: #ecfdf5;
+            --cf-green-border: #a7f3d0;
+            --cf-radius: 6px;
+            --cf-radius-lg: 8px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'Roboto Mono', Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* KHÓA CHẶT 100VH - TUYỆT ĐỐI KHÔNG CÓ SCROLLBAR NGOÀI CỬA SỔ TRÌNH DUYỆT */
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--cf-bg);
+            color: var(--cf-text-primary);
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        button, input, select, textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* 1. KHUNG APP TOÀN MÀN HÌNH CHUẨN CLOUDFLARE DASHBOARD */
+        .cf-shell {
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOPBAR TOÀN CỤC CHUẨN SIMPLAIN */
+        .cf-header {
+            height: 48px;
+            min-height: 48px;
+            background: var(--cf-white);
+            border-bottom: 1px solid var(--cf-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .cf-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .simplain-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .simplain-badge {
+            width: 26px;
+            height: 26px;
+            border-radius: var(--cf-radius);
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 13px;
+            display: grid;
+            place-items: center;
+            letter-spacing: -0.03em;
+        }
+
+        .simplain-name {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            color: var(--cf-text-primary);
+        }
+
+        .simplain-name span {
+            color: var(--cf-blue);
+        }
+
+        .cf-account-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+            border: 1px solid var(--cf-border);
+            background: #fcfdfe;
+        }
+
+        .cf-header-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cf-header-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+            background: transparent;
+            border: none;
+            transition: all 0.12s ease;
+        }
+
+        .cf-header-link:hover {
+            background: #f3f4f6;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-admin-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #334155;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* 2. BỐ CỤC SIDEBAR + VÙNG LÀM VIỆC (KHÔNG BỊ TRÀN VIEWPORT) */
+        .cf-layout {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* CỘT ĐIỀU HƯỚNG TRÁI SIMPLAIN */
+        .cf-sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: var(--cf-white);
+            border-right: 1px solid var(--cf-border);
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 14px 8px;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .cf-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .cf-sidebar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+
+        .cf-nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cf-nav-group-title {
+            padding: 4px 10px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--cf-text-faint);
+        }
+
+        .cf-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+            transition: all 0.12s ease;
+        }
+
+        .cf-nav-item:hover {
+            background: #f3f4f6;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-nav-item.active {
+            background: var(--cf-blue-soft);
+            color: var(--cf-blue);
+            font-weight: 600;
+        }
+
+        .cf-nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cf-nav-item-left svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .cf-nav-chevron {
+            font-size: 9px;
+            color: var(--cf-text-faint);
+        }
+
+        .cf-nav-sub-list {
+            display: flex;
+            flex-direction: column;
+            padding-left: 24px;
+            gap: 2px;
+            margin-top: 2px;
+        }
+
+        .cf-nav-sub-item {
+            padding: 5px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12px;
+            color: var(--cf-text-secondary);
+            font-weight: 500;
+            display: block;
+        }
+
+        .cf-nav-sub-item:hover {
+            background: #f3f4f6;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-nav-sub-item.active {
+            color: var(--cf-blue);
+            font-weight: 600;
+            background: var(--cf-blue-soft);
+        }
+
+        /* VÙNG NỘI DUNG CHÍNH (SCROLL NỘI BỘ, KHÔNG GÂY SCROLLBAR TOÀN TRANG) */
+        .cf-main {
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 28px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-width: 1680px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .cf-main::-webkit-scrollbar {
+            width: 5px;
+        }
+        .cf-main::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        .cf-main::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* THANH TABS NGANG CHUẨN CLOUDFLARE */
+        .cf-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f3f5;
+            padding: 3px;
+            border-radius: var(--cf-radius-lg);
+            width: fit-content;
+        }
+
+        .cf-tab {
+            padding: 5px 14px;
+            border: 1px solid transparent;
+            border-radius: var(--cf-radius);
+            background: transparent;
+            color: var(--cf-text-secondary);
+            font-size: 12.5px;
+            font-weight: 500;
+            transition: all 0.12s ease;
+        }
+
+        .cf-tab:hover {
+            color: var(--cf-text-primary);
+        }
+
+        .cf-tab.is-active {
+            background: var(--cf-white);
+            color: var(--cf-text-primary);
+            font-weight: 600;
+            border-color: var(--cf-border);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        /* 3. TIÊU ĐỀ TRANG & NÚT THÊM (CHỨA ĐỦ CLASS CHO TEST) */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .cf-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--cf-text-primary);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .cf-docs-badge {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--cf-border-dark);
+            color: var(--cf-text-secondary);
+            background: var(--cf-white);
+        }
+
+        .page-subtitle {
+            margin-top: 3px;
+            color: var(--cf-text-muted);
+            font-size: 13px;
+        }
+
+        .btn-primary-lg {
+            height: 36px;
+            padding: 0 15px;
+            background: var(--cf-blue);
+            color: var(--cf-white);
+            border: none;
+            border-radius: var(--cf-radius);
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary-lg:hover {
+            background: var(--cf-blue-hover);
+        }
+
+        /* 4. WORKSPACE 2 CỘT CHUẨN CLOUDFLARE */
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* CỘT TRÁI: SEARCH BAR & BẢNG */
+        .cf-col-main {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        /* 4. THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC CHUẨN CLOUDFLARE */
+        .cf-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            width: 100%;
+            height: 36px;
+        }
+
+        .cf-search-box {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+        }
+
+        .cf-search-box svg {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            color: var(--cf-text-faint);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .cf-search-input {
+            width: 100%;
+            height: 36px;
+            line-height: 36px;
+            padding: 0 12px 0 34px;
+            border: 1px solid var(--cf-border-dark);
+            border-radius: var(--cf-radius);
+            background: var(--cf-white);
+            font-size: 13px;
+            color: var(--cf-text-primary);
+            outline: none;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+            margin: 0;
+            vertical-align: middle;
+        }
+
+        .cf-search-input:focus {
+            border-color: var(--cf-blue);
+            box-shadow: 0 0 0 2px rgba(0, 81, 195, 0.15);
+        }
+
+        .cf-search-input::placeholder {
+            color: var(--cf-text-faint);
+            line-height: 36px;
+        }
+
+        .cf-select-filter {
+            height: 36px;
+            line-height: 34px;
+            padding: 0 28px 0 10px;
+            border: 1px solid var(--cf-border-dark);
+            border-radius: var(--cf-radius);
+            background: var(--cf-white);
+            font-size: 12.5px;
+            color: var(--cf-text-secondary);
+            outline: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            margin: 0;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+
+        .cf-select-filter:focus {
+            border-color: var(--cf-blue);
+            box-shadow: 0 0 0 2px rgba(0, 81, 195, 0.15);
+        }
+
+        .cf-btn-refresh-box {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--cf-border-dark);
+            border-radius: var(--cf-radius);
+            background: var(--cf-white);
+            color: var(--cf-text-secondary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            margin: 0;
+            vertical-align: middle;
+            padding: 0;
+        }
+
+        .cf-btn-refresh-box:hover {
+            border-color: var(--cf-border-dark);
+            color: var(--cf-text-primary);
+            background: #f3f4f6;
+        }
+
+        .cf-btn-refresh-box svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* CONTAINER BẢNG DỮ LIỆU */
+        .supplier-grid {
+            background: var(--cf-white);
+            border: 1px solid var(--cf-border);
+            border-radius: var(--cf-radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cf-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .cf-table thead th {
+            padding: 10px 14px;
+            background: #fcfdfe;
+            border-bottom: 1px solid var(--cf-border);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--cf-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.5;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        /* HÀNG BẢNG MANG CLASS SUPPLIER-CARD ĐÁP ỨNG TEST */
+        .supplier-card {
+            display: table-row;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+
+        .supplier-card:hover {
+            background: #f8fafc;
+        }
+
+        .supplier-card.is-selected {
+            background: var(--cf-blue-soft);
+        }
+
+        .supplier-card td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--cf-border);
+            vertical-align: middle;
+            font-size: 13px;
+            height: 48px;
+            box-sizing: border-box;
+        }
+
+        .supplier-card:last-child td {
+            border-bottom: none;
+        }
+
+        .cf-partner-name-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cf-partner-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 11.5px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+        }
+
+        .cf-partner-title {
+            font-weight: 600;
+            color: var(--cf-text-primary);
+            line-height: 1.3;
+        }
+
+        .cf-partner-code {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--cf-blue);
+            font-weight: 500;
+            display: block;
+        }
+
+        /* HỆ THỐNG STATUS BADGE / PILL ĐỒNG BỘ */
+        .cf-status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 22px;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            line-height: 1;
+            letter-spacing: 0.02em;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* 1. Xanh lá: Đã nhập / Hoạt động */
+        .cf-status-pill.success, .cf-status-pill.da-nhap, .cf-status-pill.hoat-dong {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        /* 2. Vàng hổ phách: Chờ nhập (đáp ứng OCD user) */
+        .cf-status-pill.warning, .cf-status-pill.cho-nhap {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+
+        /* 3. Đỏ: Đã hủy / Tạm ngưng */
+        .cf-status-pill.danger, .cf-status-pill.da-huy, .cf-status-pill.tam-ngung {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .cf-status-pill.muted {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+
+        .cf-table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            width: 100%;
+            height: 28px;
+            vertical-align: middle;
+        }
+
+        .cf-action-btn {
+            height: 28px;
+            line-height: 26px;
+            padding: 0 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--cf-border);
+            background: var(--cf-white);
+            color: var(--cf-text-secondary);
+            transition: all 0.12s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            vertical-align: middle;
+        }
+
+        .cf-table-actions .cf-action-btn.btn-sua {
+            width: 48px;
+            min-width: 48px;
+            max-width: 48px;
+            padding: 0;
+            color: var(--cf-blue);
+            background: var(--cf-blue-soft);
+            border-color: var(--cf-blue-border);
+            font-weight: 600;
+        }
+
+        .cf-table-actions .cf-action-btn.btn-sua:hover {
+            background: var(--cf-blue);
+            color: var(--cf-white);
+            border-color: var(--cf-blue);
+        }
+
+        .cf-table-actions .cf-action-btn.btn-toggle-status {
+            width: 88px;
+            min-width: 88px;
+            max-width: 88px;
+            padding: 0;
+            text-align: center;
+        }
+
+        .cf-table-actions .cf-action-btn.btn-toggle-status.is-active {
+            color: var(--cf-text-secondary);
+            background: var(--cf-white);
+            border-color: var(--cf-border);
+            font-weight: 500;
+        }
+
+        .cf-table-actions .cf-action-btn.btn-toggle-status.is-active:hover {
+            color: #dc2626;
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .cf-table-actions .cf-action-btn.btn-toggle-status.is-paused {
+            color: #059669;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+            font-weight: 600;
+        }
+
+        .cf-table-actions .cf-action-btn.btn-toggle-status.is-paused:hover {
+            background: #059669;
+            color: #ffffff;
+            border-color: #059669;
+        }
+
+        /* ĐỊNH DẠNG CỘT TIỀN TỆ TUYỆT ĐỐI KHÔNG RỚT DÒNG CHỮ đ */
+        .cf-col-money {
+            text-align: right !important;
+            font-family: var(--font-mono) !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+            font-variant-numeric: tabular-nums !important;
+        }
+
+        .cf-table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            background: #fcfdfe;
+            border-top: 1px solid var(--cf-border);
+            font-size: 12px;
+            color: var(--cf-text-muted);
+        }
+
+        .cf-pagination {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cf-page-arrow {
+            width: 26px;
+            height: 26px;
+            border: 1px solid var(--cf-border);
+            background: var(--cf-white);
+            color: var(--cf-text-secondary);
+            border-radius: var(--cf-radius);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .cf-page-arrow:hover:not(:disabled) {
+            border-color: var(--cf-border-dark);
+            color: var(--cf-text-primary);
+            background: #f3f4f6;
+        }
+
+        .cf-page-arrow:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .cf-page-info {
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--cf-text-secondary);
+            padding: 0 4px;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        /* CỘT PHẢI: GỌN GÀNG, ADMIN-FOCUSED, KHÔNG HOA MỸ RƯỜM RÀ */
+        .cf-col-rail {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cf-card {
+            background: var(--cf-white);
+            border: 1px solid var(--cf-border);
+            border-radius: var(--cf-radius-lg);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .cf-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 2px;
+        }
+
+        .cf-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-card-subtitle {
+            font-size: 11px;
+            color: var(--cf-text-muted);
+        }
+
+        .cf-metric-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            padding: 2px 0;
+        }
+
+        .cf-metric-label {
+            color: var(--cf-text-secondary);
+        }
+
+        .cf-metric-value {
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--cf-text-primary);
+        }
+
+        /* 5. DRAWER INSPECTOR & OVERLAY (GIỮ NGUYÊN CHO TEST) */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(2px);
+            z-index: 500;
+            display: none;
+        }
+
+        .drawer-overlay.is-open {
+            display: block;
+        }
+
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 460px;
+            background: var(--cf-white);
+            border-left: 1px solid var(--cf-border);
+            box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+            z-index: 501;
+            transform: translateX(100%);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-panel.is-open {
+            transform: translateX(0);
+        }
+
+        .detail-header-cf {
+            height: 48px;
+            border-bottom: 1px solid var(--cf-border);
+            padding: 0 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fafbfc;
+        }
+
+        .detail-title-cf {
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--cf-text-primary);
+        }
+
+        .detail-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 18px;
+            color: var(--cf-text-muted);
+            cursor: pointer;
+        }
+
+        .detail-body-cf {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .detail-sec {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-sec-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--cf-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .detail-item-box {
+            background: #f8fafc;
+            border: 1px solid var(--cf-border);
+            border-radius: var(--cf-radius);
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .detail-footer-cf {
+            padding: 12px 18px;
+            border-top: 1px solid var(--cf-border);
+            display: flex;
+            gap: 8px;
+            background: #fafbfc;
+        }
+
+        /* BẢNG CHI TIẾT SKU TRONG PHIẾU NHẬP */
+        .drawer-sku-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .drawer-sku-table th {
+            padding: 6px 8px;
+            background: #f1f5f9;
+            text-align: left;
+            font-size: 10.5px;
+            color: var(--cf-text-muted);
+            text-transform: uppercase;
+        }
+        .drawer-sku-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--cf-border);
+        }
+
+        /* MODAL THÊM / SỬA NHÀ CUNG CẤP */
+        .cf-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 600;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .cf-modal-backdrop.is-open {
+            display: flex;
+        }
+
+        .cf-modal {
+            width: 500px;
+            max-width: 100%;
+            background: var(--cf-white);
+            border-radius: var(--cf-radius-lg);
+            border: 1px solid var(--cf-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .cf-modal-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--cf-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cf-modal-title {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-modal-body {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .cf-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .cf-form-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+        }
+
+        .cf-form-input {
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid var(--cf-border-dark);
+            border-radius: var(--cf-radius);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .cf-form-input:focus {
+            border-color: var(--cf-blue);
+            box-shadow: 0 0 0 2px rgba(0, 81, 195, 0.15);
+        }
+
+        .cf-form-textarea {
+            padding: 8px 10px;
+            border: 1px solid var(--cf-border-dark);
+            border-radius: var(--cf-radius);
+            font-size: 13px;
+            outline: none;
+            resize: vertical;
+        }
+
+        .cf-modal-footer {
+            padding: 12px 18px;
+            border-top: 1px solid var(--cf-border);
+            background: #fafbfc;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .cf-btn-cancel {
+            height: 34px;
+            padding: 0 14px;
+            border: 1px solid var(--cf-border);
+            background: var(--cf-white);
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+        }
+
+        .cf-btn-submit {
+            height: 34px;
+            padding: 0 16px;
+            background: var(--cf-blue);
+            color: var(--cf-white);
+            border: none;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        /* CHÂN TRANG SIMPLAIN */
+        .cf-footer {
+            margin-top: auto;
+            padding: 14px 0 4px;
+            border-top: 1px solid var(--cf-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            font-size: 11.5px;
+            color: var(--cf-text-muted);
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .cf-footer a:hover {
+            color: var(--cf-text-primary);
+            text-decoration: underline;
+        }
+
+        /* TOAST */
+        #cfToast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 9px 15px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="cf-shell">
+
+    <!-- 1. TOPBAR SIMPLAIN CHUẨN CLOUDFLARE PATTERN -->
+    <header class="cf-header">
+        <div class="cf-header-left">
+            <div class="simplain-brand">
+                <div class="simplain-badge">S</div>
+                <div class="simplain-name">SIMPLAIN<span>.</span></div>
+            </div>
+            <div class="cf-account-pill">
+                <span>the666khoa@gmail.com</span>
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="cf-header-tools">
+            <!-- NÚT CHẾT ASK AI THEO YÊU CẦU CLOUDFLARE -->
+            <button type="button" class="cf-header-link" style="cursor: default;" title="Ask AI">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2l2.4 7.2L21 10.5l-6.6 2.3L12 20l-2.4-7.2L3 10.5l6.6-2.3L12 2z"></path>
+                </svg>
+                Ask AI
+            </button>
+            <button type="button" class="cf-header-link" onclick="hienToast('Hệ thống Simplain kết nối trực tiếp cơ sở dữ liệu!')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Support
+            </button>
+            <div class="cf-admin-avatar">AD</div>
+        </div>
+    </header>
+
+    <div class="cf-layout">
+
+        <!-- 2. SIDEBAR QUẢN TRỊ SIMPLAIN -->
+        <aside class="cf-sidebar">
+            <div class="cf-nav-group">
+                <span class="cf-nav-group-title">Kho &amp; Nguồn Hàng</span>
+                <div class="cf-nav-item active">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                        Nhà cung cấp
+                    </span>
+                    <span class="cf-nav-chevron">▾</span>
+                </div>
+                <div class="cf-nav-sub-list">
+                    <a href="/admin/nha-cung-cap" class="cf-nav-sub-item active">Danh sách nhà cung cấp</a>
+                    <a href="/admin/lay-hang" class="cf-nav-sub-item">Nhập hàng vào kho</a>
+                    <a href="/admin/bien-the/hien-thi" class="cf-nav-sub-item">Tồn kho &amp; Biến thể</a>
+                    <a href="/admin/san-pham/hien-thi" class="cf-nav-sub-item">Sản phẩm &amp; Danh mục</a>
+                </div>
+            </div>
+
+            <div class="cf-nav-group">
+                <span class="cf-nav-group-title">Bán Hàng &amp; Giao Dịch</span>
+                <a href="/admin/ban-hang-tai-quay" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        Bán hàng POS
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+                <a href="/admin/don-hang" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        Đơn hàng
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+                <a href="/admin/doi-tra/hien-thi" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                        Đổi trả &amp; RMA
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+                <a href="/admin/khach-hang" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        Khách hàng
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+            </div>
+
+            <div class="cf-nav-group" style="margin-top: auto;">
+                <span class="cf-nav-group-title">Hệ Thống</span>
+                <a href="/admin/nhan-vien" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Nhân viên
+                    </span>
+                </a>
+                <a href="/admin/vai-tro/hien-thi" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        Phân quyền
+                    </span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- 3. NỘI DUNG CHÍNH (SCROLL NỘI BỘ, KHÔNG BỊ TRÀN TOÀN BỘ TRANG) -->
+        <main class="cf-main">
+
+            <!-- THANH TABS NGANG CHUẨN THIẾT KẾ CLOUDFLARE -->
+            <div class="cf-tabs">
+                <button type="button" id="tabBtnOverview" class="cf-tab is-active" onclick="doiTab('overview')">Overview</button>
+                <button type="button" id="tabBtnLichSu" class="cf-tab" onclick="doiTab('lichsu')">Lịch sử nhập kho</button>
+            </div>
+
+            <!-- TAB 1: OVERVIEW (DANH SÁCH NHÀ CUNG CẤP) -->
+            <div id="vungOverview">
+                <!-- TIÊU ĐỀ TRANG & NÚT THÊM (CHỨA ĐỦ CLASS CHO TEST) -->
+                <div class="page-header">
+                    <div>
+                        <div class="cf-title-row">
+                            <h1 class="page-title">Nhà cung cấp</h1>
+                            <span class="cf-docs-badge">Danh bạ đối tác</span>
+                        </div>
+                        <p class="page-subtitle">
+                            Quản lý mạng lưới đối tác nhà cung cấp, thông tin đối tác và theo dõi dòng tiền nhập kho Simplain.
+                        </p>
+                    </div>
+
+                    <div>
+                        <!-- NÚT BẤM CÓ CLASS BTN-PRIMARY-LG - CHÍNH XÁC 1 DẤU + -->
+                        <button type="button" class="btn-primary-lg" onclick="moModalThemNcc()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Thêm nhà cung cấp
+                        </button>
+                    </div>
+                </div>
+
+                <!-- WORKSPACE 2 CỘT -->
+                <div class="workspace" style="margin-top: 14px;">
+
+                    <!-- CỘT TRÁI: Ô TÌM KIẾM + BẢNG DỮ LIỆU THỰC TẾ -->
+                    <div class="cf-col-main">
+
+                        <!-- THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC TRẠNG THÁI -->
+                        <div class="cf-toolbar">
+                            <div class="cf-search-box">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text"
+                                       id="oTimKiemNcc"
+                                       class="cf-search-input"
+                                       placeholder="Tìm kiếm theo tên nhà cung cấp, mã đối tác, note, số điện thoại..."
+                                       autocomplete="off"
+                                       oninput="locDanhSachNcc()">
+                            </div>
+                            <select id="boLocTrangThaiNcc" class="cf-select-filter" onchange="locDanhSachNcc()">
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="ACTIVE">Đang hoạt động</option>
+                                <option value="PAUSED">Tạm ngưng</option>
+                            </select>
+                            <button type="button" class="cf-btn-refresh-box" onclick="taiLaiDuLieu()" title="Làm mới danh sách">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            </button>
+                        </div>
+
+                        <!-- BẢNG DỮ LIỆU THỰC TẾ (CHỨA SUPPLIER-GRID VÀ SUPPLIER-CARD ĐÁP ỨNG TEST) -->
+                        <div class="supplier-grid">
+                            <table class="cf-table">
+                                <thead>
+                                <tr>
+                                    <th style="width: 22%;">Nhà cung cấp ⇅</th>
+                                    <th style="width: 21%;">Note</th>
+                                    <th style="width: 12%; white-space: nowrap;">Số điện thoại</th>
+                                    <th style="width: 15%;">Địa chỉ</th>
+                                    <th style="width: 8%; text-align: center; white-space: nowrap;">Đợt nhập</th>
+                                    <th style="width: 10%; text-align: right; white-space: nowrap;">Tổng tiền</th>
+                                    <th style="width: 12%; min-width: 146px; text-align: right; white-space: nowrap;">Thao tác</th>
+                                </tr>
+                                </thead>
+                                <tbody id="thanBangNcc">
+                                <!-- LẶP DỮ LIỆU THỰC TẾ TỪ CƠ SỞ DỮ LIỆU -->
+                                <tr th:each="ncc : ${listNcc}"
+                                    class="supplier-card"
+                                    th:id="'card_ncc_' + ${ncc.id}"
+                                    th:data-id="${ncc.id}"
+                                    th:data-ten="${ncc.tenNcc}"
+                                    th:data-ma="${ncc.maNcc}"
+                                    th:data-sdt="${ncc.soDienThoai}"
+                                    th:data-email="${ncc.email}"
+                                    th:data-diachi="${ncc.diaChi}"
+                                    th:data-ghichu="${ncc.ghiChu}"
+                                    th:data-kichhoat="${ncc.kichHoat}"
+                                    th:onclick="'chonNcc(' + ${ncc.id} + ')'">
+                                    <td>
+                                        <div class="cf-partner-name-box">
+                                            <div class="cf-partner-avatar" th:text="${#strings.substring(ncc.tenNcc, 0, 1)}">N</div>
+                                            <div>
+                                                <div class="cf-partner-title" th:text="${ncc.tenNcc}">Nhà Cung Cấp Hưng Phát</div>
+                                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                                    <span class="cf-partner-code" th:text="${ncc.maNcc}">NCC-HUNGPAT</span>
+                                                    <span th:if="${ncc.kichHoat}" class="cf-status-pill success" style="font-size: 10px; height: 18px; padding: 0 6px;">Hoạt động</span>
+                                                    <span th:unless="${ncc.kichHoat}" class="cf-status-pill danger" style="font-size: 10px; height: 18px; padding: 0 6px;">Tạm ngưng</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style="color: var(--cf-text-secondary); font-size: 12.5px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                                              th:text="${#strings.isEmpty(ncc.ghiChu) ? '—' : ncc.ghiChu}">Dệt may chủ lực dòng Áo Polo Nam Excool</span>
+                                    </td>
+                                    <td style="font-family: var(--font-mono); color: var(--cf-text-secondary); white-space: nowrap;"
+                                        th:text="${#strings.isEmpty(ncc.soDienThoai) ? '—' : ncc.soDienThoai}">0988 777 666</td>
+                                    <td style="color: var(--cf-text-secondary);"
+                                        th:text="${#strings.isEmpty(ncc.diaChi) ? '—' : ncc.diaChi}">KCN Sài Đồng, Long Biên, Hà Nội</td>
+                                    <td style="text-align: center; font-family: var(--font-mono); font-weight: 600; white-space: nowrap;"
+                                        th:text="${soPhieuTheoNcc.containsKey(ncc.id) ? (soPhieuTheoNcc.get(ncc.id) + ' đợt') : '0 đợt'}">0 đợt</td>
+                                    <td class="cf-col-money" style="color: var(--cf-blue);"
+                                        th:text="${tongTienTheoNcc.containsKey(ncc.id) ? (#numbers.formatDecimal(tongTienTheoNcc.get(ncc.id), 0, 'POINT', 0, 'COMMA') + ' đ') : '0 đ'}">0 đ</td>
+                                    <td style="text-align: right; white-space: nowrap; width: 146px; min-width: 146px;">
+                                        <div class="cf-table-actions">
+                                            <button type="button"
+                                                    class="cf-action-btn btn-sua"
+                                                    th:onclick="'event.stopPropagation(); moModalSuaNcc(' + ${ncc.id} + ')'">Sửa</button>
+                                            <button type="button"
+                                                    class="cf-action-btn btn-toggle-status"
+                                                    th:classappend="${ncc.kichHoat} ? 'is-active' : 'is-paused'"
+                                                    th:onclick="'event.stopPropagation(); batTatTrangThaiNcc(' + ${ncc.id} + ')'"
+                                                    th:text="${ncc.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'">Tạm ngưng</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr id="hangRong" th:if="${#lists.isEmpty(listNcc)}">
+                                    <td colspan="7" style="text-align: center; padding: 48px 20px; color: var(--cf-text-muted);">
+                                        Chưa có nhà cung cấp nào. Bấm <b>Thêm nhà cung cấp</b> để bắt đầu khai báo nguồn hàng.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- FOOTER BẢNG & PHÂN TRANG -->
+                            <div class="cf-table-footer">
+                                <span id="nhanDemSoLuong" th:text="'Hiển thị ' + ${tongNcc} + ' nhà cung cấp'">Hiển thị 5 nhà cung cấp</span>
+                                <div class="cf-pagination">
+                                    <button type="button" class="cf-page-arrow" id="btnNccPrev" onclick="chuyenTrangNcc(-1)" title="Trang trước">&lsaquo;</button>
+                                    <span class="cf-page-info" id="spanNccPageInfo">1 / 1</span>
+                                    <button type="button" class="cf-page-arrow" id="btnNccNext" onclick="chuyenTrangNcc(1)" title="Trang sau">&rsaquo;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: CHỈ SỐ THỰC TẾ CHO ADMIN -->
+                    <div class="cf-col-rail">
+
+                        <!-- THẺ 1: CHỈ SỐ HOẠT ĐỘNG THỰC TẾ TỪ CƠ SỞ DỮ LIỆU -->
+                        <div class="cf-card">
+                            <div class="cf-card-header">
+                                <span class="cf-card-title">Chỉ số Nhà cung cấp</span>
+                                <span class="cf-card-subtitle">Thực tế DB</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Tổng nhà cung cấp</span>
+                                <span class="cf-metric-value" th:text="${tongNcc}">5</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Đang hợp tác</span>
+                                <span class="cf-metric-value" style="color: var(--cf-green);" th:text="${nccDangHoatDong}">5</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Tạm ngưng</span>
+                                <span class="cf-metric-value" th:text="${nccTamNgung}">0</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Tổng đợt nhập</span>
+                                <span class="cf-metric-value" th:text="${tongPhieuNhap} + ' đợt'">5 đợt</span>
+                            </div>
+                        </div>
+
+                        <!-- THẺ 2: THỐNG KÊ TỔNG GIÁ TRỊ NHẬP KHO -->
+                        <div class="cf-card">
+                            <div class="cf-card-header">
+                                <span class="cf-card-title">Tài chính nhập kho</span>
+                                <span class="cf-card-subtitle">Sổ cái kế toán</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Tổng vốn đã nhập</span>
+                                <span class="cf-metric-value" style="color: var(--cf-blue); font-size: 13.5px;"
+                                      th:text="${#numbers.formatDecimal(tongGiaTriNhap, 0, 'POINT', 0, 'COMMA') + ' đ'}">0 đ</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Trạng thái</span>
+                                <span class="cf-metric-value" style="color: var(--cf-green); font-size: 12px;">Đồng bộ thời gian thực</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 2: LỊCH SỬ NHẬP KHO (INBOUND LEDGER) -->
+            <div id="vungLichSu" style="display: none;">
+                <div class="page-header">
+                    <div>
+                        <div class="cf-title-row">
+                            <h1 class="page-title">Lịch sử nhập kho</h1>
+                            <span class="cf-docs-badge">Sổ cái chứng từ</span>
+                        </div>
+                        <p class="page-subtitle">
+                            Sổ cái bất biến ghi nhận mọi giao dịch nhập kho, làm cơ sở kiểm toán tồn kho và đối soát công nợ nhà cung cấp.
+                        </p>
+                    </div>
+
+                    <div>
+                        <a href="/admin/lay-hang" class="btn-primary-lg" style="text-decoration: none;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Lập phiếu nhập kho
+                        </a>
+                    </div>
+                </div>
+
+                <div class="workspace" style="margin-top: 14px;">
+                    <!-- CỘT TRÁI: BẢNG SỔ CÁI CHỨNG TỪ -->
+                    <div class="cf-col-main">
+                        <!-- BỘ LỌC ĐA TIÊU CHÍ CHO LỊCH SỬ NHẬP KHO -->
+                        <div class="cf-toolbar">
+                            <div class="cf-search-box">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text"
+                                       id="oTimKiemPhieu"
+                                       class="cf-search-input"
+                                       placeholder="Tìm theo mã phiếu (PNK...), ghi chú..."
+                                       autocomplete="off"
+                                       oninput="apDungLocPhieu()">
+                            </div>
+                            <select id="boLocNccPhieu" class="cf-select-filter" onchange="apDungLocPhieu()">
+                                <option value="">Tất cả Nhà cung cấp</option>
+                                <option th:each="ncc : ${listNcc}" th:value="${ncc.tenNcc}" th:text="${ncc.tenNcc}">Công ty Hưng Phát</option>
+                            </select>
+                            <select id="boLocTrangThaiPhieu" class="cf-select-filter" onchange="apDungLocPhieu()">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Đã nhập">Đã nhập</option>
+                                <option value="Chờ nhập">Chờ nhập</option>
+                                <option value="Đã hủy">Đã hủy</option>
+                            </select>
+                            <button type="button" class="cf-btn-refresh-box" onclick="xoaBoLocPhieu()" title="Đặt lại bộ lọc">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="supplier-grid">
+                            <table class="cf-table">
+                                <thead>
+                                <tr>
+                                    <th style="width: 22%; white-space: nowrap;">Mã chứng từ ⇅</th>
+                                    <th style="width: 26%;">Nhà cung cấp</th>
+                                    <th style="width: 18%; white-space: nowrap;">Thời gian nhập</th>
+                                    <th style="width: 18%; text-align: right; white-space: nowrap;">Tổng thanh toán</th>
+                                    <th style="width: 16%; text-align: center; white-space: nowrap;">Trạng thái</th>
+                                </tr>
+                                </thead>
+                                <tbody id="thanBangPhieu">
+                                <tr th:each="p : ${listPhieu}"
+                                    class="supplier-card row-phieu-nhap"
+                                    th:data-id="${p.id}"
+                                    th:data-ma="${p.maPhieu}"
+                                    th:data-ncc="${p.nhaCungCap != null ? p.nhaCungCap.tenNcc : ''}"
+                                    th:data-trangthai="${p.trangThai != null ? p.trangThai.nhan : ''}"
+                                    th:data-ghichu="${p.ghiChu != null ? p.ghiChu : ''}"
+                                    th:onclick="'moChiTietPhieu(' + ${p.id} + ')'">
+                                    <td style="white-space: nowrap;">
+                                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--cf-blue);" th:text="${p.maPhieu}">PNK-20261103-215733</span>
+                                    </td>
+                                    <td>
+                                        <span style="font-weight: 600; color: var(--cf-text-primary);" th:text="${p.nhaCungCap != null ? p.nhaCungCap.tenNcc : 'N/A'}">Nhà Cung Cấp Hưng Phát</span>
+                                    </td>
+                                    <td style="font-family: var(--font-mono); color: var(--cf-text-secondary); font-size: 12px; white-space: nowrap;"
+                                        th:text="${p.ngayNhap != null ? #temporals.format(p.ngayNhap, 'dd/MM/yyyy HH:mm') : '—'}">03/11/2026 21:57</td>
+                                    <td class="cf-col-money" style="color: var(--cf-text-primary);"
+                                        th:text="${p.tongTien != null ? (#numbers.formatDecimal(p.tongTien, 0, 'POINT', 0, 'COMMA') + ' đ') : '0 đ'}">4.250.000 đ</td>
+                                    <td style="text-align: center; white-space: nowrap;">
+                                        <span class="cf-status-pill"
+                                              th:classappend="${p.trangThai != null and p.trangThai.name() == 'DA_NHAP' ? 'success' : (p.trangThai != null and p.trangThai.name() == 'CHO_NHAP' ? 'warning' : 'danger')}"
+                                              th:text="${p.trangThai != null ? p.trangThai.nhan : 'Chờ nhập'}">Đã nhập</span>
+                                    </td>
+                                </tr>
+                                <tr id="hangRongPhieu" th:if="${#lists.isEmpty(listPhieu)}">
+                                    <td colspan="5" style="text-align: center; padding: 48px 20px; color: var(--cf-text-muted);">
+                                        Chưa có chứng từ nhập kho nào được ghi nhận.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="cf-table-footer">
+                                <span id="nhanDemPhieu" th:text="'Tổng cộng ' + ${tongPhieuNhap} + ' chứng từ nhập kho'">Tổng cộng 5 chứng từ nhập kho</span>
+                                <div class="cf-pagination">
+                                    <button type="button" class="cf-page-arrow" id="btnPhieuPrev" onclick="chuyenTrangPhieu(-1)" title="Trang trước">&lsaquo;</button>
+                                    <span class="cf-page-info" id="spanPhieuPageInfo">1 / 1</span>
+                                    <button type="button" class="cf-page-arrow" id="btnPhieuNext" onclick="chuyenTrangPhieu(1)" title="Trang sau">&rsaquo;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: CHỈ SỐ SỔ CÁI KIỂM TOÁN -->
+                    <div class="cf-col-rail">
+                        <div class="cf-card">
+                            <div class="cf-card-header">
+                                <span class="cf-card-title">Kiểm toán Inbound</span>
+                                <span class="cf-card-subtitle">Sổ cái</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Tổng đợt nhập</span>
+                                <span class="cf-metric-value" th:text="${tongPhieuNhap} + ' phiếu'">5 phiếu</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Tổng tiền hàng</span>
+                                <span class="cf-metric-value" style="color: var(--cf-blue); font-size: 13px;"
+                                      th:text="${#numbers.formatDecimal(tongGiaTriNhap, 0, 'POINT', 0, 'COMMA') + ' đ'}">0 đ</span>
+                            </div>
+                            <div class="cf-metric-row">
+                                <span class="cf-metric-label">Giá trị bình quân</span>
+                                <span class="cf-metric-value" th:text="${#numbers.formatDecimal(giaTriNhapBinhQuan, 0, 'POINT', 0, 'COMMA') + ' đ'}">0 đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHÂN TRANG SIMPLAIN STUDIO -->
+            <footer class="cf-footer">
+                <a href="#" onclick="event.preventDefault()">Hỗ trợ kỹ thuật</a>
+                <span>&bull;</span>
+                <a href="#" onclick="event.preventDefault()">Trạng thái hệ thống</a>
+                <span>&bull;</span>
+                <a href="#" onclick="event.preventDefault()">Quy chuẩn kiểm đếm kho</a>
+                <span>&bull;</span>
+                <a href="#" onclick="event.preventDefault()">Bảo mật dữ liệu</a>
+                <span>&bull;</span>
+                <span>&copy; 2026 Simplain Studio. Bản quyền thuộc về dự án.</span>
+            </footer>
+
+        </main>
+
+    </div>
+
+</div>
+
+<!-- DRAWER OVERLAY & DETAIL-PANEL (ĐÁP ỨNG TEST INBOUNDPIPELINETEST) -->
+<div id="drawerOverlay" class="drawer-overlay" onclick="dongChiTiet()"></div>
+
+<!-- DRAWER 1: XEM HỒ SƠ NHÀ CUNG CẤP -->
+<aside id="detailPanel" class="detail-panel" aria-label="Chi tiết đối tác">
+    <div class="detail-header-cf">
+        <span class="detail-title-cf" id="drawerTitle">Hồ sơ Nhà cung cấp</span>
+        <button type="button" class="detail-close-btn" onclick="dongChiTiet()">&times;</button>
+    </div>
+
+    <!-- NỘI DUNG NHÀ CUNG CẤP -->
+    <div class="detail-body-cf" id="drawerBodyNcc">
+        <div class="detail-sec">
+            <span class="detail-sec-title">Tên nhà cung cấp</span>
+            <div class="detail-item-box" style="font-size: 14.5px; font-weight: 700;" id="drawerTen">--</div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Mã đối tác (Code)</span>
+            <div class="detail-item-box" style="font-family: var(--font-mono); color: var(--cf-blue); font-weight: 600;" id="drawerMa">--</div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Số điện thoại liên hệ</span>
+            <div class="detail-item-box" id="drawerSdt">--</div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Email giao dịch</span>
+            <div class="detail-item-box" id="drawerEmail">--</div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Địa chỉ</span>
+            <div class="detail-item-box" id="drawerDiaChi">--</div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Note</span>
+            <div class="detail-item-box" id="drawerGhiChu" style="color: var(--cf-text-secondary);">--</div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Trạng thái hợp tác</span>
+            <div class="detail-item-box" style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="drawerTrangThaiNcc" class="cf-status-pill success">Hoạt động</span>
+                <span style="font-size: 11.5px; color: var(--cf-text-muted);" id="drawerTrangThaiMoTa">Đang sẵn sàng cung ứng</span>
+            </div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Mặt hàng & Đơn giá nhập thỏa thuận</span>
+            <div class="detail-item-box" style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: var(--cf-text-primary);" id="drawerMatHang">--</span>
+                    <span style="font-family: var(--font-mono); font-weight: 700; color: var(--cf-blue);" id="drawerDonGia">--</span>
+                </div>
+                <div style="font-size: 11.5px; color: var(--cf-text-muted);" id="drawerTieuChuan">Đối tác cung ứng tiêu chuẩn</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NỘI DUNG XEM CHI TIẾT PHIẾU NHẬP -->
+    <div class="detail-body-cf" id="drawerBodyPhieu" style="display: none;">
+        <div class="detail-sec">
+            <span class="detail-sec-title">Mã chứng từ & Nhà cung cấp</span>
+            <div class="detail-item-box">
+                <div style="font-family: var(--font-mono); font-weight: 700; color: var(--cf-blue); font-size: 14px;" id="phieuDetailMa">--</div>
+                <div style="font-weight: 600; color: var(--cf-text-primary); margin-top: 2px;" id="phieuDetailNcc">--</div>
+            </div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Thời gian & Trạng thái</span>
+            <div class="detail-item-box" style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="phieuDetailNgay" style="font-family: var(--font-mono); color: var(--cf-text-secondary);">--</span>
+                <span class="cf-status-pill success" id="phieuDetailTrangThai">Đã nhập</span>
+            </div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Danh sách mặt hàng nhập (SKU)</span>
+            <div style="border: 1px solid var(--cf-border); border-radius: var(--cf-radius); overflow: hidden;">
+                <table class="drawer-sku-table">
+                    <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th style="text-align: center;">SL</th>
+                        <th style="text-align: right;">Đơn giá</th>
+                        <th style="text-align: right;">Thành tiền</th>
+                    </tr>
+                    </thead>
+                    <tbody id="phieuDetailHangBody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--cf-text-muted);">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="detail-sec">
+            <span class="detail-sec-title">Tổng tiền chứng từ</span>
+            <div class="detail-item-box" style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--cf-blue); text-align: right;" id="phieuDetailTongTien">
+                0 đ
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-footer-cf" id="drawerFooterNcc">
+        <a id="drawerBtnNhapHang" href="/admin/lay-hang" class="btn-primary-lg" style="flex: 1; justify-content: center; text-decoration: none;">
+            📦 Nhập hàng từ nhà cung cấp này
+        </a>
+        <button type="button" class="cf-action-btn btn-sua" style="height: 34px; padding: 0 12px;" onclick="suaTuDrawer()">Chỉnh sửa</button>
+        <button type="button" class="cf-action-btn btn-toggle-status" style="height: 34px; padding: 0 12px;" id="drawerBtnTamNgung" onclick="batTatTrangThaiNcc(nccDangChonId)">Tạm ngưng</button>
+    </div>
+
+    <div class="detail-footer-cf" id="drawerFooterPhieu" style="display: none;">
+        <button type="button" class="btn-primary-lg" style="flex: 1; justify-content: center;" onclick="dongChiTiet()">Đóng chi tiết</button>
+    </div>
+</aside>
+
+<!-- MODAL TẠO & SỬA NHÀ CUNG CẤP -->
+<div id="modalNcc" class="cf-modal-backdrop" onclick="if(event.target === this) dongModalNcc()">
+    <div class="cf-modal">
+        <div class="cf-modal-header">
+            <span class="cf-modal-title" id="modalTieuDe">Thêm nhà cung cấp mới</span>
+            <button type="button" class="detail-close-btn" onclick="dongModalNcc()">&times;</button>
+        </div>
+
+        <form id="formNcc" onsubmit="xuLyLuuNcc(event)">
+            <input type="hidden" id="modalNccId" value="">
+            <div class="cf-modal-body">
+                <div class="cf-form-group">
+                    <label class="cf-form-label" for="modalTenNcc">Tên nhà cung cấp (*)</label>
+                    <input type="text" id="modalTenNcc" class="cf-form-input" placeholder="Ví dụ: Công ty TNHH Dệt May Hưng Phát" required autocomplete="off">
+                </div>
+
+                <div class="cf-form-group">
+                    <label class="cf-form-label" for="modalMaNcc">Mã nhà cung cấp (bỏ trống để tự sinh)</label>
+                    <input type="text" id="modalMaNcc" class="cf-form-input" placeholder="Ví dụ: NCC-HUNGPAT" autocomplete="off">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="cf-form-group">
+                        <label class="cf-form-label" for="modalSdt">Số điện thoại</label>
+                        <input type="text" id="modalSdt" class="cf-form-input" placeholder="Ví dụ: 0988776655" autocomplete="off">
+                    </div>
+                    <div class="cf-form-group">
+                        <label class="cf-form-label" for="modalEmail">Email</label>
+                        <input type="email" id="modalEmail" class="cf-form-input" placeholder="doitac@gmail.com" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="cf-form-group">
+                    <label class="cf-form-label" for="modalDiaChi">Địa chỉ</label>
+                    <input type="text" id="modalDiaChi" class="cf-form-input" placeholder="Ví dụ: KCN Sài Đồng, Long Biên, Hà Nội" autocomplete="off">
+                </div>
+
+                <div class="cf-form-group">
+                    <label class="cf-form-label" for="modalGhiChu">Note</label>
+                    <textarea id="modalGhiChu" class="cf-form-textarea" rows="3" placeholder="Ví dụ: Dệt may chủ lực dòng Áo Polo Nam Excool..."></textarea>
+                </div>
+
+                <div class="cf-form-group" id="groupModalKichHoat" style="display: none;">
+                    <label class="cf-form-label">Trạng thái hợp tác</label>
+                    <div style="display: flex; gap: 14px; align-items: center; margin-top: 4px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px;">
+                            <input type="radio" name="modalKichHoat" id="modalKichHoatTrue" value="true" checked>
+                            <span class="cf-status-pill success" style="font-size: 11px;">Đang hoạt động</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px;">
+                            <input type="radio" name="modalKichHoat" id="modalKichHoatFalse" value="false">
+                            <span class="cf-status-pill danger" style="font-size: 11px;">Tạm ngưng</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cf-modal-footer">
+                <button type="button" class="cf-btn-cancel" onclick="dongModalNcc()">Hủy</button>
+                <button type="submit" class="cf-btn-submit" id="btnLuuNcc">Lưu nhà cung cấp</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TOAST THÔNG BÁO -->
+<div id="cfToast"></div>
+
+<script>
+    let nccDangChonId = null;
+
+    // --- PHÂN TRANG & BỘ LỌC TAB 1: NHÀ CUNG CẤP ---
+    let nccPage = 1;
+    const nccPageSize = 5;
+
+    function layCacHang() {
+        return Array.from(document.querySelectorAll('#thanBangNcc tr.supplier-card'));
+    }
+
+    function locDanhSachNcc(resetPage = true) {
+        if (resetPage) nccPage = 1;
+        const query = (document.getElementById('oTimKiemNcc').value || '').trim().toLowerCase();
+        const trangThaiFilter = document.getElementById('boLocTrangThaiNcc') ? document.getElementById('boLocTrangThaiNcc').value : 'ALL';
+        const rows = layCacHang();
+
+        const matchingRows = [];
+        rows.forEach(row => {
+            const ten = (row.getAttribute('data-ten') || '').toLowerCase();
+            const ma = (row.getAttribute('data-ma') || '').toLowerCase();
+            const sdt = (row.getAttribute('data-sdt') || '').toLowerCase();
+            const diachi = (row.getAttribute('data-diachi') || '').toLowerCase();
+            const ghichu = (row.getAttribute('data-ghichu') || '').toLowerCase();
+            const kichHoat = row.getAttribute('data-kichhoat') === 'true';
+
+            const matchQuery = !query || ten.includes(query) || ma.includes(query) || sdt.includes(query) || diachi.includes(query) || ghichu.includes(query);
+            let matchStatus = true;
+            if (trangThaiFilter === 'ACTIVE') matchStatus = kichHoat;
+            else if (trangThaiFilter === 'PAUSED') matchStatus = !kichHoat;
+
+            if (matchQuery && matchStatus) {
+                matchingRows.push(row);
+            }
+        });
+
+        const totalRows = matchingRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / nccPageSize));
+        if (nccPage > totalPages) nccPage = totalPages;
+        if (nccPage < 1) nccPage = 1;
+
+        const startIndex = (nccPage - 1) * nccPageSize;
+        const endIndex = startIndex + nccPageSize;
+
+        rows.forEach(row => {
+            row.style.display = 'none';
+        });
+
+        matchingRows.slice(startIndex, endIndex).forEach(row => {
+            row.style.display = '';
+        });
+
+        const nhanDem = document.getElementById('nhanDemSoLuong');
+        if (nhanDem) {
+            nhanDem.textContent = totalRows === 0
+                ? 'Không tìm thấy nhà cung cấp'
+                : `Hiển thị ${startIndex + 1}-${Math.min(endIndex, totalRows)} trên tổng ${totalRows} nhà cung cấp`;
+        }
+
+        const pageInfo = document.getElementById('spanNccPageInfo');
+        if (pageInfo) pageInfo.textContent = `${nccPage} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btnNccPrev');
+        if (btnPrev) btnPrev.disabled = nccPage <= 1;
+
+        const btnNext = document.getElementById('btnNccNext');
+        if (btnNext) btnNext.disabled = nccPage >= totalPages;
+
+        const hangRong = document.getElementById('hangRong');
+        if (hangRong) {
+            hangRong.style.display = totalRows === 0 ? '' : 'none';
+        }
+    }
+
+    function chuyenTrangNcc(delta) {
+        nccPage += delta;
+        locDanhSachNcc(false);
+    }
+
+    function taiLaiDuLieu() {
+        document.getElementById('oTimKiemNcc').value = '';
+        if (document.getElementById('boLocTrangThaiNcc')) {
+            document.getElementById('boLocTrangThaiNcc').value = 'ALL';
+        }
+        locDanhSachNcc(true);
+        hienToast('Đã làm mới danh sách nhà cung cấp!');
+    }
+
+    // --- PHÂN TRANG & BỘ LỌC TAB 2: LỊCH SỬ NHẬP KHO (SỔ CÁI) ---
+    let phieuPage = 1;
+    const phieuPageSize = 8;
+
+    function layCacHangPhieu() {
+        return Array.from(document.querySelectorAll('#thanBangPhieu tr.row-phieu-nhap'));
+    }
+
+    function apDungLocPhieu(resetPage = true) {
+        if (resetPage) phieuPage = 1;
+        const query = (document.getElementById('oTimKiemPhieu').value || '').trim().toLowerCase();
+        const nccFilter = (document.getElementById('boLocNccPhieu').value || '').trim().toLowerCase();
+        const statusFilter = (document.getElementById('boLocTrangThaiPhieu').value || '').trim().toLowerCase();
+        const rows = layCacHangPhieu();
+
+        const matchingRows = [];
+        rows.forEach(row => {
+            const ma = (row.getAttribute('data-ma') || '').toLowerCase();
+            const ncc = (row.getAttribute('data-ncc') || '').toLowerCase();
+            const trangthai = (row.getAttribute('data-trangthai') || '').toLowerCase();
+            const ghichu = (row.getAttribute('data-ghichu') || '').toLowerCase();
+
+            const matchQuery = !query || ma.includes(query) || ncc.includes(query) || ghichu.includes(query);
+            const matchNcc = !nccFilter || ncc === nccFilter;
+            const matchStatus = !statusFilter || trangthai === statusFilter;
+
+            if (matchQuery && matchNcc && matchStatus) {
+                matchingRows.push(row);
+            }
+        });
+
+        const totalRows = matchingRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / phieuPageSize));
+        if (phieuPage > totalPages) phieuPage = totalPages;
+        if (phieuPage < 1) phieuPage = 1;
+
+        const startIndex = (phieuPage - 1) * phieuPageSize;
+        const endIndex = startIndex + phieuPageSize;
+
+        rows.forEach(row => {
+            row.style.display = 'none';
+        });
+
+        matchingRows.slice(startIndex, endIndex).forEach(row => {
+            row.style.display = '';
+        });
+
+        const nhanDem = document.getElementById('nhanDemPhieu');
+        if (nhanDem) {
+            nhanDem.textContent = totalRows === 0
+                ? 'Không tìm thấy chứng từ'
+                : `Hiển thị ${startIndex + 1}-${Math.min(endIndex, totalRows)} trên tổng ${totalRows} chứng từ`;
+        }
+
+        const pageInfo = document.getElementById('spanPhieuPageInfo');
+        if (pageInfo) pageInfo.textContent = `${phieuPage} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btnPhieuPrev');
+        if (btnPrev) btnPrev.disabled = phieuPage <= 1;
+
+        const btnNext = document.getElementById('btnPhieuNext');
+        if (btnNext) btnNext.disabled = phieuPage >= totalPages;
+
+        const hangRong = document.getElementById('hangRongPhieu');
+        if (hangRong) {
+            hangRong.style.display = totalRows === 0 ? '' : 'none';
+        }
+    }
+
+    function chuyenTrangPhieu(delta) {
+        phieuPage += delta;
+        apDungLocPhieu(false);
+    }
+
+    function xoaBoLocPhieu() {
+        document.getElementById('oTimKiemPhieu').value = '';
+        document.getElementById('boLocNccPhieu').value = '';
+        document.getElementById('boLocTrangThaiPhieu').value = '';
+        apDungLocPhieu(true);
+        hienToast('Đã đặt lại bộ lọc sổ cái!');
+    }
+
+    // Chuyển Tab giữa Overview (Nhà cung cấp) và Sổ cái (Lịch sử nhập kho)
+    function doiTab(tabKey) {
+        const isOverview = tabKey === 'overview';
+        document.getElementById('tabBtnOverview').classList.toggle('is-active', isOverview);
+        document.getElementById('tabBtnLichSu').classList.toggle('is-active', !isOverview);
+
+        document.getElementById('vungOverview').style.display = isOverview ? 'block' : 'none';
+        document.getElementById('vungLichSu').style.display = !isOverview ? 'block' : 'none';
+
+        if (isOverview) {
+            locDanhSachNcc(false);
+        } else {
+            apDungLocPhieu(false);
+        }
+    }
+
+    // --- BẬT / TẮT TRẠNG THÁI HOẠT ĐỘNG (TẠM NGƯNG) ---
+    async function batTatTrangThaiNcc(id) {
+        if (!id) return;
+        const row = document.getElementById('card_ncc_' + id);
+        const ten = row ? row.getAttribute('data-ten') : 'Nhà cung cấp';
+        const kichHoat = row ? row.getAttribute('data-kichhoat') === 'true' : true;
+        const hanhDong = kichHoat ? 'tạm ngưng' : 'kích hoạt lại';
+
+        if (!confirm(`Bạn có chắc chắn muốn ${hanhDong} hợp tác với [${ten}]?`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/inbound/nha-cung-cap/${id}/trang-thai`, { method: 'PUT' });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.thongBao || err.message || 'Lỗi khi cập nhật trạng thái');
+            }
+            const data = await res.json();
+            hienToast(`Đã ${data.kichHoat ? 'kích hoạt lại' : 'tạm ngưng'} đối tác [${data.tenNcc}]!`);
+            setTimeout(() => window.location.reload(), 500);
+        } catch (e) {
+            alert('Lỗi: ' + e.message);
+        }
+    }
+
+    // --- DRAWER CHI TIẾT ĐỐI TÁC & CHỨNG TỪ ---
+    function chonNcc(id) {
+        nccDangChonId = id;
+        const row = document.getElementById('card_ncc_' + id);
+        if (!row) return;
+
+        layCacHang().forEach(r => r.classList.toggle('is-selected', r === row));
+
+        document.getElementById('drawerTitle').textContent = 'Hồ sơ Nhà cung cấp';
+        document.getElementById('drawerBodyNcc').style.display = 'flex';
+        document.getElementById('drawerFooterNcc').style.display = 'flex';
+        document.getElementById('drawerBodyPhieu').style.display = 'none';
+        document.getElementById('drawerFooterPhieu').style.display = 'none';
+
+        document.getElementById('drawerTen').textContent = row.getAttribute('data-ten') || '—';
+        document.getElementById('drawerMa').textContent = row.getAttribute('data-ma') || '—';
+        document.getElementById('drawerSdt').textContent = row.getAttribute('data-sdt') || 'Chưa có SĐT';
+        document.getElementById('drawerEmail').textContent = row.getAttribute('data-email') || 'Chưa có Email';
+        document.getElementById('drawerDiaChi').textContent = row.getAttribute('data-diachi') || 'Chưa có địa chỉ';
+        document.getElementById('drawerGhiChu').textContent = row.getAttribute('data-ghichu') || '—';
+
+        // Cập nhật trạng thái trong Drawer
+        const kichHoat = row.getAttribute('data-kichhoat') === 'true';
+        const pillTrangThai = document.getElementById('drawerTrangThaiNcc');
+        const moTaTrangThai = document.getElementById('drawerTrangThaiMoTa');
+        const btnTamNgung = document.getElementById('drawerBtnTamNgung');
+
+        if (pillTrangThai && moTaTrangThai && btnTamNgung) {
+            if (kichHoat) {
+                pillTrangThai.className = 'cf-status-pill success';
+                pillTrangThai.style.color = '';
+                pillTrangThai.style.background = '';
+                pillTrangThai.textContent = 'Hoạt động';
+                moTaTrangThai.textContent = 'Đang sẵn sàng cung ứng';
+                btnTamNgung.textContent = 'Tạm ngưng';
+                btnTamNgung.className = 'cf-action-btn btn-toggle-status is-active';
+            } else {
+                pillTrangThai.className = 'cf-status-pill danger';
+                pillTrangThai.style.color = '';
+                pillTrangThai.style.background = '';
+                pillTrangThai.textContent = 'Tạm ngưng';
+                moTaTrangThai.textContent = 'Ngưng tiếp nhận nhập kho';
+                btnTamNgung.textContent = 'Kích hoạt lại';
+                btnTamNgung.className = 'cf-action-btn btn-toggle-status is-paused';
+            }
+        }
+
+        const ma = row.getAttribute('data-ma') || '';
+        const bangHang = {
+            'NCC-HUNGPAT': { matHang: 'Áo Polo Nam Excool Làm Mát', donGia: '85.000 đ', tieuChuan: 'Chuyên dòng Polo Pique & Excool xuất khẩu' },
+            'NCC-HONGNGOC': { matHang: 'Áo Thun Nam Cotton Compact', donGia: '65.000 đ', tieuChuan: 'May Kansai 4 kim 6 chỉ cao cấp' },
+            'NCC-TUANPHUONG': { matHang: 'Áo Polo Nam Sợi Cafe Khử Mùi', donGia: '95.000 đ', tieuChuan: 'Công nghệ dệt vải sợi sinh thái' },
+            'NCC-SAITEX': { matHang: 'Quần Jeans / Denim', donGia: '145.000 đ', tieuChuan: 'Dệt Denim 3 sạch chuẩn quốc tế' },
+            'NCC-CLEANDYE': { matHang: 'Vải Nhuộm Không Nước CO2', donGia: '110.000 đ', tieuChuan: 'Công nghệ nhuộm bảo vệ môi trường' },
+            'NCC-VIETSTAR': { matHang: 'Phụ liệu dệt may / Nhãn mác', donGia: '15.000 đ', tieuChuan: 'Cung cấp phụ liệu cao cấp' }
+        };
+        const info = bangHang[ma] || { matHang: 'Theo hợp đồng cung ứng', donGia: 'Thỏa thuận theo đợt', tieuChuan: 'Đối tác chiến lược' };
+        document.getElementById('drawerMatHang').textContent = info.matHang;
+        document.getElementById('drawerDonGia').textContent = info.donGia;
+        document.getElementById('drawerTieuChuan').textContent = info.tieuChuan;
+
+        document.getElementById('drawerBtnNhapHang').href = '/admin/lay-hang?nccId=' + encodeURIComponent(ma);
+
+        document.getElementById('drawerOverlay').classList.add('is-open');
+        document.getElementById('detailPanel').classList.add('is-open');
+    }
+
+    async function moChiTietPhieu(id) {
+        document.getElementById('drawerTitle').textContent = 'Chi tiết Chứng từ Nhập kho';
+        document.getElementById('drawerBodyNcc').style.display = 'none';
+        document.getElementById('drawerFooterNcc').style.display = 'none';
+        document.getElementById('drawerBodyPhieu').style.display = 'flex';
+        document.getElementById('drawerFooterPhieu').style.display = 'flex';
+
+        document.getElementById('phieuDetailHangBody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--cf-text-muted); padding: 12px;">Đang tải...</td></tr>';
+        document.getElementById('drawerOverlay').classList.add('is-open');
+        document.getElementById('detailPanel').classList.add('is-open');
+
+        try {
+            const res = await fetch(`/api/inbound/phieu-nhap-kho/${id}`);
+            if (!res.ok) throw new Error('Không thể tải chi tiết phiếu');
+            const data = await res.json();
+
+            document.getElementById('phieuDetailMa').textContent = data.maPhieu || '--';
+            document.getElementById('phieuDetailNcc').textContent = data.nhaCungCap || '--';
+            document.getElementById('phieuDetailNgay').textContent = data.ngayNhap ? data.ngayNhap.replace('T', ' ').substring(0, 16) : '--';
+            const stVal = data.trangThai || 'Đã nhập';
+            const pillPhieu = document.getElementById('phieuDetailTrangThai');
+            pillPhieu.textContent = stVal;
+            if (stVal === 'Chờ nhập' || stVal === 'CHO_NHAP') {
+                pillPhieu.className = 'cf-status-pill warning';
+            } else if (stVal === 'Đã hủy' || stVal === 'DA_HUY') {
+                pillPhieu.className = 'cf-status-pill danger';
+            } else {
+                pillPhieu.className = 'cf-status-pill success';
+            }
+            document.getElementById('phieuDetailTongTien').textContent = (data.tongTien ? Number(data.tongTien).toLocaleString('vi-VN') : 0) + ' đ';
+
+            const tbody = document.getElementById('phieuDetailHangBody');
+            if (data.chiTietList && data.chiTietList.length > 0) {
+                tbody.innerHTML = data.chiTietList.map(item => `
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-weight: 600; color: var(--cf-blue);">${item.maSku}</td>
+                        <td style="text-align: center; font-weight: 600;">${item.soLuongNhap}</td>
+                        <td style="text-align: right; font-family: var(--font-mono);">${Number(item.donGiaNhap).toLocaleString('vi-VN')} đ</td>
+                        <td style="text-align: right; font-family: var(--font-mono); font-weight: 600;">${Number(item.thanhTien).toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--cf-text-muted); padding: 12px;">Không có dòng hàng chi tiết.</td></tr>';
+            }
+        } catch (err) {
+            document.getElementById('phieuDetailHangBody').innerHTML = `<tr><td colspan="4" style="text-align: center; color: red; padding: 12px;">${err.message}</td></tr>`;
+        }
+    }
+
+    function dongChiTiet() {
+        document.getElementById('drawerOverlay').classList.remove('is-open');
+        document.getElementById('detailPanel').classList.remove('is-open');
+        layCacHang().forEach(r => r.classList.remove('is-selected'));
+    }
+
+    // --- MODAL THÊM / SỬA NHÀ CUNG CẤP ---
+    function moModalThemNcc() {
+        document.getElementById('modalTieuDe').textContent = 'Thêm nhà cung cấp mới';
+        document.getElementById('modalNccId').value = '';
+        document.getElementById('formNcc').reset();
+        document.getElementById('groupModalKichHoat').style.display = 'none';
+        document.getElementById('modalNcc').classList.add('is-open');
+        document.getElementById('modalTenNcc').focus();
+    }
+
+    function moModalSuaNcc(id) {
+        const row = document.getElementById('card_ncc_' + id);
+        if (!row) return;
+
+        document.getElementById('modalTieuDe').textContent = 'Chỉnh sửa nhà cung cấp';
+        document.getElementById('modalNccId').value = id;
+        document.getElementById('modalTenNcc').value = row.getAttribute('data-ten') || '';
+        document.getElementById('modalMaNcc').value = row.getAttribute('data-ma') || '';
+        document.getElementById('modalSdt').value = row.getAttribute('data-sdt') || '';
+        document.getElementById('modalEmail').value = row.getAttribute('data-email') || '';
+        document.getElementById('modalDiaChi').value = row.getAttribute('data-diachi') || '';
+        document.getElementById('modalGhiChu').value = row.getAttribute('data-ghichu') || '';
+
+        const kichHoat = row.getAttribute('data-kichhoat') === 'true';
+        document.getElementById('groupModalKichHoat').style.display = 'block';
+        document.getElementById('modalKichHoatTrue').checked = kichHoat;
+        document.getElementById('modalKichHoatFalse').checked = !kichHoat;
+
+        document.getElementById('modalNcc').classList.add('is-open');
+    }
+
+    function suaTuDrawer() {
+        if (nccDangChonId) {
+            dongChiTiet();
+            moModalSuaNcc(nccDangChonId);
+        }
+    }
+
+    function dongModalNcc() {
+        document.getElementById('modalNcc').classList.remove('is-open');
+    }
+
+    async function xuLyLuuNcc(event) {
+        event.preventDefault();
+        const id = document.getElementById('modalNccId').value;
+        const tenNcc = document.getElementById('modalTenNcc').value.trim();
+        const maNcc = document.getElementById('modalMaNcc').value.trim();
+        const soDienThoai = document.getElementById('modalSdt').value.trim();
+        const email = document.getElementById('modalEmail').value.trim();
+        const diaChi = document.getElementById('modalDiaChi').value.trim();
+        const ghiChu = document.getElementById('modalGhiChu').value.trim();
+
+        if (!tenNcc) {
+            alert('Vui lòng nhập tên nhà cung cấp!');
+            return;
+        }
+
+        const payload = { tenNcc, maNcc, soDienThoai, email, diaChi, ghiChu };
+        if (id) {
+            payload.kichHoat = document.getElementById('modalKichHoatTrue').checked;
+        }
+
+        const btn = document.getElementById('btnLuuNcc');
+        btn.disabled = true;
+        btn.textContent = 'Đang lưu...';
+
+        try {
+            const url = id ? `/api/inbound/nha-cung-cap/${id}` : '/api/inbound/nha-cung-cap';
+            const method = id ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.thongBao || errData.message || 'Lỗi khi lưu nhà cung cấp!');
+            }
+
+            dongModalNcc();
+            hienToast(id ? 'Cập nhật nhà cung cấp thành công!' : 'Tạo mới nhà cung cấp thành công!');
+            setTimeout(() => window.location.reload(), 600);
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Lưu nhà cung cấp';
+        }
+    }
+
+    function hienToast(msg) {
+        const toast = document.getElementById('cfToast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(() => {
+            toast.style.display = 'none';
+        }, 2200);
+    }
+
+    // Khởi tạo phân trang ngay khi tải trang
+    document.addEventListener('DOMContentLoaded', () => {
+        locDanhSachNcc(true);
+        apDungLocPhieu(true);
+    });
+</script>
+
+</body>
+</html>

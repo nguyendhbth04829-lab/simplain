@@ -82,15 +82,15 @@ class PhanQuyenVaDashboardTest {
     }
 
     @Test
-    @DisplayName("1. Điều hướng /admin và /admin/ về /admin/dashboard")
+    @DisplayName("1. Điều hướng /admin và /admin/ về /admin/nha-cung-cap")
     void dieuHuongAdminRoot_VeDashboard() throws Exception {
         mockMvc.perform(get("/admin"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/dashboard"));
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"));
 
         mockMvc.perform(get("/admin/"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/dashboard"));
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"));
     }
 
     @Test
@@ -106,12 +106,10 @@ class PhanQuyenVaDashboardTest {
         Cookie adminCookie = loginRes.getResponse().getCookie(NhanVienController.COOKIE_ADMIN_TOKEN);
         assertNotNull(adminCookie);
 
-        // Truy cập Dashboard
+        // Truy cập Dashboard (Redirect về phân hệ nguồn hàng mặc định)
         mockMvc.perform(get("/admin/dashboard").cookie(adminCookie))
-                .andExpect(status().isOk())
-                .andExpect(view().name("admin/dashboard"))
-                .andExpect(model().attributeExists("nhanVien"))
-                .andExpect(model().attributeExists("quyenSet"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/nha-cung-cap"));
 
         // Truy cập Quản lý Vai trò (Hệ thống)
         mockMvc.perform(get("/admin/vai-tro/hien-thi").cookie(adminCookie))
@@ -141,15 +139,15 @@ class PhanQuyenVaDashboardTest {
         mockMvc.perform(get("/admin/doi-tra/hien-thi").cookie(cskhCookie))
                 .andExpect(status().isOk());
 
-        // CSKH truy cập Phân quyền vai trò (BỊ CHẶN -> Redirect về Dashboard kèm thông báo)
+        // CSKH truy cập Phân quyền vai trò (BỊ CHẶN -> Redirect về Trang chủ kèm thông báo)
         mockMvc.perform(get("/admin/vai-tro/hien-thi").cookie(cskhCookie))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/admin/dashboard?tuChoiQuyen=*"));
+                .andExpect(redirectedUrlPattern("/admin/nha-cung-cap?tuChoiQuyen=*"));
 
-        // CSKH truy cập Nhân viên (BỊ CHẶN -> Redirect về Dashboard kèm thông báo)
+        // CSKH truy cập Nhân viên (BỊ CHẶN -> Redirect về Trang chủ kèm thông báo)
         mockMvc.perform(get("/admin/nhan-vien/hien-thi").cookie(cskhCookie))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/admin/dashboard?tuChoiQuyen=*"));
+                .andExpect(redirectedUrlPattern("/admin/nha-cung-cap?tuChoiQuyen=*"));
     }
 
     @Test
@@ -184,7 +182,7 @@ class PhanQuyenVaDashboardTest {
         // Thu ngân POS truy cập Đổi trả RMA (BỊ CHẶN -> Redirect)
         mockMvc.perform(get("/admin/doi-tra/hien-thi").cookie(posCookie))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/admin/dashboard?tuChoiQuyen=*"));
+                .andExpect(redirectedUrlPattern("/admin/nha-cung-cap?tuChoiQuyen=*"));
     }
 
     @Test
