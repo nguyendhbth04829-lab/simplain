@@ -43,13 +43,14 @@ public class MauSacController {
     @GetMapping({"", "/", "/hien-thi"})
     public String hienThi(Model model,
                           @RequestParam(defaultValue = "0") Integer page,
-                          @RequestParam(required = false) String tuKhoa) {
+                          @RequestParam(required = false) String tuKhoa,
+                          @RequestParam(required = false) Boolean kichHoat) {
         if (page == null || page < 0) {
             page = 0;
         }
         int size = 6;
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<MauSac> mauSacPage = mauSacService.layDanhSachPhanTrang(tuKhoa, pageable);
+        Page<MauSac> mauSacPage = mauSacService.layDanhSachPhanTrang(tuKhoa, kichHoat, pageable);
 
         model.addAttribute("listMauSac", mauSacPage.getContent());
         model.addAttribute("pageData", mauSacPage);
@@ -59,7 +60,16 @@ public class MauSacController {
         model.addAttribute("page", page);
         model.addAttribute("totalPages", mauSacPage.getTotalPages());
         model.addAttribute("tuKhoa", tuKhoa != null ? tuKhoa : "");
-        model.addAttribute("tongMauSac", mauSacRepository.count());
+        model.addAttribute("kichHoat", kichHoat);
+
+        List<MauSac> tatCaMau = mauSacService.layTatCa();
+        long tongMauSac = tatCaMau.size();
+        long soDangHoatDong = tatCaMau.stream().filter(m -> Boolean.TRUE.equals(m.getKichHoat())).count();
+        long soVoHieuHoa = tongMauSac - soDangHoatDong;
+
+        model.addAttribute("tongMauSac", tongMauSac);
+        model.addAttribute("soDangHoatDong", soDangHoatDong);
+        model.addAttribute("soVoHieuHoa", soVoHieuHoa);
         model.addAttribute("tongKichThuoc", kichThuocRepository.count());
 
         return "admin/mau-sac/hien-thi";
@@ -76,7 +86,7 @@ public class MauSacController {
                       @RequestParam(defaultValue = "0") Integer page) {
         if (result.hasErrors()) {
             model.addAttribute("thongBaoLoi", "Dữ liệu màu sắc chưa hợp lệ, vui lòng kiểm tra lại mã màu (Hex) và tên màu!");
-            return hienThi(model, page, null);
+            return hienThi(model, page, null, null);
         }
 
         try {
@@ -86,7 +96,7 @@ public class MauSacController {
             return "redirect:/admin/mau-sac/hien-thi";
         } catch (IllegalArgumentException e) {
             model.addAttribute("thongBaoLoi", e.getMessage());
-            return hienThi(model, page, null);
+            return hienThi(model, page, null, null);
         }
     }
 

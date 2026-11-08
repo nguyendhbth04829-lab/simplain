@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Cổng thanh toán | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+        
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .preset-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1.5px solid #e2e8f0;
+        }
+        .preset-card:hover {
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.15);
+        }
+        .preset-card.active {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-navy {
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+        .btn-navy:hover {
+            background-color: #1e293b;
+        }
+        .btn-outline {
+            border: 1px solid #cbd5e1;
+            background-color: #ffffff;
+            color: #334155;
+        }
+        .btn-outline:hover {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+        }
+        .btn-danger-outline {
+            border: 1px solid #fecaca;
+            background-color: #fff;
+            color: #ef4444;
+        }
+        .btn-danger-outline:hover {
+            background-color: #fef2f2;
+            border-color: #f87171;
+        }
+        .status-badge-active {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            background-color: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        .status-badge-inactive {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+        .btn-toggle-active {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .btn-toggle-active:hover {
+            background-color: #d1fae5;
+        }
+        .btn-toggle-inactive {
+            background-color: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        .btn-toggle-inactive:hover {
+            background-color: #fef3c7;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('phuong-thuc-thanh-toan')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-credit-card text-blue-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Cổng thanh toán</span>
+                        <span class="text-xs font-mono font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full" th:text="${tongSo + ' cổng'}">0 cổng</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Tích hợp và cấu hình chuyên nghiệp cổng VNPAY, Ví MoMo, Chuyển khoản VietQR, COD</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        onclick="moModalThem()"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Tạo cổng thanh toán</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. THẺ THỐNG KÊ NHANH CỔNG THANH TOÁN -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng số cổng</div>
+                    <div class="text-2xl font-black text-slate-900 mt-1" th:text="${tongSo}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/30 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Đang Bật Kích hoạt</div>
+                    <div class="text-2xl font-black text-emerald-600 mt-1" th:text="${soDangBat}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Đang Tắt (Tạm ẩn)</div>
+                    <div class="text-2xl font-black text-slate-600 mt-1" th:text="${soDangTat}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-ban"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM ĐA TIÊU CHÍ -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+            <form action="/admin/phuong-thuc-thanh-toan/hien-thi" method="get" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <!-- Ô tìm kiếm từ khóa -->
+                <div class="sm:col-span-4 relative">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1"></i>Tìm kiếm cổng
+                    </label>
+                    <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                           placeholder="Tên cổng, mã phương thức, mô tả..."
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                </div>
+
+                <!-- Lọc Loại Cổng / Provider -->
+                <div class="sm:col-span-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        <i class="fa-solid fa-building-columns text-slate-400 mr-1"></i>Loại cổng thanh toán
+                    </label>
+                    <select name="loaiCong"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">-- Tất cả loại cổng --</option>
+                        <option value="VNPAY" th:selected="${loaiCong == 'VNPAY'}">Cổng VNPay (QR / Thẻ ATM)</option>
+                        <option value="MOMO" th:selected="${loaiCong == 'MOMO'}">Ví điện tử MoMo</option>
+                        <option value="VIETQR" th:selected="${loaiCong == 'VIETQR'}">Chuyển khoản VietQR</option>
+                        <option value="COD" th:selected="${loaiCong == 'COD'}">Tiền mặt khi nhận (COD)</option>
+                        <option value="ZALOPAY" th:selected="${loaiCong == 'ZALOPAY'}">Ví ZaloPay</option>
+                        <option value="KHAC" th:selected="${loaiCong == 'KHAC'}">Cổng khác / Tùy chỉnh</option>
+                    </select>
+                </div>
+
+                <!-- Lọc Hình thức -->
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        <i class="fa-solid fa-layer-group text-slate-400 mr-1"></i>Hình thức
+                    </label>
+                    <select name="laTrucTuyen"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">-- Hình thức --</option>
+                        <option value="true" th:selected="${laTrucTuyen == true}">Trực tuyến (Online)</option>
+                        <option value="false" th:selected="${laTrucTuyen == false}">Tiền mặt (COD)</option>
+                    </select>
+                </div>
+
+                <!-- Lọc Trạng thái kích hoạt -->
+                <div class="sm:col-span-1">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Trạng thái
+                    </label>
+                    <select name="kichHoat"
+                            class="w-full px-2.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">Tất cả</option>
+                        <option value="true" th:selected="${kichHoat == true}">Bật</option>
+                        <option value="false" th:selected="${kichHoat == false}">Tắt</option>
+                    </select>
+                </div>
+
+                <!-- Nút Lọc & Đặt lại -->
+                <div class="sm:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                            class="flex-1 btn-navy font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition">
+                        <i class="fa-solid fa-filter text-[11px]"></i>
+                        <span>Lọc</span>
+                    </button>
+                    <a href="/admin/phuong-thuc-thanh-toan/hien-thi"
+                       class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center justify-center shadow-xs transition" title="Đặt lại bộ lọc">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. THANH THAO TÁC HÀNG LOẠT (BULK ACTIONS BAR) -->
+        <div id="bulkActionsBar" class="hidden bg-slate-900 text-white p-3.5 rounded-2xl shadow-lg border border-slate-800 flex flex-wrap items-center justify-between gap-3 transition-all duration-300">
+            <div class="flex items-center gap-3">
+                <span class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-xs">
+                    <i class="fa-solid fa-check-double"></i>
+                </span>
+                <span class="text-xs font-medium">
+                    Đã chọn <strong id="selectedCount" class="text-amber-400 font-black">0</strong> cổng thanh toán
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="thucHienThaoTacHangLoat('bat')"
+                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-toggle-on"></i>
+                    <span>Bật kích hoạt</span>
+                </button>
+                <button type="button" onclick="thucHienThaoTacHangLoat('tat')"
+                        class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-toggle-off"></i>
+                    <span>Tắt kích hoạt</span>
+                </button>
+                <button type="button" onclick="boChonTatCa()"
+                        class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition" title="Bỏ chọn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. BẢNG DANH SÁCH CỔNG THANH TOÁN CHUYÊN NGHIỆP -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <th class="py-3.5 px-4 w-10 text-center">
+                                <input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"
+                                       class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                            </th>
+                            <th class="py-3.5 px-4 w-12 text-center">ID</th>
+                            <th class="py-3.5 px-4 min-w-[220px]">Cổng thanh toán &amp; Mô tả</th>
+                            <th class="py-3.5 px-4 min-w-[140px]">Loại cổng &amp; Mã</th>
+                            <th class="py-3.5 px-4 min-w-[180px]">Thông số kỹ thuật</th>
+                            <th class="py-3.5 px-4 min-w-[100px]">Hình thức</th>
+                            <th class="py-3.5 px-4 text-center min-w-[120px]">Trạng thái</th>
+                            <th class="py-3.5 px-4 text-right min-w-[180px]">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <!-- Danh sách trống -->
+                        <tr th:if="${danhSachPhuongThuc == null or danhSachPhuongThuc.isEmpty()}">
+                            <td colspan="8" class="py-12 text-center text-slate-400">
+                                <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-50 flex items-center justify-center text-2xl text-slate-300">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                                <div class="font-bold text-slate-600">Không tìm thấy cổng thanh toán nào</div>
+                                <div class="text-[11px] mt-1">Hãy thử tìm với từ khóa khác hoặc bấm "Tạo cổng thanh toán"</div>
+                            </td>
+                        </tr>
+
+                        <!-- Dòng bản ghi -->
+                        <tr th:each="pt : ${danhSachPhuongThuc}" class="hover:bg-slate-50/70 transition group">
+                            <!-- Checkbox -->
+                            <td class="py-3.5 px-4 text-center">
+                                <input type="checkbox" name="selectedIds" th:value="${pt.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                       class="item-checkbox w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                            </td>
+
+                            <!-- ID -->
+                            <td class="py-3.5 px-4 font-mono font-bold text-slate-400 text-center" th:text="${pt.id}">1</td>
+
+                            <!-- Tên & Biểu tượng & Mô tả -->
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-lg flex-shrink-0 overflow-hidden shadow-2xs">
+                                        <!-- Nếu biểu tượng là file ảnh tải lên từ máy -->
+                                        <img th:if="${pt.bieuTuong != null and (pt.bieuTuong.startsWith('/uploads/') or pt.bieuTuong.startsWith('http') or pt.bieuTuong.contains('.'))}"
+                                             th:src="${pt.bieuTuong}" alt="Logo" class="w-full h-full object-contain p-1 rounded-lg">
+                                        <!-- Nếu là class biểu tượng fontawesome thông thường -->
+                                        <i th:unless="${pt.bieuTuong != null and (pt.bieuTuong.startsWith('/uploads/') or pt.bieuTuong.startsWith('http') or pt.bieuTuong.contains('.'))}"
+                                           th:class="${pt.bieuTuong != null ? pt.bieuTuong : 'fa-solid fa-credit-card text-blue-600'}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                                            <span th:text="${pt.tenPhuongThuc}">Cổng thanh toán</span>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1 max-w-xs"
+                                             th:text="${pt.moTa != null ? pt.moTa : 'Chưa có mô tả chi tiết'}">
+                                            Mô tả hướng dẫn thanh toán
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Loại cổng & Mã định danh -->
+                            <td class="py-3.5 px-4">
+                                <div class="flex flex-col items-start gap-1">
+                                    <!-- Badge Loại Cổng -->
+                                    <span th:if="${pt.loaiCong == 'VNPAY'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+                                        <i class="fa-solid fa-qrcode text-[9px]"></i> VNPAY-QR
+                                    </span>
+                                    <span th:if="${pt.loaiCong == 'MOMO'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-pink-50 text-pink-700 border border-pink-200">
+                                        <i class="fa-solid fa-mobile-screen-button text-[9px]"></i> Ví MoMo
+                                    </span>
+                                    <span th:if="${pt.loaiCong == 'VIETQR'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <i class="fa-solid fa-building-columns text-[9px]"></i> VietQR
+                                    </span>
+                                    <span th:if="${pt.loaiCong == 'COD'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                        <i class="fa-solid fa-hand-holding-dollar text-[9px]"></i> COD Ship
+                                    </span>
+                                    <span th:if="${pt.loaiCong == 'ZALOPAY'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cyan-50 text-cyan-700 border border-cyan-200">
+                                        <i class="fa-solid fa-bolt text-[9px]"></i> ZaloPay
+                                    </span>
+                                    <span th:if="${pt.loaiCong != 'VNPAY' and pt.loaiCong != 'MOMO' and pt.loaiCong != 'VIETQR' and pt.loaiCong != 'COD' and pt.loaiCong != 'ZALOPAY'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                        <i class="fa-solid fa-puzzle-piece text-[9px]"></i> Tùy chỉnh
+                                    </span>
+
+                                    <!-- Mã định danh -->
+                                    <span class="font-mono font-bold text-[10px] text-slate-500" th:text="${pt.maPhuongThuc}">VNPAY</span>
+                                </div>
+                            </td>
+
+                            <!-- Thông số cấu hình tóm tắt -->
+                            <td class="py-3.5 px-4">
+                                <div class="text-[11px] font-mono text-slate-600 bg-slate-50/80 p-1.5 rounded-lg border border-slate-200/60 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <span th:if="${pt.cauHinh != null and !pt.cauHinh.isBlank()}" th:text="${pt.cauHinh}">Cấu hình</span>
+                                    <span th:unless="${pt.cauHinh != null and !pt.cauHinh.isBlank()}" class="text-slate-400 italic font-sans text-[10px]">Chưa cấu hình API</span>
+                                </div>
+                            </td>
+
+                            <!-- Phân loại trực tuyến / tiền mặt -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span th:if="${pt.laTrucTuyen}"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <i class="fa-solid fa-globe text-[9px]"></i> Trực tuyến
+                                </span>
+                                <span th:if="${!pt.laTrucTuyen}"
+                                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                    <i class="fa-solid fa-box text-[9px]"></i> Trực tiếp
+                                </span>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <span th:if="${pt.kichHoat}" class="status-badge-active">
+                                    <span class="pulse-dot bg-emerald-500"></span>
+                                    Hoạt động
+                                </span>
+                                <span th:unless="${pt.kichHoat}" class="status-badge-inactive">
+                                    <span class="pulse-dot bg-neutral-400"></span>
+                                    Tạm ngưng
+                                </span>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <!-- Nút Sửa: Mở Modal Chỉnh sửa -->
+                                    <button type="button"
+                                            th:onclick="'moModalSua(' + ${pt.id} + ')'"
+                                            class="btn-outline px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                                            title="Chỉnh sửa cổng thanh toán">
+                                        <i class="fa-solid fa-pen-to-square text-[11px] text-blue-600"></i>
+                                        <span>Cấu hình</span>
+                                    </button>
+
+                                    <!-- Nút Chuyển đổi trạng thái (Tạm ngưng / Kích hoạt) -->
+                                    <a th:href="@{/admin/phuong-thuc-thanh-toan/doi-trang-thai(id=${pt.id})}"
+                                       th:class="${pt.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                       th:title="${pt.kichHoat} ? 'Tạm ngưng hoạt động cổng thanh toán này' : 'Kích hoạt cổng thanh toán này'"
+                                       class="px-2.5 py-1.5 rounded-md font-bold text-xs flex items-center gap-1 shadow-2xs transition">
+                                        <i th:class="${pt.kichHoat} ? 'fa-solid fa-ban text-[11px]' : 'fa-solid fa-check text-[11px]'"></i>
+                                        <span th:text="${pt.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                    </a>
+
+
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${totalPages > 1}" class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <div>
+                    Trang <span class="font-bold text-slate-800" th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages}">1</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(page=${currentPage - 1}, tuKhoa=${tuKhoa}, loaiCong=${loaiCong}, laTrucTuyen=${laTrucTuyen}, kichHoat=${kichHoat})}"
+                       class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold">
+                        &larr; Trước
+                    </a>
+                    <a th:if="${currentPage + 1 < totalPages}"
+                       th:href="@{/admin/phuong-thuc-thanh-toan/hien-thi(page=${currentPage + 1}, tuKhoa=${tuKhoa}, loaiCong=${loaiCong}, laTrucTuyen=${laTrucTuyen}, kichHoat=${kichHoat})}"
+                       class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 1: THÊM MỚI CỔNG THANH TOÁN CHUYÊN NGHIỆP              -->
+    <!-- ============================================================= -->
+    <div id="modalThem" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl my-6 overflow-hidden transform transition-all">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shadow-xs">
+                        <i class="fa-solid fa-circle-plus text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Tạo Cổng Thanh Toán Chuyên Nghiệp</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Chọn nhà cung cấp dịch vụ hoặc tùy chỉnh thông số kết nối</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalThem()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/phuong-thuc-thanh-toan/them}" th:object="${phuongThucMoi}" method="post" enctype="multipart/form-data" class="p-6 space-y-5 text-xs max-h-[80vh] overflow-y-auto">
+                <input type="hidden" th:field="*{loaiCong}" id="themLoaiCong" value="VNPAY">
+
+                <!-- 1. BỘ CHỌN PRESET CỔNG THANH TOÁN (TOP PROVIDERS) -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                        1. Chọn Mẫu Cổng Thanh Toán Cần Thiết Lập <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        <!-- Preset VNPAY -->
+                        <div class="preset-card active p-3 rounded-2xl flex items-center gap-3" id="presetThemVnpay" onclick="chonPresetThem('VNPAY')">
+                            <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="font-extrabold text-slate-900 truncate">VNPAY-QR</div>
+                                <div class="text-[10px] text-slate-500 truncate">Cổng quét mã & Thẻ</div>
+                            </div>
+                        </div>
+
+                        <!-- Preset MOMO -->
+                        <div class="preset-card p-3 rounded-2xl flex items-center gap-3" id="presetThemMomo" onclick="chonPresetThem('MOMO')">
+                            <div class="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="font-extrabold text-slate-900 truncate">Ví MoMo</div>
+                                <div class="text-[10px] text-slate-500 truncate">Ví điện tử MoMo</div>
+                            </div>
+                        </div>
+
+                        <!-- Preset VIETQR -->
+                        <div class="preset-card p-3 rounded-2xl flex items-center gap-3" id="presetThemVietqr" onclick="chonPresetThem('VIETQR')">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="font-extrabold text-slate-900 truncate">VietQR 24/7</div>
+                                <div class="text-[10px] text-slate-500 truncate">Chuyển khoản QR</div>
+                            </div>
+                        </div>
+
+                        <!-- Preset COD -->
+                        <div class="preset-card p-3 rounded-2xl flex items-center gap-3" id="presetThemCod" onclick="chonPresetThem('COD')">
+                            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="font-extrabold text-slate-900 truncate">Ship COD</div>
+                                <div class="text-[10px] text-slate-500 truncate">Thu tiền tận nơi</div>
+                            </div>
+                        </div>
+
+                        <!-- Preset ZALOPAY -->
+                        <div class="preset-card p-3 rounded-2xl flex items-center gap-3" id="presetThemZalopay" onclick="chonPresetThem('ZALOPAY')">
+                            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="font-extrabold text-slate-900 truncate">ZaloPay</div>
+                                <div class="text-[10px] text-slate-500 truncate">Ví điện tử ZaloPay</div>
+                            </div>
+                        </div>
+
+                        <!-- Preset Tùy chỉnh KHAC -->
+                        <div class="preset-card p-3 rounded-2xl flex items-center gap-3" id="presetThemKhac" onclick="chonPresetThem('KHAC')">
+                            <div class="w-9 h-9 rounded-xl bg-slate-500/10 text-slate-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-sliders"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="font-extrabold text-slate-900 truncate">Tùy Chỉnh</div>
+                                <div class="text-[10px] text-slate-500 truncate">Cổng kết nối khác</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. THÔNG TIN CƠ BẢN -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">2. Thông tin chung của phương thức</div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Mã phương thức <span class="text-rose-500">*</span></label>
+                            <input type="text" th:field="*{maPhuongThuc}" id="themMaPhuongThuc" placeholder="VD: VNPAY_QR"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-mono uppercase font-bold">
+                            <span th:if="${#fields.hasErrors('maPhuongThuc')}" th:errors="*{maPhuongThuc}" class="error"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tên hiển thị khi thanh toán <span class="text-rose-500">*</span></label>
+                            <input type="text" th:field="*{tenPhuongThuc}" id="themTenPhuongThuc" placeholder="VD: Cổng thanh toán VNPay (VNPAY-QR / Thẻ ATM)"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-semibold">
+                            <span th:if="${#fields.hasErrors('tenPhuongThuc')}" th:errors="*{tenPhuongThuc}" class="error"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Hình thức thanh toán</label>
+                            <select th:field="*{laTrucTuyen}" id="themLaTrucTuyen" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                <option value="true">Thanh toán Trực tuyến (Online Gateway / Ví điện tử)</option>
+                                <option value="false">Tiền mặt khi nhận hàng (Ship COD)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Trạng thái khởi tạo</label>
+                            <select th:field="*{kichHoat}" id="themKichHoat" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                                <option value="true">BẬT (Khách hàng có thể chọn thanh toán ngay)</option>
+                                <option value="false">TẮT (Tạm ẩn cho đến khi cấu hình xong)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả hiển thị tại giỏ hàng &amp; thanh toán</label>
+                        <input type="text" th:field="*{moTa}" id="themMoTa" placeholder="VD: Quét mã QR bằng ứng dụng Mobile Banking hoặc ví điện tử để thanh toán tức thì."
+                               class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition">
+                    </div>
+
+                    <!-- Upload logo biểu tượng -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Logo / Biểu tượng cổng thanh toán</label>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-2xs">
+                                <i id="previewThemIcon" class="fa-solid fa-qrcode text-blue-600 text-xl"></i>
+                                <img id="previewThemImg" class="w-full h-full object-contain hidden" alt="Logo Preview">
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" name="fileBieuTuong" id="fileBieuTuongThem" accept="image/*" onchange="xemTruocAnh(this, 'previewThemImg', 'previewThemIcon')"
+                                       class="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                <p class="text-[10px] text-slate-400 mt-0.5">Tải lên logo ngân hàng / cổng thanh toán (PNG, SVG, JPG, WEBP tối đa 5MB)</p>
+                            </div>
+                        </div>
+                        <input type="hidden" th:field="*{bieuTuong}" id="themBieuTuong">
+                    </div>
+                </div>
+
+                <!-- 3. CẤU HÌNH THÔNG SỐ CHUYÊN BIỆT THEO TỪNG CỔNG -->
+                <div class="border border-slate-200 rounded-2xl p-4 bg-white shadow-2xs space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <div class="text-[11px] font-extrabold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gear"></i>
+                            <span id="labelTieuDeCauHinhThem">3. Thông số kỹ thuật kết nối VNPAY</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">Tự động đồng bộ JSON</span>
+                    </div>
+
+                    <!-- TAB VNPAY -->
+                    <div id="sectionThemVnpay" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Mã Website TMN Code <span class="text-rose-500">*</span></label>
+                                <input type="text" th:field="*{vnpTmnCode}" id="themVnpTmnCode" placeholder="VD: SIMPLAIN01"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                                <span class="text-[10px] text-slate-400">Do VNPay cấp qua email sau khi đăng ký</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Chuỗi bí mật Hash Secret <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" th:field="*{vnpHashSecret}" id="themVnpHashSecret" placeholder="VD: RAI9EFCJ891283JKSDH21"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                                    <button type="button" onclick="toggleHienThiMatKhau('themVnpHashSecret', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="text-[10px] text-slate-400">Khóa bí mật tạo chữ ký checksum HMAC-SHA512</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">URL Cổng thanh toán VNPay</label>
+                                <input type="text" th:field="*{vnpUrl}" id="themVnpUrl" placeholder="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none focus:border-blue-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Môi trường</label>
+                                <select th:field="*{vnpMoiTruong}" id="themVnpMoiTruong" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold outline-none focus:border-blue-600">
+                                    <option value="SANDBOX">SANDBOX (Thử nghiệm)</option>
+                                    <option value="PRODUCTION">PRODUCTION (Thật)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Webhook Helper -->
+                        <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-[11px] text-slate-700 space-y-1.5">
+                            <div class="font-bold text-blue-900 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info"></i> Cấu hình trên Portal VNPay Merchant:
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-blue-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">Return URL: /thanh-toan/vnpay-return</span>
+                                <button type="button" onclick="copyText('/thanh-toan/vnpay-return', this)" class="text-blue-600 hover:text-blue-800 font-bold ml-2">Copy</button>
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-blue-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">IPN Webhook: /api/payment/vnpay-ipn</span>
+                                <button type="button" onclick="copyText('/api/payment/vnpay-ipn', this)" class="text-blue-600 hover:text-blue-800 font-bold ml-2">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB MOMO -->
+                    <div id="sectionThemMomo" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Partner Code <span class="text-rose-500">*</span></label>
+                                <input type="text" th:field="*{momoPartnerCode}" id="themMomoPartnerCode" placeholder="VD: MOMOSIMPLAIN"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Access Key <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" th:field="*{momoAccessKey}" id="themMomoAccessKey" placeholder="VD: KL98394821"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('themMomoAccessKey', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Secret Key <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" th:field="*{momoSecretKey}" id="themMomoSecretKey" placeholder="VD: SECRET98394821"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('themMomoSecretKey', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">API Endpoint</label>
+                            <input type="text" th:field="*{momoEndpoint}" id="themMomoEndpoint" placeholder="https://test-payment.momo.vn/v2/gateway/api/create"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none">
+                        </div>
+
+                        <!-- Webhook Helper -->
+                        <div class="p-3 bg-pink-50/60 rounded-xl border border-pink-100 text-[11px] text-slate-700 space-y-1.5">
+                            <div class="font-bold text-pink-900 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info"></i> Cấu hình IPN Webhook MoMo:
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-pink-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">IPN URL: /api/payment/momo-ipn</span>
+                                <button type="button" onclick="copyText('/api/payment/momo-ipn', this)" class="text-pink-600 hover:text-pink-800 font-bold ml-2">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB VIETQR -->
+                    <div id="sectionThemVietqr" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Ngân hàng thụ hưởng <span class="text-rose-500">*</span></label>
+                                <select th:field="*{maNganHang}" id="themMaNganHang" onchange="doiNganHangThem(this)"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 font-semibold">
+                                    <option value="970422" data-name="MBBank">970422 - MB Bank (Ngân hàng Quân Đội)</option>
+                                    <option value="970436" data-name="Vietcombank">970436 - Vietcombank</option>
+                                    <option value="970407" data-name="Techcombank">970407 - Techcombank</option>
+                                    <option value="970415" data-name="VietinBank">970415 - VietinBank</option>
+                                    <option value="970418" data-name="BIDV">970418 - BIDV</option>
+                                    <option value="970416" data-name="ACB">970416 - ACB (Ngân hàng Á Châu)</option>
+                                    <option value="970432" data-name="VPBank">970432 - VPBank</option>
+                                    <option value="970423" data-name="TPBank">970423 - TPBank</option>
+                                    <option value="970403" data-name="Sacombank">970403 - Sacombank</option>
+                                    <option value="970405" data-name="Agribank">970405 - Agribank</option>
+                                </select>
+                                <input type="hidden" th:field="*{tenNganHang}" id="themTenNganHang" value="MBBank">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Số tài khoản thụ hưởng <span class="text-rose-500">*</span></label>
+                                <input type="text" th:field="*{soTaiKhoan}" id="themSoTaiKhoan" placeholder="VD: 0988888888"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none focus:border-blue-600">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tên chủ tài khoản (In hoa không dấu) <span class="text-rose-500">*</span></label>
+                                <input type="text" th:field="*{tenChuTaiKhoan}" id="themTenChuTaiKhoan" placeholder="VD: SIMPLAIN STORE"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-bold uppercase focus:bg-white outline-none focus:border-blue-600">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Cú pháp nội dung chuyển khoản</label>
+                                <input type="text" th:field="*{cuPhapChuyenKhoan}" id="themCuPhapChuyenKhoan" placeholder="DH {maDonHang}"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none focus:border-blue-600">
+                                <span class="text-[10px] text-slate-400">Hệ thống sẽ tự động thay {maDonHang} bằng mã đơn cụ thể</span>
+                            </div>
+                        </div>
+
+                        <!-- Upload hoặc Dán link ảnh QR Code Shop / Tài khoản -->
+                        <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-200/80 space-y-2">
+                            <label class="block text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-qrcode text-emerald-600"></i> Ảnh Mã QR Shop / Nhận tiền (Upload file hoặc dán URL)
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dán link ảnh QR</label>
+                                    <input type="text" th:field="*{qrCodeUrl}" id="themQrCodeUrl" placeholder="https://..."
+                                           class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-emerald-600">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Hoặc tải file ảnh QR từ máy</label>
+                                    <input type="file" name="fileQrCode" id="fileQrCodeThem" accept="image/*"
+                                           class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-500">Mã QR này sẽ hiển thị trực tiếp cho khách hàng quét khi thanh toán đơn hàng.</p>
+                        </div>
+                    </div>
+
+                    <!-- TAB COD -->
+                    <div id="sectionThemCod" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Phí thu hộ COD (VNĐ)</label>
+                                <input type="number" th:field="*{phiThuHo}" id="themPhiThuHo" placeholder="0" min="0" step="any"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-bold focus:bg-white outline-none">
+                                <span class="text-[10px] text-slate-400">Nhập 0 nếu miễn phí thu hộ</span>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Hạn mức COD tối đa (VNĐ)</label>
+                                <input type="number" th:field="*{hanMucCodToiDa}" id="themHanMucCodToiDa" placeholder="20000000" min="0" step="any"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-bold focus:bg-white outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Chính sách đồng kiểm</label>
+                                <select th:field="*{chinhSachKiemHang}" id="themChinhSachKiemHang" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold outline-none">
+                                    <option value="CHO_XEM_HANG">Cho xem hàng trước khi nhận</option>
+                                    <option value="CHO_THU_HANG">Cho thử hàng trước khi thanh toán</option>
+                                    <option value="KHONG_CHO_XEM">Không cho xem hàng</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB ZALOPAY -->
+                    <div id="sectionThemZalopay" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">App ID Sandbox <span class="text-rose-500">*</span></label>
+                                <input type="text" th:field="*{zaloAppId}" id="themZaloAppId" placeholder="VD: 2553"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Key 1 (Mac Key) <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" th:field="*{zaloKey1}" id="themZaloKey1" placeholder="PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL"
+                                           class="w-full px-3.5 py-2 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('themZaloKey1', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Key 2 (Callback Key)</label>
+                                <div class="relative">
+                                    <input type="password" th:field="*{zaloKey2}" id="themZaloKey2" placeholder="kLtgPl8HHhfvMuD2wKfgccY4YqZatOKH"
+                                           class="w-full px-3.5 py-2 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('themZaloKey2', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Endpoint API Sandbox</label>
+                            <input type="text" th:field="*{zaloEndpoint}" id="themZaloEndpoint" placeholder="https://sb-openapi.zalopay.vn/v2/create"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none">
+                        </div>
+
+                        <!-- Webhook Helper ZaloPay -->
+                        <div class="p-3 bg-cyan-50/60 rounded-xl border border-cyan-100 text-[11px] text-slate-700 space-y-1.5">
+                            <div class="font-bold text-cyan-900 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info"></i> Cấu hình URL Callback / Return ZaloPay:
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-cyan-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">Return URL: /thanh-toan/zalopay-return</span>
+                                <button type="button" onclick="copyText('/thanh-toan/zalopay-return', this)" class="text-cyan-600 hover:text-cyan-800 font-bold ml-2">Copy</button>
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-cyan-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">Callback IPN: /api/payment/zalopay-ipn</span>
+                                <button type="button" onclick="copyText('/api/payment/zalopay-ipn', this)" class="text-cyan-600 hover:text-cyan-800 font-bold ml-2">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB KHAC (RAW JSON) -->
+                    <div id="sectionThemKhac" class="space-y-2 hidden">
+                        <label class="block text-xs font-bold text-slate-700">Cấu hình JSON nâng cao (Tùy chỉnh)</label>
+                        <textarea th:field="*{cauHinh}" id="themCauHinh" rows="3" placeholder='{"apiKey": "...", "secret": "..."}'
+                                  class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="dongModalThem()"
+                            class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Lưu Cổng Thanh Toán</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 2: CHỈNH SỬA & CẤU HÌNH THAM SỐ CỔNG THANH TOÁN         -->
+    <!-- ============================================================= -->
+    <div id="modalSua" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-2xl my-6 overflow-hidden transform transition-all">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shadow-xs">
+                        <i class="fa-solid fa-sliders text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Cấu Hình Cổng Thanh Toán</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Bật/Tắt và chỉnh sửa thông số kết nối kỹ thuật</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalSua()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form id="formSua" method="post" enctype="multipart/form-data" class="p-6 space-y-5 text-xs max-h-[80vh] overflow-y-auto">
+                <input type="hidden" id="editId" name="id">
+                <input type="hidden" id="editLoaiCong" name="loaiCong" value="VNPAY">
+
+                <!-- 1. BỘ CHỌN PRESET TRONG MODAL SỬA: KHÓA CỐ ĐỊNH THEO YÊU CẦU -->
+                <div class="p-3.5 rounded-2xl bg-slate-100 border border-slate-200/90 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-base font-bold shadow-2xs">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-700 uppercase">Loại Cổng Thanh Toán:</span>
+                                <span id="labelEditLoaiCong" class="text-xs font-black text-blue-700 uppercase px-2.5 py-0.5 rounded-lg bg-blue-50 border border-blue-200">VNPAY</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Loại cổng được khóa cố định khi chỉnh sửa để bảo toàn lịch sử giao dịch và bảo mật hệ thống.</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs"><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i>Đã khóa</span>
+                </div>
+
+                <!-- 2. THÔNG TIN CƠ BẢN TRONG MODAL SỬA -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">2. Thông tin chung</div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Mã phương thức <span class="text-slate-400 font-normal">(Cố định)</span></label>
+                            <input type="text" id="editMaPhuongThuc" name="maPhuongThuc" readonly
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed text-xs outline-none font-mono uppercase font-bold">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tên hiển thị <span class="text-rose-500">*</span></label>
+                            <input type="text" id="editTenPhuongThuc" name="tenPhuongThuc" required
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-semibold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Hình thức</label>
+                            <select id="editLaTrucTuyen" name="laTrucTuyen" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 font-medium">
+                                <option value="true">Thanh toán Trực tuyến (Online Gateway)</option>
+                                <option value="false">Tiền mặt khi nhận (COD)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Trạng thái Bật/Tắt</label>
+                            <select id="editKichHoat" name="kichHoat" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 font-medium">
+                                <option value="true">BẬT (Khách hàng được thanh toán)</option>
+                                <option value="false">TẮT (Tạm ẩn cổng thanh toán này)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả hướng dẫn cho khách hàng</label>
+                        <input type="text" id="editMoTa" name="moTa"
+                               class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 text-slate-800 transition">
+                    </div>
+
+                    <!-- Upload logo trong modal sửa -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Logo / Biểu tượng</label>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-2xs">
+                                <i id="previewSuaIcon" class="fa-solid fa-qrcode text-blue-600 text-xl"></i>
+                                <img id="previewSuaImg" class="w-full h-full object-contain hidden" alt="Logo Preview">
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" name="fileBieuTuong" id="fileBieuTuongSua" accept="image/*" onchange="xemTruocAnh(this, 'previewSuaImg', 'previewSuaIcon')"
+                                       class="block w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                <p class="text-[10px] text-slate-400 mt-0.5">Để trống nếu muốn giữ nguyên logo hiện tại</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editBieuTuong" name="bieuTuong">
+                    </div>
+                </div>
+
+                <!-- 3. CẤU HÌNH THÔNG SỐ TRONG MODAL SỬA -->
+                <div class="border border-slate-200 rounded-2xl p-4 bg-white shadow-2xs space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <div class="text-[11px] font-extrabold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gear"></i>
+                            <span id="labelTieuDeCauHinhSua">3. Thông số kỹ thuật kết nối</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">Đã giải mã từ JSON</span>
+                    </div>
+
+                    <!-- TAB VNPAY -->
+                    <div id="sectionSuaVnpay" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Mã Website TMN Code <span class="text-rose-500">*</span></label>
+                                <input type="text" id="editVnpTmnCode" name="vnpTmnCode" placeholder="VD: SIMPLAIN01"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none focus:border-blue-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Chuỗi bí mật Hash Secret <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" id="editVnpHashSecret" name="vnpHashSecret" placeholder="VD: RAI9EFCJ891283JKSDH21"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none focus:border-blue-600">
+                                    <button type="button" onclick="toggleHienThiMatKhau('editVnpHashSecret', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">URL Cổng thanh toán</label>
+                                <input type="text" id="editVnpUrl" name="vnpUrl" placeholder="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Môi trường</label>
+                                <select id="editVnpMoiTruong" name="vnpMoiTruong" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold outline-none">
+                                    <option value="SANDBOX">SANDBOX (Thử nghiệm)</option>
+                                    <option value="PRODUCTION">PRODUCTION (Thật)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB MOMO -->
+                    <div id="sectionSuaMomo" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Partner Code <span class="text-rose-500">*</span></label>
+                                <input type="text" id="editMomoPartnerCode" name="momoPartnerCode" placeholder="VD: MOMOSIMPLAIN"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Access Key <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" id="editMomoAccessKey" name="momoAccessKey" placeholder="VD: KL98394821"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('editMomoAccessKey', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Secret Key <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" id="editMomoSecretKey" name="momoSecretKey" placeholder="VD: SECRET98394821"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('editMomoSecretKey', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Endpoint API</label>
+                            <input type="text" id="editMomoEndpoint" name="momoEndpoint" placeholder="https://test-payment.momo.vn/v2/gateway/api/create"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none">
+                        </div>
+                    </div>
+
+                    <!-- TAB VIETQR -->
+                    <div id="sectionSuaVietqr" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Ngân hàng thụ hưởng <span class="text-rose-500">*</span></label>
+                                <select id="editMaNganHang" name="maNganHang" onchange="doiNganHangSua(this)"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 font-semibold">
+                                    <option value="970422" data-name="MBBank">970422 - MB Bank (Ngân hàng Quân Đội)</option>
+                                    <option value="970436" data-name="Vietcombank">970436 - Vietcombank</option>
+                                    <option value="970407" data-name="Techcombank">970407 - Techcombank</option>
+                                    <option value="970415" data-name="VietinBank">970415 - VietinBank</option>
+                                    <option value="970418" data-name="BIDV">970418 - BIDV</option>
+                                    <option value="970416" data-name="ACB">970416 - ACB (Ngân hàng Á Châu)</option>
+                                    <option value="970432" data-name="VPBank">970432 - VPBank</option>
+                                    <option value="970423" data-name="TPBank">970423 - TPBank</option>
+                                    <option value="970403" data-name="Sacombank">970403 - Sacombank</option>
+                                    <option value="970405" data-name="Agribank">970405 - Agribank</option>
+                                </select>
+                                <input type="hidden" id="editTenNganHang" name="tenNganHang">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Số tài khoản thụ hưởng <span class="text-rose-500">*</span></label>
+                                <input type="text" id="editSoTaiKhoan" name="soTaiKhoan" placeholder="VD: 0988888888"
+                                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tên chủ tài khoản <span class="text-rose-500">*</span></label>
+                                <input type="text" id="editTenChuTaiKhoan" name="tenChuTaiKhoan" placeholder="VD: SIMPLAIN STORE"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-bold uppercase focus:bg-white outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Cú pháp chuyển khoản</label>
+                                <input type="text" id="editCuPhapChuyenKhoan" name="cuPhapChuyenKhoan" placeholder="DH {maDonHang}"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Upload hoặc Dán link ảnh QR Code Shop / Tài khoản trong Modal Sửa -->
+                        <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-200/80 space-y-2">
+                            <label class="block text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-qrcode text-emerald-600"></i> Ảnh Mã QR Shop / Nhận tiền (Upload file hoặc dán URL)
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dán link ảnh QR</label>
+                                    <input type="text" id="editQrCodeUrl" name="qrCodeUrl" placeholder="https://..."
+                                           class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-emerald-600">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Hoặc tải file ảnh QR mới</label>
+                                    <input type="file" name="fileQrCode" id="fileQrCodeSua" accept="image/*"
+                                           class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-500">Mã QR này sẽ hiển thị trực tiếp cho khách hàng quét khi thanh toán đơn hàng.</p>
+                        </div>
+                    </div>
+
+                    <!-- TAB COD -->
+                    <div id="sectionSuaCod" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Phí thu hộ COD (VNĐ)</label>
+                                <input type="number" id="editPhiThuHo" name="phiThuHo" placeholder="0" min="0" step="any"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-bold focus:bg-white outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Hạn mức COD tối đa (VNĐ)</label>
+                                <input type="number" id="editHanMucCodToiDa" name="hanMucCodToiDa" placeholder="20000000" min="0" step="any"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-bold focus:bg-white outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Chính sách đồng kiểm</label>
+                                <select id="editChinhSachKiemHang" name="chinhSachKiemHang" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold outline-none">
+                                    <option value="CHO_XEM_HANG">Cho xem hàng trước khi nhận</option>
+                                    <option value="CHO_THU_HANG">Cho thử hàng trước khi thanh toán</option>
+                                    <option value="KHONG_CHO_XEM">Không cho xem hàng</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB ZALOPAY -->
+                    <div id="sectionSuaZalopay" class="space-y-3 hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">App ID Sandbox <span class="text-rose-500">*</span></label>
+                                <input type="text" id="editZaloAppId" name="zaloAppId" placeholder="VD: 2553"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Key 1 (Mac Key) <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <input type="password" id="editZaloKey1" name="zaloKey1" placeholder="Chuỗi mã Key 1"
+                                           class="w-full px-3.5 py-2 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('editZaloKey1', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Key 2 (Callback Key)</label>
+                                <div class="relative">
+                                    <input type="password" id="editZaloKey2" name="zaloKey2" placeholder="Chuỗi mã Key 2"
+                                           class="w-full px-3.5 py-2 pr-10 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono font-bold focus:bg-white outline-none">
+                                    <button type="button" onclick="toggleHienThiMatKhau('editZaloKey2', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Endpoint API Sandbox</label>
+                            <input type="text" id="editZaloEndpoint" name="zaloEndpoint" placeholder="https://sb-openapi.zalopay.vn/v2/create"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none">
+                        </div>
+
+                        <!-- Webhook Helper ZaloPay trong Modal Sửa -->
+                        <div class="p-3 bg-cyan-50/60 rounded-xl border border-cyan-100 text-[11px] text-slate-700 space-y-1.5">
+                            <div class="font-bold text-cyan-900 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info"></i> Cấu hình URL Callback / Return ZaloPay:
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-cyan-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">Return URL: /thanh-toan/zalopay-return</span>
+                                <button type="button" onclick="copyText('/thanh-toan/zalopay-return', this)" class="text-cyan-600 hover:text-cyan-800 font-bold ml-2">Copy</button>
+                            </div>
+                            <div class="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-cyan-200">
+                                <span class="font-mono text-[10px] text-slate-600 truncate">Callback IPN: /api/payment/zalopay-ipn</span>
+                                <button type="button" onclick="copyText('/api/payment/zalopay-ipn', this)" class="text-cyan-600 hover:text-cyan-800 font-bold ml-2">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB KHAC (RAW JSON) -->
+                    <div id="sectionSuaKhac" class="space-y-2 hidden">
+                        <label class="block text-xs font-bold text-slate-700">Cấu hình JSON nâng cao (Tùy chỉnh)</label>
+                        <textarea id="editCauHinh" name="cauHinh" rows="3"
+                                  class="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50/50 text-xs font-mono focus:bg-white outline-none resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="dongModalSua()"
+                            class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Đóng
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Cập Nhật Cấu Hình</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Form ẩn phục vụ thao tác hàng loạt -->
+    <form id="formThaoTacHangLoat" th:action="@{/admin/phuong-thuc-thanh-toan/thao-tac-hang-loat}" method="post" style="display: none;">
+        <div id="hiddenInputsContainer"></div>
+        <input type="hidden" name="hanhDong" id="inputHanhDongHangLoat">
+    </form>
+
+    <!-- JavaScript Xử lý Cổng thanh toán Chuyên nghiệp -->
+    <script>
+        // Copy to clipboard helper
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const oldText = btn.innerText;
+                btn.innerText = 'Đã chép!';
+                btn.classList.add('text-emerald-600');
+                setTimeout(() => {
+                    btn.innerText = oldText;
+                    btn.classList.remove('text-emerald-600');
+                }, 1500);
+            });
+        }
+
+        // Đổi ngân hàng thụ hưởng VietQR
+        function doiNganHangThem(select) {
+            const opt = select.options[select.selectedIndex];
+            document.getElementById('themTenNganHang').value = opt.getAttribute('data-name') || opt.text;
+        }
+        function doiNganHangSua(select) {
+            const opt = select.options[select.selectedIndex];
+            document.getElementById('editTenNganHang').value = opt.getAttribute('data-name') || opt.text;
+        }
+
+        // Chọn Preset trong Modal Thêm
+        function chonPresetThem(preset) {
+            document.getElementById('themLoaiCong').value = preset;
+
+            // Xóa active class từ tất cả các preset
+            const presets = ['Vnpay', 'Momo', 'Vietqr', 'Cod', 'Zalopay', 'Khac'];
+            presets.forEach(p => {
+                const el = document.getElementById('presetThem' + p);
+                if (el) el.classList.remove('active');
+                const sec = document.getElementById('sectionThem' + p);
+                if (sec) sec.classList.add('hidden');
+            });
+
+            // Active preset hiện tại
+            const capitalized = preset.charAt(0).toUpperCase() + preset.slice(1).toLowerCase();
+            const currentCard = document.getElementById('presetThem' + capitalized);
+            if (currentCard) currentCard.classList.add('active');
+
+            const currentSec = document.getElementById('sectionThem' + capitalized);
+            if (currentSec) currentSec.classList.remove('hidden');
+
+            const labelTitle = document.getElementById('labelTieuDeCauHinhThem');
+
+            // Gợi ý tự động điền form
+            if (preset === 'VNPAY') {
+                if (labelTitle) labelTitle.innerText = '3. Thông số kỹ thuật kết nối VNPAY';
+                document.getElementById('themMaPhuongThuc').value = 'VNPAY';
+                document.getElementById('themTenPhuongThuc').value = 'Cổng thanh toán VNPay (VNPAY-QR / Thẻ ATM)';
+                document.getElementById('themLaTrucTuyen').value = 'true';
+                document.getElementById('themMoTa').value = 'Quét mã QR bằng ứng dụng ngân hàng hoặc ví VNPAY để thanh toán tức thì.';
+                document.getElementById('themBieuTuong').value = 'fa-solid fa-qrcode text-rose-600';
+                document.getElementById('previewThemIcon').className = 'fa-solid fa-qrcode text-rose-600 text-xl';
+                if (!document.getElementById('themVnpUrl').value) {
+                    document.getElementById('themVnpUrl').value = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+                }
+            } else if (preset === 'MOMO') {
+                if (labelTitle) labelTitle.innerText = '3. Thông số kỹ thuật kết nối Ví MoMo';
+                document.getElementById('themMaPhuongThuc').value = 'MOMO';
+                document.getElementById('themTenPhuongThuc').value = 'Ví điện tử MoMo';
+                document.getElementById('themLaTrucTuyen').value = 'true';
+                document.getElementById('themMoTa').value = 'Thanh toán trực tuyến dễ dàng, nhanh chóng và an toàn qua Ví MoMo.';
+                document.getElementById('themBieuTuong').value = 'fa-solid fa-wallet text-pink-600';
+                document.getElementById('previewThemIcon').className = 'fa-solid fa-wallet text-pink-600 text-xl';
+                if (!document.getElementById('themMomoEndpoint').value) {
+                    document.getElementById('themMomoEndpoint').value = 'https://test-payment.momo.vn/v2/gateway/api/create';
+                }
+            } else if (preset === 'VIETQR') {
+                if (labelTitle) labelTitle.innerText = '3. Thông số tài khoản thụ hưởng VietQR 24/7';
+                document.getElementById('themMaPhuongThuc').value = 'VIETQR';
+                document.getElementById('themTenPhuongThuc').value = 'Chuyển khoản ngân hàng qua mã VietQR (Tự động xác nhận)';
+                document.getElementById('themLaTrucTuyen').value = 'true';
+                document.getElementById('themMoTa').value = 'Mã QR thanh toán chuyển khoản hiển thị ngay lập tức với số tiền và nội dung chuẩn.';
+                document.getElementById('themBieuTuong').value = 'fa-solid fa-building-columns text-emerald-600';
+                document.getElementById('previewThemIcon').className = 'fa-solid fa-building-columns text-emerald-600 text-xl';
+                if (!document.getElementById('themCuPhapChuyenKhoan').value) {
+                    document.getElementById('themCuPhapChuyenKhoan').value = 'DH {maDonHang}';
+                }
+            } else if (preset === 'COD') {
+                if (labelTitle) labelTitle.innerText = '3. Chính sách thu tiền khi nhận hàng (Ship COD)';
+                document.getElementById('themMaPhuongThuc').value = 'COD';
+                document.getElementById('themTenPhuongThuc').value = 'Thanh toán tiền mặt khi nhận hàng (COD)';
+                document.getElementById('themLaTrucTuyen').value = 'false';
+                document.getElementById('themMoTa').value = 'Khách hàng kiểm tra hàng và thanh toán tiền mặt trực tiếp cho nhân viên giao vận.';
+                document.getElementById('themBieuTuong').value = 'fa-solid fa-hand-holding-dollar text-amber-600';
+                document.getElementById('previewThemIcon').className = 'fa-solid fa-hand-holding-dollar text-amber-600 text-xl';
+                if (!document.getElementById('themPhiThuHo').value) {
+                    document.getElementById('themPhiThuHo').value = '0';
+                }
+                if (!document.getElementById('themHanMucCodToiDa').value) {
+                    document.getElementById('themHanMucCodToiDa').value = '20000000';
+                }
+            } else if (preset === 'ZALOPAY') {
+                if (labelTitle) labelTitle.innerText = '3. Thông số kỹ thuật kết nối ZaloPay Sandbox';
+                document.getElementById('themMaPhuongThuc').value = 'ZALOPAY';
+                document.getElementById('themTenPhuongThuc').value = 'Ví điện tử ZaloPay';
+                document.getElementById('themLaTrucTuyen').value = 'true';
+                document.getElementById('themMoTa').value = 'Thanh toán trực tiếp bằng ứng dụng ZaloPay hoặc tài khoản Zalo.';
+                document.getElementById('themBieuTuong').value = 'fa-solid fa-bolt text-cyan-600';
+                document.getElementById('previewThemIcon').className = 'fa-solid fa-bolt text-cyan-600 text-xl';
+                if (!document.getElementById('themZaloAppId').value) {
+                    document.getElementById('themZaloAppId').value = '2553';
+                }
+                if (!document.getElementById('themZaloKey1').value) {
+                    document.getElementById('themZaloKey1').value = 'PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL';
+                }
+                if (!document.getElementById('themZaloKey2').value) {
+                    document.getElementById('themZaloKey2').value = 'kLtgPl8HHhfvMuD2wKfgccY4YqZatOKH';
+                }
+                if (document.getElementById('themZaloEndpoint') && !document.getElementById('themZaloEndpoint').value) {
+                    document.getElementById('themZaloEndpoint').value = 'https://sb-openapi.zalopay.vn/v2/create';
+                }
+            } else {
+                if (labelTitle) labelTitle.innerText = '3. Cấu hình JSON cổng thanh toán tùy chỉnh';
+                document.getElementById('themMaPhuongThuc').value = 'PAYMENT_CUSTOM';
+                document.getElementById('themTenPhuongThuc').value = 'Cổng thanh toán tùy chỉnh';
+                document.getElementById('themLaTrucTuyen').value = 'true';
+                document.getElementById('themMoTa').value = 'Cổng thanh toán riêng biệt của đối tác.';
+                document.getElementById('themBieuTuong').value = 'fa-solid fa-sliders text-slate-600';
+                document.getElementById('previewThemIcon').className = 'fa-solid fa-sliders text-slate-600 text-xl';
+            }
+        }
+
+        // Cập nhật giao diện theo loại cổng trong Modal Sửa (Khóa không cho chuyển loại)
+        function chonPresetSua(preset) {
+            if (!preset) preset = 'KHAC';
+            preset = preset.trim().toUpperCase();
+            document.getElementById('editLoaiCong').value = preset;
+
+            const badgeLoai = document.getElementById('labelEditLoaiCong');
+            if (badgeLoai) {
+                badgeLoai.innerText = preset;
+            }
+
+            const presets = ['Vnpay', 'Momo', 'Vietqr', 'Cod', 'Zalopay', 'Khac'];
+            presets.forEach(p => {
+                const sec = document.getElementById('sectionSua' + p);
+                if (sec) sec.classList.add('hidden');
+            });
+
+            const capitalized = preset.charAt(0).toUpperCase() + preset.slice(1).toLowerCase();
+            const currentSec = document.getElementById('sectionSua' + capitalized) || document.getElementById('sectionSuaKhac');
+            if (currentSec) currentSec.classList.remove('hidden');
+
+            const labelTitle = document.getElementById('labelTieuDeCauHinhSua');
+            if (labelTitle) {
+                labelTitle.innerText = '3. Thông số kỹ thuật kết nối ' + preset;
+            }
+        }
+
+        // Bật / tắt hiển thị chuỗi bảo mật (mở mắt / nhắm mắt)
+        function toggleHienThiMatKhau(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        }
+
+        // Xem trước ảnh khi chọn từ máy tính
+        function xemTruocAnh(input, imgId, iconId) {
+            const img = document.getElementById(imgId);
+            const icon = document.getElementById(iconId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    if (icon) icon.classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Modal Thêm
+        function moModalThem() {
+            const fileInput = document.getElementById('fileBieuTuongThem');
+            if (fileInput) fileInput.value = '';
+            const img = document.getElementById('previewThemImg');
+            if (img) {
+                img.src = '';
+                img.classList.add('hidden');
+            }
+            const icon = document.getElementById('previewThemIcon');
+            if (icon) icon.classList.remove('hidden');
+
+            // Mặc định chọn preset VNPAY
+            chonPresetThem('VNPAY');
+            document.getElementById('modalThem').classList.remove('hidden');
+        }
+        function dongModalThem() {
+            document.getElementById('modalThem').classList.add('hidden');
+        }
+
+        // Modal Sửa & Nạp dữ liệu qua API
+        function moModalSua(id) {
+            const fileInput = document.getElementById('fileBieuTuongSua');
+            if (fileInput) fileInput.value = '';
+
+            fetch(`/admin/phuong-thuc-thanh-toan/api/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('editId').value = data.id;
+                document.getElementById('editMaPhuongThuc').value = data.maPhuongThuc || '';
+                document.getElementById('editTenPhuongThuc').value = data.tenPhuongThuc || '';
+                document.getElementById('editLaTrucTuyen').value = data.laTrucTuyen ? 'true' : 'false';
+                document.getElementById('editKichHoat').value = data.kichHoat ? 'true' : 'false';
+                document.getElementById('editBieuTuong').value = data.bieuTuong || '';
+                document.getElementById('editMoTa').value = data.moTa || '';
+                document.getElementById('editCauHinh').value = data.cauHinh || '';
+
+                // Xác định loại cổng
+                const loai = (data.loaiCong || 'KHAC').toUpperCase();
+                chonPresetSua(loai);
+
+                // Nạp chi tiết các trường VNPay
+                document.getElementById('editVnpTmnCode').value = data.vnpTmnCode || '';
+                document.getElementById('editVnpHashSecret').value = data.vnpHashSecret || '';
+                document.getElementById('editVnpUrl').value = data.vnpUrl || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+                document.getElementById('editVnpMoiTruong').value = data.vnpMoiTruong || 'SANDBOX';
+
+                // Nạp chi tiết MoMo
+                document.getElementById('editMomoPartnerCode').value = data.momoPartnerCode || '';
+                document.getElementById('editMomoAccessKey').value = data.momoAccessKey || '';
+                document.getElementById('editMomoSecretKey').value = data.momoSecretKey || '';
+                document.getElementById('editMomoEndpoint').value = data.momoEndpoint || 'https://test-payment.momo.vn/v2/gateway/api/create';
+
+                // Nạp chi tiết VietQR
+                if (data.maNganHang) {
+                    document.getElementById('editMaNganHang').value = data.maNganHang;
+                }
+                document.getElementById('editTenNganHang').value = data.tenNganHang || '';
+                document.getElementById('editSoTaiKhoan').value = data.soTaiKhoan || '';
+                document.getElementById('editTenChuTaiKhoan').value = data.tenChuTaiKhoan || '';
+                document.getElementById('editCuPhapChuyenKhoan').value = data.cuPhapChuyenKhoan || 'DH {maDonHang}';
+                if (document.getElementById('editQrCodeUrl')) {
+                    document.getElementById('editQrCodeUrl').value = data.qrCodeUrl || '';
+                }
+
+                // Nạp chi tiết COD
+                document.getElementById('editPhiThuHo').value = (data.phiThuHo !== undefined && data.phiThuHo !== null) ? data.phiThuHo : '0';
+                document.getElementById('editHanMucCodToiDa').value = (data.hanMucCodToiDa !== undefined && data.hanMucCodToiDa !== null) ? data.hanMucCodToiDa : '20000000';
+                if (data.chinhSachKiemHang) {
+                    document.getElementById('editChinhSachKiemHang').value = data.chinhSachKiemHang;
+                }
+
+                // Nạp chi tiết ZaloPay
+                document.getElementById('editZaloAppId').value = data.zaloAppId || '';
+                document.getElementById('editZaloKey1').value = data.zaloKey1 || '';
+                document.getElementById('editZaloKey2').value = data.zaloKey2 || '';
+                if (document.getElementById('editZaloEndpoint')) {
+                    document.getElementById('editZaloEndpoint').value = data.zaloEndpoint || 'https://sb-openapi.zalopay.vn/v2/create';
+                }
+
+                // Hiển thị logo hiện tại nếu có
+                const img = document.getElementById('previewSuaImg');
+                const icon = document.getElementById('previewSuaIcon');
+                const isImage = data.bieuTuong && (
+                    data.bieuTuong.startsWith('/uploads/') || 
+                    data.bieuTuong.startsWith('http://') || 
+                    data.bieuTuong.startsWith('https://') || 
+                    data.bieuTuong.includes('.png') || 
+                    data.bieuTuong.includes('.jpg') || 
+                    data.bieuTuong.includes('.webp') || 
+                    data.bieuTuong.includes('.jpeg') || 
+                    data.bieuTuong.includes('.svg')
+                );
+                if (isImage) {
+                    img.src = data.bieuTuong;
+                    img.classList.remove('hidden');
+                    if (icon) icon.classList.add('hidden');
+                } else {
+                    img.src = '';
+                    img.classList.add('hidden');
+                    if (icon) {
+                        icon.className = data.bieuTuong || 'fa-solid fa-credit-card text-blue-600 text-xl';
+                        icon.classList.remove('hidden');
+                    }
+                }
+
+                document.getElementById('formSua').action = `/admin/phuong-thuc-thanh-toan/sua/${id}`;
+                document.getElementById('modalSua').classList.remove('hidden');
+            })
+            .catch(err => {
+                alert('Không thể tải thông tin cổng thanh toán: ' + err);
+            });
+        }
+        function dongModalSua() {
+            document.getElementById('modalSua').classList.add('hidden');
+        }
+
+        // Thao tác hàng loạt (Bulk actions)
+        function toggleCheckAll(master) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            const total = document.querySelectorAll('.item-checkbox').length;
+            const bar = document.getElementById('bulkActionsBar');
+            const counter = document.getElementById('selectedCount');
+            const master = document.getElementById('checkAll');
+
+            counter.innerText = checkedBoxes.length;
+            if (checkedBoxes.length > 0) {
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+
+            if (master) {
+                master.checked = (checkedBoxes.length === total && total > 0);
+            }
+        }
+
+        function boChonTatCa() {
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+            const master = document.getElementById('checkAll');
+            if (master) master.checked = false;
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function thucHienThaoTacHangLoat(hanhDong) {
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Vui lòng chọn ít nhất một cổng thanh toán!');
+                return;
+            }
+
+            if (hanhDong === 'xoa') {
+                if (!confirm(`Bạn có chắc chắn muốn xóa ${checkedBoxes.length} cổng thanh toán đã chọn?`)) {
+                    return;
+                }
+            }
+
+            const container = document.getElementById('hiddenInputsContainer');
+            container.innerHTML = '';
+
+            checkedBoxes.forEach(cb => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'ids';
+                inp.value = cb.value;
+                container.appendChild(inp);
+            });
+
+            document.getElementById('inputHanhDongHangLoat').value = hanhDong;
+            document.getElementById('formThaoTacHangLoat').submit();
+        }
+    </script>
+</body>
+</html>

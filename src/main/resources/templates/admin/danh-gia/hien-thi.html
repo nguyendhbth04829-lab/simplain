@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý &amp; Phản hồi Đánh giá sản phẩm | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar + Topbar) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('danh-gia')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${loiThaoTac}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${loiThaoTac}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-star text-amber-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Đánh giá sản phẩm</span>
+                        <span class="text-xs font-mono font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full"
+                              th:text="${thongKe.tongDanhGia + ' đánh giá'}">0 đánh giá</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Tiếp nhận đánh giá từ khách hàng đã mua hoàn tất và phản hồi trực tiếp từ Admin / CSKH</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/cua-hang" target="_blank"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-400"></i>
+                    <span>Xem Storefront</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. THẺ THỐNG KÊ NHANH KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng số đánh giá</div>
+                    <div class="text-2xl font-black text-slate-900 mt-1" th:text="${thongKe.tongDanhGia}">0</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Tất cả từ khách mua hàng</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Chưa phản hồi</div>
+                    <div class="text-2xl font-black text-amber-600 mt-1" th:text="${thongKe.chuaTraLoi}">0</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Cần CSKH giải đáp</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đã phản hồi</div>
+                    <div class="text-2xl font-black text-emerald-600 mt-1" th:text="${thongKe.daTraLoi}">0</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Đã tương tác với khách</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Điểm sao trung bình</div>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span class="text-2xl font-black text-amber-500" th:text="${thongKe.saoTrungBinh}">5.0</span>
+                        <span class="text-xs font-bold text-slate-400">/ 5.0</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-0.5" th:text="${thongKe.soLuong5Sao + ' lượt đánh giá 5★'}">0 lượt 5★</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM & BẢNG TRẠNG THÁI -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+            <form method="GET" action="/admin/danh-gia/hien-thi" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <!-- Ô tìm kiếm từ khóa -->
+                <div class="sm:col-span-5 space-y-1">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Từ khóa tìm kiếm</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" name="q" th:value="${tuKhoaHienTai}"
+                               placeholder="Tìm theo nội dung, tên KH, tên sản phẩm..."
+                               class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                </div>
+
+                <!-- Lọc theo số sao -->
+                <div class="sm:col-span-3 space-y-1">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Số sao đánh giá</label>
+                    <select name="soSao" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="" th:selected="${soSaoHienTai == null}">-- Tất cả số sao --</option>
+                        <option value="5" th:selected="${soSaoHienTai == 5}">⭐⭐⭐⭐⭐ (5 sao)</option>
+                        <option value="4" th:selected="${soSaoHienTai == 4}">⭐⭐⭐⭐ (4 sao)</option>
+                        <option value="3" th:selected="${soSaoHienTai == 3}">⭐⭐⭐ (3 sao)</option>
+                        <option value="2" th:selected="${soSaoHienTai == 2}">⭐⭐ (2 sao)</option>
+                        <option value="1" th:selected="${soSaoHienTai == 1}">⭐ (1 sao)</option>
+                    </select>
+                </div>
+
+                <!-- Lọc theo trạng thái phản hồi -->
+                <div class="sm:col-span-2 space-y-1">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái phản hồi</label>
+                    <select name="trangThai" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="TAT_CA" th:selected="${trangThaiHienTai == 'TAT_CA'}">Tất cả</option>
+                        <option value="CHUA_PHAN_HOI" th:selected="${trangThaiHienTai == 'CHUA_PHAN_HOI'}">Chưa phản hồi</option>
+                        <option value="DA_PHAN_HOI" th:selected="${trangThaiHienTai == 'DA_PHAN_HOI'}">Đã phản hồi</option>
+                    </select>
+                </div>
+
+                <!-- Nút lọc và đặt lại -->
+                <div class="sm:col-span-2 flex gap-2">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-filter text-xs"></i> Lọc
+                    </button>
+                    <a href="/admin/danh-gia/hien-thi"
+                       class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition flex items-center justify-center" title="Đặt lại">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. DANH SÁCH BẢNG ĐÁNH GIÁ -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">Danh sách Đánh giá &amp; Phản hồi</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Hiển thị kết quả tìm kiếm và bộ lọc hiện tại</p>
+                </div>
+                <div class="text-xs text-slate-500 font-medium">
+                    Tổng cộng: <span class="font-bold text-slate-900" th:text="${totalElements}">0</span> bản ghi
+                </div>
+            </div>
+
+            <!-- Nếu không có dữ liệu -->
+            <div th:if="${#lists.isEmpty(danhSachDanhGia.content)}" class="py-16 text-center space-y-3">
+                <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mx-auto">
+                    <i class="fa-regular fa-folder-open"></i>
+                </div>
+                <div class="text-sm font-bold text-slate-700">Không tìm thấy đánh giá nào</div>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto">Thử thay đổi bộ lọc tìm kiếm hoặc từ khóa để xem kết quả khác.</p>
+            </div>
+
+            <!-- Bảng hiển thị đánh giá -->
+            <div th:unless="${#lists.isEmpty(danhSachDanhGia.content)}" class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                            <th class="py-3 px-4 w-12 text-center">ID</th>
+                            <th class="py-3 px-4 w-52">Khách hàng</th>
+                            <th class="py-3 px-4 w-60">Sản phẩm &amp; Đơn hàng</th>
+                            <th class="py-3 px-4">Nội dung đánh giá</th>
+                            <th class="py-3 px-4 w-72">Phản hồi của Shop</th>
+                            <th class="py-3 px-4 w-44 text-center whitespace-nowrap">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-xs">
+                        <tr th:each="dg : ${danhSachDanhGia.content}" class="hover:bg-slate-50/70 transition align-top">
+                            <!-- ID -->
+                            <td class="py-4 px-4 text-center font-mono font-bold text-slate-400" th:text="${'#' + dg.id}">
+                                #1
+                            </td>
+
+                            <!-- Khách hàng -->
+                            <td class="py-4 px-4 space-y-1">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center text-xs flex-shrink-0 border border-indigo-100 overflow-hidden">
+                                        <img th:if="${dg.khachHang != null and dg.khachHang.anhDaiDien != null}"
+                                             th:src="${dg.khachHang.anhDaiDien}" class="w-full h-full object-cover">
+                                        <span th:unless="${dg.khachHang != null and dg.khachHang.anhDaiDien != null}"
+                                              th:text="${dg.khachHang != null ? #strings.substring(dg.khachHang.hoTen, 0, 1) : 'K'}">K</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-900" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">
+                                            Nguyễn Văn A
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 font-mono" th:if="${dg.khachHang != null and dg.khachHang.soDienThoai != null}"
+                                             th:text="${dg.khachHang.soDienThoai}">0987654321</div>
+                                    </div>
+                                </div>
+                                <div class="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                                    <i class="fa-regular fa-clock text-[10px]"></i>
+                                    <span th:text="${#temporals.format(dg.ngayTao, 'dd/MM/yyyy HH:mm')}">25/10/2026 10:00</span>
+                                </div>
+                            </td>
+
+                            <!-- Sản phẩm & Đơn hàng -->
+                            <td class="py-4 px-4 space-y-1">
+                                <div class="font-bold text-slate-800 line-clamp-2"
+                                     th:text="${dg.sanPham != null ? dg.sanPham.tenSanPham : (dg.chiTietDonHang != null ? dg.chiTietDonHang.tenSanPham : 'Sản phẩm')}">
+                                    Áo Thun Nam Simplain Cotton Compact
+                                </div>
+                                <div th:if="${dg.chiTietDonHang != null}" class="space-y-0.5">
+                                    <div class="inline-flex items-center gap-1 text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                        <span>SKU:</span>
+                                        <span class="font-bold text-slate-700" th:text="${dg.chiTietDonHang.maSku}">SP-COTTON-DEN-L</span>
+                                    </div>
+                                    <div th:if="${dg.chiTietDonHang.donHang != null}" class="text-[11px] text-blue-600 font-mono">
+                                        <a th:href="@{'/admin/don-hang/chi-tiet/' + ${dg.chiTietDonHang.donHang.id}}" target="_blank" class="hover:underline flex items-center gap-1">
+                                            <i class="fa-solid fa-receipt text-[10px]"></i>
+                                            <span th:text="${'Đơn: ' + dg.chiTietDonHang.donHang.maDonHang}">Đơn: DH-001</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Nội dung nhận xét -->
+                            <td class="py-4 px-4 space-y-2">
+                                <!-- Sao rating -->
+                                <div class="flex items-center gap-1">
+                                    <div class="flex text-amber-400 text-xs">
+                                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                           th:class="${i <= dg.soSao} ? 'fa-solid fa-star text-amber-400' : 'fa-solid fa-star text-slate-200'"></i>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-slate-600" th:text="${dg.soSao + '/5'}">5/5</span>
+                                </div>
+
+                                <!-- Text nhận xét -->
+                                <div class="text-slate-700 leading-relaxed whitespace-pre-line text-xs font-normal"
+                                     th:text="${dg.noiDung}">
+                                    Chất vải rất tốt, mặc ôm người tôn dáng và thoáng mát. Giao hàng nhanh đóng gói cẩn thận!
+                                </div>
+
+                                <!-- Hình ảnh đính kèm (nếu có) -->
+                                <div th:if="${not #lists.isEmpty(dg.danhSachAnh)}" class="flex flex-wrap gap-1.5 pt-1">
+                                    <a th:each="anh : ${dg.danhSachAnh}" th:href="${anh}" target="_blank"
+                                       class="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden block hover:opacity-80 transition bg-slate-100 flex-shrink-0">
+                                        <img th:src="${anh}" class="w-full h-full object-cover">
+                                    </a>
+                                </div>
+                            </td>
+
+                            <!-- Phản hồi của Shop -->
+                            <td class="py-4 px-4">
+                                <!-- Đã có phản hồi -->
+                                <div th:if="${dg.phanHoiAdmin != null and !dg.phanHoiAdmin.empty}" class="bg-blue-50/80 border border-blue-200 rounded-xl p-3 space-y-1.5">
+                                    <div class="flex items-center justify-between gap-1 flex-wrap">
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-black text-blue-700 uppercase tracking-wide">
+                                            <i class="fa-solid fa-store text-[9px]"></i> Phản hồi Shop
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-mono"
+                                              th:if="${dg.ngayPhanHoiAdmin != null}"
+                                              th:text="${#temporals.format(dg.ngayPhanHoiAdmin, 'dd/MM/yyyy HH:mm')}">
+                                            26/10/2026 14:00
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-800 leading-relaxed whitespace-pre-line" th:text="${dg.phanHoiAdmin}">
+                                        Cảm ơn bạn đã tin yêu Simplain!
+                                    </p>
+                                    <div class="text-[10px] text-slate-500 font-medium pt-1 border-t border-blue-100"
+                                         th:if="${dg.nhanVienPhanHoi != null}">
+                                        Bởi: <span class="font-bold text-slate-700" th:text="${dg.nhanVienPhanHoi.hoTen}">Admin</span>
+                                    </div>
+                                </div>
+
+                                <!-- Chưa có phản hồi -->
+                                <div th:unless="${dg.phanHoiAdmin != null and !dg.phanHoiAdmin.empty}" class="text-center py-3 bg-amber-50/60 border border-dashed border-amber-200 rounded-xl">
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700">
+                                        <i class="fa-solid fa-clock-rotate-left text-[11px]"></i> Chưa phản hồi
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Cột Thao tác -->
+                            <td class="py-4 px-4 text-center align-middle whitespace-nowrap">
+                                <div class="flex flex-col gap-1.5 w-36 mx-auto">
+                                    <!-- Nút Trả lời (khi chưa phản hồi) -->
+                                    <button th:if="${dg.phanHoiAdmin == null or dg.phanHoiAdmin.empty}"
+                                            type="button"
+                                            th:data-id="${dg.id}"
+                                            th:data-khachhang="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}"
+                                            th:data-sanpham="${dg.sanPham != null ? dg.sanPham.tenSanPham : (dg.chiTietDonHang != null ? dg.chiTietDonHang.tenSanPham : '')}"
+                                            th:data-sosao="${dg.soSao}"
+                                            th:data-noidung="${dg.noiDung}"
+                                            th:data-phanhoi="${dg.phanHoiAdmin != null ? dg.phanHoiAdmin : ''}"
+                                            onclick="moModalPhanHoi(this)"
+                                            class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition cursor-pointer">
+                                        <i class="fa-solid fa-reply text-[11px]"></i>
+                                        <span>Trả lời</span>
+                                    </button>
+
+                                    <!-- Nút Sửa phản hồi (khi đã có phản hồi) -->
+                                    <button th:unless="${dg.phanHoiAdmin == null or dg.phanHoiAdmin.empty}"
+                                            type="button"
+                                            th:data-id="${dg.id}"
+                                            th:data-khachhang="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}"
+                                            th:data-sanpham="${dg.sanPham != null ? dg.sanPham.tenSanPham : (dg.chiTietDonHang != null ? dg.chiTietDonHang.tenSanPham : '')}"
+                                            th:data-sosao="${dg.soSao}"
+                                            th:data-noidung="${dg.noiDung}"
+                                            th:data-phanhoi="${dg.phanHoiAdmin != null ? dg.phanHoiAdmin : ''}"
+                                            onclick="moModalPhanHoi(this)"
+                                            class="btn-outline w-full px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition cursor-pointer">
+                                        <i class="fa-solid fa-pen-to-square text-[11px] text-blue-600"></i>
+                                        <span>Sửa phản hồi</span>
+                                    </button>
+
+                                    <!-- Nút Xóa phản hồi (nếu đã phản hồi) -->
+                                    <form th:if="${dg.phanHoiAdmin != null and !dg.phanHoiAdmin.empty}"
+                                          th:action="@{'/admin/danh-gia/' + ${dg.id} + '/xoa-tra-loi'}"
+                                          method="POST"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa phản hồi này không?');"
+                                          class="w-full">
+                                        <button type="submit"
+                                                class="btn-toggle-inactive w-full px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer">
+                                            <i class="fa-solid fa-eraser text-[11px]"></i>
+                                            <span>Xóa phản hồi</span>
+                                        </button>
+                                    </form>
+
+                                    <!-- Nút Xóa đánh giá (spam/vi phạm) -->
+                                    <form th:action="@{'/admin/danh-gia/' + ${dg.id} + '/xoa'}"
+                                          method="POST"
+                                          onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn bài đánh giá này của khách hàng?');"
+                                          class="w-full">
+                                        <button type="submit"
+                                                class="btn-danger-outline w-full px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer">
+                                            <i class="fa-regular fa-trash-can text-[11px]"></i>
+                                            <span>Xóa đánh giá</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG (PAGINATION) -->
+            <div th:if="${totalPages > 1}" class="p-4 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div class="text-slate-500">
+                    Trang <span class="font-bold text-slate-800" th:text="${currentPage + 1}">1</span> /
+                    <span class="font-bold text-slate-800" th:text="${totalPages}">1</span>
+                    (Tổng cộng <span class="font-bold text-slate-800" th:text="${totalElements}">0</span> đánh giá)
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <!-- Nút Trang trước -->
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/admin/danh-gia/hien-thi(q=${tuKhoaHienTai}, soSao=${soSaoHienTai}, trangThai=${trangThaiHienTai}, page=${currentPage - 1})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i> Trước
+                    </a>
+
+                    <!-- Danh sách số trang -->
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                           th:href="@{/admin/danh-gia/hien-thi(q=${tuKhoaHienTai}, soSao=${soSaoHienTai}, trangThai=${trangThaiHienTai}, page=${i})}"
+                           th:text="${i + 1}"
+                           th:classappend="${i == currentPage} ? 'bg-blue-600 text-white font-black' : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold'"
+                           class="w-8 h-8 rounded-lg flex items-center justify-center transition">1</a>
+                    </th:block>
+
+                    <!-- Nút Trang sau -->
+                    <a th:if="${currentPage + 1 < totalPages}"
+                       th:href="@{/admin/danh-gia/hien-thi(q=${tuKhoaHienTai}, soSao=${soSaoHienTai}, trangThai=${trangThaiHienTai}, page=${currentPage + 1})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold transition flex items-center gap-1">
+                        Sau <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= MODAL PHẢN HỒI ĐÁNH GIÁ (ADMIN REPLY MODAL) ================= -->
+    <div id="modalPhanHoi" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all animate-in fade-in duration-200">
+            <!-- Modal Header -->
+            <div class="px-6 py-4.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm shadow-xs">
+                        <i class="fa-solid fa-reply"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Gửi phản hồi cho Khách hàng</h3>
+                        <p class="text-[11px] text-slate-500">Nội dung trả lời sẽ hiển thị công khai trên trang sản phẩm</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalPhanHoi()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="formTraLoi" method="POST" action="" class="p-6 space-y-4">
+                <!-- Tóm tắt đánh giá của khách hàng -->
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-900" id="modalTenKhachHang">Khách hàng</span>
+                        <span class="text-amber-500 font-bold" id="modalSoSao">⭐⭐⭐⭐⭐</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-medium" id="modalTenSanPham">Sản phẩm</div>
+                    <p class="text-slate-600 italic bg-white p-2.5 rounded-xl border border-slate-100 text-[11px] whitespace-pre-line" id="modalNoiDungKhach">
+                        Nội dung đánh giá...
+                    </p>
+                </div>
+
+                <!-- Mẫu phản hồi nhanh (Gợi ý soạn thảo) -->
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mẫu phản hồi nhanh</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="apDungMau(1)"
+                                class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-[11px] text-slate-600 font-medium transition border border-slate-200/60">
+                            + Cảm ơn 5★ &amp; ủng hộ
+                        </button>
+                        <button type="button" onclick="apDungMau(2)"
+                                class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-[11px] text-slate-600 font-medium transition border border-slate-200/60">
+                            + Xin lỗi &amp; hỗ trợ đổi size
+                        </button>
+                        <button type="button" onclick="apDungMau(3)"
+                                class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-[11px] text-slate-600 font-medium transition border border-slate-200/60">
+                            + Tiếp thu đóng góp chất liệu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Textarea nhập nội dung phản hồi -->
+                <div class="space-y-1.5">
+                    <label for="noiDungPhanHoi" class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                        <span>Nội dung phản hồi từ Shop <span class="text-red-500">*</span></span>
+                        <span class="text-[10px] text-slate-400 font-normal">Tối thiểu 5 ký tự</span>
+                    </label>
+                    <textarea id="noiDungPhanHoi" name="noiDungPhanHoi" rows="4" required minlength="5" maxlength="2000"
+                              placeholder="Nhập lời cảm ơn hoặc giải đáp thắc mắc từ cửa hàng gửi tới khách hàng..."
+                              class="w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition leading-relaxed"></textarea>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="dongModalPhanHoi()"
+                            class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-paper-plane text-xs"></i> Gửi phản hồi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script điều khiển Modal & Mẫu trả lời -->
+    <script>
+        const modal = document.getElementById('modalPhanHoi');
+        const formTraLoi = document.getElementById('formTraLoi');
+        const modalTenKhachHang = document.getElementById('modalTenKhachHang');
+        const modalSoSao = document.getElementById('modalSoSao');
+        const modalTenSanPham = document.getElementById('modalTenSanPham');
+        const modalNoiDungKhach = document.getElementById('modalNoiDungKhach');
+        const txtNoiDungPhanHoi = document.getElementById('noiDungPhanHoi');
+
+        function moModalPhanHoi(btn) {
+            const id = btn.getAttribute('data-id');
+            const khach = btn.getAttribute('data-khachhang') || 'Khách hàng';
+            const sp = btn.getAttribute('data-sanpham') || 'Sản phẩm Simplain';
+            const sao = parseInt(btn.getAttribute('data-sosao') || '5');
+            const noidung = btn.getAttribute('data-noidung') || '';
+            const phanhoi = btn.getAttribute('data-phanhoi') || '';
+
+            formTraLoi.action = '/admin/danh-gia/' + id + '/tra-loi';
+            modalTenKhachHang.textContent = khach;
+            modalTenSanPham.textContent = sp;
+            modalNoiDungKhach.textContent = noidung ? ('“' + noidung + '”') : 'Khách hàng không để lại nhận xét bằng lời.';
+            
+            let saoText = '';
+            for (let i = 0; i < sao; i++) saoText += '⭐';
+            modalSoSao.textContent = saoText + ' (' + sao + ' sao)';
+
+            txtNoiDungPhanHoi.value = phanhoi;
+
+            modal.classList.remove('hidden');
+            txtNoiDungPhanHoi.focus();
+        }
+
+        function dongModalPhanHoi() {
+            modal.classList.add('hidden');
+        }
+
+        function apDungMau(type) {
+            if (type === 1) {
+                txtNoiDungPhanHoi.value = "Dạ Simplain xin chân thành cảm ơn Quý khách đã tin tưởng và ủng hộ sản phẩm của shop! Chúc Quý khách có thật nhiều trải nghiệm ưng ý và niềm vui cùng set đồ mới này ạ. Hẹn gặp lại Quý khách ở những đơn hàng tiếp theo nhé!";
+            } else if (type === 2) {
+                txtNoiDungPhanHoi.value = "Dạ Simplain rất tiếc vì trải nghiệm đơn hàng chưa được trọn vẹn ạ. Nếu sản phẩm chưa vừa size hoặc có bất kỳ vấn đề gì, shop luôn có chính sách Đổi/Trả thuận tiện trong 15 ngày. Quý khách vui lòng gửi yêu cầu Đổi hàng hoặc liên hệ hotline để được hỗ trợ ngay nhé!";
+            } else if (type === 3) {
+                txtNoiDungPhanHoi.value = "Dạ Simplain ghi nhận góp ý chân thành từ Quý khách về chất liệu và phom dáng sản phẩm để tiếp tục cải tiến các bộ sưu tập tiếp theo tốt hơn nữa. Cảm ơn Quý khách đã dành thời gian đóng góp ý kiến quý báu cho shop ạ!";
+            }
+        }
+
+        // Đóng modal khi nhấn phím Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                dongModalPhanHoi();
+            }
+        });
+    </script>
+</body>
+</html>

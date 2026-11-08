@@ -43,16 +43,19 @@ public class BienTheSanPhamController {
     private final SanPhamService sanPhamService;
     private final MauSacService mauSacService;
     private final KichThuocService kichThuocService;
+    private final vn.fpoly.simplain.service.DanhMucService danhMucService;
 
     @Autowired
     public BienTheSanPhamController(BienTheSanPhamService bienTheService,
                                     SanPhamService sanPhamService,
                                     MauSacService mauSacService,
-                                    KichThuocService kichThuocService) {
+                                    KichThuocService kichThuocService,
+                                    vn.fpoly.simplain.service.DanhMucService danhMucService) {
         this.bienTheService = bienTheService;
         this.sanPhamService = sanPhamService;
         this.mauSacService = mauSacService;
         this.kichThuocService = kichThuocService;
+        this.danhMucService = danhMucService;
     }
 
     @GetMapping({"", "/"})
@@ -70,6 +73,9 @@ public class BienTheSanPhamController {
                           @RequestParam(required = false) Long maSanPhamId,
                           @RequestParam(required = false) Long maMauSacId,
                           @RequestParam(required = false) Long maKichThuocId,
+                          @RequestParam(required = false) BigDecimal giaTu,
+                          @RequestParam(required = false) BigDecimal giaDen,
+                          @RequestParam(required = false) String tonKhoTrangThai,
                           @RequestParam(required = false) Boolean kichHoat) {
         if (page == null || page < 0) {
             page = 0;
@@ -77,13 +83,14 @@ public class BienTheSanPhamController {
         int size = 6;
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<BienTheSanPham> bienThePage = bienTheService.layDanhSachPhanTrang(
-                tuKhoa, maSanPhamId, maMauSacId, maKichThuocId, kichHoat, pageable);
+                tuKhoa, maSanPhamId, maMauSacId, maKichThuocId, giaTu, giaDen, tonKhoTrangThai, kichHoat, pageable);
 
         model.addAttribute("listBienThe", bienThePage.getContent());
         model.addAttribute("pageData", bienThePage);
         model.addAttribute("listSanPham", sanPhamService.layTatCa());
         model.addAttribute("listMauSac", mauSacService.layTatCa());
         model.addAttribute("listKichThuoc", kichThuocService.layTatCa());
+        model.addAttribute("listDanhMuc", danhMucService.layTatCa());
 
         if (!model.containsAttribute("bienThe")) {
             BienTheSanPham formMacDinh = new BienTheSanPham();
@@ -104,6 +111,9 @@ public class BienTheSanPhamController {
         model.addAttribute("maSanPhamLoc", maSanPhamId);
         model.addAttribute("maMauSacLoc", maMauSacId);
         model.addAttribute("maKichThuocLoc", maKichThuocId);
+        model.addAttribute("giaTuLoc", giaTu);
+        model.addAttribute("giaDenLoc", giaDen);
+        model.addAttribute("tonKhoTrangThaiLoc", tonKhoTrangThai);
         model.addAttribute("kichHoatLoc", kichHoat);
 
         return "admin/bien-the/hien-thi";
@@ -122,7 +132,7 @@ public class BienTheSanPhamController {
                       @RequestParam(defaultValue = "0") Integer page) {
         if (result.hasErrors()) {
             model.addAttribute("thongBaoLoi", "Dữ liệu biến thể SKU chưa hợp lệ, vui lòng kiểm tra lại các trường báo đỏ!");
-            return hienThi(model, page, null, null, null, null, null);
+            return hienThi(model, page, null, null, null, null, null, null, null, null);
         }
 
         try {
@@ -133,7 +143,7 @@ public class BienTheSanPhamController {
             return "redirect:/admin/bien-the/hien-thi";
         } catch (IllegalArgumentException | IllegalStateException e) {
             model.addAttribute("thongBaoLoi", e.getMessage());
-            return hienThi(model, page, null, null, null, null, null);
+            return hienThi(model, page, null, null, null, null, null, null, null, null);
         }
     }
 
@@ -288,6 +298,7 @@ public class BienTheSanPhamController {
         model.addAttribute("listSanPham", sanPhamService.layTatCa());
         model.addAttribute("listMauSac", mauSacService.layTatCa());
         model.addAttribute("listKichThuoc", kichThuocService.layTatCa());
+        model.addAttribute("listDanhMuc", danhMucService.layTatCa());
         if (bienTheId != null) {
             try {
                 BienTheSanPham hienTai = bienTheService.layTheoId(bienTheId);

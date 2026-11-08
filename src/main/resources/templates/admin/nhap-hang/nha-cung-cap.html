@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhà Cung Cấp | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('nhap-hang')}"></div>
+
+    <!-- Main Content Area -->
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs animate-in fade-in">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs animate-in fade-in">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Danh mục Nhà Cung Cấp</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200">
+                            Đối tác nguồn hàng
+                        </span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Quản lý danh sách nhà cung ứng, thương hiệu chính hãng và chuyển đổi trạng thái hợp tác</p>
+                </div>
+            </div>
+
+            <!-- Nút Thao tác -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <a href="/admin/nhap-hang/hien-thi" class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl">
+                    <i class="fa-solid fa-boxes-packing mr-1.5"></i> Phiếu nhập kho
+                </a>
+                <button type="button" onclick="moModalThemNCC()" class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-plus text-amber-400 mr-1.5"></i>
+                    <span>Thêm Nhà Cung Cấp</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. KPI METRICS & 1-CLICK FILTER CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Thẻ 1: Tất cả NCC -->
+            <a th:href="@{/admin/nhap-hang/nha-cung-cap(trangThai='TAT_CA', q=${tuKhoa})}"
+               class="p-4 rounded-2xl border transition-all cursor-pointer group bg-white hover:border-slate-400 shadow-2xs flex items-center justify-between"
+               th:classappend="${trangThaiHienTai == 'TAT_CA' or trangThaiHienTai == null ? 'border-slate-900 ring-2 ring-slate-900/10' : 'border-slate-200'}">
+                <div class="space-y-1">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tổng nhà cung cấp</p>
+                    <h3 class="text-2xl font-black text-slate-900" th:text="${demTatCa != null ? demTatCa : 0}">0</h3>
+                    <p class="text-[11px] text-slate-400">Tất cả đối tác trong hệ thống</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 group-hover:bg-slate-900 group-hover:text-white text-slate-700 flex items-center justify-center text-lg transition">
+                    <i class="fa-solid fa-buildings"></i>
+                </div>
+            </a>
+
+            <!-- Thẻ 2: Đang hợp tác -->
+            <a th:href="@{/admin/nhap-hang/nha-cung-cap(trangThai='DANG_HOP_TAC', q=${tuKhoa})}"
+               class="p-4 rounded-2xl border transition-all cursor-pointer group bg-white hover:border-emerald-500 shadow-2xs flex items-center justify-between"
+               th:classappend="${trangThaiHienTai == 'DANG_HOP_TAC' ? 'border-emerald-600 ring-2 ring-emerald-600/10 bg-emerald-50/20' : 'border-slate-200'}">
+                <div class="space-y-1">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Đang hợp tác
+                    </p>
+                    <h3 class="text-2xl font-black text-emerald-600" th:text="${demDangHopTac != null ? demDangHopTac : 0}">0</h3>
+                    <p class="text-[11px] text-slate-400">Được phép tạo phiếu nhập hàng</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center text-lg transition">
+                    <i class="fa-solid fa-handshake"></i>
+                </div>
+            </a>
+
+            <!-- Thẻ 3: Ngưng hợp tác -->
+            <a th:href="@{/admin/nhap-hang/nha-cung-cap(trangThai='NGUNG_HOP_TAC', q=${tuKhoa})}"
+               class="p-4 rounded-2xl border transition-all cursor-pointer group bg-white hover:border-rose-500 shadow-2xs flex items-center justify-between"
+               th:classappend="${trangThaiHienTai == 'NGUNG_HOP_TAC' ? 'border-rose-600 ring-2 ring-rose-600/10 bg-rose-50/20' : 'border-slate-200'}">
+                <div class="space-y-1">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        Ngưng hợp tác
+                    </p>
+                    <h3 class="text-2xl font-black text-rose-600" th:text="${demNgungHopTac != null ? demNgungHopTac : 0}">0</h3>
+                    <p class="text-[11px] text-slate-400">Đã tạm dừng nhập kho</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 group-hover:bg-rose-600 group-hover:text-white text-rose-600 flex items-center justify-center text-lg transition">
+                    <i class="fa-solid fa-handshake-slash"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- 3. THANH TÌM KIẾM & BỘ LỌC TRẠNG THÁI -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs">
+            <form th:action="@{/admin/nhap-hang/nha-cung-cap}" method="get" class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                <!-- Search Box -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" name="q" th:value="${tuKhoa}" placeholder="Tìm theo tên NCC, mã NCC, số điện thoại, email, MST..."
+                           class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600">
+                </div>
+
+                <!-- Tabs Trạng thái -->
+                <input type="hidden" name="trangThai" th:value="${trangThaiHienTai}" />
+                <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl shrink-0 overflow-x-auto">
+                    <a th:href="@{/admin/nhap-hang/nha-cung-cap(trangThai='TAT_CA', q=${tuKhoa})}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap"
+                       th:classappend="${trangThaiHienTai == 'TAT_CA' or trangThaiHienTai == null ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}">
+                        Tất cả (<span th:text="${demTatCa}">0</span>)
+                    </a>
+                    <a th:href="@{/admin/nhap-hang/nha-cung-cap(trangThai='DANG_HOP_TAC', q=${tuKhoa})}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap"
+                       th:classappend="${trangThaiHienTai == 'DANG_HOP_TAC' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-emerald-700'}">
+                        Đang hợp tác (<span th:text="${demDangHopTac}">0</span>)
+                    </a>
+                    <a th:href="@{/admin/nhap-hang/nha-cung-cap(trangThai='NGUNG_HOP_TAC', q=${tuKhoa})}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap"
+                       th:classappend="${trangThaiHienTai == 'NGUNG_HOP_TAC' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-600 hover:text-rose-700'}">
+                        Ngưng hợp tác (<span th:text="${demNgungHopTac}">0</span>)
+                    </a>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-filter mr-1"></i> Lọc
+                    </button>
+                    <a th:if="${(tuKhoa != null and !tuKhoa.isBlank()) or (trangThaiHienTai != 'TAT_CA' and trangThaiHienTai != null)}"
+                       th:href="@{/admin/nhap-hang/nha-cung-cap}"
+                       class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
+                       title="Xóa bộ lọc">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. BẢNG DANH SÁCH NHÀ CUNG CẤP -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                        <tr>
+                            <th class="py-3.5 px-4">Mã NCC</th>
+                            <th class="py-3.5 px-4">Tên Nhà Cung Cấp</th>
+                            <th class="py-3.5 px-4">Phân loại đối tác</th>
+                            <th class="py-3.5 px-4">Liên hệ (SĐT / Email)</th>
+                            <th class="py-3.5 px-4">Địa chỉ &amp; MST</th>
+                            <th class="py-3.5 px-4 text-center">Trạng thái hợp tác</th>
+                            <th class="py-3.5 px-4 text-right">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr th:if="${#lists.isEmpty(listNhaCungCap)}">
+                            <td colspan="7" class="text-center py-12 text-slate-400">
+                                <div class="space-y-1">
+                                    <i class="fa-solid fa-folder-open text-2xl text-slate-300"></i>
+                                    <p>Không tìm thấy nhà cung cấp nào phù hợp.</p>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:each="ncc : ${listNhaCungCap}"
+                            class="hover:bg-slate-50/80 transition"
+                            th:classappend="${!ncc.kichHoat ? 'bg-slate-50/40 text-slate-500' : ''}">
+                            <!-- Mã NCC -->
+                            <td class="py-3.5 px-4 font-mono font-bold"
+                                th:classappend="${ncc.kichHoat ? 'text-slate-900' : 'text-slate-500'}"
+                                th:text="${ncc.maNhaCungCap}">NCC-VINATEX</td>
+
+                            <!-- Tên NCC -->
+                            <td class="py-3.5 px-4 font-bold"
+                                th:classappend="${ncc.kichHoat ? 'text-slate-900' : 'text-slate-500'}">
+                                <div class="flex items-center gap-1.5">
+                                    <span th:text="${ncc.tenNhaCungCap}">Tập đoàn Dệt may Việt Nam (Vinatex)</span>
+                                    <span th:unless="${ncc.kichHoat}" class="text-[10px] px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 font-bold">Đã ngưng</span>
+                                </div>
+                                <p th:if="${ncc.ghiChu != null and !ncc.ghiChu.isBlank()}" class="text-[11px] text-slate-400 font-normal line-clamp-1 mt-0.5" th:text="${ncc.ghiChu}">Ghi chú...</p>
+                            </td>
+
+                            <!-- Phân loại đối tác -->
+                            <td class="py-3.5 px-4">
+                                <span th:if="${ncc.chinhHang}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-badge-check text-blue-600"></i> Hãng lớn (Có Barcode)
+                                </span>
+                                <span th:unless="${ncc.chinhHang}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                    Xưởng sản xuất thường
+                                </span>
+                            </td>
+
+                            <!-- Liên hệ -->
+                            <td class="py-3.5 px-4 text-xs">
+                                <div class="font-mono font-bold" th:classappend="${ncc.kichHoat ? 'text-slate-800' : 'text-slate-500'}" th:text="${ncc.soDienThoai != null ? ncc.soDienThoai : '-'}">0987654321</div>
+                                <div class="text-[11px] text-slate-400" th:text="${ncc.email != null ? ncc.email : ''}">contact@vinatex.com</div>
+                            </td>
+
+                            <!-- Địa chỉ & MST -->
+                            <td class="py-3.5 px-4 text-xs text-slate-600 max-w-xs">
+                                <div class="line-clamp-1" th:text="${ncc.diaChi != null ? ncc.diaChi : '-'}">Hà Nội</div>
+                                <div th:if="${ncc.maSoThue != null and !ncc.maSoThue.isBlank()}" class="text-[11px] text-slate-400 font-mono">
+                                    MST: <span th:text="${ncc.maSoThue}">0100109999</span>
+                                </div>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${ncc.kichHoat}"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>Đang hợp tác</span>
+                                </span>
+                                <span th:unless="${ncc.kichHoat}"
+                                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200 shadow-2xs">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                    <span>Ngưng hợp tác</span>
+                                </span>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
+                                <!-- Nút 1: Tạo phiếu nhập (Chỉ bật khi đang hợp tác) -->
+                                <a th:if="${ncc.kichHoat}"
+                                   th:href="@{/admin/nhap-hang/tao-phieu(nccId=${ncc.id})}"
+                                   title="Tạo phiếu nhập từ NCC này"
+                                   class="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition inline-block border border-blue-200 hover:border-blue-600 shadow-2xs">
+                                    <i class="fa-solid fa-cart-flatbed"></i>
+                                </a>
+                                <button th:unless="${ncc.kichHoat}"
+                                        type="button"
+                                        disabled
+                                        title="Nhà cung cấp đã ngưng hợp tác, không thể tạo phiếu nhập mới"
+                                        class="p-2 rounded-xl bg-slate-100 text-slate-300 border border-slate-200 inline-block cursor-not-allowed">
+                                    <i class="fa-solid fa-cart-flatbed"></i>
+                                </button>
+
+                                <!-- Nút 2: Sửa thông tin -->
+                                <button type="button"
+                                        onclick="moModalSuaNCCBtn(this)"
+                                        th:data-id="${ncc.id}"
+                                        th:data-ma="${ncc.maNhaCungCap}"
+                                        th:data-ten="${ncc.tenNhaCungCap}"
+                                        th:data-sdt="${ncc.soDienThoai}"
+                                        th:data-email="${ncc.email}"
+                                        th:data-diachi="${ncc.diaChi}"
+                                        th:data-mst="${ncc.maSoThue}"
+                                        th:data-chinhhang="${ncc.chinhHang}"
+                                        th:data-kichhoat="${ncc.kichHoat}"
+                                        th:data-ghichu="${ncc.ghiChu}"
+                                        title="Chỉnh sửa thông tin"
+                                        class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer border border-slate-200 shadow-2xs">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+
+                                <!-- Nút 3: CHUYỂN ĐỔI TRẠNG THÁI (NGƯNG HỢP TÁC / HỢP TÁC LẠI) -->
+                                <button th:if="${ncc.kichHoat}"
+                                        type="button"
+                                        th:data-id="${ncc.id}"
+                                        th:data-ma="${ncc.maNhaCungCap}"
+                                        th:data-ten="${ncc.tenNhaCungCap}"
+                                        th:data-kichhoat="true"
+                                        onclick="xacNhanDoiTrangThaiNCCBtn(this)"
+                                        class="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition font-bold text-[11px] inline-flex items-center gap-1.5 border border-rose-200 hover:border-rose-600 shadow-2xs cursor-pointer"
+                                        title="Chuyển sang trạng thái Ngưng hợp tác">
+                                    <i class="fa-solid fa-handshake-slash"></i>
+                                    <span>Ngưng hợp tác</span>
+                                </button>
+
+                                <button th:unless="${ncc.kichHoat}"
+                                        type="button"
+                                        th:data-id="${ncc.id}"
+                                        th:data-ma="${ncc.maNhaCungCap}"
+                                        th:data-ten="${ncc.tenNhaCungCap}"
+                                        th:data-kichhoat="false"
+                                        onclick="xacNhanDoiTrangThaiNCCBtn(this)"
+                                        class="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition font-bold text-[11px] inline-flex items-center gap-1.5 border border-emerald-200 hover:border-emerald-600 shadow-2xs cursor-pointer"
+                                        title="Khôi phục lại quan hệ hợp tác">
+                                    <i class="fa-solid fa-handshake"></i>
+                                    <span>Hợp tác lại</span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL XÁC NHẬN CHUYỂN ĐỔI TRẠNG THÁI (NGƯNG HỢP TÁC / KHÔI PHỤC) -->
+    <div id="modalXacNhanDoiTrangThai" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-start gap-3.5">
+                <div id="boxIconDoiTrangThai" class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0">
+                    <i id="iconFaDoiTrangThai" class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 id="tieuDeXacNhan" class="font-black text-base text-slate-900">
+                        Xác nhận Ngưng Hợp Tác
+                    </h3>
+                    <p id="moTaXacNhan" class="text-xs text-slate-500 leading-relaxed">
+                        Bạn có chắc chắn muốn ngưng hợp tác với nhà cung cấp này?
+                    </p>
+                </div>
+            </div>
+
+            <!-- Khối chi tiết nhà cung cấp -->
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Mã NCC:</span>
+                    <span id="txtXacNhanMaNCC" class="font-mono font-bold text-slate-800">NCC-0001</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400">Tên NCC:</span>
+                    <span id="txtXacNhanTenNCC" class="font-bold text-slate-900 text-right line-clamp-1">Công ty</span>
+                </div>
+                <div class="flex items-center justify-between pt-1 border-t border-slate-200">
+                    <span class="text-slate-400">Trạng thái mới:</span>
+                    <span id="txtXacNhanTrangThaiMoi" class="font-black">NGƯNG HỢP TÁC</span>
+                </div>
+            </div>
+
+            <!-- Footer nút bấm -->
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="dongModalXacNhanDoiTrangThai()" class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl">
+                    Hủy bỏ
+                </button>
+                <a id="btnDongYDoiTrangThai" href="#" class="font-bold text-xs px-5 py-2.5 rounded-xl text-white shadow-xs transition inline-flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i>
+                    <span id="txtBtnDongY">Đồng ý</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM / SỬA NHÀ CUNG CẤP -->
+    <div id="modalNhaCungCap" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 id="modalNccTieuDe" class="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-building-circle-check text-blue-600"></i>
+                    <span>Thêm Nhà Cung Cấp Mới</span>
+                </h3>
+                <button type="button" onclick="dongModalNCC()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form th:action="@{/admin/nhap-hang/nha-cung-cap/luu}" method="post" class="space-y-4">
+                <input type="hidden" id="nccInputId" name="id" value="">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Mã NCC -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mã Nhà Cung Cấp <span class="text-rose-500">*</span></label>
+                        <input type="text" id="nccInputMa" name="maNhaCungCap" required placeholder="VD: NCC-VINATEX" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono uppercase outline-none focus:border-blue-600">
+                    </div>
+
+                    <!-- Tên NCC -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tên Nhà Cung Cấp <span class="text-rose-500">*</span></label>
+                        <input type="text" id="nccInputTen" name="tenNhaCungCap" required placeholder="VD: Tập đoàn Dệt May Việt Nam" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold outline-none focus:border-blue-600">
+                    </div>
+
+                    <!-- SĐT -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Số điện thoại</label>
+                        <input type="text" id="nccInputSdt" name="soDienThoai" placeholder="VD: 02438255555" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono outline-none focus:border-blue-600">
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email liên hệ</label>
+                        <input type="email" id="nccInputEmail" name="email" placeholder="VD: info@vinatex.com.vn" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-blue-600">
+                    </div>
+
+                    <!-- MST -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mã số thuế</label>
+                        <input type="text" id="nccInputMst" name="maSoThue" placeholder="VD: 0100109999" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono outline-none focus:border-blue-600">
+                    </div>
+
+                    <!-- Địa chỉ -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Địa chỉ trụ sở / kho</label>
+                        <input type="text" id="nccInputDiaChi" name="diaChi" placeholder="VD: 25 Bà Triệu, Hà Nội" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-blue-600">
+                    </div>
+                </div>
+
+                <!-- Cờ Chính Hãng & Trạng thái hợp tác -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-blue-50/50 border border-blue-200/80">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" id="nccCheckChinhHang" name="chinhHang" value="true" checked class="w-4 h-4 text-blue-600 rounded">
+                        <div>
+                            <span class="text-xs font-bold text-blue-900 block">Nhà cung cấp lớn chính hãng</span>
+                            <span class="text-[10px] text-blue-700">Có mã vạch Barcode/QR chuẩn hãng</span>
+                        </div>
+                    </label>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Trạng thái đối tác:</label>
+                        <select id="nccSelectKichHoat" name="kichHoat" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-white outline-none focus:border-blue-600">
+                            <option value="true">Đang hợp tác (Kích hoạt)</option>
+                            <option value="false">Ngưng hợp tác (Tạm ngưng)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ghi chú đối tác:</label>
+                    <textarea id="nccInputGhiChu" name="ghiChu" rows="2" placeholder="Ghi chú về chính sách công nợ, chiết khấu, sản phẩm chủ lực..." class="w-full p-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:border-blue-600"></textarea>
+                </div>
+
+                <!-- Footer buttons -->
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="dongModalNCC()" class="btn-outline font-bold text-xs px-4 py-2 rounded-xl">Đóng</button>
+                    <button type="submit" class="btn-navy font-bold text-xs px-5 py-2 rounded-xl shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk text-amber-400 mr-1.5"></i>
+                        <span>Lưu thông tin</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function moModalThemNCC() {
+            document.getElementById('modalNccTieuDe').innerHTML = '<i class="fa-solid fa-building-circle-check text-blue-600"></i><span>Thêm Nhà Cung Cấp Mới</span>';
+            document.getElementById('nccInputId').value = '';
+            document.getElementById('nccInputMa').value = 'NCC-' + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('nccInputTen').value = '';
+            document.getElementById('nccInputSdt').value = '';
+            document.getElementById('nccInputEmail').value = '';
+            document.getElementById('nccInputMst').value = '';
+            document.getElementById('nccInputDiaChi').value = '';
+            document.getElementById('nccCheckChinhHang').checked = true;
+            document.getElementById('nccSelectKichHoat').value = 'true';
+            document.getElementById('nccInputGhiChu').value = '';
+
+            const m = document.getElementById('modalNhaCungCap');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function moModalSuaNCCBtn(btn) {
+            const id = btn.getAttribute('data-id');
+            const ma = btn.getAttribute('data-ma') || '';
+            const ten = btn.getAttribute('data-ten') || '';
+            const sdt = btn.getAttribute('data-sdt') || '';
+            const email = btn.getAttribute('data-email') || '';
+            const diaChi = btn.getAttribute('data-diachi') || '';
+            const mst = btn.getAttribute('data-mst') || '';
+            const chinhHang = btn.getAttribute('data-chinhhang') === 'true';
+            const kichHoat = btn.getAttribute('data-kichhoat') === 'true';
+            const ghiChu = btn.getAttribute('data-ghichu') || '';
+
+            moModalSuaNCC(id, ma, ten, sdt, email, diaChi, mst, chinhHang, kichHoat, ghiChu);
+        }
+
+        function moModalSuaNCC(id, ma, ten, sdt, email, diaChi, mst, chinhHang, kichHoat, ghiChu) {
+            document.getElementById('modalNccTieuDe').innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-600"></i><span>Cập Nhật Nhà Cung Cấp</span>';
+            document.getElementById('nccInputId').value = id;
+            document.getElementById('nccInputMa').value = ma || '';
+            document.getElementById('nccInputTen').value = ten || '';
+            document.getElementById('nccInputSdt').value = sdt || '';
+            document.getElementById('nccInputEmail').value = email || '';
+            document.getElementById('nccInputMst').value = mst || '';
+            document.getElementById('nccInputDiaChi').value = diaChi || '';
+            document.getElementById('nccCheckChinhHang').checked = Boolean(chinhHang);
+            document.getElementById('nccSelectKichHoat').value = kichHoat ? 'true' : 'false';
+            document.getElementById('nccInputGhiChu').value = ghiChu || '';
+
+            const m = document.getElementById('modalNhaCungCap');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function dongModalNCC() {
+            const m = document.getElementById('modalNhaCungCap');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // =========================================================================
+        // XỬ LÝ CHUYỂN ĐỔI TRẠNG THÁI (NGƯNG HỢP TÁC / KHÔI PHỤC HỢP TÁC)
+        // =========================================================================
+        function xacNhanDoiTrangThaiNCCBtn(btn) {
+            const id = btn.getAttribute('data-id');
+            const ma = btn.getAttribute('data-ma') || '';
+            const ten = btn.getAttribute('data-ten') || '';
+            const kichHoat = btn.getAttribute('data-kichhoat') === 'true';
+
+            const modal = document.getElementById('modalXacNhanDoiTrangThai');
+            const boxIcon = document.getElementById('boxIconDoiTrangThai');
+            const iconFa = document.getElementById('iconFaDoiTrangThai');
+            const tieuDe = document.getElementById('tieuDeXacNhan');
+            const moTa = document.getElementById('moTaXacNhan');
+            const txtMa = document.getElementById('txtXacNhanMaNCC');
+            const txtTen = document.getElementById('txtXacNhanTenNCC');
+            const txtTrangThaiMoi = document.getElementById('txtXacNhanTrangThaiMoi');
+            const btnDongY = document.getElementById('btnDongYDoiTrangThai');
+            const txtBtnDongY = document.getElementById('txtBtnDongY');
+
+            txtMa.textContent = ma;
+            txtTen.textContent = ten;
+
+            if (kichHoat) {
+                // Đang hợp tác -> Muốn ngưng hợp tác
+                boxIcon.className = 'w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shrink-0';
+                iconFa.className = 'fa-solid fa-handshake-slash';
+                tieuDe.textContent = 'Xác nhận Ngưng Hợp Tác';
+                moTa.innerHTML = 'Bạn có chắc chắn muốn ngưng hợp tác với nhà cung cấp này? Sau khi ngưng, đối tác sẽ <b>không thể được chọn</b> khi tạo phiếu nhập hàng mới.';
+                txtTrangThaiMoi.className = 'font-black text-rose-600';
+                txtTrangThaiMoi.textContent = 'NGƯNG HỢP TÁC';
+
+                btnDongY.className = 'font-bold text-xs px-5 py-2.5 rounded-xl text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer';
+                txtBtnDongY.textContent = 'Đồng ý Ngưng hợp tác';
+            } else {
+                // Đang ngưng -> Muốn hợp tác lại
+                boxIcon.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0';
+                iconFa.className = 'fa-solid fa-handshake';
+                tieuDe.textContent = 'Khôi Phục Quan Hệ Hợp Tác';
+                moTa.innerHTML = 'Khôi phục trạng thái hoạt động cho nhà cung cấp này để tiếp tục tạo phiếu nhập kho và nhập hàng hóa?';
+                txtTrangThaiMoi.className = 'font-black text-emerald-600';
+                txtTrangThaiMoi.textContent = 'ĐANG HỢP TÁC';
+
+                btnDongY.className = 'font-bold text-xs px-5 py-2.5 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer';
+                txtBtnDongY.textContent = 'Xác nhận Hợp tác lại';
+            }
+
+            // Gán link chuyển đổi trạng thái
+            btnDongY.href = '/admin/nhap-hang/nha-cung-cap/doi-trang-thai?id=' + id;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function dongModalXacNhanDoiTrangThai() {
+            const modal = document.getElementById('modalXacNhanDoiTrangThai');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
+</body>
+</html>

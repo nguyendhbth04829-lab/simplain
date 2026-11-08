@@ -63,5 +63,12 @@ build/
 application-local.properties
 application-secret.properties
 
+# --- Binary / Utilities ---
+*.exe
+cloudflared*
+scratch/
+
+
+
 # --- Opencode / AI ---
 .opencode/

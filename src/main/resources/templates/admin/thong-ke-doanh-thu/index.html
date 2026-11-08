@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống kê Doanh thu | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        @media print {
+            aside, #adminSidebar, nav, .khong-in {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            .ban-in-chi-tiet {
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('thong-ke-doanh-thu')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- 1. PAGE HEADER: Tiêu đề + Nút In báo cáo & Xuất Excel -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Thống kê Doanh thu</span>
+                        <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Realtime</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Báo cáo tài chính, hiệu quả đa kênh (Online &amp; Tại quầy) và doanh thu thực nhận</p>
+                </div>
+            </div>
+
+            <!-- Nút Hành động Xuất file / In -->
+            <div class="flex items-center gap-2 khong-in">
+                <!-- Xuất CSV / Excel -->
+                <a th:href="@{/admin/thong-ke-doanh-thu/xuat-csv(kyThongKe=${baoCao.kyThongKe}, tuNgay=${baoCao.tuNgay}, denNgay=${baoCao.denNgay}, kenhBan=${baoCao.kenhBan})}"
+                   class="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-2 shadow-xs"
+                   title="Tải bảng kê doanh thu Excel / CSV">
+                    <i class="fa-solid fa-file-excel text-emerald-600 text-sm"></i>
+                    <span>Xuất Excel</span>
+                </a>
+
+                <!-- In Báo Cáo A4 -->
+                <button type="button" onclick="window.print()"
+                        class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer"
+                        title="In bản báo cáo tài chính khổ A4">
+                    <i class="fa-solid fa-print text-sm"></i>
+                    <span>In Báo Cáo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. BỘ LỌC THỜI GIAN VÀ KÊNH BÁN HÀNG (1 CHẠM NHANH CHÓNG) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-4 khong-in">
+            
+            <!-- Hàng 1: Nút bấm chọn kỳ thống kê nhanh -->
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mr-1">Kỳ xem:</span>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='HOM_NAY', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == 'HOM_NAY'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">Hôm nay</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='HOM_QUA', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == 'HOM_QUA'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">Hôm qua</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='7_NGAY', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == '7_NGAY'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">7 ngày qua</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='30_NGAY', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == '30_NGAY'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">30 ngày qua</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='THANG_NAY', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == 'THANG_NAY'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">Tháng này</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='THANG_TRUOC', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == 'THANG_TRUOC'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">Tháng trước</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe='NAM_NAY', kenhBan=${baoCao.kenhBan})}"
+                       th:classappend="${baoCao.kyThongKe == 'NAM_NAY'} ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+                       class="px-3 py-1.5 rounded-lg transition">Năm nay</a>
+                </div>
+
+                <!-- Chọn kênh bán hàng -->
+                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe=${baoCao.kyThongKe}, tuNgay=${baoCao.tuNgay}, denNgay=${baoCao.denNgay}, kenhBan='ALL')}"
+                       th:classappend="${baoCao.kenhBan == 'ALL'} ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'"
+                       class="px-3 py-1.5 rounded-lg transition">Tất cả kênh</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe=${baoCao.kyThongKe}, tuNgay=${baoCao.tuNgay}, denNgay=${baoCao.denNgay}, kenhBan='ONLINE')}"
+                       th:classappend="${baoCao.kenhBan == 'ONLINE'} ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'"
+                       class="px-3 py-1.5 rounded-lg transition">Online Web</a>
+                    <a th:href="@{/admin/thong-ke-doanh-thu(kyThongKe=${baoCao.kyThongKe}, tuNgay=${baoCao.tuNgay}, denNgay=${baoCao.denNgay}, kenhBan='POS')}"
+                       th:classappend="${baoCao.kenhBan == 'POS'} ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'"
+                       class="px-3 py-1.5 rounded-lg transition">Tại quầy POS</a>
+                </div>
+            </div>
+
+            <!-- Hàng 2: Form Tùy chọn khoảng ngày chính xác -->
+            <form th:action="@{/admin/thong-ke-doanh-thu}" method="get" class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-3 text-xs">
+                <input type="hidden" name="kyThongKe" value="TUY_CHON">
+                <input type="hidden" name="kenhBan" th:value="${baoCao.kenhBan}">
+
+                <span class="text-slate-500 font-semibold flex items-center gap-1.5">
+                    <i class="fa-regular fa-calendar-days text-slate-400"></i>
+                    <span>Tùy chọn khoảng ngày:</span>
+                </span>
+
+                <div class="flex items-center gap-2">
+                    <input type="date" name="tuNgay" th:value="${baoCao.tuNgay}"
+                           class="px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 text-xs font-semibold outline-none focus:border-blue-600 focus:bg-white transition">
+                    <span class="text-slate-400 font-bold">đến</span>
+                    <input type="date" name="denNgay" th:value="${baoCao.denNgay}"
+                           class="px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 text-xs font-semibold outline-none focus:border-blue-600 focus:bg-white transition">
+                </div>
+
+                <button type="submit"
+                        class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-filter text-[10px]"></i>
+                    <span>Áp dụng</span>
+                </button>
+
+                <div class="ml-auto text-slate-400 text-[11px] font-mono">
+                    Kỳ xem: <strong class="text-slate-700" th:text="${#temporals.format(baoCao.tuNgay, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(baoCao.denNgay, 'dd/MM/yyyy')}">01/01/2026 - 31/01/2026</strong>
+                </div>
+            </form>
+        </div>
+
+        <!-- 3. BỐN THẺ KPI CHÍNH (ĐƠN GIẢN, RÕ RÀNG, DỄ NHÌN) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+            <!-- KPI 1: TỔNG DOANH THU THỰC NHẬN -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider block">
+                            Tổng doanh thu thực nhận
+                        </span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/30">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white block"
+                              th:text="${#numbers.formatDecimal(baoCao.tongDoanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-700/80 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-1.5">
+                        <span th:if="${baoCao.tyLeTangTruongDoanhThu >= 0}"
+                              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-950 text-emerald-400 border border-emerald-700/50">
+                            <i class="fa-solid fa-arrow-trend-up mr-1"></i>+<span th:text="${baoCao.tyLeTangTruongDoanhThu}">0</span>%
+                        </span>
+                        <span th:if="${baoCao.tyLeTangTruongDoanhThu < 0}"
+                              class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-red-950 text-red-400 border border-red-700/50">
+                            <i class="fa-solid fa-arrow-trend-down mr-1"></i><span th:text="${baoCao.tyLeTangTruongDoanhThu}">0</span>%
+                        </span>
+                        <span class="text-[10px] text-slate-400">so kỳ trước</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-mono"
+                          th:text="'Kỳ trước: ' + ${#numbers.formatDecimal(baoCao.tongDoanhThuTruocDo, 0, 'POINT', 0, 'COMMA')} + ' ₫'"></span>
+                </div>
+            </div>
+
+            <!-- KPI 2: ĐƠN HÀNG VÀ TỶ LỆ HOÀN THÀNH -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                            Đơn hàng phát sinh
+                        </span>
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-2">
+                        <span class="text-2xl sm:text-3xl font-black font-mono text-slate-900"
+                              th:text="${baoCao.tongDonHang}">0</span>
+                        <span class="text-xs font-semibold text-slate-400">đơn</span>
+                        <span class="ml-auto text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200"
+                              th:text="${baoCao.tyLeHoanThanh} + '% TC'">0% TC</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span class="text-emerald-600 font-bold">
+                        <i class="fa-solid fa-circle-check mr-1 text-[9px]"></i>Thành công: <strong th:text="${baoCao.soDonHoanThanh}">0</strong>
+                    </span>
+                    <span class="text-red-500 font-bold">
+                        <i class="fa-solid fa-circle-xmark mr-1 text-[9px]"></i>Hủy: <strong th:text="${baoCao.soDonHuy}">0</strong>
+                    </span>
+                </div>
+            </div>
+
+            <!-- KPI 3: GIÁ TRỊ TRUNG BÌNH ĐƠN (AOV) & DOANH THU KÊNH -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                            Giá trị đơn TB (AOV)
+                        </span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm border border-amber-100">
+                            <i class="fa-solid fa-tag"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-2xl sm:text-3xl font-black font-mono text-amber-600"
+                              th:text="${#numbers.formatDecimal(baoCao.giaTriTrungBinhDon, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span class="text-indigo-600 font-semibold" title="Doanh thu bán trên website">
+                        <i class="fa-solid fa-globe mr-1"></i>Online: <strong th:text="${#numbers.formatDecimal(baoCao.doanhThuOnline, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong>
+                    </span>
+                    <span class="text-amber-700 font-semibold" title="Doanh thu bán tại quầy POS">
+                        <i class="fa-solid fa-cash-register mr-1"></i>POS: <strong th:text="${#numbers.formatDecimal(baoCao.doanhThuPos, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong>
+                    </span>
+                </div>
+            </div>
+
+            <!-- KPI 4: CHIẾT KHẤU & PHÍ SHIP -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                            Tổng giảm giá &amp; Ship
+                        </span>
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm border border-purple-100">
+                            <i class="fa-solid fa-ticket"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-2xl sm:text-3xl font-black font-mono text-purple-700"
+                              th:text="'-' + ${#numbers.formatDecimal(baoCao.tongTienGiamVoucher.add(baoCao.tongTienGiamDiem), 0, 'POINT', 0, 'COMMA')} + ' ₫'">-0 ₫</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Voucher: <strong class="text-slate-700" th:text="${#numbers.formatDecimal(baoCao.tongTienGiamVoucher, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong></span>
+                    <span>Ship thu: <strong class="text-emerald-600" th:text="${#numbers.formatDecimal(baoCao.tongPhiVanChuyen, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 4. KHU VỰC BIỂU ĐỒ DOANH THU & TỶ TRỌNG THANH TOÁN (CHART.JS) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Biểu đồ 1 (2/3 width): Xu hướng doanh thu theo ngày & số đơn -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-area text-blue-600"></i>
+                            <span>Biểu đồ Xu hướng Doanh thu</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Biến động doanh thu thực nhận (VNĐ) và số lượng đơn hàng theo từng ngày</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="flex items-center gap-1.5 text-blue-600 font-bold">
+                            <span class="w-3 h-3 rounded bg-blue-600"></span>Doanh thu (VNĐ)
+                        </span>
+                        <span class="flex items-center gap-1.5 text-amber-500 font-bold">
+                            <span class="w-3 h-3 rounded bg-amber-500"></span>Số đơn hàng
+                        </span>
+                    </div>
+                </div>
+
+                <div class="relative h-80 w-full mt-4">
+                    <canvas id="bieuDoXuHuongDoanhThu"></canvas>
+                </div>
+            </div>
+
+            <!-- Biểu đồ 2 (1/3 width): Tỷ trọng phương thức thanh toán -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <div class="pb-4 border-b border-slate-100">
+                    <h2 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-pie-chart text-emerald-500"></i>
+                        <span>Cơ cấu Thanh toán</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Phân bổ doanh thu theo hình thức thanh toán</p>
+                </div>
+
+                <div class="relative h-64 w-full my-auto flex items-center justify-center">
+                    <canvas id="bieuDoPhuongThucThanhToan"></canvas>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 text-center">
+                    <span class="text-xs font-semibold text-slate-500">
+                        Tổng doanh thu: <strong class="text-slate-900 font-mono font-bold" th:text="${#numbers.formatDecimal(baoCao.tongDoanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong>
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 5. PHÂN TÍCH SÂU: TOP SẢN PHẨM & BẢNG KÊ CHI TIẾT THEO NGÀY -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Top 5 Sản phẩm Bán chạy nhất mang lại Doanh thu cao nhất -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-crown text-amber-500"></i>
+                            <span>Top Sản phẩm Doanh thu</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500">Mặt hàng đóng góp doanh thu lớn nhất</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3" th:if="${baoCao.topSanPham != null && !baoCao.topSanPham.isEmpty()}">
+                    <div th:each="sp, stat : ${baoCao.topSanPham}" class="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white"
+                                      th:classappend="${stat.index == 0 ? 'bg-amber-500' : (stat.index == 1 ? 'bg-slate-400' : (stat.index == 2 ? 'bg-amber-700' : 'bg-slate-300'))}"
+                                      th:text="${stat.count}">1</span>
+                                <span class="font-bold text-xs text-slate-800 line-clamp-1" th:text="${sp.tenSanPham}">Tên SP</span>
+                            </div>
+                            <span class="font-mono font-bold text-xs text-emerald-600 whitespace-nowrap"
+                                  th:text="${#numbers.formatDecimal(sp.doanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                            <span>Đã bán: <strong class="text-slate-800 font-mono" th:text="${sp.soLuongDaBan}">0</strong> cái</span>
+                            <span>Đóng góp: <strong class="text-blue-600 font-mono" th:text="${sp.tyLeDongGop} + '%'">0%</strong></span>
+                        </div>
+                        <!-- Progress bar tỷ lệ -->
+                        <div class="w-full bg-slate-200 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                            <div class="bg-blue-600 h-1.5 rounded-full" th:style="'width: ' + ${sp.tyLeDongGop} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:unless="${baoCao.topSanPham != null && !baoCao.topSanPham.isEmpty()}" class="py-10 text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
+                    <p>Chưa có dữ liệu sản phẩm trong kỳ</p>
+                </div>
+            </div>
+
+            <!-- Bảng kê Doanh thu chi tiết theo ngày (2/3 width) -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs flex flex-col justify-between ban-in-chi-tiet">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-table-list text-blue-600"></i>
+                                <span>Bảng kê Doanh thu Chi tiết</span>
+                            </h3>
+                            <p class="text-[11px] text-slate-500">Dữ liệu đối soát đơn hàng và doanh thu theo từng ngày</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto mt-3">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50/80 border-b border-slate-200 text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
+                                    <th class="py-3 px-3">Ngày</th>
+                                    <th class="py-3 px-3 text-center">Số đơn</th>
+                                    <th class="py-3 px-3 text-center">Hoàn thành</th>
+                                    <th class="py-3 px-3 text-right">Doanh thu Online</th>
+                                    <th class="py-3 px-3 text-right">Doanh thu POS</th>
+                                    <th class="py-3 px-3 text-right">Tổng thực nhận</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr th:if="${baoCao.chiTietCacNgay == null || baoCao.chiTietCacNgay.isEmpty()}">
+                                    <td colspan="6" class="py-8 text-center text-slate-400">Không có dữ liệu trong khoảng thời gian này</td>
+                                </tr>
+                                <tr th:each="ct : ${baoCao.chiTietCacNgay}" class="hover:bg-slate-50/80 transition">
+                                    <td class="py-2.5 px-3 font-mono font-bold text-slate-800" th:text="${ct.ngay}">01/01/2026</td>
+                                    <td class="py-2.5 px-3 text-center font-mono" th:text="${ct.soDon}">0</td>
+                                    <td class="py-2.5 px-3 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700"
+                                              th:text="${ct.soDonHoanThanh}">0</span>
+                                    </td>
+                                    <td class="py-2.5 px-3 text-right font-mono text-indigo-700 font-semibold"
+                                        th:text="${#numbers.formatDecimal(ct.doanhThuOnline, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                                    <td class="py-2.5 px-3 text-right font-mono text-amber-700 font-semibold"
+                                        th:text="${#numbers.formatDecimal(ct.doanhThuPos, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                                    <td class="py-2.5 px-3 text-right font-mono font-black text-slate-900"
+                                        th:text="${#numbers.formatDecimal(ct.tongDoanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300 text-xs">
+                                <tr>
+                                    <td class="py-3 px-3 uppercase tracking-wider text-slate-900">TỔNG CỘNG</td>
+                                    <td class="py-3 px-3 text-center font-mono text-slate-900" th:text="${baoCao.tongDonHang}">0</td>
+                                    <td class="py-3 px-3 text-center font-mono text-emerald-700" th:text="${baoCao.soDonHoanThanh}">0</td>
+                                    <td class="py-3 px-3 text-right font-mono text-indigo-700"
+                                        th:text="${#numbers.formatDecimal(baoCao.doanhThuOnline, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                                    <td class="py-3 px-3 text-right font-mono text-amber-700"
+                                        th:text="${#numbers.formatDecimal(baoCao.doanhThuPos, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                                    <td class="py-3 px-3 text-right font-mono font-black text-emerald-600 text-sm"
+                                        th:text="${#numbers.formatDecimal(baoCao.tongDoanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- KHỞI TẠO BIỂU ĐỒ CHART.JS -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const nhanThoiGian = /*[[${baoCao.nhanThoiGian}]]*/ [];
+        const duLieuDoanhThu = /*[[${baoCao.duLieuDoanhThu}]]*/ [];
+        const duLieuSoDon = /*[[${baoCao.duLieuSoDon}]]*/ [];
+        const duLieuDoanhThuOnline = /*[[${baoCao.duLieuDoanhThuOnline}]]*/ [];
+        const duLieuDoanhThuPos = /*[[${baoCao.duLieuDoanhThuPos}]]*/ [];
+
+        const nhanPhuongThuc = /*[[${baoCao.nhanPhuongThuc}]]*/ [];
+        const duLieuPhuongThuc = /*[[${baoCao.duLieuPhuongThuc}]]*/ [];
+
+        // 1. BIỂU ĐỒ XU HƯỚNG DOANH THU & SỐ ĐƠN (DUAL AXIS AREA/BAR CHART)
+        const ctxXuHuong = document.getElementById('bieuDoXuHuongDoanhThu');
+        if (ctxXuHuong) {
+            new Chart(ctxXuHuong, {
+                type: 'bar',
+                data: {
+                    labels: nhanThoiGian,
+                    datasets: [
+                        {
+                            label: 'Doanh thu Online (₫)',
+                            data: duLieuDoanhThuOnline,
+                            backgroundColor: '#4f46e5',
+                            stack: 'DoanhThu',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Doanh thu POS (₫)',
+                            data: duLieuDoanhThuPos,
+                            backgroundColor: '#d97706',
+                            stack: 'DoanhThu',
+                            borderRadius: 4
+                        },
+                        {
+                            type: 'line',
+                            label: 'Số lượng đơn hàng',
+                            data: duLieuSoDon,
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            borderWidth: 2.5,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            yAxisID: 'ySoDon'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 12,
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.yAxisID === 'ySoDon') {
+                                        return context.dataset.label + ': ' + context.parsed.y + ' đơn';
+                                    }
+                                    return context.dataset.label + ': ' + (Number(context.parsed.y || 0)).toLocaleString('vi-VN') + ' ₫';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        },
+                        y: {
+                            position: 'left',
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(val) {
+                                    if (val >= 1000000) return (val / 1000000) + ' Tr';
+                                    if (val >= 1000) return (val / 1000) + ' K';
+                                    return val;
+                                }
+                            }
+                        },
+                        ySoDon: {
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 10 },
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. BIỂU ĐỒ TỶ TRỌNG PHƯƠNG THỨC THANH TOÁN (DOUGHNUT)
+        const ctxPt = document.getElementById('bieuDoPhuongThucThanhToan');
+        if (ctxPt) {
+            const defaultLabels = (nhanPhuongThuc && nhanPhuongThuc.length > 0) ? nhanPhuongThuc : ['Tiền mặt (POS)', 'VNPAY', 'MoMo', 'COD'];
+            const defaultData = (duLieuPhuongThuc && duLieuPhuongThuc.length > 0) ? duLieuPhuongThuc : [0, 0, 0, 0];
+
+            new Chart(ctxPt, {
+                type: 'doughnut',
+                data: {
+                    labels: defaultLabels,
+                    datasets: [{
+                        data: defaultData,
+                        backgroundColor: [
+                            '#2563eb', // Blue
+                            '#059669', // Emerald
+                            '#d97706', // Amber
+                            '#7c3aed', // Purple
+                            '#dc2626'  // Red
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10, weight: 'bold' },
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = Number(context.raw || 0);
+                                    return ' ' + context.label + ': ' + val.toLocaleString('vi-VN') + ' ₫';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '68%'
+                }
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

@@ -82,12 +82,12 @@ public class SanPham {
     @NotBlank(message = "Mô tả chi tiết sản phẩm không được để trống")
     @Size(min = 10, max = 5000, message = "Mô tả chi tiết sản phẩm phải từ 10 đến 5000 ký tự")
     @Nationalized
-    @Column(name = "mo_ta_chi_tiet", columnDefinition = "ntext")
+    @Column(name = "mo_ta_chi_tiet", columnDefinition = "nvarchar(max)")
     private String moTaChiTiet;
 
     @Size(max = 3000, message = "Hướng dẫn chọn size không được vượt quá 3000 ký tự")
     @Nationalized
-    @Column(name = "huong_dan_chon_size", columnDefinition = "ntext")
+    @Column(name = "huong_dan_chon_size", columnDefinition = "nvarchar(max)")
     private String huongDanChonSize;
 
     @Size(max = 500, message = "Đường dẫn video quảng cáo không được vượt quá 500 ký tự")
@@ -197,6 +197,12 @@ public class SanPham {
     @Transient
     @Builder.Default
     private List<HinhAnh> danhSachHinhAnh = new ArrayList<>();
+
+    /**
+     * Số lượng biến thể của sản phẩm này đang sắp hết hàng (tồn kho <= 10).
+     */
+    @Transient
+    private Long soBienTheSapHet;
 
     /**
      * Getter tương thích cho client/API sử dụng tên bienTheSanPhams

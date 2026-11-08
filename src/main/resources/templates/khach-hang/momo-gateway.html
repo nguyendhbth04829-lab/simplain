@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Thanh Toán MoMo Gateway | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #830051 0%, #b0006d 40%, #1e1b4b 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-100">
+        <!-- Header MoMo -->
+        <div class="bg-gradient-to-r from-[#a50064] to-[#d82d8b] p-6 text-white text-center relative">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-bold tracking-wider uppercase mb-2">
+                <i class="fa-solid fa-bolt text-amber-300"></i>
+                <span>MoMo Sandbox Gateway</span>
+            </div>
+            <h1 class="text-xl font-extrabold tracking-tight">Cổng Thanh Toán Ví MoMo</h1>
+            <p class="text-xs text-pink-100 mt-1">Môi trường thử nghiệm thanh toán an toàn trực tiếp</p>
+
+            <!-- Số tiền thanh toán -->
+            <div class="mt-4 bg-white/10 backdrop-blur-md rounded-2xl py-3 px-4 border border-white/20 max-w-xs mx-auto">
+                <div class="text-[11px] text-pink-100 font-semibold uppercase">Số tiền thanh toán</div>
+                <div class="text-2xl font-black text-white font-mono mt-0.5"
+                     th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                    3.211.141 đ
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin đơn hàng & Lựa chọn nguồn tiền test -->
+        <div class="p-6 sm:p-7 space-y-5 text-xs text-slate-700">
+
+            <!-- Thông tin đơn hàng -->
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500 font-medium">Mã đơn hàng:</span>
+                    <span class="font-extrabold text-slate-900 font-mono text-sm" th:text="${'#' + maDonHang}">#DH123456</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500 font-medium">Mã giao dịch MoMo:</span>
+                    <span class="font-mono text-slate-600 text-[11px]" th:text="${orderId}">REQ_123456</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500 font-medium">Đơn vị thụ hưởng:</span>
+                    <span class="font-bold text-slate-800">SIMPLAIN STORE (MoMo Merchant)</span>
+                </div>
+            </div>
+
+            <!-- Nguồn tiền thanh toán Sandbox -->
+            <div class="space-y-2.5">
+                <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                    Chọn Nguồn Tiền Thanh Toán (Test Sandbox)
+                </div>
+
+                <!-- Lựa chọn 1: Ví MoMo -->
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-pink-500 bg-pink-50/40 cursor-pointer transition">
+                    <input type="radio" name="nguonTien" value="vi_momo" checked class="w-4 h-4 text-pink-600 focus:ring-pink-500">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#a50064] to-[#d82d8b] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-slate-900">Số dư Ví MoMo (SĐT: 0901234567)</div>
+                        <div class="text-[11px] text-slate-500">Mã OTP mặc định: <strong class="text-emerald-700 font-mono">123456</strong> &bull; Số dư: 50.000.000 đ</div>
+                    </div>
+                </label>
+
+                <!-- Lựa chọn 2: Thẻ Napas MoMo -->
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-200 hover:border-pink-400 bg-white cursor-pointer transition">
+                    <input type="radio" name="nguonTien" value="atm_napas" class="w-4 h-4 text-pink-600 focus:ring-pink-500">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        <i class="fa-solid fa-credit-card"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-slate-900">Thẻ ATM Napas liên kết MoMo (Test)</div>
+                        <div class="text-[11px] text-slate-500 font-mono">9704031101990001 &bull; NGUYEN VAN A &bull; 11/18</div>
+                    </div>
+                </label>
+
+                <!-- Lựa chọn 3: Thẻ Visa Sandbox -->
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-200 hover:border-pink-400 bg-white cursor-pointer transition">
+                    <input type="radio" name="nguonTien" value="the_visa" class="w-4 h-4 text-pink-600 focus:ring-pink-500">
+                    <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        <i class="fa-brands fa-cc-visa"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-slate-900">Thẻ Quốc Tế Visa / MasterCard (Test)</div>
+                        <div class="text-[11px] text-slate-500 font-mono">4111 1111 1111 1111 &bull; CVV: 123 &bull; 12/28</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Các nút hành động -->
+            <div class="pt-2 space-y-2.5">
+                <form th:action="@{/thanh-toan/momo-return}" method="get">
+                    <input type="hidden" name="resultCode" value="0">
+                    <input type="hidden" name="orderId" th:value="${orderId}">
+                    <input type="hidden" name="maDonHang" th:value="${maDonHang}">
+                    <input type="hidden" name="message" value="Successful.">
+                    <button type="submit"
+                            class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#a50064] to-[#d82d8b] hover:from-[#900057] hover:to-[#c2227a] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition">
+                        <i class="fa-solid fa-circle-check text-sm"></i>
+                        <span>Xác Nhận Thanh Toán Ngay (MoMo Sandbox)</span>
+                    </button>
+                </form>
+
+                <a th:href="@{/thanh-toan/momo-return(resultCode='1006', orderId=${orderId}, maDonHang=${maDonHang}, message='Giao dịch bị hủy bởi người dùng.')}"
+                   class="block text-center text-slate-400 hover:text-rose-600 font-medium py-1 transition">
+                    Hủy giao dịch &amp; Quay lại giỏ hàng
+                </a>
+            </div>
+
+            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 flex items-start gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                <span>Đây là màn hình Gateway Ví MoMo Sandbox giả lập chính thức của hệ thống. Bạn chỉ cần chọn nguồn tiền và bấm <strong>"Xác nhận thanh toán ngay"</strong> để hoàn tất đơn hàng tức thì.</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toan he thong Thong bao truc tiep tren man hinh (Simplain Toast) -->
+    <script src="/js/simplain-toast.js"></script>
+</body>
+</html>

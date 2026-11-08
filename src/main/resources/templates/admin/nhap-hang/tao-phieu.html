@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo phiếu nhập hàng | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Thư viện Quét mã vạch Barcode & QR qua Camera/Webcam máy tính -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('nhap-hang')}"></div>
+
+    <!-- Main Content Area -->
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Lỗi -->
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <a href="/admin/nhap-hang/hien-thi" class="w-10 h-10 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center text-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Tạo phiếu nhập hàng</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200">
+                            Barcode Ready
+                        </span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Hỗ trợ quét máy đọc mã vạch, tự động nhận diện biến thể và giá gốc</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/nhap-hang/hien-thi" class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl">
+                    Hủy bỏ
+                </a>
+            </div>
+        </div>
+
+        <!-- FORM TẠO PHIẾU NHẬP -->
+        <form id="formNhapHang" th:action="@{/admin/nhap-hang/luu-phieu}" method="post" onsubmit="return validateFormNhap(event)" class="space-y-6">
+
+            <!-- THÔNG TIN NHÀ CUNG CẤP & MÁY QUÉT BARCODE -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- CHỌN NHÀ CUNG CẤP (5 cols) -->
+                <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-building-circle-check text-blue-600"></i>
+                            <span>1. Nhà Cung Cấp Hàng Hóa</span>
+                        </h3>
+                        <a href="/admin/nhap-hang/nha-cung-cap" target="_blank" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-plus text-[10px]"></i> Thêm NCC
+                        </a>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Chọn đối tác cung ứng <span class="text-rose-500">*</span></label>
+                        <select id="selectNhaCungCap" name="maNhaCungCapId" required onchange="thayDoiNhaCungCap(this)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:border-blue-600 outline-none">
+                            <option value="">-- Chọn Nhà Cung Cấp --</option>
+                            <option th:each="ncc : ${listNhaCungCap}"
+                                    th:value="${ncc.id}"
+                                    th:data-chinhhang="${ncc.chinhHang}"
+                                    th:data-sdt="${ncc.soDienThoai}"
+                                    th:data-diachi="${ncc.diaChi}"
+                                    th:text="${(ncc.chinhHang ? '★ [CHÍNH HÃNG] ' : '') + ncc.tenNhaCungCap + ' (' + ncc.maNhaCungCap + ')'}"
+                                    th:selected="${nccDuocChon != null and nccDuocChon == ncc.id}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Thông tin chi tiết NCC đã chọn -->
+                    <div id="boxThongTinNCC" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-400 font-bold uppercase text-[10px]">Thương hiệu:</span>
+                            <span id="nccBadgeHang" class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800">Chính hãng lớn (Có Barcode)</span>
+                        </div>
+                        <div class="text-slate-600">
+                            <span class="font-bold">Địa chỉ:</span> <span id="nccDiaChi">Vui lòng chọn nhà cung cấp</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MÁY QUÉT BARCODE & CHỌN NHANH (7 cols) -->
+                <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-barcode text-amber-500"></i>
+                            <span>2. Quét Mã Vạch Hãng Hoặc Chọn Sản Phẩm</span>
+                        </h3>
+                        <span class="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                            <i class="fa-solid fa-bolt"></i> Tự động nhận diện SKU
+                        </span>
+                    </div>
+
+                    <!-- Ô QUÉT BARCODE CẦM TAY & CAMERA MÁY TÍNH -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                            <span>Quét mã vạch Barcode / QR (Sản phẩm chính hãng):</span>
+                            <span class="text-[11px] text-slate-400">Gõ mã rồi ấn Enter hoặc bật Camera</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-500 text-base">
+                                <i class="fa-solid fa-barcode"></i>
+                            </span>
+                            <input type="text" id="inputBarcodeScanner" autofocus
+                                   onkeydown="xuLyEnterBarcode(event)"
+                                   placeholder="Đưa máy quét vào mã vạch trên tem sản phẩm hoặc gõ mã SKU rồi nhấn Enter..."
+                                   class="w-full pl-11 pr-40 py-3 rounded-xl border-2 border-amber-400/80 bg-amber-50/20 text-xs font-bold font-mono focus:border-amber-500 focus:bg-white outline-none shadow-2xs">
+                            <div class="absolute right-1.5 top-1.5 bottom-1.5 flex items-center gap-1">
+                                <button type="button" onclick="batTatCameraWebcam()" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white font-bold text-xs transition cursor-pointer flex items-center gap-1" title="Quét mã bằng Camera/Webcam máy tính">
+                                    <i class="fa-solid fa-camera"></i> Camera
+                                </button>
+                                <button type="button" onclick="thucHienQuetBarcode()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 font-black text-xs transition cursor-pointer flex items-center gap-1">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Tìm
+                                </button>
+                            </div>
+                        </div>
+                        <p id="msgBarcode" class="text-[11px] mt-1 hidden"></p>
+
+                        <!-- Gợi ý test nhanh trên máy tính không cần máy quét vật lý -->
+                        <div class="mt-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] flex flex-wrap items-center gap-1.5">
+                            <span class="font-bold text-slate-700"><i class="fa-solid fa-laptop text-blue-600"></i> Test trên máy tính:</span>
+                            <button type="button" onclick="testNhanhMa('BC-SP-POLO-EXCOOL-01-M1S1')" class="px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-900 font-mono font-bold text-[10px] transition cursor-pointer" title="Click để test thử mã Barcode hãng Vinatex">
+                                ⚡ Mã Barcode: BC-SP-POLO-EXCOOL-01-M1S1
+                            </button>
+                            <button type="button" onclick="testNhanhMa('SP-TSHIRT-COMPACT-02-XAMHEATHER-2XL')" class="px-2 py-0.5 rounded-md bg-blue-100 hover:bg-blue-200 text-blue-900 font-mono font-bold text-[10px] transition cursor-pointer" title="Click để test thử mã SKU Cotton Compact">
+                                ⚡ Mã SKU: SP-TSHIRT-COMPACT-02-XAMHEATHER-2XL
+                            </button>
+                            <button type="button" onclick="testNhanhMa('SP-NAM-QUANJEAN-02-M1S1')" class="px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-mono font-bold text-[10px] transition cursor-pointer" title="Click để test thử Quần Jean Nam">
+                                ⚡ Quần Jean: SP-NAM-QUANJEAN-02-M1S1
+                            </button>
+                        </div>
+
+                        <!-- Khung Camera Webcam (ẩn mặc định, bật khi người dùng muốn quét bằng webcam) -->
+                        <div id="boxWebcamScanner" class="mt-3 p-3 rounded-2xl bg-slate-900 text-white hidden space-y-2">
+                            <div class="flex items-center justify-between text-xs pb-1 border-b border-slate-800">
+                                <span class="font-bold flex items-center gap-1.5 text-amber-400">
+                                    <i class="fa-solid fa-video"></i> Camera Quét Mã Vạch Trực Tiếp
+                                </span>
+                                <button type="button" onclick="tatCameraWebcam()" class="text-slate-400 hover:text-white text-xs px-2 py-0.5 rounded bg-slate-800">
+                                    <i class="fa-solid fa-xmark"></i> Đóng Camera
+                                </button>
+                            </div>
+                            <div id="readerWebcam" class="w-full max-w-sm mx-auto overflow-hidden rounded-xl bg-black"></div>
+                            <p class="text-[10px] text-slate-400 text-center">Hướng mã vạch sản phẩm hoặc màn hình điện thoại vào tâm khung hình để quét tự động.</p>
+                        </div>
+                    </div>
+
+                    <!-- HOẶC CHỌN THỦ CÔNG TỪ HỆ THỐNG -->
+                    <div class="pt-2 border-t border-slate-100 flex items-center gap-3">
+                        <div class="w-1/2">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">Hoặc chọn theo Sản phẩm gốc:</label>
+                            <select id="selectSanPham" onchange="loadBienTheTheoSanPham(this.value)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-blue-600">
+                                <option value="">-- Chọn sản phẩm --</option>
+                                <option th:each="sp : ${listSanPham}" th:value="${sp.id}" th:text="${sp.tenSanPham + ' (' + sp.maSanPham + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div class="w-1/2">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">Chọn biến thể Màu / Size:</label>
+                            <div class="flex items-center gap-1.5">
+                                <select id="selectBienThe" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-blue-600">
+                                    <option value="">-- Chọn biến thể --</option>
+                                </select>
+                                <button type="button" onclick="themBienTheTuSelect()" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 cursor-pointer">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẢNG DANH SÁCH MẶT HÀNG NHẬP -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-blue-600"></i>
+                            <span>Danh sách mặt hàng nhập kho</span>
+                        </h3>
+                        <span id="badgeSoDong" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-100 text-blue-800 font-mono">0 mặt hàng</span>
+                    </div>
+
+                    <button type="button" onclick="xoaTatCaMatHang()" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer">
+                        <i class="fa-regular fa-trash-can mr-1"></i> Xóa tất cả
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-700">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                            <tr>
+                                <th class="py-3 px-3 text-center w-12">STT</th>
+                                <th class="py-3 px-4">Sản phẩm &amp; Biến thể</th>
+                                <th class="py-3 px-3">Mã quét Barcode</th>
+                                <th class="py-3 px-3 text-center">Tồn hiện tại</th>
+                                <th class="py-3 px-3 text-center w-32">Số lượng nhập</th>
+                                <th class="py-3 px-3 text-right w-36">Giá nhập (₫)</th>
+                                <th class="py-3 px-4 text-right w-40">Thành tiền (₫)</th>
+                                <th class="py-3 px-3 text-center w-16">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyMatHangNhap" class="divide-y divide-slate-100">
+                            <tr id="rowEmpty">
+                                <td colspan="8" class="text-center py-12 text-slate-400">
+                                    <i class="fa-solid fa-barcode text-3xl mb-2 block text-slate-300"></i>
+                                    Chưa có mặt hàng nào. Hãy quét mã vạch Barcode hoặc chọn biến thể ở trên để thêm vào phiếu!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TỔNG KẾT & HOÀN TẤT PHIẾU NHẬP -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- GHI CHÚ (7 cols) -->
+                <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+                    <label class="block text-xs font-bold text-slate-700">Ghi chú phiếu nhập kho:</label>
+                    <textarea name="ghiChu" rows="4" placeholder="Nhập số hóa đơn VAT, số chứng từ giao nhận của nhà cung cấp, thông tin người giao hàng..." class="w-full p-3 rounded-xl border border-slate-300 text-xs outline-none focus:border-blue-600"></textarea>
+                </div>
+
+                <!-- TỔNG TIỀN & XÁC NHẬN (5 cols) -->
+                <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between text-xs text-slate-600">
+                        <span>Tổng số lượng sản phẩm:</span>
+                        <span id="txtTongSoLuong" class="font-mono font-bold text-slate-900 text-sm">0 cái</span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs text-slate-600 border-t border-slate-100 pt-3">
+                        <span class="font-bold text-slate-900 text-sm">Tổng tiền thanh toán:</span>
+                        <span id="txtTongTien" class="font-mono font-black text-blue-600 text-lg">0 ₫</span>
+                    </div>
+
+                    <!-- TÙY CHỌN HOÀN TẤT NGAY -->
+                    <div class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200/80 flex items-start gap-3">
+                        <input type="checkbox" id="checkHoanTatNgay" name="hoanTatNgay" value="true" checked class="w-4 h-4 mt-0.5 text-blue-600 rounded cursor-pointer">
+                        <label for="checkHoanTatNgay" class="text-xs text-blue-900 font-semibold cursor-pointer">
+                            Hoàn tất nhập kho ngay lập tức
+                            <span class="block text-[11px] text-blue-600 font-normal">Hệ thống sẽ tự động cộng số lượng đã nhập vào tồn kho biến thể ngay sau khi lưu.</span>
+                        </label>
+                    </div>
+
+                    <!-- NÚT LƯU PHIẾU -->
+                    <button type="submit" id="btnSubmitPhieu" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-extrabold text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk text-amber-400"></i>
+                        <span>XÁC NHẬN LƯU PHIẾU NHẬP HÀNG</span>
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- JS XỬ LÝ QUÉT BARCODE & BẢNG NHẬP HÀNG -->
+    <script>
+        let danhSachMatHang = []; // { bienTheId, maSku, maVach, tenSanPham, tenMauSac, maKichThuoc, anhUrl, tonKhoHienTai, soLuong, giaNhap }
+
+        function thayDoiNhaCungCap(select) {
+            const opt = select.options[select.selectedIndex];
+            if (!opt || !opt.value) {
+                document.getElementById('nccDiaChi').innerText = 'Vui lòng chọn nhà cung cấp';
+                return;
+            }
+            const chinhHang = opt.getAttribute('data-chinhhang') === 'true';
+            const diaChi = opt.getAttribute('data-diachi') || 'Chưa có địa chỉ';
+            const sdt = opt.getAttribute('data-sdt') || '';
+
+            const badge = document.getElementById('nccBadgeHang');
+            if (chinhHang) {
+                badge.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800';
+                badge.innerHTML = '<i class="fa-solid fa-badge-check text-blue-600 mr-1"></i>Chính hãng lớn (Có tem mã Barcode EAN/GS1)';
+            } else {
+                badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700';
+                badge.innerText = 'Nhà cung cấp thường';
+            }
+            document.getElementById('nccDiaChi').innerText = `${diaChi} ${sdt ? ' • SĐT: ' + sdt : ''}`;
+        }
+
+        // KHI ẤN ENTER Ở Ô BARCODE
+        function xuLyEnterBarcode(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                thucHienQuetBarcode();
+            }
+        }
+
+        // TEST NHANH MÃ MẪU BẰNG 1 CÚ CLICK TRÊN MÁY TÍNH
+        function testNhanhMa(ma) {
+            const input = document.getElementById('inputBarcodeScanner');
+            input.value = ma;
+            thucHienQuetBarcode();
+        }
+
+        // QUÉT MÃ BẰNG CAMERA / WEBCAM MÁY TÍNH
+        let html5QrScanner = null;
+        function batTatCameraWebcam() {
+            const box = document.getElementById('boxWebcamScanner');
+            if (box.classList.contains('hidden')) {
+                box.classList.remove('hidden');
+                khoiTaoWebcamScanner();
+            } else {
+                tatCameraWebcam();
+            }
+        }
+
+        function khoiTaoWebcamScanner() {
+            if (typeof Html5QrcodeScanner === 'undefined') {
+                alert('Thư viện quét mã đang được tải, vui lòng thử lại sau giây lát!');
+                return;
+            }
+            if (html5QrScanner) {
+                try { html5QrScanner.clear(); } catch(e){}
+            }
+            html5QrScanner = new Html5QrcodeScanner("readerWebcam", {
+                fps: 10,
+                qrbox: { width: 250, height: 180 },
+                aspectRatio: 1.333334
+            }, false);
+
+            html5QrScanner.render(function(decodedText) {
+                const input = document.getElementById('inputBarcodeScanner');
+                input.value = decodedText;
+                tatCameraWebcam();
+                thucHienQuetBarcode();
+            }, function(err) {
+                // scanning errors ignored
+            });
+        }
+
+        function tatCameraWebcam() {
+            const box = document.getElementById('boxWebcamScanner');
+            if (box) box.classList.add('hidden');
+            if (html5QrScanner) {
+                try { html5QrScanner.clear(); } catch(e){}
+                html5QrScanner = null;
+            }
+        }
+
+        function thucHienQuetBarcode() {
+            const input = document.getElementById('inputBarcodeScanner');
+            const ma = input.value.trim();
+            const msg = document.getElementById('msgBarcode');
+            if (!ma) return;
+
+            msg.classList.remove('hidden');
+            msg.className = 'text-[11px] mt-1 text-slate-500';
+            msg.innerText = 'Đang nhận diện mã quét: ' + ma + '...';
+
+            fetch(`/admin/nhap-hang/api/quet-barcode?maQuet=${encodeURIComponent(ma)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.found) {
+                        msg.className = 'text-[11px] mt-1 text-emerald-600 font-bold';
+                        msg.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Đã nhận diện: ${data.tenSanPham} (${data.tenMauSac} / ${data.maKichThuoc}) - SKU: ${data.maSku}`;
+                        themMatHangVaoBang({
+                            bienTheId: data.bienTheId,
+                            maSku: data.maSku,
+                            maVach: data.maVach || ma,
+                            tenSanPham: data.tenSanPham,
+                            tenMauSac: data.tenMauSac,
+                            maKichThuoc: data.maKichThuoc,
+                            anhUrl: data.anhUrl,
+                            tonKhoHienTai: data.tonKhoHienTai || 0,
+                            soLuong: 1,
+                            giaNhap: data.giaGocGoiY || (data.giaBan * 0.6)
+                        });
+                        input.value = '';
+                        input.focus();
+                    } else {
+                        msg.className = 'text-[11px] mt-1 text-rose-600 font-bold';
+                        msg.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> ${data.message || 'Không tìm thấy sản phẩm!'}`;
+                    }
+                })
+                .catch(err => {
+                    msg.className = 'text-[11px] mt-1 text-rose-600 font-bold';
+                    msg.innerText = 'Lỗi kết nối: ' + err.message;
+                });
+        }
+
+        function loadBienTheTheoSanPham(spId) {
+            const selectBt = document.getElementById('selectBienThe');
+            selectBt.innerHTML = '<option value="">-- Đang tải biến thể... --</option>';
+            if (!spId) {
+                selectBt.innerHTML = '<option value="">-- Chọn biến thể --</option>';
+                return;
+            }
+
+            fetch(`/admin/nhap-hang/api/bien-the-theo-san-pham?sanPhamId=${spId}`)
+                .then(res => res.json())
+                .then(list => {
+                    selectBt.innerHTML = '<option value="">-- Chọn biến thể --</option>';
+                    list.forEach(bt => {
+                        const opt = document.createElement('option');
+                        opt.value = bt.id;
+                        opt.text = `${bt.tenMauSac} / ${bt.maKichThuoc} (SKU: ${bt.maSku}) - Tồn: ${bt.soLuong}`;
+                        opt.setAttribute('data-sku', bt.maSku);
+                        opt.setAttribute('data-mavach', bt.maVach || '');
+                        opt.setAttribute('data-mau', bt.tenMauSac);
+                        opt.setAttribute('data-size', bt.maKichThuoc);
+                        opt.setAttribute('data-ton', bt.soLuong);
+                        opt.setAttribute('data-giaban', bt.giaBan);
+                        opt.setAttribute('data-giagoc', bt.giaGoc || (bt.giaBan * 0.6));
+                        selectBt.appendChild(opt);
+                    });
+                })
+                .catch(err => {
+                    selectBt.innerHTML = '<option value="">-- Lỗi tải biến thể --</option>';
+                });
+        }
+
+        function themBienTheTuSelect() {
+            const selectSp = document.getElementById('selectSanPham');
+            const selectBt = document.getElementById('selectBienThe');
+            const btId = selectBt.value;
+            if (!btId) {
+                alert('Vui lòng chọn biến thể muốn thêm!');
+                return;
+            }
+
+            const opt = selectBt.options[selectBt.selectedIndex];
+            const tenSp = selectSp.options[selectSp.selectedIndex].text;
+
+            themMatHangVaoBang({
+                bienTheId: parseInt(btId),
+                maSku: opt.getAttribute('data-sku'),
+                maVach: opt.getAttribute('data-mavach'),
+                tenSanPham: tenSp,
+                tenMauSac: opt.getAttribute('data-mau'),
+                maKichThuoc: opt.getAttribute('data-size'),
+                anhUrl: '',
+                tonKhoHienTai: parseInt(opt.getAttribute('data-ton') || 0),
+                soLuong: 1,
+                giaNhap: parseFloat(opt.getAttribute('data-giagoc') || 100000)
+            });
+        }
+
+        function themMatHangVaoBang(item) {
+            // Kiểm tra nếu đã có trong danh sách thì tăng số lượng lên 1
+            const tonTai = danhSachMatHang.find(x => x.bienTheId === item.bienTheId);
+            if (tonTai) {
+                tonTai.soLuong += 1;
+            } else {
+                danhSachMatHang.push(item);
+            }
+            capNhatGiaoDienBang();
+        }
+
+        function capNhatGiaoDienBang() {
+            const tbody = document.getElementById('tbodyMatHangNhap');
+            const emptyRow = document.getElementById('rowEmpty');
+            const badgeSoDong = document.getElementById('badgeSoDong');
+
+            if (danhSachMatHang.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="rowEmpty">
+                        <td colspan="8" class="text-center py-12 text-slate-400">
+                            <i class="fa-solid fa-barcode text-3xl mb-2 block text-slate-300"></i>
+                            Chưa có mặt hàng nào. Hãy quét mã vạch Barcode hoặc chọn biến thể ở trên để thêm vào phiếu!
+                        </td>
+                    </tr>`;
+                badgeSoDong.innerText = '0 mặt hàng';
+                tinhTongToanPhieu();
+                return;
+            }
+
+            badgeSoDong.innerText = `${danhSachMatHang.length} mặt hàng`;
+            tbody.innerHTML = '';
+
+            danhSachMatHang.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+
+                const thanhTien = item.soLuong * item.giaNhap;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-center font-mono font-bold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-900">${item.tenSanPham}</div>
+                        <div class="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                            <span class="font-mono font-semibold text-blue-600">${item.maSku}</span>
+                            <span>&bull;</span>
+                            <span>Màu: <b>${item.tenMauSac}</b></span>
+                            <span>&bull;</span>
+                            <span>Size: <b>${item.maKichThuoc}</b></span>
+                        </div>
+                        <input type="hidden" name="bienTheIds" value="${item.bienTheId}">
+                        <input type="hidden" name="maVachs" value="${item.maVach || ''}">
+                    </td>
+                    <td class="py-3 px-3 font-mono text-[11px] text-slate-600">
+                        ${item.maVach ? item.maVach : '<span class="text-slate-300 italic">Chưa có</span>'}
+                    </td>
+                    <td class="py-3 px-3 text-center font-mono font-bold text-slate-600">
+                        ${item.tonKhoHienTai}
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <input type="number" name="soLuongs" min="1" value="${item.soLuong}"
+                               onchange="capNhatSoLuong(${item.bienTheId}, this.value)"
+                               class="w-20 px-2 py-1.5 text-center font-bold font-mono rounded-xl border border-slate-300 text-xs focus:border-blue-600 outline-none">
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                        <input type="number" name="giaNhaps" min="0" step="1000" value="${item.giaNhap}"
+                               onchange="capNhatGiaNhap(${item.bienTheId}, this.value)"
+                               class="w-28 px-2 py-1.5 text-right font-bold font-mono rounded-xl border border-slate-300 text-xs text-blue-600 focus:border-blue-600 outline-none">
+                    </td>
+                    <td class="py-3 px-4 text-right font-mono font-black text-slate-900" id="thanhTien_${item.bienTheId}">
+                        ${new Intl.NumberFormat('vi-VN').format(thanhTien)} ₫
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <button type="button" onclick="xoaMatHang(${item.bienTheId})" class="p-1.5 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-50 cursor-pointer">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tinhTongToanPhieu();
+        }
+
+        function capNhatSoLuong(bienTheId, sl) {
+            const item = danhSachMatHang.find(x => x.bienTheId === bienTheId);
+            if (item) {
+                item.soLuong = parseInt(sl) || 1;
+                const thanhTien = item.soLuong * item.giaNhap;
+                const spanTt = document.getElementById(`thanhTien_${bienTheId}`);
+                if (spanTt) spanTt.innerText = new Intl.NumberFormat('vi-VN').format(thanhTien) + ' ₫';
+                tinhTongToanPhieu();
+            }
+        }
+
+        function capNhatGiaNhap(bienTheId, gia) {
+            const item = danhSachMatHang.find(x => x.bienTheId === bienTheId);
+            if (item) {
+                item.giaNhap = parseFloat(gia) || 0;
+                const thanhTien = item.soLuong * item.giaNhap;
+                const spanTt = document.getElementById(`thanhTien_${bienTheId}`);
+                if (spanTt) spanTt.innerText = new Intl.NumberFormat('vi-VN').format(thanhTien) + ' ₫';
+                tinhTongToanPhieu();
+            }
+        }
+
+        function xoaMatHang(bienTheId) {
+            danhSachMatHang = danhSachMatHang.filter(x => x.bienTheId !== bienTheId);
+            capNhatGiaoDienBang();
+        }
+
+        function xoaTatCaMatHang() {
+            if (danhSachMatHang.length === 0) return;
+            if (confirm('Bạn có chắc muốn xóa tất cả mặt hàng trong phiếu nhập?')) {
+                danhSachMatHang = [];
+                capNhatGiaoDienBang();
+            }
+        }
+
+        function tinhTongToanPhieu() {
+            let tongSl = 0;
+            let tongTien = 0;
+            danhSachMatHang.forEach(item => {
+                tongSl += (item.soLuong || 0);
+                tongTien += (item.soLuong * item.giaNhap);
+            });
+
+            document.getElementById('txtTongSoLuong').innerText = `${tongSl} cái`;
+            document.getElementById('txtTongTien').innerText = new Intl.NumberFormat('vi-VN').format(tongTien) + ' ₫';
+        }
+
+        function validateFormNhap(e) {
+            const selectNcc = document.getElementById('selectNhaCungCap');
+            if (!selectNcc.value) {
+                alert('Vui lòng chọn Nhà Cung Cấp!');
+                selectNcc.focus();
+                return false;
+            }
+            if (danhSachMatHang.length === 0) {
+                alert('Vui lòng quét mã vạch hoặc chọn ít nhất một mặt hàng để nhập kho!');
+                document.getElementById('inputBarcodeScanner').focus();
+                return false;
+            }
+            return true;
+        }
+
+        // Tự động trigger nếu có nccDuocChon ban đầu
+        window.addEventListener('DOMContentLoaded', () => {
+            const selectNcc = document.getElementById('selectNhaCungCap');
+            if (selectNcc && selectNcc.value) {
+                thayDoiNhaCungCap(selectNcc);
+            }
+        });
+    </script>
+</body>
+</html>

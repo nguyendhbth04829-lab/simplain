@@ -62,7 +62,7 @@
                     <!-- Nút Yêu thích (Wishlist - US14) -->
                     <a href="/khach-hang/yeu-thich"
                        class="relative px-3 py-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 transition flex items-center gap-1.5"
-                       title="Sản phẩm yêu thích (US14)">
+                       title="Sản phẩm yêu thích">
                         <i class="fa-solid fa-heart text-rose-500"></i>
                         <span class="hidden md:inline">Yêu thích</span>
                         <span id="badgeWishlistHeader"
@@ -72,10 +72,10 @@
                         </span>
                     </a>
 
-                    <!-- Nút Giỏ hàng (US17) -->
+                    <!-- Nút Giỏ hàng -->
                     <a href="/gio-hang"
                        class="relative px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 transition flex items-center gap-1.5"
-                       title="Giỏ hàng của bạn (US17)">
+                       title="Giỏ hàng của bạn">
                         <i class="fa-solid fa-cart-shopping text-slate-700"></i>
                         <span class="hidden md:inline">Giỏ hàng</span>
                         <span id="badgeGioHangHeader"
@@ -90,7 +90,7 @@
                         <span class="hidden sm:inline" th:text="${khachHangDangNhap.hoTen}">Khách hàng</span>
                     </a>
                     <a th:if="${khachHangDangNhap != null}" href="/khach-hang/so-dia-chi"
-                       class="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1.5" title="Sổ địa chỉ nhận hàng (US13)">
+                       class="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1.5" title="Sổ địa chỉ nhận hàng">
                         <i class="fa-solid fa-location-dot"></i>
                         <span class="hidden md:inline">Sổ địa chỉ</span>
                     </a>
@@ -120,7 +120,7 @@
         </ol>
     </nav>
 
-    <!-- Main Content Container: CHI TIẾT SẢN PHẨM (US11) - Full Màn Hình -->
+    <!-- Main Content Container: CHI TIẾT SẢN PHẨM - Full Màn Hình -->
     <main class="flex-grow w-full px-4 sm:px-8 lg:px-12 pb-16 space-y-8"
           th:with="vUrl=${(videoSanPham != null and videoSanPham.videoUrl != null) ? videoSanPham.videoUrl : sanPham.videoUrl}">
 
@@ -173,8 +173,8 @@
                         </button>
                     </th:block>
 
-                    <!-- THUMBNAIL TIẾP THEO: Lặp qua các ảnh của các biến thể màu để người dùng xem trước -->
-                    <th:block th:each="bt : ${danhSachBienThe}">
+                    <!-- THUMBNAIL TIẾP THEO: Lặp qua các ảnh của các biến thể màu (Các size cùng màu dùng chung 1 ảnh chuẩn) -->
+                    <th:block th:each="bt : ${danhSachAnhMauDuyNhat != null ? danhSachAnhMauDuyNhat : danhSachBienThe}">
                         <button th:if="${bt.anhDaiDienUrl != null and !#strings.isEmpty(bt.anhDaiDienUrl) and bt.anhDaiDienUrl != sanPham.anhDaiDienUrl}"
                                 type="button"
                                 onclick="chuyenAnhChinh(this.getAttribute('data-img-src'))"
@@ -182,7 +182,7 @@
                                 th:data-color-id="${bt.maMauSacId}"
                                 th:data-sku="${bt.maSku}"
                                 class="w-16 h-20 rounded-xl border-2 border-neutral-200 overflow-hidden flex-shrink-0 hover:border-black transition thumb-btn focus:outline-none cursor-pointer"
-                                th:title="${'Màu: ' + bt.tenMauSac + ' - Size: ' + bt.tenKichThuoc}">
+                                th:title="${'Phân loại màu: ' + bt.tenMauSac + ' (Áp dụng cho mọi kích thước)'}">
                             <img th:src="${bt.anhDaiDienUrl}" th:alt="${bt.maSku}" class="w-full h-full object-cover">
                         </button>
                     </th:block>
@@ -273,7 +273,7 @@
 
             </div>
 
-            <!-- CỘT PHẢI (5/12): THÔNG TIN SẢN PHẨM & CỤM CHỌN MÀU / SIZE & TỒN KHO THỰC TẾ (US11) -->
+            <!-- CỘT PHẢI (5/12): THÔNG TIN SẢN PHẨM & CỤM CHỌN MÀU / SIZE & TỒN KHO THỰC TẾ -->
             <div class="lg:col-span-5 flex flex-col justify-between space-y-6">
                 <div class="space-y-4">
 
@@ -290,7 +290,7 @@
                         Áo Polo Nam Pique Cotton Khử Mùi
                     </h1>
 
-                    <!-- Banner Flash Sale Deal Sốc (US29) -->
+                    <!-- Banner Flash Sale Deal Sốc -->
                     <div id="flashSaleBanner" th:classappend="${chiTietFlashSaleDangChon != null} ? '' : 'hidden'"
                          class="p-3.5 bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500 rounded-2xl text-white shadow-md shadow-rose-500/20 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
@@ -396,7 +396,7 @@
                                     <i class="fa-solid fa-boxes-packing"></i>
                                 </div>
                                 <div>
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-neutral-500">Tồn kho thực tế (US11)</div>
+                                    <div class="text-[11px] font-bold uppercase tracking-wider text-neutral-500">Tồn kho thực tế</div>
                                     <div class="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 mt-0.5">
                                         <span id="stockStatusText" class="text-emerald-700 font-bold">Còn hàng sẵn sàng giao</span>
                                         <span class="text-neutral-400">&bull;</span>
@@ -432,13 +432,13 @@
                                 <span>Thêm vào giỏ hàng</span>
                             </button>
 
-                            <!-- Nút Nhấn Tim Yêu Thích Chi Tiết (US14) -->
+                            <!-- Nút Nhấn Tim Yêu Thích Chi Tiết -->
                             <button type="button"
                                     id="btnYeuThichChiTiet"
                                     th:onclick="'toggleYeuThichChiTiet(this, ' + ${sanPham.id} + ')'"
                                     th:classappend="${daYeuThich} ? 'text-rose-600 bg-rose-50 border-rose-300 ring-2 ring-rose-500/20' : 'text-slate-600 bg-slate-50 border-slate-200 hover:border-rose-400 hover:text-rose-600'"
                                     class="px-4 py-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                                    th:title="${daYeuThich} ? 'Bỏ yêu thích' : 'Thêm vào yêu thích (US14)'">
+                                    th:title="${daYeuThich} ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'">
                                 <i th:class="${daYeuThich} ? 'fa-solid fa-heart text-base text-rose-500' : 'fa-regular fa-heart text-base'"></i>
                                 <span id="labelYeuThichChiTiet" class="hidden sm:inline" th:text="${daYeuThich} ? 'Đã thích' : 'Yêu thích'">Yêu thích</span>
                             </button>
@@ -524,7 +524,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
                     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold uppercase tracking-wider mb-2">
-                        <i class="fa-solid fa-star text-amber-400"></i>Đánh giá thực tế từ khách mua hàng (US15)
+                        <i class="fa-solid fa-star text-amber-400"></i>Đánh giá thực tế từ khách mua hàng
                     </div>
                     <h3 class="text-xl font-black uppercase tracking-tight text-slate-900">
                         Đánh Giá &amp; Nhận Xét Của Khách Hàng
@@ -534,23 +534,70 @@
                     </p>
                 </div>
 
-                <!-- Nút Viết Đánh Giá -->
+                <!-- Nút Viết Đánh Giá: Chỉ cho phép khi khách hàng đã mua và đơn hoàn thành -->
                 <div>
+                    <!-- 1. Có quyền đánh giá: Khách đã mua, đơn HOAN_THANH và chưa đánh giá -->
                     <button type="button"
+                            th:if="${coQuyenDanhGia}"
                             onclick="kiemTraVaMoModalDanhGia()"
                             class="px-5 py-3 rounded-2xl bg-[#0f172a] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-pen-to-square"></i>
                         <span>Viết đánh giá sản phẩm</span>
                     </button>
+
+                    <!-- 2. Đã mua và ĐÃ ĐÁNH GIÁ rồi -->
+                    <div th:if="${daDangNhapKhachHang and daDanhGiaSanPhamNay}"
+                         class="px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+                        <span>Bạn đã gửi đánh giá cho sản phẩm này</span>
+                    </div>
+
+                    <!-- 3. Đã đăng nhập nhưng CHƯA MUA hàng hoặc đơn chưa hoàn thành -->
+                    <div th:if="${daDangNhapKhachHang and !daDanhGiaSanPhamNay and !coQuyenDanhGia}"
+                         class="px-4 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-500 text-xs font-bold flex items-center gap-2 cursor-not-allowed"
+                         title="Bạn chỉ có thể gửi đánh giá sau khi đơn hàng mua sản phẩm này đã được giao thành công (HOAN_THANH)!">
+                        <i class="fa-solid fa-lock text-slate-400 text-xs"></i>
+                        <span>Chỉ khách đã mua sản phẩm mới được đánh giá</span>
+                    </div>
+
+                    <!-- 4. Chưa đăng nhập -->
+                    <a th:if="${!daDangNhapKhachHang}"
+                       href="/khach-hang/dang-nhap"
+                       class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+                       title="Chỉ khách hàng đã mua và nhận hàng thành công mới có thể đánh giá">
+                        <i class="fa-solid fa-lock text-slate-400 text-xs"></i>
+                        <span>Đăng nhập để đánh giá</span>
+                    </a>
                 </div>
             </div>
 
-            <!-- Flash Message Alert Thành công / Lỗi (US15) -->
-            <div th:if="${thongBaoThanhCong != null}" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-3 animate-fade-in">
+            <!-- Cảnh báo chính sách đánh giá minh bạch khi người dùng chưa đủ điều kiện -->
+            <div th:unless="${coQuyenDanhGia}" class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-start gap-2.5">
+                    <i class="fa-solid fa-shield-halved text-amber-600 text-base shrink-0 mt-0.5"></i>
+                    <div>
+                        <div class="font-bold text-amber-900">Chính sách đánh giá minh bạch của SIMPLAIN:</div>
+                        <p class="text-[11px] text-amber-800 mt-0.5">
+                            Để bảo vệ tính chân thực của nhận xét, chỉ những khách hàng đã mua sản phẩm này và đơn hàng được giao thành công (<span class="font-mono font-bold">HOAN_THANH</span>) mới có thể gửi đánh giá chất lượng sản phẩm. Khách hàng chưa mua sẽ không thể gửi đánh giá.
+                        </p>
+                    </div>
+                </div>
+                <a th:unless="${daDangNhapKhachHang}" href="/khach-hang/dang-nhap"
+                   class="shrink-0 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition text-center">
+                    Đăng nhập ngay
+                </a>
+            </div>
+
+            <!-- Flash Message Alert Thành công / Lỗi -->
+            <div th:if="${thongBaoThanhCong != null}"
+                 th:data-toast-message="${thongBaoThanhCong}" data-toast-type="success"
+                 class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-3 animate-fade-in">
                 <i class="fa-solid fa-circle-check text-emerald-500 text-base"></i>
                 <span th:text="${thongBaoThanhCong}">Cảm ơn bạn đã gửi đánh giá sản phẩm thành công!</span>
             </div>
-            <div th:if="${loiDanhGia != null}" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-3 animate-fade-in">
+            <div th:if="${loiDanhGia != null}"
+                 th:data-toast-message="${loiDanhGia}" data-toast-type="error"
+                 class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-3 animate-fade-in">
                 <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i>
                 <span th:text="${loiDanhGia}">Đã có lỗi xảy ra khi gửi đánh giá!</span>
             </div>
@@ -708,6 +755,31 @@
                         </a>
                     </div>
 
+                    <!-- Phản hồi từ Quản trị viên / CSKH Simplain (Admin Reply) -->
+                    <div th:if="${dg.phanHoiAdmin != null and !dg.phanHoiAdmin.empty}"
+                         class="mt-3 p-4 rounded-2xl bg-blue-50/80 border border-blue-200/90 space-y-2">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                                    <i class="fa-solid fa-store text-[9px]"></i> Phản hồi từ Simplain
+                                </span>
+                                <span class="text-xs font-bold text-blue-900"
+                                      th:text="${dg.nhanVienPhanHoi != null ? dg.nhanVienPhanHoi.hoTen : 'Bộ phận CSKH Simplain'}">
+                                    CSKH Simplain
+                                </span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 font-mono"
+                                  th:if="${dg.ngayPhanHoiAdmin != null}"
+                                  th:text="${#temporals.format(dg.ngayPhanHoiAdmin, 'dd/MM/yyyy HH:mm')}">
+                                26/10/2026 10:15
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed pl-1 whitespace-pre-line"
+                           th:text="${dg.phanHoiAdmin}">
+                            Cảm ơn bạn đã tin tưởng và ủng hộ Simplain! Chúc bạn luôn có những trải nghiệm tuyệt vời cùng sản phẩm.
+                        </p>
+                    </div>
+
                 </div>
 
             </div>
@@ -715,9 +787,9 @@
         </section>
 
         <!-- ========================================================================= -->
-        <!-- MODAL VIẾT ĐÁNH GIÁ SẢN PHẨM (US15 - CHECK ĐIỀU KIỆN & JSON ẢNH & 1-5 SAO) -->
+        <!-- MODAL VIẾT ĐÁNH GIÁ SẢN PHẨM: CHỈ HIỂN THỊ KHI ĐỦ ĐIỀU KIỆN MUA HÀNG -->
         <!-- ========================================================================= -->
-        <div id="modalVietDanhGia" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div th:if="${coQuyenDanhGia}" id="modalVietDanhGia" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
             <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full my-8 overflow-hidden border border-slate-200 flex flex-col">
                 
                 <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
@@ -905,13 +977,13 @@
                 <span class="ml-2 text-slate-400">&copy; 2026 Thương hiệu thời trang nam tối giản &amp; hiện đại.</span>
             </div>
             <div class="flex items-center gap-6 font-semibold">
-                <a href="/cua-hang" class="text-slate-300 hover:text-white transition">Cửa hàng (US10)</a>
-                <a href="/khach-hang/dang-nhap" class="text-slate-300 hover:text-white transition">Hội viên Simplain Club (US01)</a>
+                <a href="/cua-hang" class="text-slate-300 hover:text-white transition">Cửa hàng</a>
+                <a href="/khach-hang/dang-nhap" class="text-slate-300 hover:text-white transition">Hội viên Simplain Club</a>
             </div>
         </div>
     </footer>
 
-    <!-- Dữ liệu JSON biến thể phục vụ tương tác Client-side (US11) -->
+    <!-- Dữ liệu JSON biến thể phục vụ tương tác Client-side -->
     <script th:inline="javascript">
         /*<![CDATA[*/
         const dsBienTheData = /*[[${danhSachBienThe}]]*/ [];
@@ -1105,7 +1177,7 @@
         const chuyenAnhTien = chuyenMediaTien;
         const chuyenAnhLui = chuyenMediaLui;
 
-        // Chọn Màu sắc -> Nhảy ảnh và cập nhật tồn kho (US11)
+        // Chọn Màu sắc -> Nhảy ảnh và cập nhật tồn kho
         function chonMau(btn) {
             const colorId = btn.getAttribute('data-color-id');
             const colorName = btn.getAttribute('data-color-name');
@@ -1133,7 +1205,7 @@
             capNhatThongTinBienTheHienTai();
         }
 
-        // Chọn Kích thước -> Cập nhật tồn kho thực tế và nhảy ảnh nếu có (US11)
+        // Chọn Kích thước -> Cập nhật tồn kho thực tế và nhảy ảnh nếu có
         function chonSize(btn) {
             const sizeId = btn.getAttribute('data-size-id');
             let sizeCode = btn.getAttribute('data-size-code') || '';
@@ -1187,7 +1259,7 @@
                     labelSizeEl.innerText = cleanSize;
                 }
 
-                // Cập nhật giá bán & Flash Sale (US29)
+                // Cập nhật giá bán & Flash Sale
                 const fsInfo = (typeof mapFlashSaleData !== 'undefined' && mapFlashSaleData && matched.id) ? mapFlashSaleData[matched.id] : null;
                 const fsBanner = document.getElementById('flashSaleBanner');
                 const boxGiaGoc = document.getElementById('boxGiaGoc');
@@ -1303,7 +1375,7 @@
 
         function thongBaoThemGioHang() {
             if (!bienTheHienTai || !bienTheHienTai.id) {
-                alert('Vui lòng chọn màu sắc và kích thước sản phẩm trước khi thêm vào giỏ hàng!');
+                showToast('Vui lòng chọn màu sắc và kích thước sản phẩm trước khi thêm vào giỏ hàng!', 'warning');
                 return;
             }
             const sl = parseInt(document.getElementById('inputSoLuongMua').value) || 1;
@@ -1330,17 +1402,15 @@
                 if (res.success) {
                     const badge = document.getElementById('badgeGioHangHeader');
                     if (badge) badge.innerText = res.tongSoLuong;
-                    if (confirm('Đã thêm sản phẩm vào giỏ hàng thành công!\nBạn có muốn chuyển đến Giỏ hàng ngay không?')) {
-                        window.location.href = '/gio-hang';
-                    }
+                    showToast('Đã thêm sản phẩm vào giỏ hàng thành công!', 'success');
                 } else {
-                    alert('Không thể thêm vào giỏ hàng: ' + (res.message || 'Lỗi'));
+                    showToast('Không thể thêm vào giỏ hàng: ' + (res.message || 'Lỗi'), 'error');
                 }
             })
             .catch(err => {
                 btn.innerHTML = oldHtml;
                 btn.disabled = false;
-                alert('Có lỗi kết nối: ' + err);
+                showToast('Có lỗi kết nối: ' + err, 'error');
             });
         }
 
@@ -1352,64 +1422,30 @@
                 if (dsBienTheData && dsBienTheData.length === 1) {
                     bienTheHienTai = dsBienTheData[0];
                 } else {
-                    alert('Vui lòng chọn Màu sắc và Kích thước trước khi bấm Mua ngay!');
+                    showToast('Vui lòng chọn Màu sắc và Kích thước trước khi bấm Mua ngay!', 'warning');
                     const swatch = document.querySelector('.color-swatch') || document.querySelector('.size-btn');
                     if (swatch) swatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
             }
             if (bienTheHienTai.soLuong !== undefined && bienTheHienTai.soLuong <= 0) {
-                alert('Rất tiếc! Biến thể này hiện đã tạm hết hàng, vui lòng chọn màu hoặc kích cỡ khác.');
+                showToast('Rất tiếc! Biến thể này hiện đã tạm hết hàng, vui lòng chọn màu hoặc kích cỡ khác.', 'warning');
                 return;
             }
             const sl = parseInt(document.getElementById('inputSoLuongMua').value) || 1;
             if (bienTheHienTai.soLuong !== undefined && sl > bienTheHienTai.soLuong) {
-                alert('Số lượng mua (' + sl + ') vượt quá số lượng tồn kho hiện còn (' + bienTheHienTai.soLuong + ')!');
+                showToast('Số lượng mua (' + sl + ') vượt quá số lượng tồn kho hiện còn (' + bienTheHienTai.soLuong + ')!', 'error');
                 return;
             }
 
             const btn = document.getElementById('btnMuaNgay');
-            const oldHtml = btn ? btn.innerHTML : '';
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i><span>Đang chuyển sang thanh toán...</span>';
             }
 
-            fetch('/gio-hang/them', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    maBienTheId: bienTheHienTai.id,
-                    soLuong: sl
-                })
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    const badge = document.getElementById('badgeGioHangHeader');
-                    if (badge && res.tongSoLuong !== undefined) {
-                        badge.innerText = res.tongSoLuong;
-                    }
-                    window.location.href = '/thanh-toan';
-                } else {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = oldHtml;
-                    }
-                    alert('Không thể mua ngay: ' + (res.message || 'Lỗi hệ thống'));
-                }
-            })
-            .catch(err => {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = oldHtml;
-                }
-                console.error(err);
-                alert('Lỗi kết nối khi mua ngay, vui lòng thử lại sau!');
-            });
+            // Chuyển thẳng sang trang thanh toán cho riêng 1 sản phẩm đang xem, không làm ảnh hưởng giỏ hàng hiện tại
+            window.location.href = '/thanh-toan?bienTheId=' + encodeURIComponent(bienTheHienTai.id) + '&soLuong=' + encodeURIComponent(sl);
         }
         const thongBaoMuaNgay = thucHienMuaNgay;
 
@@ -1439,7 +1475,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             khoiTaoDanhSachMedia();
             capNhatThongTinBienTheHienTai(coChonBienTheChuDong);
-            // Cập nhật số lượng giỏ hàng trên badge header (US17)
+            // Cập nhật số lượng giỏ hàng trên badge header
             fetch('/gio-hang/api/dem-so-luong')
                 .then(r => r.json())
                 .then(d => {
@@ -1505,7 +1541,7 @@
                         btn.className = 'px-4 py-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer text-slate-600 bg-slate-50 border-slate-200 hover:border-rose-400 hover:text-rose-600';
                         if (icon) icon.className = 'fa-regular fa-heart text-base';
                         if (label) label.innerText = 'Yêu thích';
-                        btn.title = 'Thêm vào yêu thích (US14)';
+                        btn.title = 'Thêm vào yêu thích';
                     }
                     const headerBadge = document.getElementById('badgeWishlistHeader');
                     if (headerBadge) {
@@ -1525,7 +1561,7 @@
         }
 
         // ==========================================
-        // JS XỬ LÝ ĐÁNH GIÁ SẢN PHẨM (US15)
+        // JS XỬ LÝ ĐÁNH GIÁ SẢN PHẨM
         // ==========================================
 
         const nhanXetSaoText = {
@@ -1558,15 +1594,20 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.chuaDangNhap) {
-                        hienThiToastChiTiet(data.thongBao || 'Vui lòng đăng nhập để đánh giá!', 'warning');
+                        showToast(data.thongBao || 'Vui lòng đăng nhập tài khoản đã mua sản phẩm để đánh giá!', 'warning');
                         setTimeout(() => {
                             window.location.href = '/khach-hang/dang-nhap';
                         }, 1200);
                         return;
                     }
 
+                    if (data.daDanhGia) {
+                        showToast(data.thongBao || 'Bạn đã gửi đánh giá cho sản phẩm này rồi!', 'info');
+                        return;
+                    }
+
                     if (!data.duDieuKien) {
-                        alert(data.thongBao || 'Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua và đơn hàng được giao thành công (HOAN_THANH)!');
+                        showToast(data.thongBao || 'Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua và đơn hàng được giao thành công (HOAN_THANH)!', 'error');
                         return;
                     }
 
@@ -1627,7 +1668,8 @@
         }
     </script>
 
-    <!-- Toast Notification Container -->
+    <!-- Toast Notification Container & Script -->
     <div id="toastContainerStorefront" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+    <script src="/js/simplain-toast.js"></script>
 </body>
 </html>

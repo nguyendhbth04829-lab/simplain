@@ -1,0 +1,126 @@
+Mã US,Dev (Người làm),Module / Epic,User Story (Nội dung chức năng),Vai trò,Ưu tiên,SP,Tiêu chí chấp nhận cốt lõi (Acceptance Criteria),Note,GIA MINH,,,,,chỉnh sửa lại giao diện khi sang giao diện ,,,,,
+US01,Duy,Mod 1 / Xác thực KH,"Là Khách hàng, tôi muốn đăng ký/đăng nhập tài khoản",Khách hàng,Cao,5,1. Validate form. 2. Mã hóa mật khẩu. 3. Cấp phát và verify JWT Token.,,"✅ ĐẠT: Validate, BCrypt, JWT cookie hoạt động tốt.
+⚠️ LƯU Ý: Cookie JWT nên bật HttpOnly=true; cần vô hiệu hóa token cũ khi đổi pass.",ok,,,,,,,,,
+US02,Duy,Mod 1 / Xác thực NV,"Là Nhân viên, tôi muốn đăng nhập vào hệ thống quản trị CMS",Nhân viên,Cao,3,1. Check phân quyền (Role-based). 2. Từ chối đăng nhập nếu trạng thái nhân viên bị khóa.,,"✅ ĐẠT: Role-based chặn chuẩn tài khoản khóa (trạng thái = 0).
+⚠️ LƯU Ý: Thêm giới hạn số lần gõ sai pass; chặn truy cập /admin khi thiếu JWT.",ok,,,,,,,,,
+US03,Duy,Mod 1 / Vai trò,"Là Admin, tôi muốn quản lý danh sách Vai trò",Super Admin,TB,3,1. Thêm/Sửa/Xóa vai_tro. 2. Không cho xóa vai trò đang có nhân viên sử dụng.,,"✅ ĐẠT: CRUD vai trò; chặn xóa vai trò đang có nhân viên chuẩn.
+⚠️ LƯU Ý: Đổi thao tác xóa sang POST/CSRF; khóa cứng vai trò ADMIN mặc định.",,,,,,,,,,
+US04,Duy,Mod 1 / Nhân sự,"Là Admin, tôi muốn quản lý danh sách Nhân viên",Super Admin,Cao,5,1. CRUD nhan_vien. 2. Gán vai trò cho nhân viên. 3. Active/Deactive tài khoản nhân sự.,,"✅ ĐẠT: CRUD nhân sự, phân trang, toggle kích hoạt chuẩn.
+⚠️ LƯU Ý: Chặn Admin tự khóa tài khoản chính mình; yêu cầu pass cũ khi đổi mật khẩu.",,,,,,,,,,
+US05,Duy,Mod 1 / Dashboard,"Là Admin, tôi muốn xem biểu đồ Dashboard tổng quan",Admin,TB,5,"1. Thống kê tổng số lượng người dùng, đơn hàng hôm nay, và doanh thu trong ngày.",,"✅ ĐẠT: Thống kê user, doanh thu, đơn hàng & 3 biểu đồ Chart.js đúng.
+⚠️ LƯU Ý: Cập nhật chuỗi assert trong test; chỉ cộng doanh thu đơn đã hoàn thành.",ok,,,,,,,,,
+US06,Khoa,Mod 2 / Phân loại,"Là Admin, tôi muốn quản lý Danh mục & Bộ sưu tập",Admin,Cao,5,1. CRUD danh_muc (Hỗ trợ danh mục cha/con). 2. CRUD bo_suu_tap kèm banner.,                   ,"✅ ĐẠT: CRUD danh mục cha/con & bộ sưu tập kèm banner mượt mà.
+⚠️ LƯU Ý: Chặn xóa danh mục khi còn sản phẩm trực tiếp; giới hạn size ảnh banner.",ok,,,,,,,,,
+US07,Nguyên,Mod 2 / Thuộc tính,"Là Admin, tôi muốn quản lý Màu sắc & Kích thước",Admin,Cao,3,"1. Thêm/Sửa/Xóa dữ liệu mau_sac (Hex/Mã màu) và kich_thuoc (S, M, L).",,"✅ ĐẠT: CRUD màu sắc (mã Hex) & kích thước (S/M/L) đầy đủ.
+⚠️ LƯU Ý: Ràng buộc regex mã Hex #RRGGBB; chặn xóa size đang dùng trong SKU.",ok,,,,,,,,,
+US08,Nguyên,Mod 2 / Sản phẩm,"Là Admin, tôi muốn quản lý thông tin chung Sản phẩm",Admin,Cao,5,"1. Tạo san_pham gắn với danh mục. 2. Nhập chất liệu, form dáng, mô tả chi tiết.",,"✅ ĐẠT: CRUD sản phẩm, chọn danh mục, form dáng, slug SEO chuẩn.
+⚠️ LƯU Ý: Sanitize HTML mô tả chống Stored XSS; chặn xóa SP đã có đơn hàng.",ok,,,,,,,,,
+US09,Nguyên,Mod 2 / Biến thể (SKU),"Là Admin, tôi muốn tạo Biến thể sản phẩm và quản lý tồn kho",Admin,Cao,8,"1. Map Màu + Size tạo bien_the_san_pham. 2. Quản lý Giá bán/Giá gốc, Tồn kho. 3. Upload nhiều hinh_anh.",,"✅ ĐẠT: Ma trận tạo biến thể SKU hàng loạt; quản lý giá & tồn kho tốt.
+⚠️ LƯU Ý: Cảnh báo khi giá bán < giá gốc; thêm sửa nhanh tồn kho ngay trên bảng.",,,,,,,Khi tạm ngừng biến thể và khách mua báo lỗi,,,
+US10,Nguyên,Mod 2 / Storefront,"Là Khách hàng, tôi muốn tìm kiếm và lọc danh sách sản phẩm",Khách hàng,Cao,8,"1. Hiển thị Grid sản phẩm. 2. Bộ lọc Filter theo Giá, Màu, Size, Danh mục. 3. Tìm kiếm text.",,"✅ ĐẠT: Grid hiển thị sản phẩm, bộ lọc Đa Tiêu Chí (Giá/Màu/Size/DM).
+⚠️ LƯU Ý: Thêm Index SQL tối ưu tìm kiếm; hỗ trợ phân trang AJAX.",,,,,,,Khi mở lại biến thẻ và khách hàng mua tất cả sp đều báo lỗi,,,
+US11,Nguyên,Mod 2 / Storefront,"Là Khách hàng, tôi muốn xem trang Chi tiết sản phẩm",Khách hàng,Cao,5,1. Khi chọn Size/Màu nhảy ảnh tương ứng. 2. Hiển thị số lượng tồn kho thực tế.,"Toàn bộ thứ khác: OK
+LỖI/TỒN TẠI: Tồn kho hiển thị theo dữ liệu tải trang, có thể lệch nếu kho thay đổi đồng thời.
+ĐỀ XUẤT: Bổ sung test cho chuyển ảnh/stock theo biến thể; hiển thị trạng thái """"Hết hàng"""" rõ theo từng biến thể và refresh tồn kho khi thêm vào giỏ.
+","✅ ĐẠT: Chi tiết sản phẩm, đổi ảnh theo phân loại màu/size.
+⚠️ LƯU Ý: Bổ sung refresh tồn kho realtime; hiển thị rõ tag ""Hết hàng"" theo từng biến thể.",ok,,,,,,,,,
+US12,Minh,Mod 3 / Hồ sơ KH,"Là Khách hàng, tôi muốn cập nhật thông tin cá nhân",Khách hàng,Cao,3,"1. Cập nhật Tên, SĐT, Email, Giới tính, Ngày sinh. 2. Cho phép Đổi mật khẩu.","Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: Upload avatar chưa giới hạn dung lượng/định dạng, tên file gốc chưa sanitize triệt để; cookie JWT đang set HttpOnly=false nên dễ bị đánh cắp qua XSS; đổi mật khẩu không thu hồi token cũ.
+ ĐỀ XUẤT: Validate ảnh (size/MIME), đặt tên UUID; bật HttpOnly/Secure cho cookie; vô hiệu hóa phiên cũ sau khi đổi mật khẩu.","✅ ĐẠT: Cập nhật hồ sơ khách (Tên, SĐT, Email, Ngày sinh, Pass).
+⚠️ LƯU Ý: Giới hạn dung lượng/MIME avatar; bật HttpOnly cookie; hủy phiên cũ khi đổi pass.",ok,,,sửa hồ sơ admin,,,,,,
+US13,Minh,Mod 3 / Sổ địa chỉ,"Là Khách hàng, tôi muốn quản lý sổ địa chỉ giao hàng",Khách hàng,Cao,5,1. CRUD Sổ địa chỉ. 2. Render dropdown Tỉnh/Huyện/Xã. 3. Set cờ Địa chỉ mặc định.,"Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: Xóa và đặt mặc định đang dùng GET nên có thể bị kích hoạt qua link/prefetch; chưa có ràng buộc DB đảm bảo duy nhất một địa chỉ mặc định; thao tác đồng thời có thể tạo 0 hoặc nhiều mặc định.
+ ĐỀ XUẤT: Chuyển thao tác thay đổi sang POST + CSRF; thêm unique filtered index/khóa nghiệp vụ; validate/trim dữ liệu đầu vào.","✅ ĐẠT: CRUD sổ địa chỉ; chọn Tỉnh/Huyện/Xã; gắn cờ mặc định.
+⚠️ LƯU Ý: Chuyển xóa/đặt mặc định sang POST; thêm ràng buộc DB chỉ có 1 địa chỉ mặc định.",ok,,,,,,,,,
+US14,Minh,Mod 3 / Tương tác,"Là Khách hàng, tôi muốn thêm sản phẩm vào Yêu thích (Wishlist)",Khách hàng,Thấp,2,1. Nhấn tim sản phẩm (Lưu san_pham_yeu_thich). 2. Hiển thị trang Danh sách yêu thích.,"Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: Logic check-then-insert có thể tạo bản ghi trùng khi click đồng thời nếu bảng chưa có unique (ma_khach_hang_id, ma_san_pham_id); sản phẩm đã xóa được bỏ qua khi hiển thị nhưng bản ghi yêu thích vẫn còn.
+ ĐỀ XUẤT: Thêm unique constraint + bắt DuplicateKeyException; dọn bản ghi mồ côi; bổ sung test toggle 2 chiều.","✅ ĐẠT: Bấm tim lưu Wishlist; hiển thị trang yêu thích riêng.
+⚠️ LƯU Ý: Thêm unique index (khach_hang_id, san_pham_id) tránh trùng khi click nhanh.",ok,,,,,,,,,
+US15,Minh,Mod 3 / Đánh giá,"Là Khách hàng, tôi muốn Đánh giá sản phẩm đã mua",Khách hàng,TB,5,1. Check điều kiện ma_chi_tiet_don_hang_id đã hoàn thành. 2. Upload JSON ảnh. 3. Rating 1-5 sao.,"Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: luuAnhDanhGia chỉ lấy đuôi file, không giới hạn dung lượng/không kiểm tra MIME thực; danhSachAnhUrls do client gửi không được kiểm tra; nguy cơ upload file độc hại/stored XSS.
+ ĐỀ XUẤT: Giới hạn 5MB/ảnh, whitelist jpg/png/webp, kiểm tra magic bytes, đổi tên UUID, chỉ nhận URL nội bộ; thêm kiểm duyệt/xóa ảnh.","✅ ĐẠT: Đánh giá 1-5 sao + upload ảnh; chỉ cho đánh giá đơn hoàn thành.
+⚠️ LƯU Ý: Giới hạn ảnh <= 5MB (jpg/png/webp); sanitize URL ảnh gửi từ client.",,,Lỗi khi đánh giá sản phẩm, ,,,,,,
+US16,Minh,Mod 3 / Hội viên,"Là Hệ thống, tôi muốn tự động tích điểm Loyalty (Coolcash)",Hệ thống,TB,8,1. Đơn hàng hoàn thành cộng % điểm (so_du_coolcash). 2. Đạt mốc tự động lên Hạng (hang_thanh_vien).,"Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: tongChiTieuNam không reset theo năm và không hạ hạng; API POST /api/don-hang/{id}/hoan-thanh-va-tich-diem không yêu cầu đăng nhập/quyền, có thể ép đơn bất kỳ sang HOAN_THANH để cộng điểm và bỏ qua log US22.
+ ĐỀ XUẤT: Bảo vệ API (ADMIN/nhân viên), dùng chung QuanLyVanDonService; job reset chi tiêu năm; ghi log thay đổi hạng.","✅ ĐẠT: Tự động cộng điểm CoolCash khi xong đơn; tự động nâng hạng.
+⚠️ LƯU Ý: Job reset chi tiêu định kỳ; bảo vệ API tích điểm chặt chẽ bằng quyền hệ thống.",Chưa test đc,,,,,,,,,
+US17,Trí,Mod 4 / Giỏ hàng,"Là Khách hàng, tôi muốn quản lý Giỏ hàng của mình",Khách hàng,Cao,5,1. Thêm/Sửa/Xóa biến thể vào giỏ. 2. Tính năng bó hàng Combo (Sinh nhom_combo_token).,"Toàn bộ thứ khác: OK
+ LỖI: Khi tạo đơn, DonHangService gán donGia = giaCombo cho từng món con nhưng thanhTien = giá lẻ × SL; TaoDonHangService lưu nguyên vào chi_tiet_don_hang. Vì vậy tổng chi_tiet_don_hang.thanh_tien ≠ don_hang.tong_tien_hang và dòng chi tiết hiển thị sai đơn giá/thành tiền, có thể làm sai báo cáo doanh thu.
+ ĐỀ XUẤT: Phân bổ giá combo cho từng món theo tỷ lệ hoặc lưu một dòng combo riêng; đảm bảo sum(thanh_tien) = tong_tien_hang; thêm test combo đa món/số lượng >1.","✅ ĐẠT: Thêm/sửa/xóa giỏ hàng; gom nhóm Combo bằng token.
+⚠️ LƯU Ý: Cần phân bổ đều đơn giá combo cho các món con để sum(thành tiền) = tổng tiền hàng.",,,Lỗi khi khách hàng bấm nút nhanh ở gói combo,,,,Lỗi khi bấm vào nút đặt hàng,,,
+US18,Trí,Mod 4 / Thanh toán,"Là Admin, tôi muốn Bật/Tắt cấu hình cổng thanh toán",Admin,TB,2,"1. CRUD bảng phuong_thuc_thanh_toan (COD, VNPay, MoMo).","Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: /admin/** hiện cho qua khi chưa đăng nhập (PhanQuyenAdminInterceptor trả true nếu không có nhân viên) nên cấu hình cổng thanh toán có thể bị truy cập trái phép; xóa chỉ kiểm tra giao_dich_thanh_toan, chưa kiểm tra don_hang tham chiếu; cho phép SVG có thể chứa script.
+ ĐỀ XUẤT: Sửa interceptor trả 401/redirect khi chưa đăng nhập; kiểm tra FK don_hang trước khi xóa; chặn SVG hoặc sanitize.","✅ ĐẠT: CRUD & Bật/tắt các cổng thanh toán (COD, VNPay, MoMo).
+⚠️ LƯU Ý: Bắt buộc đăng nhập trước khi vào cấu hình; kiểm tra FK đơn hàng trước khi xóa PTTT.",chưa test đc,,,,,,,,,
+US19,Trí,Mod 4 / Thanh toán,"Là Khách hàng, tôi muốn thực hiện Checkout đơn hàng",Khách hàng,Cao,8,1. Tính Tổng tiền = Hàng - Voucher - Điểm + Ship. 2. Xác nhận địa chỉ và phương thức thanh toán.,"Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: Mã voucher không hợp lệ chỉ bị bỏ qua (hopLe=false, giảm 0đ), không chặn đặt hàng; phí ship tính trên tiền hàng trước giảm giá; combo hiển thị tổng đúng nhưng chi tiết đơn bị lệch (xem US17).
+ ĐỀ XUẤT: Chặn submit và báo rõ khi voucher sai; xác nhận nghiệp vụ freeship; test đồng thời voucher + điểm + combo.","✅ ĐẠT: Checkout tính đúng Tiền hàng - Voucher - Điểm + Ship.
+⚠️ LƯU Ý: Chặn đặt hàng khi voucher không hợp lệ; xác nhận chính sách freeship trước giảm.",ok,,,,,,,,,Không đăng nhập được vẫn dặt đc hàng thành công
+US20,Trí,Mod 4 / Thanh toán,"Là Hệ thống, tôi muốn tích hợp Cổng thanh toán (VNPay/MoMo)",Hệ thống,Cao,8,1. Generate URL quét QR. 2. Xử lý IPN Webhook trả về từ ngân hàng. 3. Lưu giao_dich_thanh_toan.,"rất nhiều lỗi, note vô nghĩa","🟡 CẦN HOÀN THIỆN: Tạo QR thanh toán & nhận Webhook IPN lưu giao dịch.
+⚠️ LƯU Ý: So khớp chính xác số tiền IPN với đơn; chống xử lý lặp IPN (Idempotent).",Ko bt test,,,,,,,,,
+US21,Hưng,Mod 5 / Đơn hàng,"Là Hệ thống, tôi muốn Tạo mới Đơn hàng và Trừ tồn kho",Hệ thống,Cao,8,1. API nhận Data từ Dev 4 để Insert don_hang & chi_tiet_don_hang. 2. Giảm so_luong trong kho thật.,"KẾT QUẢ: ĐẠT MỘT PHẦN.
+ Đã có: API POST /api/don-hang/tao-moi nhận DTO, validate phương thức đang bật, kiểm tra tồn trước, trừ kho atomic (UPDATE ... WHERE soLuong >= ?), insert don_hang + chi_tiet_don_hang trong 1 transaction, rollback khi thiếu hàng, ghi log khởi tạo.
+ LỖI/TỒN TẠI: (1) API công khai, không auth; tin tưởng donGia/thanhTien/tongTienHang/tongThanhToan/maTrangThai từ client → có thể tạo đơn giá 0 hoặc trạng thái tùy ý. (2) Combo lưu sai donGia/thanhTien (US17). (3) maDonHang = timestamp + random 3 số, có thể trùng. (4) Đơn online giữ tồn kho khi chưa thanh toán; chưa có job hủy/hoàn kho.
+ ĐỀ XUẤT: Bảo vệ API (nhân viên/service token), tính lại giá/tổng từ DB, ép trạng thái khởi tạo CHO_XAC_NHAN, dùng sequence/UUID cho mã đơn, bổ sung timeout hủy đơn.","✅ ĐẠT: Tạo đơn hàng & trừ tồn kho an toàn bằng atomic update.
+⚠️ LƯU Ý: Tính lại giá/tổng từ DB (tránh tin client); thêm job tự động hoàn kho đơn online quá hạn.",Chưa test đc,,,,,,,,,
+US22,Hưng,Mod 5 / Đơn hàng,"Là Admin/Kho, tôi muốn cập nhật trạng thái vận đơn",Admin,Cao,5,"1. Update trạng thái (Chờ duyệt, Đang giao, Đã giao...). 2. Ghi log lich_su_trang_thai_don_hang.","Toàn bộ thứ khác: OK
+ LỖI/TỒN TẠI: (1) Thay đổi trạng thái tự động từ VNPay/MoMo IPN và API hoàn thành + tích điểm không ghi log → timeline thiếu mốc. (2) API /api/don-hang/{id}/trang-thai không có auth; trang /admin/don-hang cho qua khi chưa đăng nhập; actor fallback nhân viên đầu tiên nên log sai người. (3) Hủy đơn ở Admin chỉ hoàn kho, không hoàn điểm Coolcash/tiền/voucher. (4) Lỗi tích điểm bị nuốt, đơn vẫn HOAN_THANH.
+ ĐỀ XUẤT: Ghi log mọi thay đổi trạng thái (kể cả hệ thống), bắt buộc auth + phân quyền, bỏ fallback actor, hoàn điểm/tiền khi hủy, retry/cảnh báo khi tích điểm lỗi.","✅ ĐẠT: Cập nhật trạng thái đơn (Chờ duyệt -> Đang giao -> Đã giao) & log audit.
+⚠️ LƯU Ý: Ghi log cả khi đổi qua IPN; hoàn điểm/tiền/voucher khi hủy đơn.",ok,,,,,,,,,
+US23,Hưng,Mod 5 / Đơn hàng,"Là Khách hàng, tôi muốn theo dõi Lịch sử đơn hàng cá nhân",Khách hàng,Cao,3,"1. Liệt kê danh sách đơn. 2. Xem chi tiết trạng thái đơn, mã vận đơn (nếu có).",,"✅ ĐẠT: Khách theo dõi danh sách & chi tiết đơn hàng, mã vận đơn.
+⚠️ LƯU Ý: Thêm nút Hủy đơn nhanh khi đơn còn Chờ xác nhận; hiển thị timeline vận chuyển trực quan.",ok,,Lỗi giao diện,,,,,,,
+US24,Hưng,Mod 5 / Đổi trả,"Là Khách hàng, tôi muốn tạo Yêu cầu Đổi/Trả (RMA) online",Khách hàng,TB,5,1. Form tick chọn sản phẩm lỗi trong đơn cũ. 2. Chọn SKU mới muốn đổi hoặc Nhập STK nếu muốn hoàn tiền.,,"✅ ĐẠT: Tạo phiếu Đổi/Trả (RMA) online, chọn đổi SKU mới hoặc hoàn tiền.
+⚠️ LƯU Ý: Giới hạn trong 60 ngày kể từ khi mua; chặn tạo nhiều RMA cùng lúc trên 1 đơn.",ok,,,,,,,,,
+US25,Hưng,Mod 5 / Đổi trả,"Là CSKH, tôi muốn Xét duyệt Yêu cầu Đổi/Trả (RMA)",CSKH,TB,5,1. Xem danh sách RMA. 2. Đổi trạng thái (Approve/Reject). 3. Bổ sung ghi chú kiểm định hàng về kho.,,"✅ ĐẠT: CSKH duyệt/từ chối RMA; ghi chú kiểm định hàng về kho.
+⚠️ LƯU Ý: Tự động trừ kho SKU mới khi duyệt đổi; lưu mã giao dịch khi xác nhận hoàn tiền.",,,,,,,,,,
+US26,Khoa,Mod 6 / Voucher,"Là Admin, tôi muốn tạo chương trình Mã giảm giá",Admin,Cao,5,"1. Tạo Voucher (% hoặc Tiền mặt). 2. Đặt giới hạn ngân sách, lượt dùng tối đa, đơn tối thiểu.",,"✅ ĐẠT: Tạo mã giảm giá theo % hoặc tiền; giới hạn ngân sách & lượt dùng.
+⚠️ LƯU Ý: Thêm nút bật/tắt nhanh voucher; check trùng mã không phân biệt hoa thường.",ok,,,,,,,,,
+US27,Khoa,Mod 6 / Voucher,"Là Khách hàng, tôi muốn Thu thập và Áp dụng Mã giảm giá",Khách hàng,Cao,5,1. Lưu voucher vào voucher_so_huu. 2. API Validate check mã còn lượt/có hợp lệ với đơn không.,,"✅ ĐẠT: Khách lưu voucher vào ví; validate hợp lệ khi áp dụng.
+⚠️ LƯU Ý: Ràng buộc unique (khach_hang_id, voucher_id); khóa mã ngay sau khi đặt hàng thành công.",ok,,,,,,,,,
+US28,Khoa,Mod 6 / Bán hàng,"Là Admin, tôi muốn thiết lập Gói Combo kích cầu",Admin,TB,5,1. Tạo gói giá fix (VD: Tự chọn 3 áo giá 299k). 2. Map san_pham_trong_combo các áo được áp dụng.,,"✅ ĐẠT: Tạo gói Combo giá fix (ví dụ 3 áo 299k); map sản phẩm con.
+⚠️ LƯU Ý: Sửa test setup thiếu danh mục/mô tả; tạm ẩn combo nếu có sản phẩm con hết hàng.",,,,,,,,,,
+US29,Khoa,Mod 6 / Bán hàng,"Là Admin, tôi muốn thiết lập khung giờ Flash Sale",Admin,TB,8,1. Đặt khung giờ Bắt đầu/Kết thúc. 2. Gán giá sốc và giới hạn số lượng (so_luong_mo_ban) cho biến thể.,,"✅ ĐẠT: Tạo khung giờ Flash Sale; gán giá sốc & giới hạn số lượng bán.
+⚠️ LƯU Ý: Trừ kho Flash Sale bằng atomic update tránh race-condition; thêm đồng hồ đếm ngược JS.",,,Lỗi khi khách hàng bấm nút săn ngay,,,,,,,
+US30,Khoa,Mod 6 / Nội dung,"Là Admin, tôi muốn quản lý Bài viết Blog & Banner QC",Admin,Thấp,3,1. CRUD bai_viet_blog (SEO friendly). 2. CRUD banner_quang_cao tại các vị trí hiển thị trên Web.,,"✅ ĐẠT: CRUD bài viết Blog chuẩn SEO & Banner quảng cáo trang chủ.
+⚠️ LƯU Ý: Sanitize nội dung HTML blog chống XSS; nén ảnh banner sang WebP tải nhanh.",ok,,,,,,,,,
+US31,Duy,Mod 2 / Thuộc tính,"Là Admin, tôi muốn quản lý danh mục Chất liệu vải",Admin,Cao,3,1. CRUD chat_lieu. 2. Bật/Tắt trạng thái kich_hoat. 3. Validate không xóa nếu đã gán vào san_pham.,,"✅ ĐẠT: Quản lý danh mục Chất liệu vải; tìm kiếm, phân trang.
+⚠️ LƯU Ý: Chặn xóa chất liệu đang được sản phẩm sử dụng.",,,,,,,,,,
+US32,Hưng,Mod 2 / Thuộc tính,"Là Admin, tôi muốn quản lý danh mục Form dáng",Admin,Cao,3,"1. CRUD form_dang (Regular, Slim, Oversize...). 2. Bật/Tắt kich_hoat. 3. Validate không xóa nếu đang dùng.",,"✅ ĐẠT: Quản lý danh mục Form dáng (Slim fit, Regular fit,...).
+⚠️ LƯU Ý: Chặn xóa form dáng khi còn sản phẩm liên kết.",,,,,,,,,,
+US33,Trí,Mod 7 / Bán hàng POS,"Là Thu ngân, tôi muốn bán hàng tại quầy và quản lý hóa đơn chờ",Thu ngân,Cao,8,1. CRUD hoa_don_cho & chi_tiet_hoa_don_cho. 2. Quét mã vạch/SKU thêm vào đơn. 3. Áp dụng Loyalty/khách hàng. 4. Thanh toán tiền mặt (tính tiền thối) hoặc QR. 5. Tạo don_hang TAI_QUAY & trừ kho thật.,,"✅ ĐẠT: Bán hàng tại quầy (POS), tạo tab hóa đơn chờ, quét mã barcode.
+⚠️ LƯU Ý: Bổ sung phím tắt (F2 tìm, F4 thanh toán) cho thu ngân thao tác nhanh.",,,,,,,,,,
+,,,,,,,,Hưng,Minh,,,,,,,,,,
+US34,Hưng,Mod 5 / Vận chuyển,"Là Nhân viên Vận hành, tôi muốn Quản lý Mã vận đơn được cung cấp từ Đơn vị Vận chuyển thứ 3 (3PL)",Nhân viên,Cao,5,"1. Tích hợp danh mục đơn vị vận chuyển.
+2. Khóa ô nhập tự do của shop, mã vận đơn phải theo hãng.
+3. Tích hợp link tra cứu hành trình vận chuyển thời gian thực.",,,,,,,,,,,,
+US35,Minh,Mod 5 / Đơn hàng,"Là Thủ kho / CSKH, tôi muốn Xử lý Đơn hàng bị mất trên đường giao (Lost in transit)",CSKH,Cao,5,"1. Bổ sung trạng thái/nghiệp vụ Hàng mất trên đường giao (HANG_THAT_LAC / LOST_IN_TRANSIT).
+2. Tuyệt đối KHÔNG cộng lại tồn kho vì hàng đã bị thất lạc ngoài thực tế.
+3. Ghi nhận biên bản sự cố khiếu nại đền bù 3PL và lưu log kiểm toán đơn hàng.",,,,,,,,,,,,
+US36,Minh,Mod 5 / Đổi trả (RMA),"Là Nhân viên Kiểm định Kho, tôi muốn Kiểm tra & Phân loại chất lượng Hàng đổi trả / Hàng giao lỗi",Nhân viên,Cao,5,"1. Giao diện kiểm định hàng hoàn về kho: đánh giá mức độ lỗi và phân loại.
+2. Nếu hàng còn dùng/bán được: tự động cộng lại tồn kho để tiếp tục bán.
+3. Nếu lỗi hỏng nặng không thể dùng: trừ tồn kho coi như phế phẩm/tiêu hủy, lập biên bản hao hụt.
+4. Khắc phục lỗi gửi yêu cầu RMA đơn combo/flash sale không gửi ảnh hoặc ảnh dung lượng lớn (nâng hạn mức 50MB).",,,,,,,,,,,,
+US37,Trí,Mod 4 & 5 / Bảo mật & Đơn,"Là Chủ shop, tôi muốn Chống đặt hàng ảo, Bom hàng & Gom sạch tồn kho phá hoại",Admin,Cao,8,"1. Đặt giới hạn trần số lượng mua tối đa trên 1 đơn hàng cho từng biến thể/sản phẩm.
+2. Phát hiện & cảnh báo tài khoản/SĐT có dấu hiệu spam đơn hoặc gom hết tồn kho.
+3. Cơ chế tự động giải phóng tồn kho đối với đơn chờ thanh toán quá hạn.",,,,,,,,,,,,
+US38,Khoa,Mod 2 / Phân loại & SP,"Là Quản trị viên, tôi muốn Chuẩn hóa Cây Danh mục Thời trang (5 Cha - 19 Con) & Thuộc tính chuyên nghiệp",Admin,Cao,8,"1. Thiết lập 5 Danh mục cha (Thời trang nam, Thời trang nữ, Giày dép, Ví & Balo, Phụ kiện) và Danh mục con tương ứng.
+2. Bổ sung đầy đủ bộ thuộc tính động chuyên nghiệp theo từng loại hàng (chất liệu, form dáng, độ dài tay áo, kiểu cổ...).
+3. Đồng bộ bộ lọc Storefront và form thêm sửa biến thể.",,,,,,,,,,,,
+US39,Nguyên,Mod 2 / Biến thể (SKU),"Là Quản lý sản phẩm, tôi muốn Các biến thể Cùng màu Khác size tự động Dùng chung Hình ảnh",Admin,TB,5,"1. Upload ảnh cho 1 size bất kỳ thì các size còn lại cùng màu tự động kế thừa bộ ảnh.
+2. Biến thể mới tạo chưa có ảnh sẽ tự động dùng chung ảnh của biến thể cùng màu đã có.
+3. Trang Chi tiết sản phẩm hiển thị thư viện ảnh gom theo màu duy nhất, không lặp lại ảnh trùng giữa các size.",,,,,,,,,,,,
+US40,Nguyên,Mod 2 / Biến thể (SKU),"Là Nhân viên Quản lý Biến thể, tôi muốn Tìm kiếm Sản phẩm gốc bằng chữ (Autocomplete)",Nhân viên,TB,3,"1. Thanh tìm kiếm Searchable Combobox gõ chữ lọc tức thì theo Tên hoặc Mã sản phẩm gốc.
+2. Áp dụng đồng bộ tại: Bộ lọc biến thể, Modal thêm đơn lẻ, Modal Ma trận SIMPLAIN, và Trang sửa biến thể.
+3. Dropdown nổi trực quan.",,,,,,,,,,,,
+US41,Khoa,Mod 2 / Sản phẩm & Kho,"Là Admin, tôi muốn Xem chi tiết biến thể trong Sản phẩm & Cảnh báo Tồn kho Sắp hết (Low Stock Alert)",Admin,Cao,5,"1. Xem chi tiết tồn kho và thuộc tính của tất cả biến thể trực tiếp trong trang Quản lý thông tin chung sản phẩm.
+2. Cho phép ấn vào sản phẩm là thêm/sửa trực tiếp biến thể của sản phẩm đó (gộp thao tác).
+3. Widget cảnh báo biến thể sắp hết hàng trên Dashboard Admin và đánh dấu cảnh báo để kịp thời nhập kho.",,,,,,,,,,,,
+US42,Duy,Mod 8 / Nhập hàng & NCC,"Là Thủ kho / Admin, tôi muốn Quản lý Nhà cung cấp, Chuyển đổi trạng thái hợp tác & Quét Barcode nhập hàng",Admin,Cao,8,"1. CRUD Nhà cung cấp (Tên, MST, SĐT, Email, Địa chỉ).
+2. Tính năng Ngưng hợp tác / Tiếp tục hợp tác (chặn tạo phiếu nhập với NCC đã ngưng).
+3. Tạo phiếu nhập hàng từ NCC, hỗ trợ quét mã vạch Barcode.",,,,,,,,,,,,
+US43,Hưng,Mod 8 / Kế toán Kho,"Là Kế toán kho / Admin, tôi muốn Tính Giá vốn Bình quân Gia quyền Di động (AVCO) khi Nhập hàng",Admin,Cao,5,"1. Tự động tính lại giá vốn biến thể khi nhập lô mới giá khác lô cũ còn tồn theo công thức AVCO: (TonCu * GiaCu + SLNhap * GiaNhap) / (TonCu + SLNhap).
+2. Lưu snapshot giá vốn tại thời điểm bán vào chi_tiet_don_hang cho cả đơn Online và POS.
+3. Tính toán chính xác Lợi nhuận gộp trên Dashboard = Doanh thu - Tổng giá vốn.",,,,,,,,,,,,
+US44,Trí,Mod 7 & 5 / Omnichannel,"Là Quản trị viên, tôi muốn Hợp nhất Bán hàng Đa kênh Toàn diện (Omnichannel Online & POS)",Admin,Cao,8,"1. Kho hàng tập trung thời gian thực (Centralized Stock Pool): bán tại quầy POS hay Online đều trừ kho nguyên tử, loại trừ lệch kho.
+2. Phân định kênh loaiDonHang (ONLINE vs TAI_QUAY) trên danh sách, bộ lọc và thẻ KPI thống kê đơn hàng.
+3. Tích hợp hồ sơ khách hàng đa kênh: tích điểm và áp dụng voucher hội viên thống nhất giữa quầy và web.",,,,,,,,,,,,

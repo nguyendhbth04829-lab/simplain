@@ -17,13 +17,23 @@ import java.util.Optional;
 public interface MauSacRepository extends JpaRepository<MauSac, Long> {
 
     /**
-     * Tìm kiếm phân trang màu sắc theo mã màu (Hex) hoặc tên màu.
+     * Lấy danh sách màu sắc đang kích hoạt sắp xếp theo tên màu.
+     */
+    java.util.List<MauSac> findByKichHoatTrueOrderByTenMauAsc();
+
+    /**
+     * Tìm kiếm phân trang màu sắc theo mã màu (Hex) hoặc tên màu kèm lọc trạng thái hoạt động.
      */
     @Query("SELECT ms FROM MauSac ms WHERE " +
            "(:tuKhoa IS NULL OR :tuKhoa = '' OR " +
            " LOWER(ms.maMau) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR " +
-           " LOWER(ms.tenMau) LIKE LOWER(CONCAT('%', :tuKhoa, '%')))")
-    Page<MauSac> timKiemPhanTrang(@Param("tuKhoa") String tuKhoa, Pageable pageable);
+           " LOWER(ms.tenMau) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) AND " +
+           "(:kichHoat IS NULL OR ms.kichHoat = :kichHoat)")
+    Page<MauSac> timKiemPhanTrang(@Param("tuKhoa") String tuKhoa, @Param("kichHoat") Boolean kichHoat, Pageable pageable);
+
+    default Page<MauSac> timKiemPhanTrang(String tuKhoa, Pageable pageable) {
+        return timKiemPhanTrang(tuKhoa, null, pageable);
+    }
 
     /**
      * Tìm màu sắc theo mã màu (không phân biệt hoa thường).

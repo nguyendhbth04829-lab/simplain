@@ -16,7 +16,7 @@
 
     <!-- Top Announcement Bar -->
     <div class="bg-black text-white text-xs py-2 text-center font-medium tracking-wide">
-        Hệ thống Quản trị SIMPLAIN STORE &bull; Chi tiết Biến thể SKU, Tồn kho &amp; Thư viện Hình ảnh (US09)
+        Hệ thống Quản trị SIMPLAIN STORE &bull; Chi tiết Biến thể SKU, Tồn kho &amp; Thư viện Hình ảnh
     </div>
 
     <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
@@ -70,10 +70,33 @@
                 <form th:object="${bienThe}" action="/admin/bien-the/update" method="post" enctype="multipart/form-data" class="space-y-4" novalidate>
                     <input type="hidden" th:field="*{id}">
 
-                    <!-- Sản phẩm gốc -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Sản phẩm gốc <span class="text-rose-500 font-bold">*</span></label>
-                        <select th:field="*{maSanPhamId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-slate-800 transition font-medium">
+                    <!-- Sản phẩm gốc (Nhập chữ tìm kiếm tức thì) -->
+                    <div class="relative" id="boxViewSpGoc">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                            Sản phẩm gốc <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <div class="relative mb-2">
+                            <input type="text" id="inputTimKiemSpView"
+                                   placeholder="🔍 Gõ chữ để tìm sản phẩm gốc (Tên hoặc Mã SP)..."
+                                   onfocus="hienDropdownViewSp()"
+                                   oninput="locDanhSachSpView(this.value)"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50/20 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-semibold transition">
+                            <div id="dropdownViewSpGoc" class="absolute z-30 left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl hidden text-xs divide-y divide-slate-100">
+                                <div th:each="sp : ${listSanPham}"
+                                     th:data-id="${sp.id}"
+                                     th:data-masp="${sp.maSanPham}"
+                                     th:data-tensp="${sp.tenSanPham}"
+                                     onclick="chonSpGocView(this.getAttribute('data-id'), this.getAttribute('data-masp'), this.getAttribute('data-tensp'))"
+                                     class="item-sp-view p-2.5 hover:bg-blue-50/70 cursor-pointer flex items-center justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-slate-900 truncate" th:text="${sp.tenSanPham}">Tên SP</div>
+                                        <div class="text-[10px] text-slate-500 font-mono" th:text="${sp.maSanPham}">SP-01</div>
+                                    </div>
+                                    <span class="text-[10px] text-blue-600 font-bold shrink-0" th:text="${#numbers.formatDecimal(sp.giaCoBan != null ? sp.giaCoBan : 0, 0, 'POINT', 0, 'COMMA') + ' đ'}">100.000 đ</span>
+                                </div>
+                            </div>
+                        </div>
+                        <select id="selectSpView" th:field="*{maSanPhamId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-slate-800 transition font-medium">
                             <option value="">-- Chọn sản phẩm gốc --</option>
                             <option th:each="sp : ${listSanPham}"
                                     th:value="${sp.id}"
@@ -461,6 +484,51 @@
                 reader.readAsDataURL(file);
             });
         }
+
+        // Tìm kiếm sản phẩm gốc bằng cách nhập chữ
+        function hienDropdownViewSp() {
+            const dd = document.getElementById('dropdownViewSpGoc');
+            if (dd) dd.classList.remove('hidden');
+        }
+        function locDanhSachSpView(val) {
+            hienDropdownViewSp();
+            const q = (val || '').toLowerCase().trim();
+            const items = document.querySelectorAll('.item-sp-view');
+            items.forEach(it => {
+                const masp = (it.getAttribute('data-masp') || '').toLowerCase();
+                const tensp = (it.getAttribute('data-tensp') || '').toLowerCase();
+                if (!q || masp.includes(q) || tensp.includes(q)) {
+                    it.style.display = '';
+                } else {
+                    it.style.display = 'none';
+                }
+            });
+        }
+        function chonSpGocView(id, masp, tensp) {
+            const sel = document.getElementById('selectSpView');
+            const input = document.getElementById('inputTimKiemSpView');
+            const dd = document.getElementById('dropdownViewSpGoc');
+            if (sel) sel.value = id;
+            if (input) input.value = masp + ' - ' + tensp;
+            if (dd) dd.classList.add('hidden');
+        }
+        document.addEventListener('click', function(e) {
+            const box = document.getElementById('boxViewSpGoc');
+            const dd = document.getElementById('dropdownViewSpGoc');
+            if (box && dd && !box.contains(e.target)) {
+                dd.classList.add('hidden');
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            const sel = document.getElementById('selectSpView');
+            const input = document.getElementById('inputTimKiemSpView');
+            if (sel && sel.value && input) {
+                const opt = sel.options[sel.selectedIndex];
+                if (opt && opt.value) {
+                    input.value = opt.text;
+                }
+            }
+        });
     </script>
 </body>
 </html>

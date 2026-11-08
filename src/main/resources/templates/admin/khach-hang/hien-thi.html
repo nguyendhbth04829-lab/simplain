@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khách hàng | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('khach-hang')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title bên trái + Nút "+ Thêm khách hàng" bên phải -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-neutral-900 text-white flex items-center justify-center text-lg border border-neutral-800">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Khách hàng</span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Phân loại &amp; quản trị khách hàng lưu tại quầy (POS) và khách hàng đăng ký tài khoản Online</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        onclick="moModalThemKhach()"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer transition bg-slate-900 hover:bg-black text-white">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>+ Thêm khách hàng</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. KPI OVERVIEW METRIC CARDS -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Tổng khách hàng -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Tổng khách hàng</span>
+                    <span class="text-xl sm:text-2xl font-black text-slate-900 mt-1 block" th:text="${tongTatCa}">0</span>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+
+            <!-- Khách Online -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-indigo-500 uppercase tracking-wider block">Đăng ký Online</span>
+                    <span class="text-xl sm:text-2xl font-black text-indigo-900 mt-1 block" th:text="${tongOnline}">0</span>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-globe"></i>
+                </div>
+            </div>
+
+            <!-- Khách Tại quầy POS -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-amber-500 uppercase tracking-wider block">Lưu tại quầy (POS)</span>
+                    <span class="text-xl sm:text-2xl font-black text-amber-900 mt-1 block" th:text="${tongPos}">0</span>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+            </div>
+
+            <!-- Trạng thái Hoạt động -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-emerald-500 uppercase tracking-wider block">Hoạt động / Khóa</span>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <span class="text-xl font-black text-emerald-600" th:text="${tongHoatDong}">0</span>
+                        <span class="text-slate-400 font-bold">/</span>
+                        <span class="text-sm font-bold text-red-500" th:text="${tongKhoa}">0</span>
+                    </div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TABS PHÂN LOẠI & CARD BỘ LỌC TÌM KIẾM -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+            
+            <!-- Filter Tabs Nguồn -->
+            <div class="flex items-center gap-2 border-b border-slate-100 pb-3 overflow-x-auto">
+                <a th:href="@{/admin/khach-hang/hien-thi(nguon='ALL', tuKhoa=${tuKhoa}, trangThai=${trangThai})}"
+                   th:classappend="${nguon == null || nguon == 'ALL'} ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-100 font-medium'"
+                   class="px-3.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-[11px]"></i>
+                    <span>Tất cả khách hàng (<span th:text="${tongTatCa}">0</span>)</span>
+                </a>
+                <a th:href="@{/admin/khach-hang/hien-thi(nguon='ONLINE', tuKhoa=${tuKhoa}, trangThai=${trangThai})}"
+                   th:classappend="${nguon == 'ONLINE'} ? 'bg-indigo-600 text-white font-bold' : 'text-slate-600 hover:bg-slate-100 font-medium'"
+                   class="px-3.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition flex items-center gap-2">
+                    <i class="fa-solid fa-globe text-[11px]"></i>
+                    <span>Đăng ký Online (<span th:text="${tongOnline}">0</span>)</span>
+                </a>
+                <a th:href="@{/admin/khach-hang/hien-thi(nguon='POS', tuKhoa=${tuKhoa}, trangThai=${trangThai})}"
+                   th:classappend="${nguon == 'POS'} ? 'bg-amber-600 text-white font-bold' : 'text-slate-600 hover:bg-slate-100 font-medium'"
+                   class="px-3.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition flex items-center gap-2">
+                    <i class="fa-solid fa-cash-register text-[11px]"></i>
+                    <span>Lưu tại quầy POS (<span th:text="${tongPos}">0</span>)</span>
+                </a>
+            </div>
+
+            <!-- Form Filter Inputs -->
+            <form th:action="@{/admin/khach-hang/hien-thi}" method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <input type="hidden" name="nguon" th:value="${nguon}">
+
+                <!-- Từ khóa tìm kiếm -->
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tìm kiếm khách hàng</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                               placeholder="Tìm theo Họ tên, Số điện thoại, Email, Mã KH..."
+                               class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    </div>
+                </div>
+
+                <!-- Lọc Trạng thái -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Trạng thái tài khoản</label>
+                    <select name="trangThai"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                        <option value="" th:selected="${trangThai == null}">Tất cả trạng thái</option>
+                        <option value="1" th:selected="${trangThai != null && trangThai == 1}">Đang hoạt động</option>
+                        <option value="0" th:selected="${trangThai != null && trangThai == 0}">Đã tạm khóa</option>
+                    </select>
+                </div>
+
+                <!-- Buttons submit / reset -->
+                <div class="flex items-center gap-2">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-filter text-xs"></i>
+                        <span>Lọc dữ liệu</span>
+                    </button>
+                    <a th:href="@{/admin/khach-hang/hien-thi}"
+                       class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold transition flex items-center justify-center"
+                       title="Đặt lại bộ lọc">
+                        <i class="fa-solid fa-rotate-right text-xs"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. DATA TABLE DANH SÁCH KHÁCH HÀNG -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <th class="py-3.5 px-4 text-center w-12">#</th>
+                            <th class="py-3.5 px-4">Khách hàng</th>
+                            <th class="py-3.5 px-4">Số điện thoại</th>
+                            <th class="py-3.5 px-4">Email</th>
+                            <th class="py-3.5 px-4 text-center">Nguồn khách hàng</th>
+                            <th class="py-3.5 px-4 text-center">Ngày tạo</th>
+                            <th class="py-3.5 px-4 text-center">Trạng thái</th>
+                            <th class="py-3.5 px-4 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr th:if="${danhSachKhachHang == null || danhSachKhachHang.isEmpty()}">
+                            <td colspan="8" class="py-12 text-center text-slate-400">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="fa-solid fa-user-slash text-4xl mb-3 text-slate-300"></i>
+                                    <p class="text-sm font-semibold text-slate-600">Không tìm thấy khách hàng nào</p>
+                                    <p class="text-xs text-slate-400 mt-1">Hãy thử thay đổi điều kiện lọc hoặc từ khóa tìm kiếm</p>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:each="kh, stat : ${danhSachKhachHang}" class="hover:bg-slate-50/80 transition duration-150">
+                            <!-- Số thứ tự -->
+                            <td class="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]" th:text="${stat.count + (currentPage * 10)}">1</td>
+
+                            <!-- Thông tin khách hàng & Avatar -->
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-black text-xs uppercase flex-shrink-0">
+                                        <span th:text="${kh.hoTen != null && !kh.hoTen.isEmpty() ? kh.hoTen.substring(0, 1) : 'K'}">K</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-900 text-xs sm:text-sm" th:text="${kh.hoTen}">Nguyễn Văn A</div>
+                                        <div class="text-[10px] text-slate-400 font-mono" th:text="${kh.maKhachHang}">KH123456</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- SĐT -->
+                            <td class="py-3.5 px-4 font-mono font-semibold text-slate-800" th:text="${kh.soDienThoai != null ? kh.soDienThoai : '--'}">0912345678</td>
+
+                            <!-- Email -->
+                            <td class="py-3.5 px-4 text-slate-600">
+                                <span th:text="${kh.email != null ? kh.email : '--'}">email@example.com</span>
+                            </td>
+
+                            <!-- Nguồn khách hàng (Badge phân loại rõ ràng) -->
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${kh.taiQuay}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                    <i class="fa-solid fa-cash-register text-[9px]"></i>
+                                    <span>Lưu tại quầy (POS)</span>
+                                </span>
+                                <span th:unless="${kh.taiQuay}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <i class="fa-solid fa-globe text-[9px]"></i>
+                                    <span>Đăng ký Online</span>
+                                </span>
+                            </td>
+
+                            <!-- Ngày tạo -->
+                            <td class="py-3.5 px-4 text-center text-slate-500 font-mono text-[11px]"
+                                th:text="${kh.ngayTao != null ? #temporals.format(kh.ngayTao, 'dd/MM/yyyy HH:mm') : '--'}">
+                                01/01/2026
+                            </td>
+
+                            <!-- Trạng thái hoạt động -->
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${kh.trangThai != null && kh.trangThai == 1}"
+                                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="fa-solid fa-circle-check text-[9px]"></i>
+                                    <span>Hoạt động</span>
+                                </span>
+                                <span th:unless="${kh.trangThai != null && kh.trangThai == 1}"
+                                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
+                                    <i class="fa-solid fa-lock text-[9px]"></i>
+                                    <span>Đã khóa</span>
+                                </span>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="py-3.5 px-4 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <!-- Nút Xem chi tiết Modal -->
+                                    <button type="button"
+                                            th:onclick="'moModalChiTietKhach(' + ${kh.id} + ')'"
+                                            class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 flex items-center justify-center transition"
+                                            title="Xem hồ sơ khách hàng & đơn hàng">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+
+                                    <!-- Nút Toggle Khóa / Mở Khóa -->
+                                    <form th:action="@{/admin/khach-hang/doi-trang-thai/{id}(id=${kh.id})}" method="post" class="inline">
+                                        <button type="submit"
+                                                th:classappend="${kh.trangThai != null && kh.trangThai == 1} ? 'hover:bg-red-50 text-slate-600 hover:text-red-600' : 'hover:bg-emerald-50 text-slate-600 hover:text-emerald-600'"
+                                                class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                                                th:title="${kh.trangThai != null && kh.trangThai == 1} ? 'Khóa tài khoản khách hàng' : 'Mở khóa tài khoản khách hàng'">
+                                            <i th:class="${kh.trangThai != null && kh.trangThai == 1} ? 'fa-solid fa-lock text-xs' : 'fa-solid fa-lock-open text-xs'"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${totalPages != null && totalPages > 1}" class="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-slate-200/80 gap-3 text-xs text-slate-500">
+                <div>
+                    Hiển thị trang <span class="font-bold text-slate-700" th:text="${currentPage + 1}">1</span> / <span class="font-bold text-slate-700" th:text="${totalPages}">1</span>
+                    (Tổng cộng <span class="font-bold text-slate-700" th:text="${totalElements}">0</span> khách hàng)
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <a th:href="@{/admin/khach-hang/hien-thi(page=${currentPage - 1}, tuKhoa=${tuKhoa}, nguon=${nguon}, trangThai=${trangThai})}"
+                       th:if="${currentPage > 0}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 font-semibold transition">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i> Trước
+                    </a>
+                    <span th:unless="${currentPage > 0}" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i> Trước
+                    </span>
+
+                    <a th:href="@{/admin/khach-hang/hien-thi(page=${currentPage + 1}, tuKhoa=${tuKhoa}, nguon=${nguon}, trangThai=${trangThai})}"
+                       th:if="${currentPage + 1 < totalPages}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 font-semibold transition">
+                        Sau <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                    <span th:unless="${currentPage + 1 < totalPages}" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                        Sau <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL THÊM NHANH KHÁCH HÀNG -->
+    <div id="modalThemKhach" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base border border-blue-100">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm sm:text-base text-slate-900">Thêm khách hàng mới</h3>
+                        <p class="text-[11px] text-slate-500">Tạo tài khoản khách hàng trực tiếp vào hệ thống</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalThemKhach()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/khach-hang/them-nhanh}" method="post" class="space-y-4">
+                <!-- Chọn loại khách hàng -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Phân loại nguồn khách hàng</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-amber-400 cursor-pointer transition has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50">
+                            <input type="radio" name="laTaiQuay" value="true" checked class="text-amber-600 focus:ring-amber-500" onchange="toggleEmailRequired(true)">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800">Lưu tại quầy (POS)</span>
+                                <span class="block text-[10px] text-slate-500">Tự tạo email ảo nếu để trống</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 hover:border-indigo-400 cursor-pointer transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50/50">
+                            <input type="radio" name="laTaiQuay" value="false" class="text-indigo-600 focus:ring-indigo-500" onchange="toggleEmailRequired(false)">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800">Đăng ký Online</span>
+                                <span class="block text-[10px] text-slate-500">Bắt buộc nhập email thật</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Họ và tên -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Họ và tên khách hàng <span class="text-red-500">*</span></label>
+                    <input type="text" name="hoTen" required placeholder="VD: Nguyễn Văn Anh"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 font-medium">
+                </div>
+
+                <!-- Số điện thoại -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Số điện thoại (10 chữ số) <span class="text-red-500">*</span></label>
+                    <input type="tel" name="soDienThoai" required placeholder="VD: 0988888888" maxlength="10"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 font-medium">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Địa chỉ Email <span id="nhanEmailBatBuoc" class="text-slate-400 text-[10px]">(Tự sinh nếu là POS)</span>
+                    </label>
+                    <input type="email" id="inputEmailThem" name="email" placeholder="VD: customer@gmail.com"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 font-medium">
+                </div>
+
+                <!-- Giới tính & Ngày sinh -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Giới tính</label>
+                        <select name="gioiTinh" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 font-medium">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Ngày sinh</label>
+                        <input type="date" name="ngaySinh"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 font-medium">
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="dongModalThemKhach()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-bold transition">
+                        Hủy
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                        Lưu khách hàng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL XEM CHI TIẾT KHÁCH HÀNG & LỊCH SỬ ĐƠN HÀNG -->
+    <div id="modalChiTietKhach" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base border border-indigo-100">
+                        <i class="fa-solid fa-address-card"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm sm:text-base text-slate-900">Chi tiết Hồ sơ Khách hàng</h3>
+                        <p class="text-[11px] text-slate-500">Tra cứu điểm thưởng Coolcash, phân loại và đơn hàng</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModalChiTietKhach()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Nội dung chi tiết load động qua API -->
+            <div id="chiTietKhachLoading" class="py-12 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-3xl mb-2 text-blue-600"></i>
+                <p class="text-xs font-medium">Đang tải dữ liệu hồ sơ...</p>
+            </div>
+
+            <div id="chiTietKhachBody" class="hidden space-y-4">
+                <!-- Header thông tin -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <span class="text-slate-400 text-[10px] uppercase font-bold block">Họ và tên</span>
+                        <span id="dtHoTen" class="font-black text-slate-900 text-sm">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-[10px] uppercase font-bold block">Mã khách hàng</span>
+                        <span id="dtMaKh" class="font-mono font-bold text-blue-600">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-[10px] uppercase font-bold block">Số điện thoại</span>
+                        <span id="dtSdt" class="font-mono font-semibold text-slate-800">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-[10px] uppercase font-bold block">Email</span>
+                        <span id="dtEmail" class="text-slate-700">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-[10px] uppercase font-bold block">Nguồn khách hàng</span>
+                        <span id="dtNguon" class="font-bold">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-[10px] uppercase font-bold block">Ngày tham gia</span>
+                        <span id="dtNgayTao" class="font-mono text-slate-600">--</span>
+                    </div>
+                </div>
+
+                <!-- Thống kê Hội viên & Chi tiêu -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-amber-50/60 rounded-xl p-3 border border-amber-200 text-center">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Hạng Hội Viên</span>
+                        <span id="dtHang" class="text-xs sm:text-sm font-black text-amber-900 mt-1 block">Khách hàng mới</span>
+                    </div>
+                    <div class="bg-emerald-50/60 rounded-xl p-3 border border-emerald-200 text-center">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Ví Coolcash</span>
+                        <span id="dtCoolcash" class="text-xs sm:text-sm font-black text-emerald-900 mt-1 block">0 đ</span>
+                    </div>
+                    <div class="bg-blue-50/60 rounded-xl p-3 border border-blue-200 text-center">
+                        <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Tổng đơn hàng</span>
+                        <span id="dtSoDon" class="text-xs sm:text-sm font-black text-blue-900 mt-1 block">0</span>
+                    </div>
+                </div>
+
+                <!-- Lịch sử 5 đơn hàng gần nhất -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-receipt text-blue-600"></i>
+                        <span>Đơn hàng gần đây nhất</span>
+                    </h4>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase">
+                                <tr>
+                                    <th class="py-2.5 px-3">Mã đơn</th>
+                                    <th class="py-2.5 px-3">Kênh mua</th>
+                                    <th class="py-2.5 px-3">Tổng tiền</th>
+                                    <th class="py-2.5 px-3 text-right">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dtDanhSachDonHang" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="4" class="py-4 text-center text-slate-400">Chưa có đơn hàng nào</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 text-right">
+                <button type="button" onclick="dongModalChiTietKhach()" class="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT XỬ LÝ MODAL & API CHI TIẾT -->
+    <script>
+        function moModalThemKhach() {
+            document.getElementById('modalThemKhach').classList.remove('hidden');
+        }
+
+        function dongModalThemKhach() {
+            document.getElementById('modalThemKhach').classList.add('hidden');
+        }
+
+        function toggleEmailRequired(isPos) {
+            const emailInput = document.getElementById('inputEmailThem');
+            const nhanEmail = document.getElementById('nhanEmailBatBuoc');
+            if (isPos) {
+                emailInput.required = false;
+                nhanEmail.textContent = '(Tự sinh nếu là POS)';
+                nhanEmail.className = 'text-slate-400 text-[10px]';
+            } else {
+                emailInput.required = true;
+                nhanEmail.textContent = '* Bắt buộc cho Online';
+                nhanEmail.className = 'text-red-500 text-[10px] font-bold';
+            }
+        }
+
+        function moModalChiTietKhach(id) {
+            const modal = document.getElementById('modalChiTietKhach');
+            const loading = document.getElementById('chiTietKhachLoading');
+            const body = document.getElementById('chiTietKhachBody');
+            
+            modal.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            body.classList.add('hidden');
+
+            fetch(`/admin/khach-hang/api/${id}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Không thể tải thông tin khách hàng');
+                    return res.json();
+                })
+                .then(data => {
+                    document.getElementById('dtHoTen').textContent = data.hoTen || '--';
+                    document.getElementById('dtMaKh').textContent = data.maKhachHang || '--';
+                    document.getElementById('dtSdt').textContent = data.soDienThoai || '--';
+                    document.getElementById('dtEmail').textContent = data.email || '--';
+                    document.getElementById('dtNgayTao').textContent = data.ngayTao ? data.ngayTao.replace('T', ' ') : '--';
+                    
+                    const nguonEl = document.getElementById('dtNguon');
+                    if (data.laTaiQuay) {
+                        nguonEl.innerHTML = '<span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Lưu tại quầy (POS)</span>';
+                    } else {
+                        nguonEl.innerHTML = '<span class="text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">Đăng ký Online</span>';
+                    }
+
+                    document.getElementById('dtHang').textContent = data.hangThanhVien || 'Khách hàng mới';
+                    document.getElementById('dtCoolcash').textContent = (Number(data.soDuCoolcash || 0)).toLocaleString('vi-VN') + ' đ';
+                    document.getElementById('dtSoDon').textContent = data.soDonHang || 0;
+
+                    const tbody = document.getElementById('dtDanhSachDonHang');
+                    if (data.danhSachDonHang && data.danhSachDonHang.length > 0) {
+                        tbody.innerHTML = data.danhSachDonHang.map(dh => `
+                            <tr class="hover:bg-slate-50">
+                                <td class="py-2.5 px-3 font-mono font-bold text-blue-600">${dh.maDonHang || '--'}</td>
+                                <td class="py-2.5 px-3">
+                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${dh.loaiDonHang === 'TAI_QUAY' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}">
+                                        ${dh.loaiDonHang === 'TAI_QUAY' ? 'Tại quầy' : 'Online'}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 font-bold text-slate-800">${(Number(dh.tongTien || 0)).toLocaleString('vi-VN')} đ</td>
+                                <td class="py-2.5 px-3 text-right">
+                                    <span class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                                        ${dh.tenTrangThai || 'Hoàn thành'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-400">Chưa có đơn hàng nào</td></tr>';
+                    }
+
+                    loading.classList.add('hidden');
+                    body.classList.remove('hidden');
+                })
+                .catch(err => {
+                    loading.innerHTML = `<p class="text-red-500 font-bold">${err.message}</p>`;
+                });
+        }
+
+        function dongModalChiTietKhach() {
+            document.getElementById('modalChiTietKhach').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

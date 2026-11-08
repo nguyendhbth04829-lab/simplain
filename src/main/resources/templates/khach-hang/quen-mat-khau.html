@@ -1,0 +1,232 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quên mật khẩu & Đặt lại qua Gmail | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Header thương hiệu SIMPLAIN STORE -->
+    <header class="border-b border-slate-200 bg-white sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/cua-hang" class="flex items-center space-x-2">
+                <span class="text-xl font-black tracking-widest uppercase text-slate-900">SIMPLAIN<span class="text-blue-600">.</span></span>
+                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded tracking-wider uppercase border border-slate-200">STORE</span>
+            </a>
+            <div class="flex items-center space-x-4 text-xs font-semibold">
+                <a href="/khach-hang/dang-nhap" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                    <span>Quay lại Đăng nhập</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center py-10 px-4">
+        <div class="w-full max-w-md">
+
+            <!-- Card Lấy lại mật khẩu -->
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200 p-8 sm:p-10">
+
+                <!-- Header Icon & Title -->
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-sm">
+                        <i class="fa-solid fa-key text-2xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-black uppercase tracking-tight text-slate-900">Khôi phục Mật khẩu</h1>
+                    <p class="text-xs text-slate-500 mt-1">Lấy lại mật khẩu tài khoản qua mã xác thực OTP gửi về Gmail</p>
+                </div>
+
+                <!-- Step Indicator (Quy trình 2 bước) -->
+                <div class="flex items-center justify-center gap-2 mb-6 text-[11px] font-bold">
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition"
+                         th:classappend="${buoc == null or buoc == 1} ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-500'">
+                        <span class="w-4 h-4 rounded-full bg-white/20 text-center text-[10px] flex items-center justify-center">1</span>
+                        <span>Nhập Gmail</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition"
+                         th:classappend="${buoc == 2} ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-500'">
+                        <span class="w-4 h-4 rounded-full bg-white/20 text-center text-[10px] flex items-center justify-center">2</span>
+                        <span>Nhập OTP &amp; Đổi pass</span>
+                    </div>
+                </div>
+
+                <!-- Alert Thông báo Lỗi -->
+                <div th:if="${thongBaoLoi}" class="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start text-rose-800 text-xs shadow-xs animate-shake">
+                    <i class="fa-solid fa-circle-exclamation text-base mr-2.5 mt-0.5 text-rose-600 flex-shrink-0"></i>
+                    <span th:text="${thongBaoLoi}"></span>
+                </div>
+
+                <!-- Alert Thông báo Thành công -->
+                <div th:if="${thongBaoThanhCong}" class="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start text-emerald-800 text-xs shadow-xs">
+                    <i class="fa-solid fa-circle-check text-base mr-2.5 mt-0.5 text-emerald-600 flex-shrink-0"></i>
+                    <span th:text="${thongBaoThanhCong}"></span>
+                </div>
+
+                <!-- ========================================================================= -->
+                <!-- BƯỚC 1: NHẬP ĐỊA CHỈ GMAIL ĐỂ NHẬN MÃ XÁC THỰC OTP                        -->
+                <!-- ========================================================================= -->
+                <div th:if="${buoc == null or buoc == 1}">
+                    <form th:object="${yeuCauQuenMatKhauRequest}" th:action="@{/khach-hang/quen-mat-khau/gui-otp}" method="post" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                Địa chỉ Gmail / Email đăng ký <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-regular fa-envelope text-sm"></i>
+                                </span>
+                                <input type="email" th:field="*{email}" placeholder="Ví dụ: yourname@gmail.com" required
+                                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition placeholder:text-slate-400">
+                            </div>
+                            <p class="text-rose-500 text-xs mt-1" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+                            <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info text-[10px] text-blue-500"></i>
+                                Hệ thống sẽ gửi mã OTP gồm 6 chữ số có hiệu lực trong 10 phút.
+                            </p>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl uppercase tracking-wider text-xs transition duration-200 shadow-md shadow-blue-500/25 mt-4 flex items-center justify-center cursor-pointer">
+                            <i class="fa-solid fa-paper-plane mr-2 text-xs"></i>
+                            <span>GỬI MÃ XÁC THỰC OTP QUA GMAIL</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ========================================================================= -->
+                <!-- BƯỚC 2: NHẬP MÃ OTP & MẬT KHẨU MỚI                                         -->
+                <!-- ========================================================================= -->
+                <div th:if="${buoc == 2}">
+                    <form th:object="${xacNhanDoiMatKhauRequest}" th:action="@{/khach-hang/quen-mat-khau/dat-lai}" method="post" class="space-y-4">
+                        
+                        <!-- Email (Readonly để người dùng kiểm tra) -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                                Email nhận mã OTP
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-at text-xs"></i>
+                                </span>
+                                <input type="email" th:field="*{email}" readonly
+                                       class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold outline-none cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <!-- Mã OTP 6 số -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                Mã xác thực OTP (6 chữ số) <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-shield-halved text-sm text-emerald-600"></i>
+                                </span>
+                                <input type="text" th:field="*{maOtp}" placeholder="Nhập 6 chữ số (VD: 849201)" maxlength="6" pattern="[0-9]{6}" required
+                                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none text-base font-mono font-bold tracking-widest text-emerald-800 placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-400 transition">
+                            </div>
+                            <p class="text-rose-500 text-xs mt-1" th:if="${#fields.hasErrors('maOtp')}" th:errors="*{maOtp}"></p>
+                        </div>
+
+                        <!-- Mật khẩu mới -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                Mật khẩu mới <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-lock text-sm"></i>
+                                </span>
+                                <input type="password" id="inputPassMoi" th:field="*{matKhauMoi}" placeholder="Ít nhất 6 ký tự..." required minlength="6"
+                                       class="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition placeholder:text-slate-400">
+                                <button type="button" onclick="togglePassVisibility('inputPassMoi', 'iconPassMoi')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700">
+                                    <i class="fa-regular fa-eye text-xs" id="iconPassMoi"></i>
+                                </button>
+                            </div>
+                            <p class="text-rose-500 text-xs mt-1" th:if="${#fields.hasErrors('matKhauMoi')}" th:errors="*{matKhauMoi}"></p>
+                        </div>
+
+                        <!-- Xác nhận mật khẩu mới -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                Nhập lại mật khẩu mới <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-lock-open text-sm"></i>
+                                </span>
+                                <input type="password" id="inputPassConfirm" th:field="*{xacNhanMatKhauMoi}" placeholder="Xác nhận lại mật khẩu..." required minlength="6"
+                                       class="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition placeholder:text-slate-400">
+                                <button type="button" onclick="togglePassVisibility('inputPassConfirm', 'iconPassConfirm')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700">
+                                    <i class="fa-regular fa-eye text-xs" id="iconPassConfirm"></i>
+                                </button>
+                            </div>
+                            <p class="text-rose-500 text-xs mt-1" th:if="${#fields.hasErrors('xacNhanMatKhauMoi')}" th:errors="*{xacNhanMatKhauMoi}"></p>
+                        </div>
+
+                        <!-- Nút hoàn tất đổi mật khẩu -->
+                        <button type="submit"
+                                class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl uppercase tracking-wider text-xs transition duration-200 shadow-md shadow-emerald-600/25 mt-4 flex items-center justify-center cursor-pointer">
+                            <i class="fa-solid fa-check-double mr-2 text-xs"></i>
+                            <span>XÁC NHẬN &amp; ĐẶT LẠI MẬT KHẨU</span>
+                        </button>
+                    </form>
+
+                    <!-- Gửi lại mã OTP nếu chưa nhận được -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 text-center">
+                        <form th:action="@{/khach-hang/quen-mat-khau/gui-otp}" method="post" class="inline">
+                            <input type="hidden" name="email" th:value="${xacNhanDoiMatKhauRequest.email}">
+                            <span class="text-xs text-slate-500">Chưa nhận được mã OTP?</span>
+                            <button type="submit" class="text-xs text-blue-600 font-bold hover:underline ml-1 cursor-pointer">
+                                Gửi lại mã mới
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Footer quay về đăng nhập -->
+                <div class="mt-6 pt-5 border-t border-slate-200 text-center text-xs text-slate-500">
+                    Nhớ mật khẩu rồi?
+                    <a href="/khach-hang/dang-nhap" class="text-blue-600 font-bold hover:underline ml-1">Đăng nhập ngay</a>
+                </div>
+
+            </div>
+
+            <!-- Footer copyright -->
+            <p class="text-center text-[11px] text-slate-400 mt-6">
+                &copy; 2026 SIMPLAIN STORE &bull; Hệ thống bảo mật xác thực OTP qua Gmail.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        function togglePassVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+    <!-- Toan he thong Thong bao truc tiep tren man hinh (Simplain Toast) -->
+    <script src="/js/simplain-toast.js"></script>
+</body>
+</html>

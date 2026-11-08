@@ -37,8 +37,16 @@ public class KichThuocService {
      */
     @Transactional(readOnly = true)
     public Page<KichThuoc> layDanhSachPhanTrang(String tuKhoa, Pageable pageable) {
+        return layDanhSachPhanTrang(tuKhoa, null, pageable);
+    }
+
+    /**
+     * Lấy danh sách kích thước có phân trang, tìm kiếm theo từ khóa và trạng thái hoạt động.
+     */
+    @Transactional(readOnly = true)
+    public Page<KichThuoc> layDanhSachPhanTrang(String tuKhoa, Boolean kichHoat, Pageable pageable) {
         String tuKhoaChuan = (tuKhoa != null && !tuKhoa.isBlank()) ? tuKhoa.trim() : null;
-        Page<KichThuoc> pageData = kichThuocRepository.timKiemPhanTrang(tuKhoaChuan, pageable);
+        Page<KichThuoc> pageData = kichThuocRepository.timKiemPhanTrang(tuKhoaChuan, kichHoat, pageable);
         pageData.getContent().forEach(kt -> kt.setSoBienTheSuDung(demSoBienTheSuDungKichThuoc(kt.getId())));
         return pageData;
     }

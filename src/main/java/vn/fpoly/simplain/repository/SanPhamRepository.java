@@ -20,7 +20,7 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Long> {
 //
     /**
      * Tìm kiếm phân trang sản phẩm theo từ khóa (mã SP, tên SP, slug, chất liệu, form dáng),
-     * lọc theo danh mục, bộ sưu tập, form dáng và trạng thái kinh doanh.
+     * lọc theo danh mục, bộ sưu tập, form dáng, chất liệu, khoảng giá và trạng thái kinh doanh.
      */
     @Query("SELECT sp FROM SanPham sp WHERE " +
            "(:tuKhoa IS NULL OR :tuKhoa = '' OR " +
@@ -32,13 +32,25 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Long> {
            "(:maDanhMucId IS NULL OR sp.maDanhMucId = :maDanhMucId) AND " +
            "(:maBoSuuTapId IS NULL OR sp.maBoSuuTapId = :maBoSuuTapId) AND " +
            "(:formDang IS NULL OR :formDang = '' OR LOWER(sp.formDang) = LOWER(:formDang)) AND " +
+           "(:chatLieu IS NULL OR :chatLieu = '' OR LOWER(sp.chatLieu) LIKE LOWER(CONCAT('%', :chatLieu, '%'))) AND " +
+           "(:maChatLieuId IS NULL OR sp.maChatLieuId = :maChatLieuId) AND " +
+           "(:giaTu IS NULL OR sp.giaCoBan >= :giaTu) AND " +
+           "(:giaDen IS NULL OR sp.giaCoBan <= :giaDen) AND " +
            "(:kichHoat IS NULL OR sp.kichHoat = :kichHoat)")
     Page<SanPham> timKiemPhanTrang(@Param("tuKhoa") String tuKhoa,
                                    @Param("maDanhMucId") Long maDanhMucId,
                                    @Param("maBoSuuTapId") Long maBoSuuTapId,
                                    @Param("formDang") String formDang,
+                                   @Param("chatLieu") String chatLieu,
+                                   @Param("maChatLieuId") Long maChatLieuId,
+                                   @Param("giaTu") BigDecimal giaTu,
+                                   @Param("giaDen") BigDecimal giaDen,
                                    @Param("kichHoat") Boolean kichHoat,
                                    Pageable pageable);
+
+    default Page<SanPham> timKiemPhanTrang(String tuKhoa, Long maDanhMucId, Long maBoSuuTapId, String formDang, Boolean kichHoat, Pageable pageable) {
+        return timKiemPhanTrang(tuKhoa, maDanhMucId, maBoSuuTapId, formDang, null, null, null, null, kichHoat, pageable);
+    }
 
     /**
      * Tìm kiếm và lọc danh sách sản phẩm trên Storefront cho Khách hàng (US10):

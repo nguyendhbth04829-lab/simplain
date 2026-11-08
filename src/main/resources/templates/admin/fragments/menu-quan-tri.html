@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- =========================================================================================
+     FRAGMENT DÙNG CHUNG: THANH MENU QUẢN TRỊ SIMPLAIN CMS THEO PHONG CÁCH CHUẨN
+     Thiết kế: Dark Navy Sidebar (#131728) + Topbar Trắng + Modal System + Button Colors (#2563eb, #00cec9, #e17055)
+     Cách dùng: <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('san-pham')}"></div>
+     ========================================================================================= -->
+<div th:fragment="menuQuanTri(menuActive)">
+
+    <!-- Common CSS Styling theo phong cách Xanh Than - Trắng - Xanh Biển Sapphire Hiện Đại -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        body, button, input, select, textarea, table, th, td, h1, h2, h3, h4, h5, h6, span, p, a {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            text-rendering: optimizeLegibility;
+        }
+
+        :root {
+            --navy-dark: #0a192f;
+            --navy-main: #0f172a;
+            --navy-surface: #1e293b;
+            --navy-border: #334155;
+            --accent-blue: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --canvas-bg: #f8fafc;
+            --card-white: #ffffff;
+            --border-slate: #cbd5e1;
+        }
+
+        /* Nút Tối Thao Tác Chính (Primary Navy / Black Button) */
+        .btn-navy, .btn-black, .btn-primary {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            border: 1px solid #0f172a !important;
+            border-radius: 0.75rem; /* rounded-xl */
+            font-weight: 700;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        }
+        .btn-navy:hover, .btn-black:hover, .btn-primary:hover {
+            background-color: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3) !important;
+            transform: translateY(-1px);
+        }
+        .btn-navy:active, .btn-black:active, .btn-primary:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+        }
+
+        /* Nút Điểm Nhấn Xanh Biển (Accent Sapphire Blue) */
+        .btn-accent, .btn-blue {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #2563eb !important;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+        }
+        .btn-accent:hover, .btn-blue:hover {
+            background-color: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35) !important;
+            transform: translateY(-1px);
+        }
+        .btn-accent:active, .btn-blue:active {
+            transform: translateY(1px);
+        }
+
+        /* Nút Viền Mảnh Trắng Tinh Tế (Outline Button) */
+        .btn-outline {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .btn-outline:hover {
+            background-color: #eff6ff !important;
+            border-color: #3b82f6 !important;
+            color: #1d4ed8 !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+            transform: translateY(-1px);
+        }
+        .btn-outline:active {
+            transform: translateY(1px);
+        }
+
+        /* Nút Bật Trạng Thái (Kích hoạt lại khi đang ngưng) */
+        .btn-toggle-active {
+            background-color: #f0fdf4 !important;
+            color: #15803d !important;
+            border: 1px solid #86efac !important;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.375rem 0.625rem;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(22, 163, 74, 0.08);
+        }
+        .btn-toggle-active:hover {
+            background-color: #dcfce7 !important;
+            color: #166534 !important;
+            border-color: #22c55e !important;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2) !important;
+            transform: translateY(-1px);
+        }
+        .btn-toggle-active:active {
+            transform: translateY(1px);
+        }
+
+        /* Nút Tắt Trạng Thái (Tạm ngưng khi đang hoạt động) */
+        .btn-toggle-inactive {
+            background-color: #fffbeb !important;
+            color: #b45309 !important;
+            border: 1px solid #fde68a !important;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.375rem 0.625rem;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(217, 119, 6, 0.08);
+        }
+        .btn-toggle-inactive:hover {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            border-color: #f59e0b !important;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2) !important;
+            transform: translateY(-1px);
+        }
+        .btn-toggle-inactive:active {
+            transform: translateY(1px);
+        }
+
+        /* Nút Xóa Nguy Hiểm (Danger Outline) */
+        .btn-danger-outline {
+            background-color: #ffffff !important;
+            color: #e11d48 !important;
+            border: 1px solid #fecdd3 !important;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.375rem 0.625rem;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            text-decoration: none;
+        }
+        .btn-danger-outline:hover {
+            background-color: #fff1f2 !important;
+            color: #be123c !important;
+            border-color: #f43f5e !important;
+            box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2) !important;
+            transform: translateY(-1px);
+        }
+        .btn-danger-outline:active {
+            transform: translateY(1px);
+        }
+
+        /* Badge Trạng thái Rõ Ràng & Bắt mắt */
+        .status-badge-active {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+            letter-spacing: 0.025em;
+            box-shadow: 0 1px 2px rgba(16, 185, 129, 0.06);
+        }
+
+        .status-badge-inactive {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+            letter-spacing: 0.025em;
+        }
+
+        .pulse-dot {
+            width: 0.375rem;
+            height: 0.375rem;
+            border-radius: 9999px;
+            display: inline-block;
+        }
+
+        /* Tùy biến thanh cuộn sidebar */
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: #0a192f;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        /* =========================================================================
+           HỆ THỐNG GIAO DIỆN TỐI (DARK MODE) TOÀN DIỆN CHO ADMIN CMS
+           ========================================================================= */
+        html.dark, html.dark body, body.dark {
+            background-color: #0b0f19 !important;
+            color: #e2e8f0 !important;
+        }
+
+        html.dark main {
+            background-color: #0b0f19 !important;
+        }
+
+        /* Topbar Header Dark */
+        html.dark header {
+            background-color: #0f172a !important;
+            border-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+
+        /* Card, Container, Bảng, Hộp thoại Dark */
+        html.dark .bg-white {
+            background-color: #151d30 !important;
+            border-color: #23304c !important;
+            color: #f1f5f9 !important;
+        }
+
+        html.dark .bg-slate-50,
+        html.dark .bg-neutral-50,
+        html.dark .bg-slate-50\/50,
+        html.dark .bg-slate-50\/60,
+        html.dark .bg-slate-50\/70,
+        html.dark .bg-neutral-50\/80 {
+            background-color: #0f172a !important;
+            border-color: #1e293b !important;
+            color: #cbd5e1 !important;
+        }
+
+        /* Viền khung Dark */
+        html.dark .border-slate-200,
+        html.dark .border-slate-100,
+        html.dark .border-slate-300,
+        html.dark .border-neutral-200,
+        html.dark .border-neutral-100,
+        html.dark .border-neutral-300,
+        html.dark .border-neutral-200\/80,
+        html.dark .border-slate-200\/80,
+        html.dark .border-slate-200\/90 {
+            border-color: #23304c !important;
+        }
+
+        /* Chữ Dark Mode */
+        html.dark .text-slate-900,
+        html.dark .text-slate-800,
+        html.dark .text-neutral-900,
+        html.dark .text-neutral-800,
+        html.dark .text-black,
+        html.dark .text-\[\#0f172a\] {
+            color: #f8fafc !important;
+        }
+
+        html.dark .text-slate-700,
+        html.dark .text-slate-600,
+        html.dark .text-neutral-700,
+        html.dark .text-neutral-600 {
+            color: #cbd5e1 !important;
+        }
+
+        html.dark .text-slate-500,
+        html.dark .text-slate-400,
+        html.dark .text-neutral-500,
+        html.dark .text-neutral-400 {
+            color: #94a3b8 !important;
+        }
+
+        /* Input, Select, Textarea Dark Mode */
+        html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+        html.dark select,
+        html.dark textarea {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark input:focus,
+        html.dark select:focus,
+        html.dark textarea:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        }
+
+        /* Nút viền ngoài btn-outline trong Dark mode */
+        html.dark .btn-outline {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        html.dark .btn-outline:hover {
+            background-color: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        /* Bảng Table trong Dark mode */
+        html.dark table tbody tr {
+            border-color: #1e293b !important;
+        }
+        html.dark table tbody tr:hover {
+            background-color: rgba(30, 41, 59, 0.7) !important;
+        }
+        html.dark table thead tr {
+            border-color: #23304c !important;
+        }
+        html.dark table thead th {
+            color: #94a3b8 !important;
+        }
+
+        /* Modal Popup trong Dark mode */
+        html.dark [data-modal] > div,
+        html.dark #modalCaiDatGiaoDien > div,
+        html.dark #modalTaoDonNhanh > div {
+            background-color: #151d30 !important;
+            border-color: #23304c !important;
+            color: #f1f5f9 !important;
+        }
+    </style>
+
+    <!-- 1. LEFT SIDEBAR: Cột điều hướng Xanh Than (#0a192f / #0f172a) -->
+    <aside id="adminSidebar"
+           class="fixed top-0 bottom-0 left-0 w-64 bg-[#0a192f] border-r border-[#1e293b] z-50 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 -translate-x-full">
+        
+        <!-- Sidebar Brand Logo -->
+        <div class="h-16 flex items-center justify-between px-5 border-b border-[#1e293b] flex-shrink-0">
+            <a href="/admin/dashboard" class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-blue-500/30">
+                    S
+                </div>
+                <div>
+                    <span class="text-base font-black tracking-wider uppercase text-white">SIMPLAIN<span class="text-blue-500">.</span></span>
+                    <span class="block text-[9px] font-mono font-bold text-slate-400 tracking-widest uppercase">Admin Centre</span>
+                </div>
+            </a>
+            <!-- Mobile close button -->
+            <button type="button"
+                    onclick="dongSidebarMobile()"
+                    class="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Navigation Items -->
+        <div class="flex-grow overflow-y-auto sidebar-scroll py-4 px-3 space-y-6 text-xs">
+
+            <!-- NHÓM 1: TỔNG QUAN & DOANH THU -->
+            <div class="space-y-1" th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('DASHBOARD')}">
+                <div class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Tổng quan
+                </div>
+
+                <a href="/admin/dashboard"
+                   th:classappend="${menuActive == 'dashboard' or menuActive == 'thong-ke-doanh-thu'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150">
+                    <i class="fa-solid fa-chart-line w-4 text-center text-emerald-400"></i>
+                    <span class="text-xs">Dashboard &amp; Doanh thu</span>
+                </a>
+            </div>
+
+            <!-- NHÓM 2: DỊCH VỤ / SẢN PHẨM & KHO HÀNG -->
+            <div class="space-y-1" th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('SAN_PHAM')}">
+                <div class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Quản lý Hàng hóa
+                </div>
+
+                <!-- Danh mục -->
+                <a href="/admin/danh-muc/hien-thi"
+                   th:classappend="${menuActive == 'danh-muc'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-folder-tree w-4 text-center"></i>
+                        <span>Danh mục sản phẩm</span>
+                    </span>
+                </a>
+
+                <!-- Sản phẩm -->
+                <a href="/admin/san-pham/hien-thi"
+                   th:classappend="${menuActive == 'san-pham'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-shirt w-4 text-center"></i>
+                        <span>Quản lý sản phẩm</span>
+                    </span>
+                </a>
+
+                <!-- Biến thể SKU & Kho -->
+                <a href="/admin/bien-the/hien-thi"
+                   th:classappend="${menuActive == 'bien-the'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-boxes-stacked w-4 text-center"></i>
+                        <span>Biến thể SKU &amp; Tồn kho</span>
+                    </span>
+                </a>
+
+                <!-- Nhập hàng từ NCC & Quét Barcode -->
+                <a href="/admin/nhap-hang/hien-thi"
+                   th:classappend="${menuActive == 'nhap-hang'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-truck-ramp-box w-4 text-center"></i>
+                        <span>Nhập hàng từ NCC</span>
+                    </span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider"
+                          th:classappend="${menuActive == 'nhap-hang'} ? 'bg-blue-700 text-white font-bold' : 'text-amber-400 bg-slate-800/80'">BARCODE</span>
+                </a>
+
+                <!-- Bộ sưu tập -->
+                <a href="/admin/bo-suu-tap/hien-thi"
+                   th:classappend="${menuActive == 'bo-suu-tap'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-images w-4 text-center"></i>
+                        <span>Bộ sưu tập &amp; Banner</span>
+                    </span>
+                </a>
+
+                <!-- Màu sắc -->
+                <a href="/admin/mau-sac/hien-thi"
+                   th:classappend="${menuActive == 'mau-sac'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-palette w-4 text-center"></i>
+                        <span>Màu sắc sản phẩm</span>
+                    </span>
+                </a>
+
+                <!-- Kích thước -->
+                <a href="/admin/kich-thuoc/hien-thi"
+                   th:classappend="${menuActive == 'kich-thuoc'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-ruler-combined w-4 text-center"></i>
+                        <span>Kích thước (Size)</span>
+                    </span>
+                </a>
+
+                <!-- Chất liệu vải -->
+                <a href="/admin/chat-lieu/hien-thi"
+                   th:classappend="${menuActive == 'chat-lieu'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-scroll w-4 text-center"></i>
+                        <span>Chất liệu vải</span>
+                    </span>
+                    <span class="text-[9px] font-mono px-1.5 py-0.5 rounded"
+                          th:classappend="${menuActive == 'chat-lieu'} ? 'bg-blue-700 text-white font-bold' : 'text-slate-400 bg-slate-800/80'">VẢI</span>
+                </a>
+
+                <!-- Form dáng -->
+                <a href="/admin/form-dang/hien-thi"
+                   th:classappend="${menuActive == 'form-dang'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-person-rays w-4 text-center"></i>
+                        <span>Form dáng (Fit)</span>
+                    </span>
+                    <span class="text-[9px] font-mono px-1.5 py-0.5 rounded"
+                          th:classappend="${menuActive == 'form-dang'} ? 'bg-blue-700 text-white font-bold' : 'text-slate-400 bg-slate-800/80'">FIT</span>
+                </a>
+
+                <!-- Video quảng cáo sản phẩm -->
+                <a href="/admin/video-san-pham/hien-thi"
+                   th:classappend="${menuActive == 'video-san-pham'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-film w-4 text-center"></i>
+                        <span>Video quảng cáo SP</span>
+                    </span>
+                    <span class="text-[9px] font-mono px-1.5 py-0.5 rounded"
+                          th:classappend="${menuActive == 'video-san-pham'} ? 'bg-blue-700 text-white font-bold' : 'text-slate-400 bg-slate-800/80'">VIDEO</span>
+                </a>
+            </div>
+
+            <!-- NHÓM 3: BÁN HÀNG & THANH TOÁN (MOD 4 & MOD 5) -->
+            <div class="space-y-1" th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('BAN_HANG_POS') or quyenSet.contains('DON_HANG') or quyenSet.contains('DOI_TRA') or quyenSet.contains('KHUYEN_MAI') or quyenSet.contains('THANH_TOAN')}">
+                <div class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Bán hàng &amp; Đơn hàng
+                </div>
+
+                <!-- Bán hàng tại quầy (POS) -->
+                <a href="/admin/ban-hang-tai-quay"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('BAN_HANG_POS')}"
+                   th:classappend="${menuActive == 'pos'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-cash-register w-4 text-center text-amber-400"></i>
+                        <span class="font-bold">Bán hàng tại quầy</span>
+                    </span>
+                    <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30">POS</span>
+                </a>
+
+                <!-- Quản lý Đơn hàng & Kho -->
+                <a href="/admin/don-hang/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('DON_HANG')}"
+                   th:classappend="${menuActive == 'don-hang'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-box-open w-4 text-center"></i>
+                        <span>Quản lý Đơn hàng</span>
+                    </span>
+                </a>
+
+                <!-- Quản lý Khách hàng (Online & Tại quầy POS) -->
+                <a href="/admin/khach-hang/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('DON_HANG') or quyenSet.contains('BAN_HANG_POS') or quyenSet.contains('KHACH_HANG')}"
+                   th:classappend="${menuActive == 'khach-hang'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150">
+                    <i class="fa-solid fa-users w-4 text-center text-cyan-400"></i>
+                    <span>Quản lý Khách hàng</span>
+                </a>
+
+                <!-- Xét duyệt Đổi / Trả RMA -->
+                <a href="/admin/doi-tra/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('DOI_TRA')}"
+                   th:classappend="${menuActive == 'doi-tra'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-arrows-rotate w-4 text-center"></i>
+                        <span>Xét duyệt Đổi/Trả</span>
+                    </span>
+                </a>
+
+                <!-- Quản lý Đánh giá sản phẩm -->
+                <a href="/admin/danh-gia/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('SAN_PHAM')}"
+                   th:classappend="${menuActive == 'danh-gia'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-star w-4 text-center text-amber-400"></i>
+                        <span>Quản lý Đánh giá</span>
+                    </span>
+                </a>
+
+                <!-- Mã giảm giá / Voucher (US26 - Mod 6) -->
+                <a href="/admin/voucher/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('KHUYEN_MAI')}"
+                   th:classappend="${menuActive == 'voucher'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-ticket w-4 text-center text-amber-400"></i>
+                        <span>Mã giảm giá (Voucher)</span>
+                    </span>
+                </a>
+
+                <!-- Gói Combo Kích Cầu (US28 - Mod 6) -->
+                <a href="/admin/combo/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('KHUYEN_MAI')}"
+                   th:classappend="${menuActive == 'combo'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-boxes-packing w-4 text-center text-amber-400"></i>
+                        <span>Gói Combo kích cầu</span>
+                    </span>
+                </a>
+
+                <!-- Khung giờ Flash Sale (US29 - Mod 6) -->
+                <a href="/admin/flash-sale/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('KHUYEN_MAI')}"
+                   th:classappend="${menuActive == 'flash-sale'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-bolt w-4 text-center text-amber-400"></i>
+                        <span>Khung giờ Flash Sale</span>
+                    </span>
+                </a>
+
+                <!-- Cổng thanh toán -->
+                <a href="/admin/phuong-thuc-thanh-toan/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('THANH_TOAN')}"
+                   th:classappend="${menuActive == 'phuong-thuc-thanh-toan'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-credit-card w-4 text-center"></i>
+                        <span>Cổng thanh toán</span>
+                    </span>
+                </a>
+
+                <!-- Giao dịch thanh toán -->
+                <a href="/admin/giao-dich-thanh-toan/hien-thi"
+                   th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('THANH_TOAN')}"
+                   th:classappend="${menuActive == 'giao-dich-thanh-toan'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-receipt w-4 text-center"></i>
+                        <span>Lịch sử giao dịch</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- NHÓM: TRUYỀN THÔNG & NỘI DUNG (MOD 6 - US30) -->
+            <div class="space-y-1" th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('NOI_DUNG')}">
+                <div class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Truyền thông &amp; Nội dung
+                </div>
+
+                <!-- Bài viết Blog -->
+                <a href="/admin/noi-dung/blog"
+                   th:classappend="${menuActive == 'blog' || menuActive == 'noi-dung'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-newspaper w-4 text-center text-amber-400"></i>
+                        <span>Bài viết Blog (SEO)</span>
+                    </span>
+                </a>
+
+                <!-- Banner Quảng cáo -->
+                <a href="/admin/noi-dung/banner"
+                   th:classappend="${menuActive == 'banner'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-images w-4 text-center text-amber-400"></i>
+                        <span>Banner Quảng Cáo</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- NHÓM 4: QUẢN LÝ HỆ THỐNG & NHÂN SỰ -->
+            <div class="space-y-1" th:if="${quyenSet == null or quyenSet.isEmpty() or quyenSet.contains('ALL') or quyenSet.contains('HE_THONG')}">
+                <div class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Hệ thống &amp; Phân quyền
+                </div>
+
+                <!-- Nhân viên -->
+                <a href="/admin/nhan-vien/hien-thi"
+                   th:classappend="${menuActive == 'nhan-vien'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-user-tie w-4 text-center"></i>
+                        <span>Quản lý Nhân sự</span>
+                    </span>
+                </a>
+
+                <!-- Vai trò -->
+                <a href="/admin/vai-tro/hien-thi"
+                   th:classappend="${menuActive == 'vai-tro'} ? 'bg-blue-600 text-white font-extrabold shadow-md shadow-blue-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-lg transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-shield-halved w-4 text-center"></i>
+                        <span>Phân quyền Vai trò</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- NHÓM 5: LIÊN KẾT NHANH -->
+            <div class="space-y-1 pt-2 border-t border-[#1e293b]">
+                <a href="/cua-hang" target="_blank"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 transition duration-150">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-arrow-up-right-from-square w-4 text-center text-blue-400"></i>
+                        <span>Xem Cửa hàng Khách</span>
+                    </span>
+                    <span class="text-[10px] text-blue-400 font-mono">&nearr;</span>
+                </a>
+                <a href="/admin/dang-xuat"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-rose-300 hover:bg-rose-950/30 transition duration-150">
+                    <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center text-slate-400"></i>
+                    <span>Đăng xuất phiên làm việc</span>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Sidebar Footer Status (Click để xem / sửa hồ sơ cá nhân hoặc đăng xuất) -->
+        <div class="p-3.5 border-t border-[#1e293b] bg-[#071120] flex-shrink-0">
+            <div class="flex items-center justify-between gap-2">
+                <button type="button"
+                        onclick="moModalSuaThongTinTaiKhoan()"
+                        title="Click để sửa thông tin tài khoản"
+                        class="flex items-center gap-2.5 min-w-0 text-left hover:opacity-90 transition cursor-pointer flex-1 group">
+                    <div id="sidebarUserAvatar" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-bold text-xs uppercase shadow-xs flex-shrink-0 group-hover:border-blue-500 transition">
+                        <span th:if="${(nhanVienHienTai != null ? nhanVienHienTai : nhanVien) != null and (nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen) != null}"
+                              th:text="${#strings.substring((nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen), 0, 1)}">A</span>
+                        <i th:unless="${(nhanVienHienTai != null ? nhanVienHienTai : nhanVien) != null and (nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen) != null}" class="fa-solid fa-user-shield text-xs"></i>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div id="sidebarUserHoTen" class="text-xs font-bold text-white truncate group-hover:text-blue-400 transition"
+                             th:text="${nhanVienHienTai != null ? nhanVienHienTai.hoTen : (nhanVien != null ? nhanVien.hoTen : 'Ban Quản trị Simplain')}">Ban Quản trị Simplain</div>
+                        <div class="text-[10px] text-slate-400 flex items-center gap-1.5 font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-xs shadow-emerald-400/80"></span>
+                            <span id="sidebarUserVaiTro" class="truncate"
+                                  th:text="${nhanVienHienTai != null ? nhanVienHienTai.tenVaiTro : (nhanVien != null ? nhanVien.tenVaiTro : 'Hệ thống sẵn sàng')}">Hệ thống sẵn sàng</span>
+                        </div>
+                    </div>
+                </button>
+                <a href="/admin/dang-xuat"
+                   title="Đăng xuất khỏi CMS"
+                   class="w-7 h-7 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center transition flex-shrink-0 text-xs cursor-pointer">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </a>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- Backdrop trên Mobile khi mở Sidebar -->
+    <div id="sidebarBackdrop"
+         onclick="dongSidebarMobile()"
+         class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden"></div>
+
+    <!-- 2. TOPBAR: Thanh tiêu đề & Công cụ Trắng (#ffffff) -->
+    <header class="sticky top-0 z-30 bg-white border-b border-slate-200 lg:pl-64 h-16 flex items-center justify-between px-4 sm:px-6">
+        
+        <!-- Cụm Trái: Nút Hamburger Mobile & Điều hướng -->
+        <div class="flex items-center gap-3">
+            <button type="button"
+                    onclick="moSidebarMobile()"
+                    class="lg:hidden text-slate-600 hover:text-black p-2 rounded-lg hover:bg-slate-100 transition focus:outline-none"
+                    title="Mở menu quản trị">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium">
+                <span class="text-slate-400">Quản trị CMS</span>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+                <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px]" th:text="${menuActive}">Module</span>
+            </div>
+        </div>
+
+        <!-- Cụm Phải: Các icon công cụ & Profile (Giống ảnh thiết kế) -->
+        <div class="flex items-center gap-2 sm:gap-3 text-slate-500">
+            <!-- Icon Vị trí / Hỗ trợ -->
+            <a href="/cua-hang" target="_blank"
+               title="Xem trước giao diện Cửa hàng Storefront"
+               class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-bag-shopping text-blue-600"></i>
+                <span>Xem Storefront</span>
+            </a>
+
+            <!-- Icon Trợ giúp -->
+            <button type="button"
+                    title="Hướng dẫn sử dụng CMS"
+                    class="w-9 h-9 rounded-lg hover:bg-slate-100 hover:text-slate-800 flex items-center justify-center transition">
+                <i class="fa-regular fa-circle-question text-base"></i>
+            </button>
+
+            <!-- Nút Chuyển đổi Nhanh Sáng / Tối (Dark / Light Mode Toggle) -->
+            <button type="button"
+                    id="btnToggleTheme"
+                    onclick="toggleThemeNhanh()"
+                    title="Chuyển chế độ Giao diện Sáng / Tối"
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition shadow-2xs cursor-pointer">
+                <i id="themeToggleIcon" class="fa-solid fa-moon text-sm"></i>
+            </button>
+
+            <!-- Nút Mở Hộp thoại Cài Đặt Giao Diện & Hệ Thống (Settings Modal) -->
+            <button type="button"
+                    id="btnOpenSettings"
+                    onclick="moModalCaiDatGiaoDien()"
+                    title="Cài đặt giao diện & Hệ thống"
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition shadow-2xs cursor-pointer group">
+                <i class="fa-solid fa-gear text-sm group-hover:rotate-45 transition-transform duration-300"></i>
+            </button>
+
+            <!-- Avatar & Info Admin profile (Clickable Dropdown khi bấm vào hình ảnh tròn nhỏ) -->
+            <div class="relative pl-2 border-l border-slate-200 dark:border-slate-700">
+                <button type="button"
+                        id="btnAdminProfileMenu"
+                        onclick="toggleProfileDropdown(event)"
+                        title="Hồ sơ tài khoản & Đăng xuất"
+                        class="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer text-left focus:outline-none group">
+                    <div class="text-right hidden sm:block">
+                        <div id="topbarUserHoTen"
+                             class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition"
+                             th:text="${nhanVienHienTai != null ? nhanVienHienTai.hoTen : (nhanVien != null ? nhanVien.hoTen : 'Quản trị viên')}">Quản trị viên</div>
+                        <span id="topbarUserVaiTro"
+                              class="inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/60"
+                              th:text="${nhanVienHienTai != null ? nhanVienHienTai.tenVaiTro : (nhanVien != null ? nhanVien.tenVaiTro : 'ADMIN')}">ADMIN</span>
+                    </div>
+                    <!-- Hình ảnh tròn nhỏ (Avatar) -->
+                    <div id="topbarUserAvatar"
+                         class="w-9 h-9 rounded-full bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center text-xs font-black font-mono uppercase shadow-xs ring-2 ring-transparent group-hover:ring-blue-500 transition">
+                        <span th:if="${(nhanVienHienTai != null ? nhanVienHienTai : nhanVien) != null and (nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen) != null}"
+                              th:text="${#strings.substring((nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen), 0, 1)}">A</span>
+                        <span th:unless="${(nhanVienHienTai != null ? nhanVienHienTai : nhanVien) != null and (nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen) != null}">A</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition"></i>
+                </button>
+
+                <!-- Profile Dropdown Menu (Popup khi click hình tròn nhỏ) -->
+                <div id="adminProfileDropdown"
+                     class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-[#131b2e] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#23304c] py-2 z-50 transition">
+                    
+                    <!-- Khối tóm tắt thông tin tài khoản -->
+                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div id="dropdownUserAvatar"
+                                 class="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm font-black uppercase font-mono shadow-xs flex-shrink-0">
+                                <span th:if="${(nhanVienHienTai != null ? nhanVienHienTai : nhanVien) != null and (nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen) != null}"
+                                      th:text="${#strings.substring((nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen), 0, 1)}">A</span>
+                                <span th:unless="${(nhanVienHienTai != null ? nhanVienHienTai : nhanVien) != null and (nhanVienHienTai != null ? nhanVienHienTai.hoTen : nhanVien.hoTen) != null}">A</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h4 id="dropdownUserHoTen"
+                                    class="text-xs font-black text-slate-900 dark:text-white truncate"
+                                    th:text="${nhanVienHienTai != null ? nhanVienHienTai.hoTen : (nhanVien != null ? nhanVien.hoTen : 'Quản trị viên')}">Quản trị viên</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                    @<span id="dropdownUserTenDangNhap" th:text="${nhanVienHienTai != null ? nhanVienHienTai.tenDangNhap : (nhanVien != null ? nhanVien.tenDangNhap : 'admin')}">admin</span>
+                                    &bull;
+                                    <span id="dropdownUserMaNV" class="font-mono font-bold" th:text="${nhanVienHienTai != null ? nhanVienHienTai.maNhanVien : (nhanVien != null ? nhanVien.maNhanVien : 'NV001')}">NV001</span>
+                                </p>
+                                <div class="mt-1">
+                                    <span id="dropdownUserVaiTro"
+                                          class="inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/60"
+                                          th:text="${nhanVienHienTai != null ? nhanVienHienTai.tenVaiTro : (nhanVien != null ? nhanVien.tenVaiTro : 'Quản trị viên')}">ADMIN</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Các mục hành động -->
+                    <div class="py-1">
+                        <!-- Nút Sửa thông tin tài khoản -->
+                        <button type="button"
+                                onclick="moModalSuaThongTinTaiKhoan()"
+                                class="w-full px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-3 transition cursor-pointer text-left">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-user-pen text-xs"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-bold text-[12px]">Sửa thông tin tài khoản</div>
+                                <div class="text-[10px] text-slate-400">Họ tên, SĐT, Email, Đổi mật khẩu</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+                        </button>
+
+                        <!-- Nút Cài đặt giao diện -->
+                        <button type="button"
+                                onclick="moModalCaiDatGiaoDien(); dongProfileDropdown();"
+                                class="w-full px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-3 transition cursor-pointer text-left">
+                            <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-palette text-xs"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-bold text-[12px]">Cài đặt Giao diện</div>
+                                <div class="text-[10px] text-slate-400">Sáng / Tối, Tinh gọn</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Phân cách & Nút Đăng xuất -->
+                    <div class="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
+                        <a href="/admin/dang-xuat"
+                           class="w-full px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-3 transition group">
+                            <div class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-bold text-[12px]">Đăng xuất</div>
+                                <div class="text-[10px] text-slate-400">Thoát khỏi phiên làm việc CMS</div>
+                            </div>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <!-- =========================================================================
+         MODAL CÀI ĐẶT GIAO DIỆN & TÙY CHỌN HỆ THỐNG (SETTINGS MODAL)
+         ========================================================================= -->
+    <div id="modalCaiDatGiaoDien"
+         data-modal
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">Cài Đặt Giao Diện &amp; Hệ Thống</h3>
+                        <p class="text-[11px] text-slate-500">Tùy biến hiển thị theo phong cách cá nhân</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalCaiDatGiaoDien')"
+                        class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- 1. Chọn Chế độ Sáng / Tối -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Chế độ hiển thị (Theme Mode)
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="chonThemeMode('light')" id="btnOptLight"
+                            class="theme-opt-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-blue-500 flex flex-col items-center gap-1.5 transition text-center cursor-pointer">
+                        <i class="fa-solid fa-sun text-amber-500 text-lg"></i>
+                        <span class="text-xs font-bold text-slate-800">Sáng</span>
+                        <span class="text-[10px] text-slate-400">Ban ngày</span>
+                    </button>
+                    <button type="button" onclick="chonThemeMode('dark')" id="btnOptDark"
+                            class="theme-opt-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-blue-500 flex flex-col items-center gap-1.5 transition text-center cursor-pointer">
+                        <i class="fa-solid fa-moon text-indigo-400 text-lg"></i>
+                        <span class="text-xs font-bold text-slate-800">Tối</span>
+                        <span class="text-[10px] text-slate-400">Dịu mắt ban đêm</span>
+                    </button>
+                    <button type="button" onclick="chonThemeMode('system')" id="btnOptSystem"
+                            class="theme-opt-btn p-3 rounded-2xl border-2 border-slate-200 hover:border-blue-500 flex flex-col items-center gap-1.5 transition text-center cursor-pointer">
+                        <i class="fa-solid fa-laptop text-blue-500 text-lg"></i>
+                        <span class="text-xs font-bold text-slate-800">Tự động</span>
+                        <span class="text-[10px] text-slate-400">Theo hệ điều hành</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Tùy chọn Mật độ hiển thị Dashboard -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Bố cục Dashboard Quản Trị
+                </label>
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
+                        <div>
+                            <div class="text-xs font-bold text-slate-900">Bố cục Tinh Gọn (Clean Mode)</div>
+                            <div class="text-[10px] text-slate-500">Tập trung 100% vào số liệu kinh doanh &amp; biểu đồ chính</div>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">Đang bật</span>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[11px] text-slate-400 font-medium">Tự động lưu vào trình duyệt</span>
+                <button type="button" onclick="dongModal('modalCaiDatGiaoDien')"
+                        class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs">
+                    Hoàn tất
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL SỬA THÔNG TIN TÀI KHOẢN CÁ NHÂN (USER PROFILE MODAL)
+         ========================================================================= -->
+    <div id="modalSuaThongTinTaiKhoan"
+         data-modal
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        
+        <div class="bg-white dark:bg-[#131b2e] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-[#23304c] max-h-[92vh] overflow-y-auto">
+            
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20 text-base">
+                        <i class="fa-solid fa-id-badge"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900 dark:text-white">Hồ Sơ &amp; Sửa Thông Tin Tài Khoản</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Cập nhật thông tin cá nhân và mật khẩu đăng nhập</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModalSuaThongTinTaiKhoan()"
+                        class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <form id="formSuaThongTinTaiKhoan" onsubmit="xuLyLuuHoSoCaNhan(event)" class="space-y-4 mt-5" novalidate>
+                
+                <!-- Alert thông báo -->
+                <div id="profileAlertBox" class="hidden p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5">
+                    <i id="profileAlertIcon" class="fa-solid fa-circle-info text-base flex-shrink-0"></i>
+                    <span id="profileAlertText" class="flex-1"></span>
+                </div>
+
+                <!-- Thông tin cố định hệ thống (Mã NV, Tên đăng nhập, Vai trò) -->
+                <div class="bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mã nhân viên</span>
+                        <span id="profileDisplayMaNV" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs"
+                              th:text="${(nhanVienHienTai != null ? nhanVienHienTai.maNhanVien : (nhanVien != null ? nhanVien.maNhanVien : 'NV001'))}">NV001</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tên đăng nhập</span>
+                        <span id="profileDisplayTenDangNhap" class="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs"
+                              th:text="${(nhanVienHienTai != null ? nhanVienHienTai.tenDangNhap : (nhanVien != null ? nhanVien.tenDangNhap : 'admin'))}">admin</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Vai trò</span>
+                        <span id="profileDisplayVaiTro" class="inline-block font-extrabold uppercase text-[10px] px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/60"
+                              th:text="${(nhanVienHienTai != null ? nhanVienHienTai.tenVaiTro : (nhanVien != null ? nhanVien.tenVaiTro : 'ADMIN'))}">ADMIN</span>
+                    </div>
+                </div>
+
+                <!-- Họ và tên (Bắt buộc) -->
+                <div>
+                    <label for="profileInputHoTen" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                        Họ và tên <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                        <input type="text"
+                               id="profileInputHoTen"
+                               required
+                               placeholder="Nhập họ và tên đầy đủ"
+                               th:value="${nhanVienHienTai != null ? nhanVienHienTai.hoTen : (nhanVien != null ? nhanVien.hoTen : '')}"
+                               class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-slate-800 dark:text-white transition font-medium">
+                    </div>
+                    <p id="profileErrorHoTen" class="text-[11px] text-rose-600 font-semibold mt-1 hidden"></p>
+                </div>
+
+                <!-- Grid 2 cột: SĐT & Email -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="profileInputSoDienThoai" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                            Số điện thoại
+                        </label>
+                        <div class="relative">
+                            <i class="fa-solid fa-phone absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="tel"
+                                   id="profileInputSoDienThoai"
+                                   placeholder="VD: 0912345678"
+                                   th:value="${nhanVienHienTai != null ? nhanVienHienTai.soDienThoai : (nhanVien != null ? nhanVien.soDienThoai : '')}"
+                                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-slate-800 dark:text-white transition font-mono font-medium">
+                        </div>
+                        <p id="profileErrorSoDienThoai" class="text-[11px] text-rose-600 font-semibold mt-1 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label for="profileInputEmail" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                            Email liên hệ
+                        </label>
+                        <div class="relative">
+                            <i class="fa-regular fa-envelope absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="email"
+                                   id="profileInputEmail"
+                                   placeholder="VD: nhanvien@simplain.vn"
+                                   th:value="${nhanVienHienTai != null ? nhanVienHienTai.email : (nhanVien != null ? nhanVien.email : '')}"
+                                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-slate-800 dark:text-white transition font-medium">
+                        </div>
+                        <p id="profileErrorEmail" class="text-[11px] text-rose-600 font-semibold mt-1 hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Khối Đổi Mật Khẩu (Accordion / Expandable) -->
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button"
+                            onclick="toggleDoiMatKhauProfile()"
+                            class="flex items-center justify-between w-full py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 transition cursor-pointer">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-key text-blue-600 text-xs"></i>
+                            <span>Đổi mật khẩu tài khoản</span>
+                            <span class="text-[10px] text-slate-400 font-normal">(Để trống nếu không đổi)</span>
+                        </span>
+                        <i id="iconToggleDoiMatKhau" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                    </button>
+
+                    <div id="boxDoiMatKhauProfile" class="hidden space-y-3 mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700">
+                        <div>
+                            <label for="profileInputMatKhauMoi" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                Mật khẩu mới
+                            </label>
+                            <input type="password"
+                                   id="profileInputMatKhauMoi"
+                                   placeholder="Tối thiểu 6 ký tự"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-slate-800 dark:text-white transition">
+                        </div>
+                        <div>
+                            <label for="profileInputXacNhanMatKhau" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                Nhập lại mật khẩu mới
+                            </label>
+                            <input type="password"
+                                   id="profileInputXacNhanMatKhau"
+                                   placeholder="Nhập lại chính xác mật khẩu mới"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-slate-800 dark:text-white transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <a href="/admin/dang-xuat"
+                       class="text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        <span>Đăng xuất</span>
+                    </a>
+                    
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                onclick="dongModalSuaThongTinTaiKhoan()"
+                                class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                            Hủy bỏ
+                        </button>
+                        <button type="submit"
+                                id="btnLuuHoSoProfile"
+                                class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                            <i id="btnLuuHoSoIcon" class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span id="btnLuuHoSoText">Lưu thay đổi</span>
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT HỖ TRỢ SIDEBAR MOBILE & HỆ THỐNG MODAL DÙNG CHUNG TOÀN CMS -->
+    <script>
+        // Khởi tạo trạng thái Theme ngay khi load trang
+        (function() {
+            const currentTheme = localStorage.getItem('simplain_admin_theme') || 'light';
+            apDungTheme(currentTheme, false);
+        })();
+
+        function apDungTheme(theme, save) {
+            if (save) {
+                localStorage.setItem('simplain_admin_theme', theme);
+            }
+            let isDark = false;
+            if (theme === 'dark') {
+                isDark = true;
+            } else if (theme === 'system') {
+                isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+                const icon = document.getElementById('themeToggleIcon');
+                if (icon) {
+                    icon.className = 'fa-solid fa-sun text-amber-400 text-sm';
+                }
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+                const icon = document.getElementById('themeToggleIcon');
+                if (icon) {
+                    icon.className = 'fa-solid fa-moon text-slate-700 text-sm';
+                }
+            }
+            capNhatGiaoDienModalCaiDat(theme);
+        }
+
+        function toggleThemeNhanh() {
+            const currentTheme = localStorage.getItem('simplain_admin_theme') || 'light';
+            let nextTheme = 'dark';
+            if (currentTheme === 'dark') {
+                nextTheme = 'light';
+            } else if (currentTheme === 'system') {
+                const isSysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                nextTheme = isSysDark ? 'light' : 'dark';
+            }
+            apDungTheme(nextTheme, true);
+        }
+
+        function chonThemeMode(theme) {
+            apDungTheme(theme, true);
+        }
+
+        function moModalCaiDatGiaoDien() {
+            const currentTheme = localStorage.getItem('simplain_admin_theme') || 'light';
+            capNhatGiaoDienModalCaiDat(currentTheme);
+            moModal('modalCaiDatGiaoDien');
+        }
+
+        function capNhatGiaoDienModalCaiDat(theme) {
+            const btnLight = document.getElementById('btnOptLight');
+            const btnDark = document.getElementById('btnOptDark');
+            const btnSystem = document.getElementById('btnOptSystem');
+            if (!btnLight || !btnDark || !btnSystem) return;
+
+            const activeClass = ['border-blue-600', 'bg-blue-50/50', 'ring-2', 'ring-blue-400'];
+            [btnLight, btnDark, btnSystem].forEach(b => b.classList.remove(...activeClass));
+
+            if (theme === 'dark') {
+                btnDark.classList.add(...activeClass);
+            } else if (theme === 'system') {
+                btnSystem.classList.add(...activeClass);
+            } else {
+                btnLight.classList.add(...activeClass);
+            }
+        }
+        function moSidebarMobile() {
+            const sidebar = document.getElementById('adminSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) sidebar.classList.remove('-translate-x-full');
+            if (backdrop) backdrop.classList.remove('hidden');
+        }
+
+        function dongSidebarMobile() {
+            const sidebar = document.getElementById('adminSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) sidebar.classList.add('-translate-x-full');
+            if (backdrop) backdrop.classList.add('hidden');
+        }
+
+        // Bật / Tắt hiển thị Card Bộ lọc tìm kiếm
+        function toggleBoLoc() {
+            const content = document.getElementById('boLocContent');
+            const icon = document.getElementById('boLocIcon');
+            if (!content) return;
+            const dangMo = !content.classList.contains('hidden');
+            if (dangMo) {
+                content.classList.add('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-down text-xs text-slate-400';
+            } else {
+                content.classList.remove('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-up text-xs text-slate-400';
+            }
+        }
+
+        // Mở Modal Form Popup
+        function moModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Đóng Modal Form Popup
+        function dongModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Bật / Tắt Menu Dropdown của Avatar Profile
+        function toggleProfileDropdown(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('adminProfileDropdown');
+            if (!dropdown) return;
+            dropdown.classList.toggle('hidden');
+        }
+
+        function dongProfileDropdown() {
+            const dropdown = document.getElementById('adminProfileDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+
+        // Tự động đóng dropdown profile khi click ra bên ngoài
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('adminProfileDropdown');
+            const btn = document.getElementById('btnAdminProfileMenu');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                if (!dropdown.contains(event.target) && (!btn || !btn.contains(event.target))) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        });
+
+        // Mở Modal Sửa thông tin tài khoản
+        function moModalSuaThongTinTaiKhoan() {
+            dongProfileDropdown();
+            const alertBox = document.getElementById('profileAlertBox');
+            if (alertBox) alertBox.classList.add('hidden');
+            ['profileErrorHoTen', 'profileErrorSoDienThoai', 'profileErrorEmail'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.innerText = ''; el.classList.add('hidden'); }
+            });
+            moModal('modalSuaThongTinTaiKhoan');
+        }
+
+        function dongModalSuaThongTinTaiKhoan() {
+            dongModal('modalSuaThongTinTaiKhoan');
+        }
+
+        // Mở / Đóng khối Đổi mật khẩu
+        function toggleDoiMatKhauProfile() {
+            const box = document.getElementById('boxDoiMatKhauProfile');
+            const icon = document.getElementById('iconToggleDoiMatKhau');
+            if (!box) return;
+            const isHidden = box.classList.contains('hidden');
+            if (isHidden) {
+                box.classList.remove('hidden');
+                if (icon) icon.classList.add('rotate-180');
+            } else {
+                box.classList.add('hidden');
+                if (icon) icon.classList.remove('rotate-180');
+                const p1 = document.getElementById('profileInputMatKhauMoi');
+                const p2 = document.getElementById('profileInputXacNhanMatKhau');
+                if (p1) p1.value = '';
+                if (p2) p2.value = '';
+            }
+        }
+
+        // Xử lý gửi AJAX lưu thông tin hồ sơ cá nhân
+        async function xuLyLuuHoSoCaNhan(e) {
+            e.preventDefault();
+            const hoTen = document.getElementById('profileInputHoTen').value.trim();
+            const soDienThoai = document.getElementById('profileInputSoDienThoai').value.trim();
+            const email = document.getElementById('profileInputEmail').value.trim();
+            const matKhauMoi = document.getElementById('profileInputMatKhauMoi') ? document.getElementById('profileInputMatKhauMoi').value.trim() : '';
+            const xacNhanMatKhau = document.getElementById('profileInputXacNhanMatKhau') ? document.getElementById('profileInputXacNhanMatKhau').value.trim() : '';
+
+            const alertBox = document.getElementById('profileAlertBox');
+            const alertText = document.getElementById('profileAlertText');
+            const alertIcon = document.getElementById('profileAlertIcon');
+            const btnText = document.getElementById('btnLuuHoSoText');
+            const btnIcon = document.getElementById('btnLuuHoSoIcon');
+            const btnLuu = document.getElementById('btnLuuHoSoProfile');
+
+            // Reset thông báo lỗi
+            ['profileErrorHoTen', 'profileErrorSoDienThoai', 'profileErrorEmail'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.innerText = ''; el.classList.add('hidden'); }
+            });
+            if (alertBox) alertBox.classList.add('hidden');
+
+            // Kiểm tra validate client
+            if (!hoTen) {
+                const err = document.getElementById('profileErrorHoTen');
+                if (err) {
+                    err.innerText = 'Họ và tên không được để trống!';
+                    err.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (matKhauMoi) {
+                if (matKhauMoi.length < 6) {
+                    if (alertBox) {
+                        alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 bg-rose-50 text-rose-700 border-rose-200';
+                        alertIcon.className = 'fa-solid fa-triangle-exclamation text-base flex-shrink-0 text-rose-600';
+                        alertText.innerText = 'Mật khẩu mới phải có ít nhất 6 ký tự!';
+                        alertBox.classList.remove('hidden');
+                    }
+                    return;
+                }
+                if (matKhauMoi !== xacNhanMatKhau) {
+                    if (alertBox) {
+                        alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 bg-rose-50 text-rose-700 border-rose-200';
+                        alertIcon.className = 'fa-solid fa-triangle-exclamation text-base flex-shrink-0 text-rose-600';
+                        alertText.innerText = 'Mật khẩu mới và xác nhận mật khẩu không trùng khớp!';
+                        alertBox.classList.remove('hidden');
+                    }
+                    return;
+                }
+            }
+
+            // Bật hiệu ứng chờ
+            if (btnLuu) btnLuu.disabled = true;
+            if (btnText) btnText.innerText = 'Đang lưu...';
+            if (btnIcon) btnIcon.className = 'fa-solid fa-spinner fa-spin text-xs';
+
+            try {
+                const response = await fetch('/admin/api/tai-khoan/cap-nhat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hoTen, soDienThoai, email, matKhauMoi, xacNhanMatKhau })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.thanhCong) {
+                    if (alertBox) {
+                        alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 bg-emerald-50 text-emerald-800 border-emerald-200';
+                        alertIcon.className = 'fa-solid fa-circle-check text-base flex-shrink-0 text-emerald-600';
+                        alertText.innerText = data.thongBao || 'Cập nhật thông tin thành công!';
+                        alertBox.classList.remove('hidden');
+                    }
+
+                    // Cập nhật giao diện realtime ngay lập tức
+                    if (data.hoTen) {
+                        const topHoTen = document.getElementById('topbarUserHoTen');
+                        if (topHoTen) topHoTen.innerText = data.hoTen;
+                        const dropHoTen = document.getElementById('dropdownUserHoTen');
+                        if (dropHoTen) dropHoTen.innerText = data.hoTen;
+                        const sideHoTen = document.getElementById('sidebarUserHoTen');
+                        if (sideHoTen) sideHoTen.innerText = data.hoTen;
+                    }
+                    if (data.avatarLetter) {
+                        const topAvatar = document.getElementById('topbarUserAvatar');
+                        if (topAvatar) topAvatar.innerHTML = '<span>' + data.avatarLetter + '</span>';
+                        const dropAvatar = document.getElementById('dropdownUserAvatar');
+                        if (dropAvatar) dropAvatar.innerHTML = '<span>' + data.avatarLetter + '</span>';
+                        const sideAvatar = document.getElementById('sidebarUserAvatar');
+                        if (sideAvatar) sideAvatar.innerHTML = '<span>' + data.avatarLetter + '</span>';
+                    }
+
+                    // Tự động đóng modal sau 1 giây
+                    setTimeout(() => {
+                        dongModalSuaThongTinTaiKhoan();
+                    }, 1000);
+                } else {
+                    if (alertBox) {
+                        alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 bg-rose-50 text-rose-700 border-rose-200';
+                        alertIcon.className = 'fa-solid fa-triangle-exclamation text-base flex-shrink-0 text-rose-600';
+                        alertText.innerText = data.thongBao || 'Cập nhật thất bại, vui lòng kiểm tra lại thông tin!';
+                        alertBox.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                if (alertBox) {
+                    alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 bg-rose-50 text-rose-700 border-rose-200';
+                    alertIcon.className = 'fa-solid fa-triangle-exclamation text-base flex-shrink-0 text-rose-600';
+                    alertText.innerText = 'Lỗi kết nối máy chủ: ' + err.message;
+                    alertBox.classList.remove('hidden');
+                }
+            } finally {
+                if (btnLuu) btnLuu.disabled = false;
+                if (btnText) btnText.innerText = 'Lưu thay đổi';
+                if (btnIcon) btnIcon.className = 'fa-solid fa-floppy-disk text-xs';
+            }
+        }
+
+        // Đóng modal khi nhấn phím ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('[data-modal]').forEach(m => {
+                    if (!m.classList.contains('hidden')) {
+                        m.classList.add('hidden');
+                        m.classList.remove('flex');
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Hệ thống thông báo trực tiếp trên màn hình Simplain Toast (thay thế toàn bộ alert) -->
+    <script src="/js/simplain-toast.js"></script>
+
+</div>
+
+</body>
+</html>
+

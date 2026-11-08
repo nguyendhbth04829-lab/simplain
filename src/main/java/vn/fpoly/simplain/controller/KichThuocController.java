@@ -43,13 +43,14 @@ public class KichThuocController {
     @GetMapping({"", "/", "/hien-thi"})
     public String hienThi(Model model,
                           @RequestParam(defaultValue = "0") Integer page,
-                          @RequestParam(required = false) String tuKhoa) {
+                          @RequestParam(required = false) String tuKhoa,
+                          @RequestParam(required = false) Boolean kichHoat) {
         if (page == null || page < 0) {
             page = 0;
         }
         int size = 6;
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<KichThuoc> kichThuocPage = kichThuocService.layDanhSachPhanTrang(tuKhoa, pageable);
+        Page<KichThuoc> kichThuocPage = kichThuocService.layDanhSachPhanTrang(tuKhoa, kichHoat, pageable);
 
         model.addAttribute("listKichThuoc", kichThuocPage.getContent());
         model.addAttribute("pageData", kichThuocPage);
@@ -59,7 +60,16 @@ public class KichThuocController {
         model.addAttribute("page", page);
         model.addAttribute("totalPages", kichThuocPage.getTotalPages());
         model.addAttribute("tuKhoa", tuKhoa != null ? tuKhoa : "");
-        model.addAttribute("tongKichThuoc", kichThuocRepository.count());
+        model.addAttribute("kichHoat", kichHoat);
+
+        List<KichThuoc> tatCaSizes = kichThuocService.layTatCa();
+        long tongKichThuoc = tatCaSizes.size();
+        long soDangHoatDong = tatCaSizes.stream().filter(kt -> Boolean.TRUE.equals(kt.getKichHoat())).count();
+        long soVoHieuHoa = tongKichThuoc - soDangHoatDong;
+
+        model.addAttribute("tongKichThuoc", tongKichThuoc);
+        model.addAttribute("soDangHoatDong", soDangHoatDong);
+        model.addAttribute("soVoHieuHoa", soVoHieuHoa);
         model.addAttribute("tongMauSac", mauSacRepository.count());
 
         return "admin/kich-thuoc/hien-thi";
@@ -76,7 +86,7 @@ public class KichThuocController {
                       @RequestParam(defaultValue = "0") Integer page) {
         if (result.hasErrors()) {
             model.addAttribute("thongBaoLoi", "Dữ liệu kích thước chưa hợp lệ, vui lòng kiểm tra lại mã size và tên kích thước!");
-            return hienThi(model, page, null);
+            return hienThi(model, page, null, null);
         }
 
         try {
@@ -86,7 +96,7 @@ public class KichThuocController {
             return "redirect:/admin/kich-thuoc/hien-thi";
         } catch (IllegalArgumentException e) {
             model.addAttribute("thongBaoLoi", e.getMessage());
-            return hienThi(model, page, null);
+            return hienThi(model, page, null, null);
         }
     }
 

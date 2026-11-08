@@ -83,11 +83,29 @@ public class SanPhamService {
                                               String formDang,
                                               Boolean kichHoat,
                                               Pageable pageable) {
+        return layDanhSachPhanTrang(tuKhoa, maDanhMucId, maBoSuuTapId, formDang, null, null, null, null, kichHoat, pageable);
+    }
+
+    /**
+     * Lấy danh sách sản phẩm có phân trang, tìm kiếm đa tiêu chí kèm lọc theo chất liệu và khoảng giá tiền (US08 & US10).
+     */
+    @Transactional(readOnly = true)
+    public Page<SanPham> layDanhSachPhanTrang(String tuKhoa,
+                                              Long maDanhMucId,
+                                              Long maBoSuuTapId,
+                                              String formDang,
+                                              String chatLieu,
+                                              Long maChatLieuId,
+                                              BigDecimal giaTu,
+                                              BigDecimal giaDen,
+                                              Boolean kichHoat,
+                                              Pageable pageable) {
         String tuKhoaChuan = (tuKhoa != null && !tuKhoa.isBlank()) ? tuKhoa.trim() : null;
         String formDangChuan = (formDang != null && !formDang.isBlank()) ? formDang.trim() : null;
+        String chatLieuChuan = (chatLieu != null && !chatLieu.isBlank()) ? chatLieu.trim() : null;
 
         Page<SanPham> pageData = sanPhamRepository.timKiemPhanTrang(
-                tuKhoaChuan, maDanhMucId, maBoSuuTapId, formDangChuan, kichHoat, pageable);
+                tuKhoaChuan, maDanhMucId, maBoSuuTapId, formDangChuan, chatLieuChuan, maChatLieuId, giaTu, giaDen, kichHoat, pageable);
 
         lamGiauThongTinHienThi(pageData.getContent());
         return pageData;

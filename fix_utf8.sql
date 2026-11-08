@@ -1,0 +1,1 @@
+﻿UPDATE trang_thai_don_hang SET ten_trang_thai = N'Thất lạc một phần hàng' WHERE ma_trang_thai = 'THAT_LAC_MOT_PHAN'; UPDATE trang_thai_don_hang SET ten_trang_thai = N'Hàng thất lạc' WHERE ma_trang_thai = 'HANG_THAT_LAC';

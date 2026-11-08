@@ -16,11 +16,20 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import vn.fpoly.simplain.entity.BienTheSanPham;
+import vn.fpoly.simplain.entity.DanhMuc;
 import vn.fpoly.simplain.entity.HinhAnh;
+import vn.fpoly.simplain.entity.KichThuoc;
+import vn.fpoly.simplain.entity.MauSac;
 import vn.fpoly.simplain.entity.SanPham;
+import vn.fpoly.simplain.repository.BienTheSanPhamRepository;
 import vn.fpoly.simplain.repository.BoSuuTapRepository;
 import vn.fpoly.simplain.repository.ChatLieuRepository;
 import vn.fpoly.simplain.repository.FormDangRepository;
+import vn.fpoly.simplain.repository.HinhAnhRepository;
+import vn.fpoly.simplain.repository.KichThuocRepository;
+import vn.fpoly.simplain.repository.MauSacRepository;
+import vn.fpoly.simplain.service.BienTheSanPhamService;
 import vn.fpoly.simplain.service.DanhMucService;
 import vn.fpoly.simplain.service.SanPhamService;
 
@@ -40,18 +49,33 @@ public class SanPhamController {
     private final BoSuuTapRepository boSuuTapRepository;
     private final ChatLieuRepository chatLieuRepository;
     private final FormDangRepository formDangRepository;
-//
+    private final BienTheSanPhamService bienTheSanPhamService;
+    private final BienTheSanPhamRepository bienTheSanPhamRepository;
+    private final MauSacRepository mauSacRepository;
+    private final KichThuocRepository kichThuocRepository;
+    private final HinhAnhRepository hinhAnhRepository;
+
     @Autowired
     public SanPhamController(SanPhamService sanPhamService,
                              DanhMucService danhMucService,
                              BoSuuTapRepository boSuuTapRepository,
                              ChatLieuRepository chatLieuRepository,
-                             FormDangRepository formDangRepository) {
+                             FormDangRepository formDangRepository,
+                             BienTheSanPhamService bienTheSanPhamService,
+                             BienTheSanPhamRepository bienTheSanPhamRepository,
+                             MauSacRepository mauSacRepository,
+                             KichThuocRepository kichThuocRepository,
+                             HinhAnhRepository hinhAnhRepository) {
         this.sanPhamService = sanPhamService;
         this.danhMucService = danhMucService;
         this.boSuuTapRepository = boSuuTapRepository;
         this.chatLieuRepository = chatLieuRepository;
         this.formDangRepository = formDangRepository;
+        this.bienTheSanPhamService = bienTheSanPhamService;
+        this.bienTheSanPhamRepository = bienTheSanPhamRepository;
+        this.mauSacRepository = mauSacRepository;
+        this.kichThuocRepository = kichThuocRepository;
+        this.hinhAnhRepository = hinhAnhRepository;
     }
 
     @GetMapping({"", "/"})
@@ -68,7 +92,10 @@ public class SanPhamController {
                           @RequestParam(required = false) String tuKhoa,
                           @RequestParam(required = false) Long maDanhMucId,
                           @RequestParam(required = false) Long maBoSuuTapId,
+                          @RequestParam(required = false) Long maChatLieuId,
                           @RequestParam(required = false) String formDang,
+                          @RequestParam(required = false) java.math.BigDecimal giaTu,
+                          @RequestParam(required = false) java.math.BigDecimal giaDen,
                           @RequestParam(required = false) Boolean kichHoat) {
         if (page == null || page < 0) {
             page = 0;
@@ -76,12 +103,21 @@ public class SanPhamController {
         int size = 5;
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<SanPham> sanPhamPage = sanPhamService.layDanhSachPhanTrang(
-                tuKhoa, maDanhMucId, maBoSuuTapId, formDang, kichHoat, pageable);
+                tuKhoa, maDanhMucId, maBoSuuTapId, formDang, null, maChatLieuId, giaTu, giaDen, kichHoat, pageable);
 
         var listDanhMuc = danhMucService.layTatCa();
         var listBoSuuTap = boSuuTapRepository.findAll(Sort.by("id").descending());
         var listChatLieu = chatLieuRepository.findByKichHoatTrue(Sort.by("tenChatLieu").ascending());
         var listFormDang = formDangRepository.findByKichHoatTrue(Sort.by("tenFormDang").ascending());
+
+        for (SanPham sp : sanPhamPage.getContent()) {
+            Long ton = bienTheSanPhamRepository.tinhTongTonKhoTheoSanPham(sp.getId());
+            sp.setTongTonKho(ton != null ? ton.intValue() : 0);
+            Long sapHet = bienTheSanPhamRepository.demBienTheSapHetHangTheoSanPham(sp.getId(), 10);
+            sp.setSoBienTheSapHet(sapHet != null ? sapHet : 0L);
+            Long tongBt = bienTheSanPhamRepository.countByMaSanPhamId(sp.getId());
+            sp.setSoBienThe(tongBt != null ? tongBt : 0L);
+        }
 
         model.addAttribute("listSanPham", sanPhamPage.getContent());
         model.addAttribute("pageData", sanPhamPage);
@@ -98,13 +134,18 @@ public class SanPhamController {
         model.addAttribute("sanPhamDangBan", sanPhamService.demSanPhamDangBan());
         model.addAttribute("sanPhamNoiBat", sanPhamService.demSanPhamNoiBat());
         model.addAttribute("tongDanhMuc", listDanhMuc.size());
+        model.addAttribute("tongTonKhoToanHeThong", bienTheSanPhamService.tinhTongTonKho());
+        model.addAttribute("tongBienTheSapHetToanHeThong", bienTheSanPhamService.demSkuSapHetHang());
 
         model.addAttribute("page", page);
         model.addAttribute("totalPages", sanPhamPage.getTotalPages());
         model.addAttribute("tuKhoa", tuKhoa != null ? tuKhoa : "");
         model.addAttribute("maDanhMucLoc", maDanhMucId);
         model.addAttribute("maBoSuuTapLoc", maBoSuuTapId);
+        model.addAttribute("maChatLieuLoc", maChatLieuId);
         model.addAttribute("formDangLoc", formDang != null ? formDang : "");
+        model.addAttribute("giaTuLoc", giaTu);
+        model.addAttribute("giaDenLoc", giaDen);
         model.addAttribute("kichHoatLoc", kichHoat);
 
         return "admin/san-pham/hien-thi";
@@ -128,7 +169,7 @@ public class SanPhamController {
                       @RequestParam(defaultValue = "0") Integer page) {
         if (result.hasErrors()) {
             model.addAttribute("thongBaoLoi", "Dữ liệu sản phẩm chưa hợp lệ, vui lòng kiểm tra lại các trường báo đỏ!");
-            return hienThi(model, page, null, null, null, null, null);
+            return hienThi(model, page, null, null, null, null, null, null, null, null);
         }
 
         try {
@@ -150,7 +191,7 @@ public class SanPhamController {
             return "redirect:/admin/san-pham/hien-thi";
         } catch (IllegalArgumentException e) {
             model.addAttribute("thongBaoLoi", e.getMessage());
-            return hienThi(model, page, null, null, null, null, null);
+            return hienThi(model, page, null, null, null, null, null, null, null, null);
         }
     }
 
@@ -599,6 +640,252 @@ public class SanPhamController {
         } catch (Exception e) {
             resp.put("success", false);
             resp.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    // =========================================================================
+    // API GỘP QUẢN LÝ BIẾN THỂ TRỰC TIẾP TRONG SẢN PHẨM & XEM CHI TIẾT TỒN KHO
+    // =========================================================================
+
+    /**
+     * API JSON Lấy chi tiết đầy đủ sản phẩm (bao gồm toàn bộ thuộc tính, album ảnh và danh sách biến thể tồn kho).
+     */
+    @GetMapping("/api/chi-tiet-day-du")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiLayChiTietDayDu(@RequestParam Long sanPhamId) {
+        Map<String, Object> resp = new HashMap<>();
+        try {
+            SanPham sp = sanPhamService.layTheoId(sanPhamId);
+            List<HinhAnh> dsAnh = sanPhamService.layDanhSachHinhAnhSanPham(sanPhamId);
+            List<BienTheSanPham> dsBienThe = bienTheSanPhamRepository.findByMaSanPhamId(sanPhamId);
+
+            Long ton = bienTheSanPhamRepository.tinhTongTonKhoTheoSanPham(sanPhamId);
+            Long sapHet = bienTheSanPhamRepository.demBienTheSapHetHangTheoSanPham(sanPhamId, 10);
+
+            Map<String, Object> spData = new HashMap<>();
+            spData.put("id", sp.getId());
+            spData.put("maSanPham", sp.getMaSanPham());
+            spData.put("tenSanPham", sp.getTenSanPham());
+            spData.put("slug", sp.getDuongDanSlug());
+            spData.put("giaBan", sp.getGiaCoBan());
+            spData.put("giaGoc", sp.getGiaCoBan());
+            spData.put("kichHoat", sp.getKichHoat());
+            spData.put("anhDaiDienUrl", sp.getAnhDaiDienUrl());
+            spData.put("huongDanChonSize", sp.getHuongDanChonSize());
+            spData.put("moTaChiTiet", sp.getMoTaChiTiet());
+
+            // Thuộc tính danh mục & phân loại
+            DanhMuc dm = null;
+            if (sp.getMaDanhMucId() != null) {
+                try {
+                    dm = danhMucService.layTheoId(sp.getMaDanhMucId());
+                } catch (Exception ignored) {}
+            }
+            String tenDm = dm != null ? dm.getTenDanhMuc() : (sp.getTenDanhMuc() != null ? sp.getTenDanhMuc() : "Chưa phân loại");
+            String tenDmCha = "Danh mục gốc";
+            if (dm != null && dm.getMaDanhMucCha() != null) {
+                try {
+                    DanhMuc dmCha = danhMucService.layTheoId(dm.getMaDanhMucCha());
+                    if (dmCha != null) {
+                        tenDmCha = dmCha.getTenDanhMuc();
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            spData.put("tenDanhMuc", tenDm);
+            spData.put("tenDanhMucCha", tenDmCha);
+            spData.put("tenBoSuuTap", sp.getTenBoSuuTap() != null ? sp.getTenBoSuuTap() : "Không có");
+            spData.put("tenChatLieu", sp.getChatLieu() != null ? sp.getChatLieu() : "Chưa xác định");
+            spData.put("tenFormDang", sp.getFormDang() != null ? sp.getFormDang() : "Tiêu chuẩn");
+
+            spData.put("tongTonKho", ton != null ? ton : 0L);
+            spData.put("soBienThe", dsBienThe.size());
+            spData.put("soBienTheSapHet", sapHet != null ? sapHet : 0L);
+
+            // Dữ liệu biến thể kèm thông tin màu/size
+            Map<Long, MauSac> mapMau = mauSacRepository.findAll().stream()
+                    .collect(java.util.stream.Collectors.toMap(MauSac::getId, m -> m, (a, b) -> a));
+            Map<Long, KichThuoc> mapSize = kichThuocRepository.findAll().stream()
+                    .collect(java.util.stream.Collectors.toMap(KichThuoc::getId, k -> k, (a, b) -> a));
+
+            List<Map<String, Object>> listBtDto = dsBienThe.stream().map(bt -> {
+                Map<String, Object> mapBt = new HashMap<>();
+                mapBt.put("id", bt.getId());
+                mapBt.put("maSku", bt.getMaSku());
+                mapBt.put("maVachBarcode", bt.getMaVachBarcode() != null ? bt.getMaVachBarcode() : "");
+                mapBt.put("soLuongTon", bt.getSoLuong() != null ? bt.getSoLuong() : 0);
+                mapBt.put("giaBan", bt.getGiaBan());
+                mapBt.put("giaGoc", bt.getGiaGoc());
+                mapBt.put("kichHoat", bt.getKichHoat());
+                MauSac ms = mapMau.get(bt.getMaMauSacId());
+                mapBt.put("tenMauSac", ms != null ? ms.getTenMau() : (bt.getTenMauSac() != null ? bt.getTenMauSac() : ""));
+                mapBt.put("maMauHex", ms != null ? ms.getMaMau() : (bt.getMaMauHex() != null ? bt.getMaMauHex() : "#cccccc"));
+                mapBt.put("maMauSacId", bt.getMaMauSacId());
+                KichThuoc kt = mapSize.get(bt.getMaKichThuocId());
+                mapBt.put("tenKichThuoc", kt != null ? kt.getTenKichThuoc() : (bt.getTenKichThuoc() != null ? bt.getTenKichThuoc() : ""));
+                mapBt.put("maKichThuocId", bt.getMaKichThuocId());
+                mapBt.put("sapHetHang", bt.getSoLuong() != null && bt.getSoLuong() <= 10);
+                mapBt.put("anhDaiDienUrl", bt.getAnhDaiDienUrl() != null ? bt.getAnhDaiDienUrl() : sp.getAnhDaiDienUrl());
+                return mapBt;
+            }).toList();
+
+            resp.put("success", true);
+            resp.put("sanPham", spData);
+            resp.put("danhSachHinhAnh", dsAnh);
+            resp.put("danhSachBienThe", listBtDto);
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi lấy thông tin: " + e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    /**
+     * API JSON Danh mục Màu sắc và Kích thước phục vụ Modal thêm biến thể trực tiếp.
+     */
+    @GetMapping("/api/danh-muc-mau-size")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiLayDanhMucMauSize() {
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("listMauSac", mauSacRepository.findByKichHoatTrueOrderByTenMauAsc());
+        resp.put("listKichThuoc", kichThuocRepository.findByKichHoatTrueOrderByThuTuHienThiAsc());
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * API JSON Thêm trực tiếp 1 biến thể vào sản phẩm ngay trên màn hình sản phẩm.
+     */
+    @PostMapping("/api/them-bien-the-truc-tiep")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiThemBienTheTrucTiep(
+            @RequestParam Long sanPhamId,
+            @RequestParam Long maMauSacId,
+            @RequestParam Long maKichThuocId,
+            @RequestParam java.math.BigDecimal giaBan,
+            @RequestParam(required = false) java.math.BigDecimal giaGoc,
+            @RequestParam Integer soLuongTon,
+            @RequestParam(required = false) String maSku,
+            @RequestParam(required = false) String maVachBarcode) {
+        Map<String, Object> resp = new HashMap<>();
+        try {
+            // Kiểm tra trùng lặp màu + size
+            boolean daCo = bienTheSanPhamRepository.findByMaSanPhamIdAndMaMauSacIdAndMaKichThuocId(
+                    sanPhamId, maMauSacId, maKichThuocId).isPresent();
+            if (daCo) {
+                resp.put("success", false);
+                resp.put("message", "Biến thể với Màu sắc và Kích cỡ này đã tồn tại trong sản phẩm!");
+                return ResponseEntity.badRequest().body(resp);
+            }
+
+            // Sinh mã SKU tự động nếu chưa có
+            String sku = (maSku != null && !maSku.trim().isEmpty())
+                    ? maSku.trim().toUpperCase()
+                    : bienTheSanPhamService.sinhMaSkuTuDong(sanPhamId, maMauSacId, maKichThuocId);
+
+            if (bienTheSanPhamRepository.existsByMaSku(sku)) {
+                sku = sku + "-" + System.currentTimeMillis() % 1000;
+            }
+
+            // Sinh mã Barcode nếu chưa có
+            String barcode = (maVachBarcode != null && !maVachBarcode.trim().isEmpty())
+                    ? maVachBarcode.trim()
+                    : bienTheSanPhamService.sinhMaVachBarcodeTuDong(sku);
+
+            BienTheSanPham bt = BienTheSanPham.builder()
+                    .maSanPhamId(sanPhamId)
+                    .maMauSacId(maMauSacId)
+                    .maKichThuocId(maKichThuocId)
+                    .maSku(sku)
+                    .maVachBarcode(barcode)
+                    .giaBan(giaBan)
+                    .giaGoc(giaGoc != null ? giaGoc : giaBan)
+                    .soLuong(soLuongTon != null ? soLuongTon : 0)
+                    .kichHoat(true)
+                    .build();
+
+            BienTheSanPham saved = bienTheSanPhamRepository.save(bt);
+            resp.put("success", true);
+            resp.put("message", "Thêm biến thể [" + saved.getMaSku() + "] thành công!");
+            resp.put("bienTheId", saved.getId());
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi tạo biến thể: " + e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    /**
+     * API JSON Cập nhật nhanh biến thể trực tiếp (tồn kho, giá bán, mã vạch).
+     */
+    @PostMapping("/api/sua-bien-the-truc-tiep")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiSuaBienTheTrucTiep(
+            @RequestParam Long id,
+            @RequestParam Integer soLuongTon,
+            @RequestParam java.math.BigDecimal giaBan,
+            @RequestParam(required = false) java.math.BigDecimal giaGoc,
+            @RequestParam(required = false) String maVachBarcode) {
+        Map<String, Object> resp = new HashMap<>();
+        try {
+            BienTheSanPham bt = bienTheSanPhamRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy biến thể #" + id));
+
+            bt.setSoLuong(soLuongTon);
+            bt.setGiaBan(giaBan);
+            if (giaGoc != null) bt.setGiaGoc(giaGoc);
+            if (maVachBarcode != null && !maVachBarcode.trim().isEmpty()) {
+                bt.setMaVachBarcode(maVachBarcode.trim());
+            }
+
+            bienTheSanPhamRepository.save(bt);
+            resp.put("success", true);
+            resp.put("message", "Cập nhật biến thể thành công!");
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi cập nhật: " + e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    /**
+     * API JSON Bật/Tắt trạng thái biến thể trực tiếp.
+     */
+    @PostMapping("/api/doi-trang-thai-bien-the-truc-tiep")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiDoiTrangThaiBienTheTrucTiep(@RequestParam Long id) {
+        Map<String, Object> resp = new HashMap<>();
+        try {
+            BienTheSanPham bt = bienTheSanPhamService.doiTrangThai(id);
+            resp.put("success", true);
+            resp.put("kichHoat", bt.getKichHoat());
+            resp.put("message", "Đã " + (Boolean.TRUE.equals(bt.getKichHoat()) ? "kích hoạt" : "tạm ngưng") + " biến thể!");
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi đổi trạng thái: " + e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    /**
+     * API JSON Xóa biến thể trực tiếp.
+     */
+    @PostMapping("/api/xoa-bien-the-truc-tiep")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiXoaBienTheTrucTiep(@RequestParam Long id) {
+        Map<String, Object> resp = new HashMap<>();
+        try {
+            bienTheSanPhamService.xoa(id);
+            resp.put("success", true);
+            resp.put("message", "Đã xóa biến thể thành công!");
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("message", "Lỗi xóa biến thể: " + e.getMessage());
             return ResponseEntity.badRequest().body(resp);
         }
     }

@@ -37,8 +37,16 @@ public class MauSacService {
      */
     @Transactional(readOnly = true)
     public Page<MauSac> layDanhSachPhanTrang(String tuKhoa, Pageable pageable) {
+        return layDanhSachPhanTrang(tuKhoa, null, pageable);
+    }
+
+    /**
+     * Lấy danh sách màu sắc có phân trang, tìm kiếm theo từ khóa và trạng thái hoạt động.
+     */
+    @Transactional(readOnly = true)
+    public Page<MauSac> layDanhSachPhanTrang(String tuKhoa, Boolean kichHoat, Pageable pageable) {
         String tuKhoaChuan = (tuKhoa != null && !tuKhoa.isBlank()) ? tuKhoa.trim() : null;
-        Page<MauSac> pageData = mauSacRepository.timKiemPhanTrang(tuKhoaChuan, pageable);
+        Page<MauSac> pageData = mauSacRepository.timKiemPhanTrang(tuKhoaChuan, kichHoat, pageable);
         pageData.getContent().forEach(ms -> ms.setSoBienTheSuDung(demSoBienTheSuDungMauSac(ms.getId())));
         return pageData;
     }

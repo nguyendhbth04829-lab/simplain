@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @Service
 public class BienTheSanPhamService {
 //
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BienTheSanPhamService.class);
     private static final long DUNG_LUONG_ANH_TOI_DA = 5L * 1024 * 1024; // 5MB / ảnh
     private static final List<String> DUOI_ANH_HOP_LE = Arrays.asList(".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg");
 
@@ -71,9 +72,26 @@ public class BienTheSanPhamService {
                                                      Long maKichThuocId,
                                                      Boolean kichHoat,
                                                      Pageable pageable) {
+        return layDanhSachPhanTrang(tuKhoa, maSanPhamId, maMauSacId, maKichThuocId, null, null, null, kichHoat, pageable);
+    }
+
+    /**
+     * Lấy danh sách biến thể SKU có phân trang, tìm kiếm theo từ khóa và lọc theo khoảng giá, trạng thái tồn kho, trạng thái kích hoạt.
+     */
+    @Transactional(readOnly = true)
+    public Page<BienTheSanPham> layDanhSachPhanTrang(String tuKhoa,
+                                                     Long maSanPhamId,
+                                                     Long maMauSacId,
+                                                     Long maKichThuocId,
+                                                     BigDecimal giaTu,
+                                                     BigDecimal giaDen,
+                                                     String tonKhoTrangThai,
+                                                     Boolean kichHoat,
+                                                     Pageable pageable) {
         String tuKhoaChuan = (tuKhoa != null && !tuKhoa.isBlank()) ? tuKhoa.trim() : null;
+        String tonKhoChuan = (tonKhoTrangThai != null && !tonKhoTrangThai.isBlank()) ? tonKhoTrangThai.trim().toUpperCase() : null;
         Page<BienTheSanPham> pageData = bienTheRepository.timKiemPhanTrang(
-                tuKhoaChuan, maSanPhamId, maMauSacId, maKichThuocId, kichHoat, pageable);
+                tuKhoaChuan, maSanPhamId, maMauSacId, maKichThuocId, giaTu, giaDen, tonKhoChuan, kichHoat, pageable);
 
         napThongTinHienThiChoDanhSach(pageData.getContent());
         return pageData;
@@ -414,6 +432,19 @@ public class BienTheSanPhamService {
             }
 
             List<HinhAnh> dsAnh = hinhAnhRepository.findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(bt.getId());
+            if (dsAnh.isEmpty() && bt.getMaSanPhamId() != null && bt.getMaMauSacId() != null) {
+                // Tự động dùng chung ảnh với các biến thể cùng màu sắc của sản phẩm gốc (khác size)
+                List<BienTheSanPham> cungMauVariants = bienTheRepository.findByMaSanPhamIdAndMaMauSacId(bt.getMaSanPhamId(), bt.getMaMauSacId());
+                for (BienTheSanPham sibling : cungMauVariants) {
+                    if (sibling.getId() != null && !sibling.getId().equals(bt.getId())) {
+                        List<HinhAnh> siblingAnh = hinhAnhRepository.findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(sibling.getId());
+                        if (siblingAnh != null && !siblingAnh.isEmpty()) {
+                            dsAnh = siblingAnh;
+                            break;
+                        }
+                    }
+                }
+            }
             bt.setDanhSachHinhAnh(dsAnh);
             if (!dsAnh.isEmpty()) {
                 bt.setAnhDaiDienUrl(dsAnh.get(0).getDuongDanAnh());
@@ -592,6 +623,38 @@ public class BienTheSanPhamService {
             }
         }
 
+        // Tự động đồng bộ ảnh cho các biến thể cùng màu nhưng khác size nếu các size đó chưa có ảnh
+        if (maBienTheId != null && soAnhDaLuu > 0) {
+            try {
+                bienTheRepository.findById(maBienTheId).ifPresent(currentBt -> {
+                    if (currentBt.getMaSanPhamId() != null && currentBt.getMaMauSacId() != null) {
+                        List<BienTheSanPham> siblings = bienTheRepository.findByMaSanPhamIdAndMaMauSacId(
+                                currentBt.getMaSanPhamId(), currentBt.getMaMauSacId());
+                        List<HinhAnh> freshImages = hinhAnhRepository.findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(maBienTheId);
+                        for (BienTheSanPham sib : siblings) {
+                            if (!sib.getId().equals(maBienTheId)) {
+                                long countSib = hinhAnhRepository.countByMaBienTheId(sib.getId());
+                                if (countSib == 0 && !freshImages.isEmpty()) {
+                                    for (HinhAnh img : freshImages) {
+                                        HinhAnh clone = HinhAnh.builder()
+                                                .maSanPhamId(img.getMaSanPhamId())
+                                                .maBienTheId(sib.getId())
+                                                .duongDanAnh(img.getDuongDanAnh())
+                                                .laAnhDaiDien(img.getLaAnhDaiDien())
+                                                .thuTu(img.getThuTu())
+                                                .build();
+                                        hinhAnhRepository.save(clone);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                log.warn("Không thể đồng bộ ảnh biến thể cùng màu: {}", ex.getMessage());
+            }
+        }
+
         return soAnhDaLuu;
     }
 
@@ -685,6 +748,14 @@ public class BienTheSanPhamService {
         }
 
         List<BienTheSanPham> ketQua = new ArrayList<>();
+        Map<Long, String> anhTheoMauMap = new HashMap<>();
+
+        // Thu thập trước các ảnh được gán theo màu trong request để các size cùng màu dùng chung
+        for (BienTheHangLoatItemRequest it : request.getDanhSachBienThe()) {
+            if (it.getMaMauSacId() != null && it.getHinhAnhUrl() != null && !it.getHinhAnhUrl().isBlank()) {
+                anhTheoMauMap.putIfAbsent(it.getMaMauSacId(), it.getHinhAnhUrl().trim());
+            }
+        }
 
         for (BienTheHangLoatItemRequest item : request.getDanhSachBienThe()) {
             if (item.getMaMauSacId() == null || item.getMaKichThuocId() == null) {
@@ -707,22 +778,16 @@ public class BienTheSanPhamService {
                     .findFirst();
 
             if (btOpt.isPresent()) {
-                // Đã tồn tại -> Cập nhật giá bán, giá gốc và cộng dồn số lượng tồn kho
                 BienTheSanPham btCu = btOpt.get();
-                if (item.getGiaBan() != null && item.getGiaBan().compareTo(BigDecimal.ZERO) >= 0) {
-                    btCu.setGiaBan(item.getGiaBan());
-                }
-                if (item.getGiaGoc() != null && item.getGiaGoc().compareTo(BigDecimal.ZERO) >= 0) {
-                    btCu.setGiaGoc(item.getGiaGoc());
-                }
-                if (item.getSoLuong() != null && item.getSoLuong() >= 0) {
-                    btCu.setSoLuong((btCu.getSoLuong() != null ? btCu.getSoLuong() : 0) + item.getSoLuong());
-                }
-                btCu.setKichHoat(item.getKichHoat() != null ? item.getKichHoat() : true);
-                ketQua.add(bienTheRepository.save(btCu));
-            } else {
-                // Tạo mới biến thể
-                String sku = item.getMaSku();
+                MauSac ms = mauSacRepository.findById(item.getMaMauSacId()).orElse(null);
+                KichThuoc kt = kichThuocRepository.findById(item.getMaKichThuocId()).orElse(null);
+                String tenMau = ms != null ? ms.getTenMau() : (btCu.getTenMauSac() != null ? btCu.getTenMauSac() : "Màu ID " + item.getMaMauSacId());
+                String tenSize = kt != null ? kt.getMaKichThuoc() : (btCu.getMaKichThuoc() != null ? btCu.getMaKichThuoc() : "Size ID " + item.getMaKichThuocId());
+                throw new IllegalArgumentException("Biến thể của sản phẩm [" + sp.getTenSanPham() + "] với Màu [" + tenMau + "] và Size [" + tenSize + "] đã tồn tại trong hệ thống! Vui lòng không thêm trùng lặp.");
+            }
+
+            // Tạo mới biến thể
+            String sku = item.getMaSku();
                 if (sku == null || sku.isBlank()) {
                     sku = sinhMaSkuTuDong(targetSpId, item.getMaMauSacId(), item.getMaKichThuocId());
                 } else {
@@ -758,8 +823,42 @@ public class BienTheSanPhamService {
                         .kichHoat(item.getKichHoat() != null ? item.getKichHoat() : true)
                         .build();
 
-                ketQua.add(bienTheRepository.saveAndFlush(btMoi));
-            }
+                BienTheSanPham saved = bienTheRepository.saveAndFlush(btMoi);
+                String anhUrl = (item.getHinhAnhUrl() != null && !item.getHinhAnhUrl().isBlank())
+                        ? item.getHinhAnhUrl().trim()
+                        : anhTheoMauMap.get(item.getMaMauSacId());
+
+                if (anhUrl == null && (request.getHinhAnhChungUrl() != null && !request.getHinhAnhChungUrl().isBlank())) {
+                    anhUrl = request.getHinhAnhChungUrl().trim();
+                }
+
+                // Nếu vẫn chưa có ảnh, tìm xem các biến thể đã có của màu này trên hệ thống có ảnh chưa (dùng chung ảnh theo màu)
+                if (anhUrl == null) {
+                    List<BienTheSanPham> cungMau = bienTheRepository.findByMaSanPhamIdAndMaMauSacId(targetSpId, item.getMaMauSacId());
+                    for (BienTheSanPham sib : cungMau) {
+                        List<HinhAnh> sibAnh = hinhAnhRepository.findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(sib.getId());
+                        if (sibAnh != null && !sibAnh.isEmpty()) {
+                            anhUrl = sibAnh.get(0).getDuongDanAnh();
+                            anhTheoMauMap.put(item.getMaMauSacId(), anhUrl);
+                            break;
+                        }
+                    }
+                }
+
+                if (anhUrl != null) {
+                    try {
+                        HinhAnh ha = HinhAnh.builder()
+                                .maSanPhamId(targetSpId)
+                                .maBienTheId(saved.getId())
+                                .duongDanAnh(anhUrl)
+                                .laAnhDaiDien(true)
+                                .thuTu(1)
+                                .build();
+                        hinhAnhRepository.save(ha);
+                    } catch (Exception ignored) {
+                    }
+                }
+                ketQua.add(saved);
         }
 
         return ketQua;

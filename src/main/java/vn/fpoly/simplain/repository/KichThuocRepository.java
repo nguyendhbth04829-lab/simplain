@@ -17,13 +17,27 @@ import java.util.Optional;
 public interface KichThuocRepository extends JpaRepository<KichThuoc, Long> {
 
     /**
-     * Tìm kiếm phân trang kích thước theo mã size (S, M, L, XL...) hoặc tên mô tả kích thước.
+     * Lấy danh sách kích thước đang kích hoạt.
+     */
+    java.util.List<KichThuoc> findByKichHoatTrueOrderByIdAsc();
+
+    default java.util.List<KichThuoc> findByKichHoatTrueOrderByThuTuHienThiAsc() {
+        return findByKichHoatTrueOrderByIdAsc();
+    }
+
+    /**
+     * Tìm kiếm phân trang kích thước theo mã size (S, M, L, XL...) hoặc tên mô tả kích thước kèm lọc trạng thái.
      */
     @Query("SELECT kt FROM KichThuoc kt WHERE " +
            "(:tuKhoa IS NULL OR :tuKhoa = '' OR " +
            " LOWER(kt.maKichThuoc) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR " +
-           " LOWER(kt.tenKichThuoc) LIKE LOWER(CONCAT('%', :tuKhoa, '%')))")
-    Page<KichThuoc> timKiemPhanTrang(@Param("tuKhoa") String tuKhoa, Pageable pageable);
+           " LOWER(kt.tenKichThuoc) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) AND " +
+           "(:kichHoat IS NULL OR kt.kichHoat = :kichHoat)")
+    Page<KichThuoc> timKiemPhanTrang(@Param("tuKhoa") String tuKhoa, @Param("kichHoat") Boolean kichHoat, Pageable pageable);
+
+    default Page<KichThuoc> timKiemPhanTrang(String tuKhoa, Pageable pageable) {
+        return timKiemPhanTrang(tuKhoa, null, pageable);
+    }
 
     /**
      * Tìm kích thước theo mã kích thước (không phân biệt hoa thường).

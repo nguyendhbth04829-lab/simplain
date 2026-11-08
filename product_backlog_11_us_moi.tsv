@@ -1,0 +1,67 @@
+US34	Hưng	Mod 5 / Vận chuyển	Là Nhân viên Vận hành, tôi muốn Quản lý Mã vận đơn được cung cấp từ Đơn vị Vận chuyển thứ 3 (3PL)	Admin / Vận hành	Cao	5	"1. Tích hợp danh mục 6 đơn vị vận chuyển 3PL (GHTK, GHN, Viettel Post, J&T, Ninja Van, SPX).
+2. Khóa ô nhập tự do của shop, mã vận đơn phải do 3PL sinh tự động hoặc chọn theo hãng.
+3. Tích hợp link tra cứu hành trình vận chuyển thời gian thực."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Chặn nhân viên tự bịa mã vận đơn; chuẩn hóa format mã theo chuẩn 3PL.
+ĐỀ XUẤT: Đồng bộ API tra cứu hành trình tự động."	"✅ ĐẠT: Quản lý 3PL chuyên nghiệp; chuẩn hóa mã vận đơn; có link tra cứu hành trình trực tiếp.
+⚠️ LƯU Ý: Đồng bộ Webhook cập nhật tiến độ giao hàng từ 3PL."	ok
+US35	Hưng	Mod 5 / Đơn hàng	Là Thủ kho / CSKH, tôi muốn Xử lý Đơn hàng bị mất trên đường giao (Lost in transit)	Thủ kho / CSKH	Cao	5	"1. Bổ sung trạng thái/nghiệp vụ Hàng mất trên đường giao (HANG_THAT_LAC / LOST_IN_TRANSIT).
+2. Tuyệt đối KHÔNG cộng lại tồn kho vì hàng đã bị thất lạc ngoài thực tế.
+3. Ghi nhận biên bản sự cố khiếu nại đền bù 3PL và lưu log kiểm toán đơn hàng."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Cách ly nghiệp vụ hàng mất, chặn hoàn tồn kho tự động; phân định rõ với hàng khách từ chối nhận.
+ĐỀ XUẤT: Bổ sung module đối soát tiền đền bù của hãng vận chuyển."	"✅ ĐẠT: Trạng thái hàng thất lạc chuẩn xác; cô lập không cộng lại tồn kho; lưu hồ sơ khiếu nại 3PL.
+⚠️ LƯU Ý: Tự động gắn cờ yêu cầu kế toán đối soát công nợ bồi thường."	ok
+US36	Hưng	Mod 5 / Đổi trả (RMA)	Là Nhân viên Kiểm định Kho, tôi muốn Kiểm tra & Phân loại chất lượng Hàng đổi trả / Hàng giao lỗi	Kiểm định viên / Kho	Cao	5	"1. Giao diện kiểm định hàng hoàn về kho: đánh giá mức độ lỗi và phân loại.
+2. Nếu hàng còn dùng/bán được: tự động cộng lại tồn kho để tiếp tục bán.
+3. Nếu lỗi hỏng nặng không thể dùng: trừ tồn kho coi như phế phẩm/tiêu hủy, lập biên bản hao hụt.
+4. Khắc phục lỗi gửi yêu cầu RMA đơn combo/flash sale không gửi ảnh hoặc ảnh dung lượng lớn (nâng hạn mức 50MB)."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Có 2 nhánh xử lý kho (Nhập lại kho bán tiếp vs Xuất hủy phế phẩm); khắc phục triệt để lỗi upload ảnh RMA trên đơn combo/flash sale.
+ĐỀ XUẤT: Bổ sung chụp ảnh biên bản tiêu hủy."	"✅ ĐẠT: Phân loại hàng hoàn (Tái nhập kho vs Xuất hủy phế phẩm); tự động cập nhật kho đúng nghiệp vụ; fix triệt để lỗi upload ảnh RMA.
+⚠️ LƯU Ý: Chụp ảnh lưu bằng chứng biên bản kiểm định phế phẩm."	ok
+US37	Trí	Mod 4 & 5 / Bảo mật & Đơn	Là Chủ shop, tôi muốn Chống đặt hàng ảo, Bom hàng & Gom sạch tồn kho phá hoại	Hệ thống / Admin	Cao	8	"1. Đặt giới hạn trần số lượng mua tối đa (Max Purchase Limit) trên 1 đơn hàng cho từng biến thể/sản phẩm.
+2. Phát hiện & cảnh báo tài khoản/SĐT có dấu hiệu spam đơn hoặc gom hết tồn kho.
+3. Cơ chế tự động giải phóng tồn kho (Stock Release Timeout) đối với đơn chờ thanh toán quá hạn."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Đặt hạn mức số lượng mua tối đa cho mỗi SKU trên đơn hàng; ngăn chặn hành vi phá hoại kho; tự động hoàn kho khi hết hạn giữ chỗ.
+ĐỀ XUẤT: Cho phép cấu hình hạn mức mua riêng cho từng chương trình khuyến mãi."	"✅ ĐẠT: Chặn gom sạch kho hàng loạt; giải phóng tồn kho tự động; bảo vệ người mua chân chính.
+⚠️ LƯU Ý: Cho phép Admin linh hoạt cấu hình hạn mức mua theo chiến dịch."	ok
+US38	Khoa & Nguyên	Mod 2 / Phân loại & SP	Là Quản trị viên, tôi muốn Chuẩn hóa Cây Danh mục Thời trang (5 Cha - 19 Con) & Thuộc tính chuyên nghiệp	Admin	Cao	8	"1. Thiết lập 5 Danh mục cha (Thời trang nam, Thời trang nữ, Giày dép, Ví & Balo, Phụ kiện) và 19 Danh mục con tương ứng.
+2. Bổ sung đầy đủ bộ thuộc tính động chuyên nghiệp theo từng loại hàng (chất liệu, form dáng, độ dài tay áo, kiểu cổ, kiểu gót, kích thước dây, tròng kính...).
+3. Đồng bộ bộ lọc Storefront và form thêm sửa biến thể."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Xây dựng cấu trúc danh mục chuẩn ngành thời trang (5 cha, 19 con) kèm bộ thuộc tính chi tiết cho từng loại sản phẩm; nạp dữ liệu mẫu hoàn chỉnh.
+ĐỀ XUẤT: Thêm tính năng quản lý thuộc tính động (EAV)."	"✅ ĐẠT: 5 danh mục cha, 19 danh mục con chuẩn hóa; đầy đủ thuộc tính chuyên nghiệp từng loại hàng; data khởi tạo tự động.
+⚠️ LƯU Ý: Giữ tính toàn vẹn khóa ngoại khi chuyển nhóm danh mục."	ok
+US39	Nguyên	Mod 2 / Biến thể (SKU)	Là Quản lý sản phẩm, tôi muốn Các biến thể Cùng màu Khác size tự động Dùng chung Hình ảnh	Admin / Kho	TB	5	"1. Upload ảnh cho 1 size bất kỳ thì các size còn lại cùng màu tự động kế thừa bộ ảnh.
+2. Biến thể mới tạo chưa có ảnh sẽ tự động dùng chung ảnh của biến thể cùng màu đã có.
+3. Trang Chi tiết sản phẩm hiển thị thư viện ảnh gom theo màu duy nhất, không lặp lại ảnh trùng giữa các size."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Tự động kế thừa và ánh xạ ảnh theo cặp (Mã SP + Mã màu); loại bỏ thao tác upload lặp lại cho các size S, M, L, XL; tối ưu trải nghiệm chọn màu ở trang chi tiết sản phẩm.
+ĐỀ XUẤT: Cho phép tùy chọn override ảnh riêng cho size đặc biệt."	"✅ ĐẠT: Tự động chia sẻ ảnh theo cặp (Sản phẩm + Màu sắc); tiết kiệm 80% dung lượng lưu trữ; giao diện storefront đồng nhất.
+⚠️ LƯU Ý: Cho phép ghi đè ảnh riêng lẻ cho từng size nếu có nhu cầu đặc biệt."	ok
+US40	Nguyên	Mod 2 / Biến thể (SKU)	Là Nhân viên Quản lý Biến thể, tôi muốn Tìm kiếm Sản phẩm gốc bằng chữ (Autocomplete)	Admin / Kho	TB	3	"1. Thanh tìm kiếm Searchable Combobox gõ chữ lọc tức thì theo Tên hoặc Mã sản phẩm gốc.
+2. Áp dụng đồng bộ tại: Bộ lọc biến thể, Modal thêm đơn lẻ, Modal Ma trận SIMPLAIN, và Trang sửa biến thể.
+3. Dropdown nổi trực quan, hỗ trợ nút xóa nhanh × và phím Esc."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Thay thế select tĩnh bằng ô tìm kiếm autocomplete mượt mà, gõ chữ lọc real-time không cần cuộn tìm; hỗ trợ tìm theo cả tên và mã SP.
+ĐỀ XUẤT: Bổ sung phím mũi tên lên/xuống để duyệt nhanh kết quả."	"✅ ĐẠT: Tìm kiếm sản phẩm cha bằng gõ chữ mượt mà ở tất cả modal và bộ lọc biến thể; thao tác nhanh gấp 5 lần.
+⚠️ LƯU Ý: Giữ nguyên hidden select để tương thích 100% form validate cũ."	ok
+US41	Nguyên	Mod 2 / Sản phẩm & Kho	Là Admin, tôi muốn Xem chi tiết biến thể trong Sản phẩm & Cảnh báo Tồn kho Sắp hết (Low Stock Alert)	Admin / Kho	Cao	5	"1. Xem chi tiết tồn kho và thuộc tính của tất cả biến thể trực tiếp trong trang Quản lý thông tin chung sản phẩm.
+2. Cho phép ấn vào sản phẩm là thêm/sửa trực tiếp biến thể của sản phẩm đó (gộp thao tác).
+3. Widget cảnh báo biến thể sắp hết hàng trên Dashboard Admin và đánh dấu cảnh báo để kịp thời nhập kho."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Tích hợp xem nhanh tồn kho biến thể ngay tại bảng sản phẩm; gộp thao tác thêm biến thể theo sản phẩm cha; cảnh báo hàng sắp hết trên Dashboard.
+ĐỀ XUẤT: Cho phép tùy chỉnh ngưỡng cảnh báo tồn kho (mặc định <= 5)."	"✅ ĐẠT: Gộp quản lý sản phẩm và biến thể tiện lợi; hiển thị tồn kho chi tiết; cảnh báo hàng sắp hết trực quan trên Dashboard.
+⚠️ LƯU Ý: Cho phép cấu hình ngưỡng cảnh báo tồn kho tối thiểu (Low Stock Threshold)."	ok
+US42	Duy	Mod 8 / Nhập hàng & NCC	Là Thủ kho / Admin, tôi muốn Quản lý Nhà cung cấp, Chuyển đổi trạng thái hợp tác & Quét Barcode nhập hàng	Admin / Thủ kho	Cao	8	"1. CRUD Nhà cung cấp (Tên, MST, SĐT, Email, Địa chỉ).
+2. Tính năng Ngưng hợp tác / Tiếp tục hợp tác (chặn tạo phiếu nhập với NCC đã ngưng).
+3. Tạo phiếu nhập hàng từ NCC, hỗ trợ quét mã vạch Barcode (qua máy quét USB, camera hoặc nhập tay giả lập trên giao diện PC)."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Quản lý nhà cung cấp đầy đủ thông tin; nút toggle chuyển đổi trạng thái hợp tác tức thì; quét mã vạch Barcode mượt mà trên máy tính để tạo phiếu nhập.
+ĐỀ XUẤT: Bổ sung tính năng in tem mã vạch Barcode dán lên sản phẩm."	"✅ ĐẠT: Quản lý NCC hoàn chỉnh; toggle ngưng/tiếp tục hợp tác; quét barcode tìm biến thể nhập kho tiện lợi trên máy tính.
+⚠️ LƯU Ý: Hỗ trợ in mã barcode sản phẩm dán lên bao bì sau khi nhập kho."	ok
+US43	Duy & Hưng	Mod 8 / Kế toán Kho	Là Kế toán kho / Admin, tôi muốn Tính Giá vốn Bình quân Gia quyền Di động (AVCO) khi Nhập hàng	Kế toán kho / Admin	Cao	5	"1. Tự động tính lại giá vốn biến thể khi nhập lô mới giá khác lô cũ còn tồn theo công thức AVCO: (TonCu * GiaCu + SLNhap * GiaNhap) / (TonCu + SLNhap).
+2. Lưu snapshot giá vốn tại thời điểm bán vào chi_tiet_don_hang cho cả đơn Online và POS.
+3. Tính toán chính xác Lợi nhuận gộp trên Dashboard = Doanh thu - Tổng giá vốn."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Áp dụng phương pháp giá bình quân gia quyền di động (AVCO) chuẩn kế toán kho; lưu vết giá vốn trên từng dòng đơn hàng; báo cáo lãi gộp chính xác trên Dashboard.
+ĐỀ XUẤT: Xuất báo cáo biến động giá vốn theo kỳ kế toán."	"✅ ĐẠT: Công thức AVCO chuẩn kế toán kho; snapshot giá vốn trên từng dòng chi tiết đơn hàng; báo cáo lãi gộp chính xác.
+⚠️ LƯU Ý: Lưu vết lịch sử biến động giá vốn theo từng phiếu nhập hàng để phục vụ kiểm toán."	ok
+US44	Trí & Hưng	Mod 7 & 5 / Omnichannel	Là Quản trị viên, tôi muốn Hợp nhất Bán hàng Đa kênh Toàn diện (Omnichannel Online & POS)	Admin / Thu ngân	Cao	8	"1. Kho hàng tập trung thời gian thực (Centralized Stock Pool): bán tại quầy POS hay Online đều trừ kho nguyên tử, loại trừ lệch kho.
+2. Phân định kênh loaiDonHang (ONLINE vs TAI_QUAY) trên danh sách, bộ lọc và thẻ KPI thống kê đơn hàng.
+3. Tích hợp hồ sơ khách hàng đa kênh: tích điểm và áp dụng voucher hội viên thống nhất giữa quầy và web."	"Toàn bộ thứ khác: OK
+ĐÃ XỬ LÝ: Kho hàng duy nhất thời gian thực cho cả POS và Online; bộ lọc và badge kênh bán hàng rõ ràng trong CMS; đồng bộ khách hàng và điểm tích lũy giữa 2 kênh.
+ĐỀ XUẤT: Bổ sung biểu đồ so sánh tỷ trọng doanh thu giữa Online và POS."	"✅ ĐẠT: Đồng bộ kho hàng thời gian thực; bộ lọc & badge kênh bán chuyên nghiệp; tích điểm hội viên đa kênh thống nhất.
+⚠️ LƯU Ý: Bổ sung báo cáo so sánh doanh thu và tỷ trọng đơn hàng giữa kênh Online và kênh POS."	ok

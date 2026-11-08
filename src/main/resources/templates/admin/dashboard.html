@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng quan &amp; Báo cáo Doanh thu | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        @media print {
+            .no-print, aside, header, #sidebar, .sidebar, [th\\:replace*="menu-quan-tri"] {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                background: #ffffff !important;
+            }
+            .lg\\:pl-64 {
+                padding-left: 0 !important;
+            }
+            .shadow-sm, .shadow-md, .shadow-xs, .shadow-2xl {
+                box-shadow: none !important;
+            }
+            .border {
+                border-color: #cbd5e1 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('dashboard')}"></div>
+
+    <!-- Main Content Container -->
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-7 space-y-6">
+
+        <!-- Thông báo Trạng thái / Cảnh báo -->
+        <div th:if="${thongBaoThanhCongDashboard}" class="no-print bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-semibold shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                <span th:text="${thongBaoThanhCongDashboard}">Thao tác thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoiBoLoc}" class="no-print bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-semibold shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                <span th:text="${thongBaoLoiBoLoc}">Lỗi bộ lọc ngày thống kê!</span>
+            </div>
+            <a href="/admin/dashboard" class="text-xs font-bold underline hover:text-rose-900">Đặt lại</a>
+        </div>
+
+        <div th:if="${thongBaoLoiDashboard}" class="no-print bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-semibold shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+                <span th:text="${thongBaoLoiDashboard}">Dữ liệu đơn hàng chưa hợp lệ!</span>
+            </div>
+            <button onclick="moModalTaoDonNhanh()" class="text-xs font-bold bg-rose-600 text-white px-3 py-1 rounded-lg hover:bg-rose-700">Xem lại</button>
+        </div>
+
+        <div th:if="${thongBaoTuChoiQuyen}" class="no-print bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-semibold shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-shield-halved text-amber-600 text-base"></i>
+                <span th:text="${thongBaoTuChoiQuyen}">Tài khoản của bạn không có quyền truy cập vào chức năng này!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-amber-500 hover:text-amber-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- HEADER: TIÊU ĐỀ & NÚT THAO TÁC XUẤT BÁO CÁO                              -->
+        <!-- ========================================================================= -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>Tổng quan &amp; Doanh thu</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>Trực tuyến
+                    </span>
+                    <a th:if="${soRmaChoXuLy > 0}" href="/admin/doi-tra/hien-thi"
+                       class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition">
+                        <i class="fa-solid fa-bell text-amber-600 mr-1"></i><span th:text="${soRmaChoXuLy} + ' RMA'">0 RMA</span>
+                    </a>
+                </h1>
+                <p class="text-xs text-slate-500 mt-1">
+                    Kỳ báo cáo: <strong class="text-slate-800 font-mono font-bold"
+                                        th:text="${baoCao != null and baoCao.tuNgay != null ? #temporals.format(baoCao.tuNgay, 'dd/MM/yyyy') + ' - ' + #temporals.format(baoCao.denNgay, 'dd/MM/yyyy') : 'Toàn thời gian'}">Kỳ báo cáo</strong>
+                    &bull; Xin chào, <span class="font-bold text-slate-700" th:text="${nhanVien != null ? nhanVien.hoTen : 'Quản trị viên'}">Quản trị viên</span>
+                </p>
+            </div>
+
+            <!-- Nút thao tác nhanh -->
+            <div class="no-print flex flex-wrap items-center gap-2">
+                <a th:href="@{/admin/dashboard/xuat-csv(kyThongKe=${baoCao != null ? baoCao.kyThongKe : '7_NGAY'}, tuNgay=${baoCao != null and baoCao.tuNgay != null ? baoCao.tuNgay : ''}, denNgay=${baoCao != null and baoCao.denNgay != null ? baoCao.denNgay : ''}, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-solid fa-file-csv text-emerald-600"></i><span>Xuất Excel</span>
+                </a>
+
+                <button type="button" onclick="window.print()"
+                        class="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-solid fa-print text-slate-600"></i><span>In</span>
+                </button>
+
+                <button type="button" onclick="moModalTaoDonNhanh()"
+                        class="btn-navy px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-plus"></i><span>Tạo đơn kiểm thử</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- THANH CÔNG CỤ BỘ LỌC TINH GỌN (CHỌN NHANH & KHOẢNG NGÀY)                 -->
+        <!-- ========================================================================= -->
+        <div class="no-print bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+            <!-- Nút chọn nhanh chu kỳ -->
+            <div class="flex flex-wrap items-center gap-1">
+                <span class="text-[10px] font-extrabold uppercase text-slate-400 mr-1">Chu kỳ:</span>
+                <a th:href="@{/admin/dashboard(kyThongKe='HOM_NAY', soNgayBieuDo=1, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   th:classappend="${baoCao != null and baoCao.kyThongKe == 'HOM_NAY'} ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                   class="px-2.5 py-1.5 rounded-lg transition">Hôm nay</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe='HOM_QUA', soNgayBieuDo=2, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   th:classappend="${baoCao != null and baoCao.kyThongKe == 'HOM_QUA'} ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                   class="px-2.5 py-1.5 rounded-lg transition">Hôm qua</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe='7_NGAY', soNgayBieuDo=7, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   th:classappend="${baoCao != null and baoCao.kyThongKe == '7_NGAY'} ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                   class="px-2.5 py-1.5 rounded-lg transition">7 ngày</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe='30_NGAY', soNgayBieuDo=30, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   th:classappend="${baoCao != null and baoCao.kyThongKe == '30_NGAY'} ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                   class="px-2.5 py-1.5 rounded-lg transition">30 ngày</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe='THANG_NAY', soNgayBieuDo=30, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   th:classappend="${baoCao != null and baoCao.kyThongKe == 'THANG_NAY'} ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                   class="px-2.5 py-1.5 rounded-lg transition">Tháng này</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe='THANG_TRUOC', soNgayBieuDo=30, kenhBan=${baoCao != null ? baoCao.kenhBan : 'ALL'})}"
+                   th:classappend="${baoCao != null and baoCao.kyThongKe == 'THANG_TRUOC'} ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                   class="px-2.5 py-1.5 rounded-lg transition">Tháng trước</a>
+            </div>
+
+            <!-- Kênh bán hàng -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                <span class="text-[10px] font-extrabold uppercase text-slate-400 px-1.5">Kênh:</span>
+                <a th:href="@{/admin/dashboard(kyThongKe=${baoCao != null ? baoCao.kyThongKe : '7_NGAY'}, kenhBan='ALL')}"
+                   th:classappend="${baoCao != null and baoCao.kenhBan == 'ALL'} ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                   class="px-2.5 py-1 rounded-lg transition">Tất cả</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe=${baoCao != null ? baoCao.kyThongKe : '7_NGAY'}, kenhBan='ONLINE')}"
+                   th:classappend="${baoCao != null and baoCao.kenhBan == 'ONLINE'} ? 'bg-white text-blue-600 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                   class="px-2.5 py-1 rounded-lg transition">Online</a>
+
+                <a th:href="@{/admin/dashboard(kyThongKe=${baoCao != null ? baoCao.kyThongKe : '7_NGAY'}, kenhBan='POS')}"
+                   th:classappend="${baoCao != null and baoCao.kenhBan == 'POS'} ? 'bg-white text-emerald-600 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                   class="px-2.5 py-1 rounded-lg transition">POS Quầy</a>
+            </div>
+
+            <!-- Bộ chọn ngày tùy chỉnh -->
+            <form action="/admin/dashboard" method="get" class="flex items-center gap-1.5">
+                <input type="hidden" name="kyThongKe" value="TUY_CHON">
+                <input type="hidden" name="kenhBan" th:value="${baoCao != null ? baoCao.kenhBan : 'ALL'}">
+                <input type="hidden" id="ngayThongKeInput" name="ngayThongKe" th:value="${thongKe != null ? thongKe.ngayThongKe : ''}">
+                <input type="hidden" id="soNgayBieuDoSelect" name="soNgayBieuDo" th:value="${thongKe != null ? thongKe.soNgayBieuDo : 7}">
+
+                <input type="date" name="tuNgay" th:value="${baoCao != null and baoCao.tuNgay != null ? baoCao.tuNgay : ''}"
+                       class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:outline-none focus:border-slate-800">
+                <span class="text-slate-400">-</span>
+                <input type="date" name="denNgay" th:value="${baoCao != null and baoCao.denNgay != null ? baoCao.denNgay : ''}"
+                       class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:outline-none focus:border-slate-800">
+                <button type="submit" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">
+                    Lọc
+                </button>
+            </form>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 4 THẺ CHỈ SỐ KPI CHÍNH (GỌN GÀNG, SẮC NÉT, ĐỦ Ý NGHĨA)                   -->
+        <!-- ========================================================================= -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <!-- KPI 1: TỔNG DOANH THU THỰC NHẬN -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 text-xs">
+                        <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Doanh thu thực nhận</span>
+                        <span th:if="${baoCao != null and baoCao.tyLeTangTruongDoanhThu >= 0}"
+                              class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                            +<span th:text="${baoCao.tyLeTangTruongDoanhThu}">0</span>%
+                        </span>
+                        <span th:if="${baoCao != null and baoCao.tyLeTangTruongDoanhThu < 0}"
+                              class="text-[11px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
+                            <span th:text="${baoCao.tyLeTangTruongDoanhThu}">0</span>%
+                        </span>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight"
+                             th:text="${baoCao != null and baoCao.tongDoanhThu != null ? #numbers.formatDecimal(baoCao.tongDoanhThu, 0, 'POINT', 0, 'COMMA') : '0'} + ' ₫'">0 ₫</div>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Hôm nay: <strong id="kpiDoanhThuTrongNgay" class="font-mono text-slate-800 font-bold"
+                                            th:text="${#numbers.formatDecimal(thongKe.doanhThuTrongNgay, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong></span>
+                    <span class="text-slate-400">Online: <strong class="text-blue-600" th:text="${baoCao != null and baoCao.doanhThuOnline != null ? #numbers.formatDecimal(baoCao.doanhThuOnline, 0, 'POINT', 0, 'COMMA') : '0'} + ' ₫'">0 ₫</strong></span>
+                </div>
+            </div>
+
+            <!-- KPI 2: ĐƠN HÀNG PHÁT SINH & TỶ LỆ HOÀN THÀNH -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 text-xs">
+                        <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Đơn hàng trong kỳ</span>
+                        <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded"
+                              th:text="${baoCao != null ? baoCao.tyLeHoanThanh : 0} + '% xong'">100% xong</span>
+                    </div>
+
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight"
+                              th:text="${baoCao != null ? baoCao.tongDonHang : 0}">0</span>
+                        <span class="text-xs text-slate-500 font-medium">đơn</span>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Hôm nay: <strong id="kpiDonHangHomNay" class="font-mono text-slate-800 font-bold"
+                                           th:text="${thongKe.soDonHangHomNay}">0</strong> đơn</span>
+                    <span>Thành công: <strong class="text-emerald-600 font-mono" th:text="${baoCao != null ? baoCao.soDonHoanThanh : 0}">0</strong> &bull; Hủy: <strong class="text-rose-500 font-mono" th:text="${baoCao != null ? baoCao.soDonHuy : 0}">0</strong></span>
+                </div>
+            </div>
+
+            <!-- KPI 3: GIÁ TRỊ ĐƠN TRUNG BÌNH (AOV) & CHIẾT KHẤU -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 text-xs">
+                        <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Giá trị TB / Đơn (AOV)</span>
+                        <i class="fa-solid fa-scale-balanced text-indigo-500 text-sm"></i>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight"
+                             th:text="${baoCao != null and baoCao.giaTriTrungBinhDon != null ? #numbers.formatDecimal(baoCao.giaTriTrungBinhDon, 0, 'POINT', 0, 'COMMA') : '0'} + ' ₫'">0 ₫</div>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Voucher: <strong class="text-rose-600 font-mono" th:text="'-' + ${#numbers.formatDecimal(baoCao != null ? baoCao.tongTienGiamVoucher : 0, 0, 'POINT', 0, 'COMMA')} + ' ₫'">-0 ₫</strong></span>
+                    <span>Ship thu: <strong class="text-slate-800 font-mono" th:text="${#numbers.formatDecimal(baoCao != null ? baoCao.tongPhiVanChuyen : 0, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong></span>
+                </div>
+            </div>
+
+            <!-- KPI 4: NGƯỜI DÙNG & QUY MÔ HỆ THỐNG -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 text-xs">
+                        <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Người dùng hệ thống</span>
+                        <i class="fa-solid fa-users text-blue-500 text-sm"></i>
+                    </div>
+
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="kpiTongNguoiDung" class="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight"
+                              th:text="${thongKe.tongSoLuongNguoiDung}">0</span>
+                        <span class="text-xs text-slate-500 font-medium">tài khoản</span>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Khách hàng: <strong class="font-mono text-slate-800" th:text="${thongKe.tongKhachHang}">0</strong> <span class="text-emerald-600" th:text="'(+' + ${thongKe.khachHangMoiTrongNgay} + ')'">(+0)</span></span>
+                    <span>Nhân sự: <strong class="font-mono text-blue-600" th:text="${thongKe.tongNhanVien}">0</strong></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- CẢNH BÁO BIẾN THỂ SẮP HẾT HÀNG (LOW STOCK ALERT & TẠO PHIẾU NHẬP)       -->
+        <!-- ========================================================================= -->
+        <div th:if="${soBienTheSapHetHang != null and soBienTheSapHetHang > 0}" 
+             class="bg-linear-to-r from-amber-500/10 via-rose-500/10 to-transparent border-l-4 border-amber-500 bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-amber-200/80">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation text-lg animate-bounce"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-sm text-slate-900">Cảnh báo Tồn kho: Có <span th:text="${soBienTheSapHetHang}" class="text-rose-600 font-black">0</span> biến thể sắp hết hàng (tồn kho &le; 10)</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700">Cần nhập gấp</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Admin cần kịp thời tạo phiếu nhập hàng từ nhà cung cấp chính hãng để tránh gián đoạn kinh doanh.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="/admin/nhap-hang/tao-phieu" 
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition">
+                        <i class="fa-solid fa-file-circle-plus text-amber-400"></i>
+                        <span>Tạo phiếu nhập hàng ngay</span>
+                    </a>
+                    <a href="/admin/san-pham" 
+                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs transition">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Xem tồn kho SP</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách SKU nguy cấp -->
+            <div th:if="${danhSachBienTheSapHetHang != null and not #lists.isEmpty(danhSachBienTheSapHetHang)}" class="mt-3.5 overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                    <thead class="text-[10px] font-bold text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2 px-3">Mã SKU</th>
+                            <th class="py-2 px-3">Phân loại (Màu / Size)</th>
+                            <th class="py-2 px-3 text-center">Tồn kho hiện tại</th>
+                            <th class="py-2 px-3 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr th:each="sku : ${danhSachBienTheSapHetHang}" class="hover:bg-amber-50/30 transition">
+                            <td class="py-2 px-3 font-mono font-bold text-slate-800" th:text="${sku.maSku}">SKU-123</td>
+                            <td class="py-2 px-3 text-slate-600">
+                                <span th:text="${sku.tenMauSac != null ? sku.tenMauSac : ('Màu #' + sku.maMauSacId)}">Đen</span> / 
+                                <span th:text="${sku.maKichThuoc != null ? sku.maKichThuoc : (sku.tenKichThuoc != null ? sku.tenKichThuoc : ('Size #' + sku.maKichThuocId))}">L</span>
+                            </td>
+                            <td class="py-2 px-3 text-center font-bold font-mono">
+                                <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700" th:text="${(sku.soLuong != null ? sku.soLuong : 0) + ' chiếc'}">5 chiếc</span>
+                            </td>
+                            <td class="py-2 px-3 text-right">
+                                <a th:href="@{'/admin/nhap-hang/tao-phieu?sku=' + ${sku.maSku}}" 
+                                   class="text-blue-600 hover:text-blue-800 font-bold text-[11px] inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-cart-plus"></i> Nhập biến thể này
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- HỆ THỐNG BIỂU ĐỒ (DOANH THU & PHƯƠNG THỨC THANH TOÁN)                     -->
+        <!-- ========================================================================= -->
+        <div class="sr-only">Biểu đồ Tổng quan SIMPLAIN STORE</div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+            <!-- Biểu đồ Doanh thu (Online + POS) & Số đơn (2/3 width) -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-blue-600"></i>
+                            <span>Biểu đồ Doanh thu &amp; Số lượng Đơn hàng</span>
+                        </h2>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-mono">Đơn vị: VNĐ &amp; Đơn hàng</span>
+                </div>
+
+                <div class="relative h-72 w-full mt-3">
+                    <canvas id="bieuDoDoanhThuVaDonHang"></canvas>
+                </div>
+            </div>
+
+            <!-- Biểu đồ Phương thức thanh toán (1/3 width) -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div class="pb-3 border-b border-slate-100">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-credit-card text-indigo-600"></i>
+                        <span>Cơ cấu Thanh toán</span>
+                    </h2>
+                </div>
+
+                <div class="relative h-56 w-full my-auto flex items-center justify-center">
+                    <canvas id="bieuDoPhuongThucThanhToan"></canvas>
+                </div>
+
+                <div class="pt-2.5 border-t border-slate-100 text-center text-[11px] text-slate-400">
+                    COD &bull; VNPay &bull; MoMo &bull; Tiền mặt POS
+                </div>
+            </div>
+
+        </div>
+
+        <!-- HÀNG BIỂU ĐỒ PHỤ: TRẠNG THÁI ĐƠN & NGƯỜI DÙNG (CẦN CHO BÀI TEST & PHÂN TÍCH) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            <!-- Biểu đồ Trạng thái Đơn hàng -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-amber-500"></i>
+                        <span>Tỷ trọng Trạng thái Đơn hàng</span>
+                    </h2>
+                    <span class="text-xs text-slate-500 font-mono font-bold" th:text="${thongKe.tongDonHangToanHeThong} + ' đơn toàn hệ thống'">0 đơn</span>
+                </div>
+
+                <div class="relative h-56 w-full my-auto flex items-center justify-center">
+                    <canvas id="bieuDoTrangThaiDonHang"></canvas>
+                </div>
+            </div>
+
+            <!-- Biểu đồ Cơ cấu Người dùng -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-user-group text-blue-600"></i>
+                        <span>Cơ cấu Người dùng</span>
+                    </h2>
+                    <span class="text-xs text-slate-500 font-mono font-bold" th:text="${thongKe.tongSoLuongNguoiDung} + ' tài khoản'">0 tài khoản</span>
+                </div>
+
+                <div class="relative h-56 w-full my-auto flex items-center justify-center">
+                    <canvas id="bieuDoCoCauNguoiDung"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PHÂN TÍCH: TOP SẢN PHẨM & ĐƠN HÀNG GẦN NHẤT                               -->
+        <!-- ========================================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            <!-- Top 5 Sản phẩm Doanh thu cao nhất -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-crown text-amber-500"></i>
+                        <span>Top 5 Sản phẩm Doanh thu cao nhất</span>
+                    </h2>
+                    <a href="/admin/san-pham/hien-thi" class="text-xs font-bold text-blue-600 hover:text-blue-800">Kho hàng →</a>
+                </div>
+
+                <div class="divide-y divide-slate-100 my-1">
+                    <div th:each="sp, stat : ${baoCao.topSanPham}" class="py-2.5 flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs font-mono"
+                             th:classappend="${stat.index == 0} ? 'bg-amber-100 text-amber-800' : (${stat.index == 1} ? 'bg-slate-200 text-slate-800' : (${stat.index == 2} ? 'bg-amber-700/20 text-amber-900' : 'bg-slate-100 text-slate-600'))"
+                             th:text="${stat.index + 1}">1</div>
+                        <div class="flex-grow min-w-0">
+                            <h4 class="text-xs font-semibold text-slate-900 truncate" th:text="${sp.tenSanPham}">Tên sản phẩm</h4>
+                            <div class="flex items-center justify-between text-[11px] text-slate-500 mt-0.5">
+                                <span>Đã bán: <strong class="font-mono text-slate-800" th:text="${sp.soLuongDaBan}">0</strong> cái</span>
+                                <strong class="font-mono text-emerald-600 font-bold"
+                                        th:text="${#numbers.formatDecimal(sp.doanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
+                                <div class="bg-blue-600 h-1 rounded-full" th:style="'width: ' + ${sp.tyLeDongGop} + '%;'"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(baoCao.topSanPham)}" class="py-6 text-center text-xs text-slate-400">
+                        Chưa có dữ liệu sản phẩm trong kỳ báo cáo này.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Đơn hàng phát sinh mới nhất -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-emerald-600"></i>
+                        <span>Đơn hàng mới nhất</span>
+                    </h2>
+                    <a href="/admin/don-hang/hien-thi" class="text-xs font-bold text-blue-600 hover:text-blue-800">Tất cả đơn →</a>
+                </div>
+
+                <div class="overflow-x-auto mt-2">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                                <th class="py-2 px-2">Mã đơn</th>
+                                <th class="py-2 px-2">Người nhận</th>
+                                <th class="py-2 px-2">Trạng thái</th>
+                                <th class="py-2 px-2 text-right">Tổng tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr th:each="dh : ${thongKe.danhSachDonHangMoiNhat}" class="hover:bg-slate-50 transition">
+                                <td class="py-2 px-2 font-mono font-bold text-slate-900" th:text="${dh.maDonHang}">CM-01</td>
+                                <td class="py-2 px-2">
+                                    <div class="font-semibold text-slate-800" th:text="${dh.tenNguoiNhan}">Nguyễn Văn A</div>
+                                    <div class="text-[10px] text-slate-400 font-mono" th:text="${dh.soDienThoaiNhan}">0901234567</div>
+                                </td>
+                                <td class="py-2 px-2">
+                                    <span th:if="${dh.trangThaiDonHang != null and dh.trangThaiDonHang.maTrangThai == 'HOAN_THANH'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Hoàn thành</span>
+                                    <span th:if="${dh.trangThaiDonHang != null and dh.trangThaiDonHang.maTrangThai == 'CHO_XAC_NHAN'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Chờ xác nhận</span>
+                                    <span th:if="${dh.trangThaiDonHang != null and dh.trangThaiDonHang.maTrangThai == 'DANG_XU_LY'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Đang xử lý</span>
+                                    <span th:if="${dh.trangThaiDonHang != null and dh.trangThaiDonHang.maTrangThai == 'DANG_GIAO'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Đang giao</span>
+                                    <span th:if="${dh.trangThaiDonHang != null and dh.trangThaiDonHang.maTrangThai == 'DA_HUY'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">Đã hủy</span>
+                                </td>
+                                <td class="py-2 px-2 text-right font-mono font-bold text-slate-900"
+                                    th:text="${#numbers.formatDecimal(dh.tongThanhToan, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(thongKe.danhSachDonHangMoiNhat)}">
+                                <td colspan="4" class="py-6 text-center text-slate-400">
+                                    Chưa có đơn hàng nào trong hệ thống.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- BẢNG KÊ CHI TIẾT DOANH THU THEO TỪNG NGÀY (AUDIT TABLE)                  -->
+        <!-- ========================================================================= -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-table-list text-blue-600"></i>
+                    <span>Bảng kê Chi tiết Doanh thu theo ngày</span>
+                </h2>
+                <a th:href="@{/admin/dashboard/xuat-csv(kyThongKe=${baoCao.kyThongKe}, tuNgay=${baoCao.tuNgay}, denNgay=${baoCao.denNgay}, kenhBan=${baoCao.kenhBan})}"
+                   class="no-print text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1">
+                    <i class="fa-solid fa-download"></i><span>Tải file CSV</span>
+                </a>
+            </div>
+
+            <div class="overflow-x-auto mt-3">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider bg-slate-50/70">
+                            <th class="py-2.5 px-3">Ngày</th>
+                            <th class="py-2.5 px-3 text-center">Số đơn</th>
+                            <th class="py-2.5 px-3 text-center">Hoàn thành</th>
+                            <th class="py-2.5 px-3 text-center">Đơn hủy</th>
+                            <th class="py-2.5 px-3 text-right">Doanh thu Online</th>
+                            <th class="py-2.5 px-3 text-right">Doanh thu POS</th>
+                            <th class="py-2.5 px-3 text-right">Chiết khấu</th>
+                            <th class="py-2.5 px-3 text-right font-black text-slate-900">Tổng doanh thu</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr th:each="row : ${baoCao.chiTietCacNgay}" class="hover:bg-slate-50 transition">
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900" th:text="${row.ngay}">01/11/2026</td>
+                            <td class="py-2.5 px-3 text-center font-mono" th:text="${row.soDonHang}">0</td>
+                            <td class="py-2.5 px-3 text-center font-mono text-emerald-600 font-bold" th:text="${row.soDonHoanThanh}">0</td>
+                            <td class="py-2.5 px-3 text-center font-mono text-rose-500" th:text="${row.soDonHuy}">0</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-700"
+                                th:text="${#numbers.formatDecimal(row.doanhThuOnline, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-slate-700"
+                                th:text="${#numbers.formatDecimal(row.doanhThuPos, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-rose-500"
+                                th:text="${#numbers.formatDecimal(row.tongChietKhau, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 bg-slate-50/50"
+                                th:text="${#numbers.formatDecimal(row.tongDoanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(baoCao.chiTietCacNgay)}">
+                            <td colspan="8" class="py-6 text-center text-slate-400">
+                                Không có phát sinh dữ liệu trong kỳ thống kê này.
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="border-t-2 border-slate-300 bg-slate-50 font-bold text-xs">
+                        <tr>
+                            <td class="py-2.5 px-3 uppercase text-slate-900">Tổng cộng toàn kỳ</td>
+                            <td class="py-2.5 px-3 text-center font-mono" th:text="${baoCao.tongDonHang}">0</td>
+                            <td class="py-2.5 px-3 text-center font-mono text-emerald-600" th:text="${baoCao.soDonHoanThanh}">0</td>
+                            <td class="py-2.5 px-3 text-center font-mono text-rose-500" th:text="${baoCao.soDonHuy}">0</td>
+                            <td class="py-2.5 px-3 text-right font-mono" th:text="${#numbers.formatDecimal(baoCao.doanhThuOnline, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            <td class="py-2.5 px-3 text-right font-mono" th:text="${#numbers.formatDecimal(baoCao.doanhThuPos, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-rose-500" th:text="${#numbers.formatDecimal(baoCao.tongTienGiamVoucher + baoCao.tongTienGiamDiem, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-sm font-black text-blue-700" th:text="${#numbers.formatDecimal(baoCao.tongDoanhThu, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL TẠO NHANH ĐƠN HÀNG HÔM NAY ĐỂ TEST REALTIME DASHBOARD               -->
+    <!-- ========================================================================= -->
+    <div id="modalTaoDonNhanh"
+         th:classappend="${moModalTaoDon} ? 'flex' : 'hidden'"
+         class="no-print fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">Tạo nhanh Đơn hàng hôm nay</h3>
+                <button type="button" onclick="dongModalTaoDonNhanh()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/dashboard/tao-don-nhanh}" th:object="${taoDonHangNhanhRequest}" method="post" class="space-y-4 mt-4" novalidate>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Mã đơn hàng</label>
+                        <input type="text" th:field="*{maDonHang}" placeholder="Tự sinh nếu trống"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition font-mono uppercase font-bold">
+                        <p th:if="${#fields.hasErrors('maDonHang')}" th:errors="*{maDonHang}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Trạng thái <span class="text-rose-500">*</span></label>
+                        <select th:field="*{maTrangThai}"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition">
+                            <option value="HOAN_THANH">Hoàn thành (Tính doanh thu)</option>
+                            <option value="CHO_XAC_NHAN">Chờ xác nhận</option>
+                            <option value="DANG_XU_LY">Đang xử lý</option>
+                            <option value="DANG_GIAO">Đang giao hàng</option>
+                            <option value="DA_HUY">Đã hủy (Không tính doanh thu)</option>
+                        </select>
+                        <p th:if="${#fields.hasErrors('maTrangThai')}" th:errors="*{maTrangThai}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Tên người nhận <span class="text-rose-500">*</span></label>
+                        <input type="text" th:field="*{tenNguoiNhan}" placeholder="VD: Lê Hoàng Nam"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition">
+                        <p th:if="${#fields.hasErrors('tenNguoiNhan')}" th:errors="*{tenNguoiNhan}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Số điện thoại <span class="text-rose-500">*</span></label>
+                        <input type="text" th:field="*{soDienThoaiNhan}" placeholder="VD: 0912345678"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition font-mono">
+                        <p th:if="${#fields.hasErrors('soDienThoaiNhan')}" th:errors="*{soDienThoaiNhan}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Địa chỉ giao hàng <span class="text-rose-500">*</span></label>
+                    <input type="text" th:field="*{diaChiGiaoHang}" placeholder="VD: Số 123 Cầu Giấy, Hà Nội"
+                           class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition">
+                    <p th:if="${#fields.hasErrors('diaChiGiaoHang')}" th:errors="*{diaChiGiaoHang}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Tiền hàng (₫) <span class="text-rose-500">*</span></label>
+                        <input type="number" step="1000" min="1000" th:field="*{tongTienHang}" placeholder="499000"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition font-mono font-bold">
+                        <p th:if="${#fields.hasErrors('tongTienHang')}" th:errors="*{tongTienHang}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Giảm giá (₫)</label>
+                        <input type="number" step="1000" min="0" th:field="*{tienGiamGia}" placeholder="0"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition font-mono font-bold">
+                        <p th:if="${#fields.hasErrors('tienGiamGia')}" th:errors="*{tienGiamGia}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Phí ship (₫)</label>
+                        <input type="number" step="1000" min="0" th:field="*{phiVanChuyen}" placeholder="25000"
+                               class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition font-mono font-bold">
+                        <p th:if="${#fields.hasErrors('phiVanChuyen')}" th:errors="*{phiVanChuyen}" class="text-[11px] text-rose-600 font-semibold mt-1"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Ghi chú</label>
+                    <textarea th:field="*{ghiChu}" rows="2" placeholder="Ghi chú thêm..."
+                              class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs outline-none focus:border-slate-800 text-slate-800 transition resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="dongModalTaoDonNhanh()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-xs transition cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit" class="btn-navy px-4 py-2 rounded-xl font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk"></i><span>Lưu đơn</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DỮ LIỆU JAVASCRIPT & KHỞI TẠO BIỂU ĐỒ CHART.JS                            -->
+    <!-- ========================================================================= -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const nhanNgayBieuDo = /*[[${baoCao != null and !#lists.isEmpty(baoCao.nhanThoiGian) ? baoCao.nhanThoiGian : thongKe.nhanNgayBieuDo}]]*/ ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+        const duLieuDoanhThuOnline = /*[[${baoCao != null and !#lists.isEmpty(baoCao.duLieuDoanhThuOnline) ? baoCao.duLieuDoanhThuOnline : thongKe.duLieuDoanhThuTheoNgay}]]*/ [0, 0, 0, 0, 0, 0, 0];
+        const duLieuDoanhThuPos = /*[[${baoCao != null and !#lists.isEmpty(baoCao.duLieuDoanhThuPos) ? baoCao.duLieuDoanhThuPos : thongKe.duLieuDoanhThuTheoNgay}]]*/ [0, 0, 0, 0, 0, 0, 0];
+        const duLieuSoDonTheoNgay = /*[[${baoCao != null and !#lists.isEmpty(baoCao.duLieuSoDon) ? baoCao.duLieuSoDon : thongKe.duLieuSoDonTheoNgay}]]*/ [0, 0, 0, 0, 0, 0, 0];
+
+        const nhanPhuongThuc = /*[[${baoCao != null and !#lists.isEmpty(baoCao.nhanPhuongThuc) ? baoCao.nhanPhuongThuc : {}}]]*/ ['COD', 'VNPAY', 'MOMO', 'TIEN_MAT'];
+        const duLieuPhuongThuc = /*[[${baoCao != null and !#lists.isEmpty(baoCao.duLieuPhuongThuc) ? baoCao.duLieuPhuongThuc : {}}]]*/ [0, 0, 0, 0];
+
+        const nhanTrangThaiDonHang = /*[[${thongKe.nhanTrangThaiDonHang}]]*/ ['Chờ xác nhận', 'Đang xử lý', 'Đang giao', 'Hoàn thành', 'Đã hủy'];
+        const duLieuSoDonTheoTrangThai = /*[[${thongKe.duLieuSoDonTheoTrangThai}]]*/ [0, 0, 0, 0, 0];
+
+        const nhanCoCauNguoiDung = /*[[${thongKe.nhanCoCauNguoiDung}]]*/ ['KH Hoạt động', 'KH Bị khóa', 'NV Đang làm', 'NV Đã nghỉ'];
+        const duLieuCoCauNguoiDung = /*[[${thongKe.duLieuCoCauNguoiDung}]]*/ [5, 0, 3, 0];
+
+        // 1. Biểu đồ Doanh thu (Online + POS) & Số đơn
+        const ctxDoanhThu = document.getElementById('bieuDoDoanhThuVaDonHang');
+        if (ctxDoanhThu && typeof Chart !== 'undefined') {
+            new Chart(ctxDoanhThu, {
+                type: 'bar',
+                data: {
+                    labels: nhanNgayBieuDo,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Online (₫)',
+                            data: duLieuDoanhThuOnline,
+                            backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                            hoverBackgroundColor: '#1d4ed8',
+                            borderRadius: 4,
+                            stack: 'DoanhThuStack',
+                            yAxisID: 'yDoanhThu',
+                            order: 2
+                        },
+                        {
+                            type: 'bar',
+                            label: 'POS (₫)',
+                            data: duLieuDoanhThuPos,
+                            backgroundColor: 'rgba(139, 92, 246, 0.85)',
+                            hoverBackgroundColor: '#6d28d9',
+                            borderRadius: 4,
+                            stack: 'DoanhThuStack',
+                            yAxisID: 'yDoanhThu',
+                            order: 3
+                        },
+                        {
+                            type: 'line',
+                            label: 'Số đơn',
+                            data: duLieuSoDonTheoNgay,
+                            borderColor: '#F59E0B',
+                            backgroundColor: '#FEF3C7',
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#D97706',
+                            tension: 0.25,
+                            yAxisID: 'ySoDon',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Inter', size: 11, weight: '600' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.yAxisID === 'yDoanhThu') {
+                                        return ' ' + context.dataset.label + ': ' + new Intl.NumberFormat('vi-VN').format(context.parsed.y) + ' ₫';
+                                    }
+                                    return ' ' + context.dataset.label + ': ' + context.parsed.y + ' đơn';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        yDoanhThu: {
+                            type: 'linear', position: 'left', stacked: true, beginAtZero: true,
+                            ticks: {
+                                callback: val => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(val) + ' ₫',
+                                font: { family: 'Inter', size: 10 }
+                            }
+                        },
+                        ySoDon: {
+                            type: 'linear', position: 'right', beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            ticks: { stepSize: 1, font: { family: 'Inter', size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Biểu đồ Phương thức thanh toán
+        const ctxPhuongThuc = document.getElementById('bieuDoPhuongThucThanhToan');
+        if (ctxPhuongThuc && typeof Chart !== 'undefined') {
+            const hasDataPT = duLieuPhuongThuc && duLieuPhuongThuc.length > 0 && duLieuPhuongThuc.some(v => v > 0);
+            new Chart(ctxPhuongThuc, {
+                type: 'doughnut',
+                data: {
+                    labels: hasDataPT ? nhanPhuongThuc : ['Chưa có dữ liệu'],
+                    datasets: [{
+                        data: hasDataPT ? duLieuPhuongThuc : [1],
+                        backgroundColor: hasDataPT ? ['#3B82F6', '#10B981', '#EC4899', '#F59E0B', '#8B5CF6'] : ['#E2E8F0'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 }, boxWidth: 10 } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => !hasDataPT ? ' Chưa có dữ liệu' : ' ' + ctx.label + ': ' + new Intl.NumberFormat('vi-VN').format(ctx.raw) + ' ₫'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Biểu đồ Trạng thái đơn hàng (Doughnut)
+        const ctxTrangThai = document.getElementById('bieuDoTrangThaiDonHang');
+        if (ctxTrangThai && typeof Chart !== 'undefined') {
+            new Chart(ctxTrangThai, {
+                type: 'doughnut',
+                data: {
+                    labels: nhanTrangThaiDonHang,
+                    datasets: [{
+                        data: duLieuSoDonTheoTrangThai,
+                        backgroundColor: ['#F59E0B', '#3B82F6', '#6366F1', '#10B981', '#EF4444'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 }, boxWidth: 10 } }
+                    }
+                }
+            });
+        }
+
+        // 4. Biểu đồ Cơ cấu người dùng (Bar)
+        const ctxNguoiDung = document.getElementById('bieuDoCoCauNguoiDung');
+        if (ctxNguoiDung && typeof Chart !== 'undefined') {
+            new Chart(ctxNguoiDung, {
+                type: 'bar',
+                data: {
+                    labels: nhanCoCauNguoiDung,
+                    datasets: [{
+                        label: 'Số lượng',
+                        data: duLieuCoCauNguoiDung,
+                        backgroundColor: ['#10B981', '#9CA3AF', '#2563EB', '#EF4444'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter', size: 10 } } },
+                        x: { ticks: { font: { family: 'Inter', size: 10 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function moModalTaoDonNhanh() {
+            const modal = document.getElementById('modalTaoDonNhanh');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dongModalTaoDonNhanh() {
+            const modal = document.getElementById('modalTaoDonNhanh');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

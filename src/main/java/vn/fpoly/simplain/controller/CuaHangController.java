@@ -16,14 +16,18 @@ import vn.fpoly.simplain.dto.ThongKeDanhGiaResponse;
 import vn.fpoly.simplain.dto.ThongTinKhachHangResponse;
 import vn.fpoly.simplain.dto.VoucherKhachHangDto;
 import vn.fpoly.simplain.entity.*;
+import vn.fpoly.simplain.repository.DanhGiaSanPhamRepository;
 import vn.fpoly.simplain.service.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Controller MVC phục vụ giao diện Storefront Simplain cho Khách hàng:
@@ -47,6 +51,12 @@ public class CuaHangController {
     private BannerQuangCaoService bannerQuangCaoService;
     private GoiComboService goiComboService;
     private FlashSaleService flashSaleService;
+    private DanhGiaSanPhamRepository danhGiaSanPhamRepository;
+
+    @Autowired
+    public void setDanhGiaSanPhamRepository(DanhGiaSanPhamRepository danhGiaSanPhamRepository) {
+        this.danhGiaSanPhamRepository = danhGiaSanPhamRepository;
+    }
 
     @Autowired
     public void setBannerQuangCaoService(BannerQuangCaoService bannerQuangCaoService) {
@@ -151,10 +161,12 @@ public class CuaHangController {
             }
         }
 
-        // Danh sách dữ liệu cho Sidebar Bộ lọc (chỉ hiển thị Danh mục & BST đang kích hoạt)
+        // Danh sách dữ liệu cho Sidebar Bộ lọc & Menu Phân cấp (8 Danh mục Cha, 32 Danh mục Con)
         List<DanhMuc> danhSachDanhMuc = danhMucService.layTatCa().stream()
                 .filter(dm -> Boolean.TRUE.equals(dm.getKichHoat()))
                 .toList();
+        List<DanhMuc> cayDanhMuc = danhMucService.layCayDanhMuc(null, true);
+        model.addAttribute("cayDanhMuc", cayDanhMuc);
         List<BoSuuTap> danhSachBoSuuTap = boSuuTapService.layTatCa().stream()
                 .filter(bst -> Boolean.TRUE.equals(bst.getKichHoat()))
                 .toList();
@@ -233,6 +245,9 @@ public class CuaHangController {
         model.addAttribute("sapXep", sapXep);
         model.addAttribute("soBoLocDangApDung", soBoLocDangApDung);
 
+        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With")) || "true".equalsIgnoreCase(request.getParameter("ajax"))) {
+            return "khach-hang/cua-hang :: khuVucDanhSachSanPham";
+        }
         return "khach-hang/cua-hang";
     }
 
@@ -303,7 +318,7 @@ public class CuaHangController {
      * 1. Khi chọn Size/Màu nhảy ảnh tương ứng (hỗ trợ cả tham số mauId, sizeId, bienTheId và chuyển đổi tức thì bằng JS).
      * 2. Hiển thị số lượng tồn kho thực tế của biến thể đang chọn và tổng tồn kho sản phẩm.
      */
-    @GetMapping({"/cua-hang/san-pham/{id}", "/san-pham/{id}"})
+    @GetMapping({"/cua-hang/san-pham/{id:\\d+}", "/san-pham/{id:\\d+}"})
     public String hienThiChiTietSanPham(@PathVariable("id") Long id,
                                         @RequestParam(name = "mauId", required = false) Long mauId,
                                         @RequestParam(name = "sizeId", required = false) Long sizeId,
@@ -353,9 +368,9 @@ public class CuaHangController {
 
     /**
      * Xem trang Chi tiết sản phẩm theo đường dẫn Slug chuẩn SEO (US11).
-     * Hỗ trợ cả /cua-hang/san-pham/slug/{slug}, /san-pham/slug/{slug} và /cua-hang/{slug}.
+     * Hỗ trợ cả /cua-hang/san-pham/slug/{slug}, /san-pham/slug/{slug}, /cua-hang/{slug} và /san-pham/{slug}.
      */
-    @GetMapping({"/cua-hang/san-pham/slug/{slug}", "/san-pham/slug/{slug}", "/cua-hang/{slug:[a-z0-9-]+}"})
+    @GetMapping({"/cua-hang/san-pham/slug/{slug}", "/san-pham/slug/{slug}", "/cua-hang/{slug:[a-z0-9-]+}", "/san-pham/{slug:[a-z0-9-]+}"})
     public String hienThiChiTietTheoSlug(@PathVariable("slug") String slug,
                                          @RequestParam(name = "mauId", required = false) Long mauId,
                                          @RequestParam(name = "sizeId", required = false) Long sizeId,
@@ -448,6 +463,8 @@ public class CuaHangController {
         List<DanhMuc> danhSachDanhMuc = danhMucService.layTatCa().stream()
                 .filter(dm -> Boolean.TRUE.equals(dm.getKichHoat()))
                 .toList();
+        List<DanhMuc> cayDanhMuc = danhMucService.layCayDanhMuc(null, true);
+        model.addAttribute("cayDanhMuc", cayDanhMuc);
 
         List<SanPham> sanPhamLienQuan = sanPhamService.laySanPhamLienQuanStorefront(sp.getId(), sp.getMaDanhMucId(), 4);
 
@@ -466,6 +483,20 @@ public class CuaHangController {
         model.addAttribute("danhSachAnhPhu", dsAnhPhu);
         model.addAttribute("coChonBienTheChuDong", coChonBienTheChuDong);
         model.addAttribute("videoSanPham", videoSanPham);
+        // Lọc danh sách biến thể đại diện theo từng màu sắc (các size cùng màu dùng chung ảnh, tránh lặp lại nhiều lần thumbnail)
+        List<BienTheSanPham> danhSachAnhMauDuyNhat = new ArrayList<>();
+        Set<String> setAnhDaThem = new HashSet<>();
+        Set<Long> setMauDaThem = new HashSet<>();
+        for (BienTheSanPham bt : dsBienThe) {
+            if (bt.getAnhDaiDienUrl() != null && !bt.getAnhDaiDienUrl().isBlank()) {
+                if (!setMauDaThem.contains(bt.getMaMauSacId()) && !setAnhDaThem.contains(bt.getAnhDaiDienUrl())) {
+                    danhSachAnhMauDuyNhat.add(bt);
+                    setMauDaThem.add(bt.getMaMauSacId());
+                    setAnhDaThem.add(bt.getAnhDaiDienUrl());
+                }
+            }
+        }
+        model.addAttribute("danhSachAnhMauDuyNhat", danhSachAnhMauDuyNhat);
         model.addAttribute("danhSachBienThe", dsBienThe);
         model.addAttribute("bienTheDangChon", bienTheDangChon);
         model.addAttribute("chiTietFlashSaleDangChon", chiTietFlashSaleDangChon);
@@ -483,13 +514,23 @@ public class CuaHangController {
 
         boolean daYeuThich = false;
         List<ChiTietDonHang> dsChiTietDuDieuKien = Collections.emptyList();
+        boolean daDanhGiaSanPhamNay = false;
         ThongTinKhachHangResponse kh = (ThongTinKhachHangResponse) model.getAttribute("khachHangDangNhap");
         if (kh != null && sp.getId() != null) {
             daYeuThich = sanPhamYeuThichService.kiemTraDaYeuThich(kh.getId(), sp.getId());
-            dsChiTietDuDieuKien = danhGiaSanPhamService.layDanhSachChiTietDonHangDuDieuKien(kh.getId(), sp.getId());
+            if (danhGiaSanPhamRepository != null) {
+                daDanhGiaSanPhamNay = danhGiaSanPhamRepository.existsByMaKhachHangIdAndMaSanPhamId(kh.getId(), sp.getId());
+            }
+            if (!daDanhGiaSanPhamNay) {
+                dsChiTietDuDieuKien = danhGiaSanPhamService.layDanhSachChiTietDonHangDuDieuKien(kh.getId(), sp.getId());
+            }
         }
+        boolean coQuyenDanhGia = (kh != null) && !daDanhGiaSanPhamNay && !dsChiTietDuDieuKien.isEmpty();
         model.addAttribute("daYeuThich", daYeuThich);
+        model.addAttribute("daDanhGiaSanPhamNay", daDanhGiaSanPhamNay);
         model.addAttribute("dsChiTietDuDieuKien", dsChiTietDuDieuKien);
+        model.addAttribute("coQuyenDanhGia", coQuyenDanhGia);
+        model.addAttribute("daDangNhapKhachHang", kh != null);
 
         // Dữ liệu Đánh giá sản phẩm đã mua (US15)
         ThongKeDanhGiaResponse thongKeDanhGia = danhGiaSanPhamService.layThongKeDanhGiaTheoSanPham(sp.getId());

@@ -23,18 +23,26 @@ public interface DanhMucRepository extends JpaRepository<DanhMuc, Long> {
     Page<DanhMuc> findAllByTenDanhMucContainingIgnoreCase(String tenDanhMuc, Pageable pageable);
 
     /**
-     * Tìm kiếm kết hợp theo từ khóa (tên hoặc slug), danh mục cha và trạng thái kích hoạt.
+     * Tìm kiếm kết hợp theo từ khóa (tên hoặc slug), danh mục cha, cấp danh mục (Cha/Con) và trạng thái kích hoạt.
      */
     @Query("SELECT dm FROM DanhMuc dm WHERE " +
            "(:tuKhoa IS NULL OR :tuKhoa = '' OR " +
            " LOWER(dm.tenDanhMuc) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR " +
            " LOWER(dm.duongDanSlug) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) AND " +
            "(:maDanhMucCha IS NULL OR dm.maDanhMucCha = :maDanhMucCha) AND " +
+           "(:capDanhMuc IS NULL OR :capDanhMuc = '' OR " +
+           " (:capDanhMuc = 'CHA' AND dm.maDanhMucCha IS NULL) OR " +
+           " (:capDanhMuc = 'CON' AND dm.maDanhMucCha IS NOT NULL)) AND " +
            "(:kichHoat IS NULL OR dm.kichHoat = :kichHoat)")
     Page<DanhMuc> timKiemPhanTrang(@Param("tuKhoa") String tuKhoa,
                                    @Param("maDanhMucCha") Long maDanhMucCha,
+                                   @Param("capDanhMuc") String capDanhMuc,
                                    @Param("kichHoat") Boolean kichHoat,
                                    Pageable pageable);
+
+    default Page<DanhMuc> timKiemPhanTrang(String tuKhoa, Long maDanhMucCha, Boolean kichHoat, Pageable pageable) {
+        return timKiemPhanTrang(tuKhoa, maDanhMucCha, null, kichHoat, pageable);
+    }
 
     /**
      * Tìm danh mục theo đường dẫn slug.

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhập hàng NCC & Quét Barcode | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('nhap-hang')}"></div>
+
+    <!-- Main Content Area -->
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-sm">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Nhập hàng từ Nhà Cung Cấp</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wide">
+                            <i class="fa-solid fa-barcode mr-1"></i>Mã quét chính hãng
+                        </span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Quản lý phiếu nhập kho, nhận diện mã vạch Barcode/QR từ hãng lớn và đồng bộ tự động tồn kho</p>
+                </div>
+            </div>
+
+            <!-- Nút Thao tác -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <a href="/admin/nhap-hang/nha-cung-cap" class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-2xs">
+                    <i class="fa-solid fa-building-circle-check text-blue-600 mr-1.5"></i>
+                    <span>Danh mục NCC</span>
+                </a>
+                <a href="/admin/nhap-hang/tao-phieu" class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs">
+                    <i class="fa-solid fa-plus text-amber-400 mr-1.5"></i>
+                    <span>Tạo phiếu nhập mới</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. THẺ KPI TỔNG QUAN -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" th:if="${thongKe != null}">
+            <!-- Tổng số phiếu -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng số phiếu</span>
+                    <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-file-invoice"></i></span>
+                </div>
+                <div class="mt-2 text-2xl font-black text-slate-900 font-mono" th:text="${thongKe['tongPhieu'] != null ? thongKe['tongPhieu'] : 0}">0</div>
+                <div class="mt-1 text-[11px] text-slate-500 font-medium">Toàn bộ lịch sử nhập kho</div>
+            </div>
+
+            <!-- Chờ nhập kho -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Chờ nhập kho</span>
+                    <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                </div>
+                <div class="mt-2 text-2xl font-black text-amber-600 font-mono" th:text="${thongKe['phieuChoDuyet'] != null ? thongKe['phieuChoDuyet'] : 0}">0</div>
+                <div class="mt-1 text-[11px] text-slate-500 font-medium">Phiếu dự thảo chưa cộng kho</div>
+            </div>
+
+            <!-- Đã hoàn tất -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đã hoàn tất</span>
+                    <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fa-solid fa-circle-check"></i></span>
+                </div>
+                <div class="mt-2 text-2xl font-black text-emerald-600 font-mono" th:text="${thongKe['phieuHoanTat'] != null ? thongKe['phieuHoanTat'] : 0}">0</div>
+                <div class="mt-1 text-[11px] text-slate-500 font-medium">Đã cộng tồn kho biến thể</div>
+            </div>
+
+            <!-- Tổng giá trị nhập -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng giá trị nhập</span>
+                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><i class="fa-solid fa-money-bill-wave"></i></span>
+                </div>
+                <div class="mt-2 text-xl font-black text-slate-900 font-mono" th:text="${#numbers.formatDecimal(thongKe['tongTienNhap'] != null ? thongKe['tongTienNhap'] : 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</div>
+                <div class="mt-1 text-[11px] text-slate-500 font-medium">
+                    Tổng: <span class="font-bold text-slate-700" th:text="${thongKe['tongSoLuongNhap'] != null ? thongKe['tongSoLuongNhap'] : 0}">0</span> cái đã nhập
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <form th:action="@{/admin/nhap-hang/hien-thi}" method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                <!-- Từ khóa -->
+                <div class="lg:col-span-4">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tìm kiếm</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" name="tuKhoa" th:value="${tuKhoa}" placeholder="Mã phiếu nhập, ghi chú..."
+                               class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-blue-600 outline-none">
+                    </div>
+                </div>
+
+                <!-- Chọn Nhà cung cấp -->
+                <div class="lg:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nhà cung cấp</label>
+                    <select name="maNhaCungCapId" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:border-blue-600 outline-none">
+                        <option value="">-- Tất cả nhà cung cấp --</option>
+                        <option th:each="ncc : ${listNhaCungCap}"
+                                th:value="${ncc.id}"
+                                th:text="${(ncc.chinhHang ? '★ ' : '') + ncc.tenNhaCungCap}"
+                                th:selected="${maNhaCungCapLoc != null and maNhaCungCapLoc == ncc.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Trạng thái -->
+                <div class="lg:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Trạng thái phiếu</label>
+                    <select name="trangThai" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:border-blue-600 outline-none">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="CHO_NHAP" th:selected="${trangThaiLoc == 'CHO_NHAP'}">Chờ nhập kho (Dự thảo)</option>
+                        <option value="DA_NHAP" th:selected="${trangThaiLoc == 'DA_NHAP'}">Đã nhập kho (Hoàn tất)</option>
+                        <option value="DA_HUY" th:selected="${trangThaiLoc == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
+
+                <!-- Nút bấm -->
+                <div class="lg:col-span-2 flex items-center gap-2">
+                    <button type="submit" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5 h-[38px]">
+                        <i class="fa-solid fa-filter"></i> Lọc
+                    </button>
+                    <a th:href="@{/admin/nhap-hang/hien-thi}" class="p-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-600 text-xs flex items-center justify-center h-[38px] w-10" title="Đặt lại bộ lọc">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. BẢNG DANH SÁCH PHIẾU NHẬP HÀNG -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                        <tr>
+                            <th class="py-3 px-4">Mã phiếu</th>
+                            <th class="py-3 px-4">Nhà cung cấp</th>
+                            <th class="py-3 px-4">Thời gian</th>
+                            <th class="py-3 px-4 text-center">Tổng số lượng</th>
+                            <th class="py-3 px-4 text-right">Tổng tiền nhập</th>
+                            <th class="py-3 px-4 text-center">Trạng thái</th>
+                            <th class="py-3 px-4 text-right">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr th:if="${#lists.isEmpty(listPhieuNhap)}">
+                            <td colspan="7" class="text-center py-12 text-slate-400">
+                                <i class="fa-solid fa-boxes-packing text-3xl mb-2 block text-slate-300"></i>
+                                Chưa có phiếu nhập hàng nào phù hợp với bộ lọc tìm kiếm.
+                            </td>
+                        </tr>
+
+                        <tr th:each="p : ${listPhieuNhap}" class="hover:bg-slate-50/80 transition">
+                            <!-- Mã phiếu -->
+                            <td class="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                <a th:href="@{/admin/nhap-hang/chi-tiet(id=${p.id})}" class="text-blue-600 hover:underline flex items-center gap-1.5">
+                                    <i class="fa-solid fa-file-lines text-slate-400"></i>
+                                    <span th:text="${p.maPhieuNhap}">PN-123</span>
+                                </a>
+                                <p th:if="${p.ghiChu != null and !p.ghiChu.isBlank()}" class="text-[11px] text-slate-400 font-sans line-clamp-1 mt-0.5" th:text="${p.ghiChu}">Ghi chú...</p>
+                            </td>
+
+                            <!-- Nhà cung cấp -->
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-1.5 font-bold text-slate-900">
+                                    <span th:text="${p.tenNhaCungCap != null ? p.tenNhaCungCap : (p.nhaCungCap != null ? p.nhaCungCap.tenNhaCungCap : 'Chưa xác định')}">Vinatex</span>
+                                    <span th:if="${p.nhaCungCapChinhHang != null and p.nhaCungCapChinhHang}"
+                                          class="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-700 border border-blue-200 inline-flex items-center gap-0.5" title="Nhà cung cấp lớn chính hãng (Có tem mã Barcode EAN/GS1)">
+                                        <i class="fa-solid fa-badge-check text-blue-600"></i> HÃNG
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Thời gian -->
+                            <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                                <span th:text="${#temporals.format(p.ngayNhap, 'dd/MM/yyyy HH:mm')}">01/01/2026 10:00</span>
+                            </td>
+
+                            <!-- Tổng số lượng -->
+                            <td class="py-3.5 px-4 text-center">
+                                <span class="font-bold font-mono text-slate-900 px-2.5 py-1 rounded-lg bg-slate-100" th:text="${p.tongSoLuong + ' cái'}">50 cái</span>
+                            </td>
+
+                            <!-- Tổng tiền nhập -->
+                            <td class="py-3.5 px-4 text-right font-mono font-bold text-blue-600">
+                                <span th:text="${#numbers.formatDecimal(p.tongTien, 0, 'COMMA', 0, 'POINT') + ' ₫'}">10.000.000 ₫</span>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${p.trangThai == 'CHO_NHAP'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <i class="fa-solid fa-clock mr-1"></i>Chờ nhập kho
+                                </span>
+                                <span th:if="${p.trangThai == 'DA_NHAP'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="fa-solid fa-circle-check mr-1"></i>Đã nhập kho
+                                </span>
+                                <span th:if="${p.trangThai == 'DA_HUY'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                    <i class="fa-solid fa-ban mr-1"></i>Đã hủy
+                                </span>
+                            </td>
+
+                            <!-- Hành động -->
+                            <td class="py-3.5 px-4 text-right space-x-1">
+                                <a th:href="@{/admin/nhap-hang/chi-tiet(id=${p.id})}" title="Xem chi tiết phiếu" class="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-blue-600 hover:text-white transition inline-block">
+                                    <i class="fa-regular fa-eye"></i>
+                                </a>
+
+                                <!-- Nút Duyệt hoàn tất (chỉ hiện khi CHO_NHAP) -->
+                                <form th:if="${p.trangThai == 'CHO_NHAP'}" th:action="@{/admin/nhap-hang/hoan-tat}" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn duyệt nhập kho? Tồn kho các sản phẩm sẽ được cộng tự động.')">
+                                    <input type="hidden" name="id" th:value="${p.id}">
+                                    <button type="submit" title="Duyệt hoàn tất nhập kho" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition cursor-pointer">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Nút Hủy (chỉ hiện khi CHO_NHAP) -->
+                                <button th:if="${p.trangThai == 'CHO_NHAP'}" type="button" th:onclick="'moModalHuyPhieu(' + ${p.id} + ', \'' + ${p.maPhieuNhap} + '\')'" title="Hủy phiếu nhập này" class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition cursor-pointer">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <div th:if="${totalPages > 1}" class="p-4 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-xs text-slate-500">
+                    Trang <span class="font-bold text-slate-800" th:text="${page + 1}">1</span> / <span class="font-bold text-slate-800" th:text="${totalPages}">5</span>
+                </span>
+                <div class="flex items-center gap-1">
+                    <a th:if="${page > 0}" th:href="@{/admin/nhap-hang/hien-thi(page=${page - 1}, tuKhoa=${tuKhoa}, maNhaCungCapId=${maNhaCungCapLoc}, trangThai=${trangThaiLoc})}" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs hover:bg-slate-100">Trước</a>
+                    <a th:if="${page + 1 < totalPages}" th:href="@{/admin/nhap-hang/hien-thi(page=${page + 1}, tuKhoa=${tuKhoa}, maNhaCungCapId=${maNhaCungCapLoc}, trangThai=${trangThaiLoc})}" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs hover:bg-slate-100">Tiếp theo</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Hủy Phiếu Nhập -->
+    <div id="modalHuyPhieu" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                    <span>Hủy phiếu nhập hàng</span>
+                </h3>
+                <button type="button" onclick="dongModalHuyPhieu()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form th:action="@{/admin/nhap-hang/huy}" method="post" class="space-y-3">
+                <input type="hidden" id="inputHuyPhieuId" name="id" value="">
+                <p class="text-xs text-slate-600">
+                    Bạn đang thực hiện hủy phiếu nhập <span id="spanHuyMaPhieu" class="font-mono font-bold text-slate-900"></span>.
+                </p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Lý do hủy:</label>
+                    <textarea name="lyDoHuy" rows="3" placeholder="Nhập lý do hủy phiếu (tùy chọn)..." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-rose-500"></textarea>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="dongModalHuyPhieu()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold hover:bg-slate-50 cursor-pointer">Hủy bỏ</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function moModalHuyPhieu(id, maPhieu) {
+            document.getElementById('inputHuyPhieuId').value = id;
+            document.getElementById('spanHuyMaPhieu').innerText = maPhieu;
+            const m = document.getElementById('modalHuyPhieu');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function dongModalHuyPhieu() {
+            const m = document.getElementById('modalHuyPhieu');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+    </script>
+</body>
+</html>

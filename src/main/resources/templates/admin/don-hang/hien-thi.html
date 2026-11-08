@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đơn hàng | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('don-hang')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-boxes-packing text-blue-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Đơn hàng</span>
+                        <span class="text-xs font-mono font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full" th:text="${tongDonHang + ' đơn'}">0 đơn</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Tiếp nhận đơn hàng từ Checkout, quản lý trạng thái vận đơn &amp; ghi log lịch sử (US21, US22)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/giao-dich-thanh-toan/hien-thi"
+                   class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 transition">
+                    <i class="fa-solid fa-receipt text-slate-500"></i>
+                    <span>Lịch sử Giao dịch</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. THẺ THỐNG KÊ NHANH ĐƠN HÀNG ĐA KÊNH (OMNICHANNEL ONLINE & POS) -->
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3.5">
+            <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng số đơn hàng</div>
+                    <div class="text-2xl font-black text-slate-900 mt-1" th:text="${tongDonHang}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4.5 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/30 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Chờ xác nhận</div>
+                    <div class="text-2xl font-black text-amber-600 mt-1" th:text="${soDonCho}">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4.5 rounded-2xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/30 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-globe"></i> Kênh Online
+                    </div>
+                    <div class="text-2xl font-black text-blue-600 mt-1" th:text="${soDonOnline}">0</div>
+                </div>
+                <a th:href="@{/admin/don-hang/hien-thi(loaiDonHang='ONLINE')}" title="Xem riêng đơn Online"
+                   class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg hover:bg-blue-200 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                </a>
+            </div>
+
+            <div class="bg-white p-4.5 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/30 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-store"></i> Tại quầy (POS)
+                    </div>
+                    <div class="text-2xl font-black text-emerald-600 mt-1" th:text="${soDonPos}">0</div>
+                </div>
+                <a th:href="@{/admin/don-hang/hien-thi(loaiDonHang='TAI_QUAY')}" title="Xem riêng đơn POS"
+                   class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg hover:bg-emerald-200 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                </a>
+            </div>
+
+            <div class="bg-white p-4.5 rounded-2xl border border-purple-200/80 bg-gradient-to-br from-white to-purple-50/30 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[11px] font-bold text-purple-700 uppercase tracking-wider">Tổng doanh thu</div>
+                    <div class="text-lg font-black text-purple-600 mt-1"
+                         th:text="${#numbers.formatDecimal(tongDoanhThu, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. KHỐI TÌM KIẾM VÀ BỘ LỌC ĐƠN HÀNG -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <form th:action="@{/admin/don-hang/hien-thi}" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
+                
+                <div class="sm:col-span-4">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                        Tìm kiếm đơn hàng
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                               placeholder="Tìm theo Mã đơn, Khách hàng, SĐT..."
+                               class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-medium bg-slate-50/50">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                        Trạng thái đơn hàng
+                    </label>
+                    <select name="maTrangThai"
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-medium bg-slate-50/50">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option th:each="tt : ${dsTrangThai}"
+                                th:value="${tt.maTrangThai}"
+                                th:text="${tt.tenTrangThai}"
+                                th:selected="${maTrangThai == tt.maTrangThai}">Chờ xác nhận</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                        Kênh bán hàng (Omnichannel)
+                    </label>
+                    <select name="loaiDonHang"
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition font-medium bg-slate-50/50 font-semibold text-slate-700">
+                        <option value="">-- Tất cả kênh bán --</option>
+                        <option value="ONLINE" th:selected="${loaiDonHang == 'ONLINE'}">&#127760; Online Web / E-Commerce</option>
+                        <option value="TAI_QUAY" th:selected="${loaiDonHang == 'TAI_QUAY'}">&#127978; Tại quầy (POS Store)</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                            class="flex-1 btn-navy text-xs font-bold py-2.5 px-3 rounded-xl shadow-xs transition text-center cursor-pointer">
+                        Lọc dữ liệu
+                    </button>
+                    <a th:href="@{/admin/don-hang/hien-thi}"
+                       class="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition text-center shadow-xs"
+                       title="Đặt lại bộ lọc">
+                        Đặt lại
+                    </a>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- 4. BẢNG DANH SÁCH ĐƠN HÀNG -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="py-3.5 px-4 w-12 text-center">STT</th>
+                            <th class="py-3.5 px-4">Mã Đơn / Vận Đơn</th>
+                            <th class="py-3.5 px-4">Khách Hàng / Người Nhận</th>
+                            <th class="py-3.5 px-4">Địa Chỉ Giao Hàng</th>
+                            <th class="py-3.5 px-4">Cổng Thanh Toán</th>
+                            <th class="py-3.5 px-4 text-right">Tổng Thanh Toán</th>
+                            <th class="py-3.5 px-4 text-center">Trạng Thái</th>
+                            <th class="py-3.5 px-4">Ngày Đặt</th>
+                            <th class="py-3.5 px-4 text-center min-w-[190px]">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        
+                        <tr th:each="dh, stat : ${trangDonHang.content}" class="hover:bg-slate-50/60 transition">
+                            
+                            <td class="py-3.5 px-4 text-center font-mono text-slate-400 font-bold"
+                                th:text="${stat.count + (currentPage * pageSize)}">1</td>
+
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-mono font-extrabold text-[#0f172a] bg-blue-50/60 border border-blue-200/60 px-2 py-0.5 rounded-md text-xs"
+                                          th:text="${'#' + dh.maDonHang}">#DH123456</span>
+                                    <span th:if="${dh.loaiDonHang == 'TAI_QUAY'}"
+                                          class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-store text-[9px]"></i> Tại quầy
+                                    </span>
+                                    <span th:if="${dh.loaiDonHang == 'ONLINE' or dh.loaiDonHang == null}"
+                                          class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-globe text-[9px]"></i> Online
+                                    </span>
+                                </div>
+                                <div th:if="${dh.maVanDon != null and !#strings.isEmpty(dh.maVanDon)}"
+                                     class="mt-1 flex items-center gap-1 text-[10px] font-mono font-bold text-purple-700 bg-purple-50 border border-purple-200/70 px-2 py-0.5 rounded-md w-fit"
+                                     title="Mã vận đơn vận chuyển">
+                                    <i class="fa-solid fa-truck-fast text-[9px]"></i>
+                                    <span th:text="${dh.maVanDon}">VD-123456</span>
+                                </div>
+                                <div th:unless="${dh.maVanDon != null and !#strings.isEmpty(dh.maVanDon)}"
+                                     class="mt-1 text-[10px] text-slate-400 italic flex items-center gap-1">
+                                    <i class="fa-regular fa-clock text-[9px]"></i>
+                                    <span th:text="${dh.loaiDonHang == 'TAI_QUAY' ? 'Nhận tại quầy (POS)' : 'Chưa có vận đơn'}">Chưa có vận đơn</span>
+                                </div>
+                            </td>
+
+                            <td class="py-3.5 px-4">
+                                <div class="font-bold text-slate-900" th:text="${dh.tenNguoiNhan}">Nguyễn Văn A</div>
+                                <div class="text-[11px] text-slate-500 font-mono" th:text="${dh.soDienThoaiNhan}">0987654321</div>
+                            </td>
+
+                            <td class="py-3.5 px-4 max-w-xs truncate" th:title="${dh.diaChiGiaoHang}">
+                                <span class="text-slate-600" th:text="${dh.diaChiGiaoHang}">123 Phố Cầu Giấy...</span>
+                            </td>
+
+                            <td class="py-3.5 px-4">
+                                <span th:if="${dh.phuongThucThanhToan != null}" class="font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <i th:if="${#strings.contains(dh.phuongThucThanhToan.maPhuongThuc, 'VNPAY')}" class="fa-solid fa-qrcode text-blue-600"></i>
+                                    <i th:if="${#strings.contains(dh.phuongThucThanhToan.maPhuongThuc, 'MOMO')}" class="fa-solid fa-wallet text-pink-600"></i>
+                                    <i th:if="${#strings.contains(dh.phuongThucThanhToan.maPhuongThuc, 'COD')}" class="fa-solid fa-money-bill-wave text-emerald-600"></i>
+                                    <span th:text="${dh.phuongThucThanhToan.tenPhuongThuc}">COD</span>
+                                </span>
+                                <span th:unless="${dh.phuongThucThanhToan != null}" class="text-slate-400 italic">COD</span>
+                            </td>
+
+                            <td class="py-3.5 px-4 text-right font-bold text-slate-900 font-mono text-sm"
+                                th:text="${#numbers.formatDecimal(dh.tongThanhToan, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                350.000 đ
+                            </td>
+
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'CHO_XAC_NHAN'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="pulse-dot bg-amber-500"></span>
+                                    <span>Chờ xác nhận</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'DANG_XU_LY'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                    <span class="pulse-dot bg-blue-500"></span>
+                                    <span>Đang xử lý</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'DANG_GIAO'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                    <span class="pulse-dot bg-purple-500"></span>
+                                    <span>Đang giao hàng</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'HOAN_THANH'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="pulse-dot bg-emerald-500"></span>
+                                    <span>Hoàn thành</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'DA_HUY'}"
+                                      th:classappend="${dh.ghiChu != null and (dh.ghiChu.contains('thất lạc') or dh.ghiChu.contains('THẤT LẠC') or dh.ghiChu.contains('mất'))} ? 'bg-red-100 text-red-900 border-red-300' : 'bg-rose-50 text-rose-700 border-rose-200'"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border">
+                                    <span class="pulse-dot bg-rose-500"></span>
+                                    <span th:text="${dh.ghiChu != null and (dh.ghiChu.contains('thất lạc') or dh.ghiChu.contains('THẤT LẠC') or dh.ghiChu.contains('mất'))} ? 'Hàng mất khi giao (Không hoàn kho)' : 'Đã hủy'">Đã hủy</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'HANG_THAT_LAC'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-900 border border-red-300">
+                                    <span class="pulse-dot bg-red-600"></span>
+                                    <span>Hàng mất khi giao (Không hoàn kho)</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'THAT_LAC_MOT_PHAN'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-900 border border-orange-300">
+                                    <span class="pulse-dot bg-orange-600"></span>
+                                    <span>Thất lạc 1 phần hàng</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'DANG_DOI_TRA'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                    <span class="pulse-dot bg-amber-600"></span>
+                                    <span>Đang đổi / trả</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'DA_TRA_HANG'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-300">
+                                    <span class="pulse-dot bg-rose-600"></span>
+                                    <span>Đã trả hàng (Hoàn tiền)</span>
+                                </span>
+                                <span th:if="${dh.trangThaiDonHang.maTrangThai == 'DA_DOI_HANG'}"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-300">
+                                    <span class="pulse-dot bg-blue-600"></span>
+                                    <span>Đã đổi hàng</span>
+                                </span>
+
+                                <!-- Huy hiệu chờ hoàn tiền hoặc đã hoàn tiền -->
+                                <div th:if="${dh.trangThaiHoanTien == 'CHO_HOAN_TIEN'}" class="mt-1">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                                        <i class="fa-solid fa-bolt text-amber-600"></i> Chờ hoàn tiền
+                                    </span>
+                                </div>
+                                <div th:if="${dh.trangThaiHoanTien == 'DA_HOAN_TIEN'}" class="mt-1">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        <i class="fa-solid fa-check text-emerald-600"></i> Đã gửi bill
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]"
+                                th:text="${#temporals.format(dh.ngayTao, 'dd/MM/yyyy HH:mm')}">
+                                25/10/2026 15:30
+                            </td>
+
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                    <!-- Nút xem chi tiết mặt hàng, tồn kho & timeline vận đơn -->
+                                    <button type="button"
+                                            th:data-id="${dh.id}"
+                                            th:data-code="${dh.maDonHang}"
+                                            th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                            th:data-receiver="${dh.tenNguoiNhan}"
+                                            th:data-phone="${dh.soDienThoaiNhan}"
+                                            th:data-address="${dh.diaChiGiaoHang}"
+                                            th:data-note="${dh.ghiChu}"
+                                            th:data-status-text="${dh.trangThaiDonHang.tenTrangThai}"
+                                            th:data-status-code="${dh.trangThaiDonHang.maTrangThai}"
+                                            th:data-total="${#numbers.formatDecimal(dh.tongThanhToan, 0, 'COMMA', 0, 'POINT') + ' đ'}"
+                                            th:data-refund-bank="${dh.nganHangHoanTien != null ? dh.nganHangHoanTien : ''}"
+                                            th:data-refund-acc="${dh.soTaiKhoanHoanTien != null ? dh.soTaiKhoanHoanTien : ''}"
+                                            th:data-refund-name="${dh.chuTaiKhoanHoanTien != null ? dh.chuTaiKhoanHoanTien : ''}"
+                                            th:data-refund-note="${dh.ghiChuHoanTien != null ? dh.ghiChuHoanTien : ''}"
+                                            th:data-refund-status="${dh.trangThaiHoanTien != null ? dh.trangThaiHoanTien : ''}"
+                                            th:data-refund-bill="${dh.anhBillHoanTien != null ? dh.anhBillHoanTien : ''}"
+                                            th:data-refund-trans="${dh.maGiaoDichHoanTien != null ? dh.maGiaoDichHoanTien : ''}"
+                                            th:data-refund-date="${dh.ngayHoanTien != null ? #temporals.format(dh.ngayHoanTien, 'dd/MM/yyyy HH:mm') : ''}"
+                                            onclick="xemChiTietDonHang(this)"
+                                            class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                            title="Xem chi tiết mặt hàng & lịch sử trạng thái">
+                                        Chi tiết
+                                    </button>
+
+                                    <!-- Nút đổi trạng thái đơn hàng & cập nhật vận đơn (US22) -->
+                                    <a th:if="${dh.trangThaiDonHang.maTrangThai == 'DANG_DOI_TRA'}"
+                                       th:href="@{/admin/doi-tra/hien-thi(tuKhoa=${dh.maDonHang})}"
+                                       class="px-2.5 py-1 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                       title="Đang đổi / trả: Đi đến duyệt yêu cầu RMA">
+                                        Duyệt RMA
+                                    </a>
+
+                                    <button type="button"
+                                            th:if="${dh.trangThaiDonHang.maTrangThai == 'DA_TRA_HANG'}"
+                                            class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 text-xs font-medium cursor-not-allowed"
+                                            title="Đơn hàng đã hoàn tất Trả hàng & Hoàn tiền (Khóa quy trình)">
+                                        Đã trả hàng
+                                    </button>
+
+                                    <button type="button"
+                                            th:if="${dh.trangThaiDonHang.maTrangThai == 'DA_DOI_HANG'}"
+                                            class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 text-xs font-medium cursor-not-allowed"
+                                            title="Đơn hàng đã hoàn tất Đổi hàng mới (Khóa quy trình)">
+                                        Đã đổi hàng
+                                    </button>
+
+                                    <!-- 1. Trạng thái kết thúc: Khóa quy trình -->
+                                    <button type="button"
+                                            th:if="${dh.trangThaiDonHang.maTrangThai == 'HOAN_THANH'}"
+                                            th:data-id="${dh.id}"
+                                            th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                            th:data-code="${dh.maDonHang}"
+                                            th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                            onclick="moModalDoiTrangThai(this)"
+                                            class="px-2 py-1 rounded-lg border border-slate-200 text-slate-500 bg-slate-50 text-xs font-medium transition cursor-pointer"
+                                            title="Đơn hàng đã hoàn thành">
+                                        Đã xong
+                                    </button>
+
+                                    <button type="button"
+                                            th:if="${dh.trangThaiDonHang.maTrangThai == 'DA_HUY'}"
+                                            th:data-id="${dh.id}"
+                                            th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                            th:data-code="${dh.maDonHang}"
+                                            th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                            onclick="moModalDoiTrangThai(this)"
+                                            class="px-2 py-1 rounded-lg border border-slate-200 text-slate-400 bg-slate-50 text-xs font-medium transition cursor-pointer"
+                                            title="Đơn hàng đã hủy">
+                                        Đã hủy
+                                    </button>
+
+                                    <!-- 2. CHO_XAC_NHAN: Nút [Xác nhận] nổi bật + Nút [Đổi bước] -->
+                                    <div th:if="${dh.trangThaiDonHang.maTrangThai == 'CHO_XAC_NHAN'}" class="inline-flex items-center gap-1">
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this, 'DANG_XU_LY')"
+                                                class="px-2.5 py-1 rounded-lg border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                title="Xác nhận đơn & Chuẩn bị hàng">
+                                            Xác nhận
+                                        </button>
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this)"
+                                                class="px-2 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium transition shadow-2xs cursor-pointer"
+                                                title="Tùy chọn khác (Hủy đơn...)">
+                                            Đổi bước
+                                        </button>
+                                    </div>
+
+                                    <!-- 3. DANG_XU_LY: Nút [Giao hàng] nổi bật + Nút [Đổi bước] -->
+                                    <div th:if="${dh.trangThaiDonHang.maTrangThai == 'DANG_XU_LY'}" class="inline-flex items-center gap-1">
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this, 'DANG_GIAO')"
+                                                class="px-2.5 py-1 rounded-lg border border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                title="Bàn giao đơn vị vận chuyển (3PL)">
+                                            Giao hàng
+                                        </button>
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this)"
+                                                class="px-2 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium transition shadow-2xs cursor-pointer"
+                                                title="Tùy chọn khác (Hủy đơn...)">
+                                            Đổi bước
+                                        </button>
+                                    </div>
+
+                                    <!-- 4. DANG_GIAO: Nút [Giao xong] nổi bật + Nút [Báo sự cố] -->
+                                    <div th:if="${dh.trangThaiDonHang.maTrangThai == 'DANG_GIAO'}" class="inline-flex items-center gap-1">
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this, 'HOAN_THANH')"
+                                                class="px-2.5 py-1 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                title="Xác nhận khách đã nhận hàng thành công">
+                                            Giao xong
+                                        </button>
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this)"
+                                                class="px-2 py-1 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition shadow-2xs cursor-pointer"
+                                                title="Báo thất lạc / Hủy đơn / Sửa vận đơn">
+                                            Báo sự cố
+                                        </button>
+                                    </div>
+
+                                    <!-- 5. THAT_LAC_MOT_PHAN: Nút [Giao thành công] + Nút [Báo sự cố] -->
+                                    <div th:if="${dh.trangThaiDonHang.maTrangThai == 'THAT_LAC_MOT_PHAN'}" class="inline-flex items-center gap-1">
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this, 'HOAN_THANH')"
+                                                class="px-2.5 py-1 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                title="Giao thành công các sản phẩm còn lại cho khách">
+                                            Giao thành công
+                                        </button>
+                                        <button type="button"
+                                                th:data-id="${dh.id}"
+                                                th:data-status="${dh.trangThaiDonHang.maTrangThai}"
+                                                th:data-code="${dh.maDonHang}"
+                                                th:data-waybill="${dh.maVanDon != null ? dh.maVanDon : ''}"
+                                                onclick="moModalDoiTrangThai(this)"
+                                                class="px-2 py-1 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition shadow-2xs cursor-pointer"
+                                                title="Cập nhật mất thêm món / Hủy đơn">
+                                            Báo sự cố
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+
+                        </tr>
+
+                        <!-- Trạng thái trống -->
+                        <tr th:if="${#lists.isEmpty(trangDonHang.content)}">
+                            <td colspan="9" class="py-12 text-center text-slate-400 text-xs">
+                                <i class="fa-solid fa-boxes-packing text-3xl mb-2 block text-slate-300"></i>
+                                <span>Chưa có đơn hàng nào phù hợp với bộ lọc tìm kiếm.</span>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            <div th:if="${trangDonHang.totalPages > 1}"
+                 class="px-5 py-4 border-t border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div class="text-slate-500">
+                    Hiển thị trang <span class="font-bold text-slate-800" th:text="${currentPage + 1}">1</span>
+                    trên tổng số <span class="font-bold text-slate-800" th:text="${trangDonHang.totalPages}">1</span> trang
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <a th:href="@{/admin/don-hang/hien-thi(page=${currentPage - 1}, size=${pageSize}, tuKhoa=${tuKhoa}, maTrangThai=${maTrangThai}, loaiDonHang=${loaiDonHang})}"
+                       th:classappend="${currentPage == 0} ? 'pointer-events-none opacity-40' : ''"
+                       class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 font-bold transition">
+                        &larr; Trước
+                    </a>
+                    <span class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold" th:text="${currentPage + 1}">1</span>
+                    <a th:href="@{/admin/don-hang/hien-thi(page=${currentPage + 1}, size=${pageSize}, tuKhoa=${tuKhoa}, maTrangThai=${maTrangThai}, loaiDonHang=${loaiDonHang})}"
+                       th:classappend="${currentPage + 1 >= trangDonHang.totalPages} ? 'pointer-events-none opacity-40' : ''"
+                       class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 font-bold transition">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: XEM CHI TIẾT MẶT HÀNG & TRỪ TỒN KHO THỰC TẾ -->
+    <div id="modalChiTiet" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-3xl w-full p-6 flex flex-col max-h-[92vh] overflow-hidden">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Chi tiết Mặt hàng trong Đơn hàng</h3>
+                        <p id="modalMaDonHang" class="text-[11px] text-slate-500 font-mono">#DH...</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalChiTiet')" class="px-2.5 py-1 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-bold text-xs transition cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+
+            <!-- Khu vực nội dung cuộn mượt mà không bị tràn màn hình -->
+            <div class="overflow-y-auto pr-2 space-y-4 flex-1">
+                <!-- Tóm tắt người nhận & thông tin vận đơn -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 text-xs space-y-1.5">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Người nhận:</span>
+                        <span id="modalReceiver" class="font-bold text-slate-900">Nguyễn Văn A</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Số điện thoại:</span>
+                        <span id="modalPhone" class="font-bold font-mono text-slate-900">0987654321</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Địa chỉ giao:</span>
+                        <span id="modalAddress" class="font-medium text-slate-700 text-right max-w-md">123 Phố...</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-slate-200/60 pt-1">
+                        <span class="text-slate-500">Mã vận đơn:</span>
+                        <span id="modalWaybill" class="font-bold font-mono text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-truck-fast text-[10px]"></i>
+                            <span id="modalWaybillText">Chưa có mã vận đơn</span>
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500">Trạng thái hiện tại:</span>
+                        <span id="modalStatusBadge" class="font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700">Chờ xác nhận</span>
+                    </div>
+                    <div id="modalNoteRow" class="flex justify-between border-t border-slate-200/60 pt-1 text-[11px]">
+                        <span class="text-slate-400">Ghi chú đơn hàng:</span>
+                        <span id="modalNote" class="italic text-slate-600">Giao hàng giờ hành chính</span>
+                    </div>
+                </div>
+
+                <!-- Bảng mặt hàng đã trừ kho thật (US21 - Tiêu chí 1 & 2) -->
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+                        <span>Mặt hàng đã xuất kho (Trừ tồn kho thật)</span>
+                        <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-check"></i> Đã trừ kho tự động
+                        </span>
+                    </div>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100/80 text-[10px] uppercase font-extrabold text-slate-500">
+                                <tr>
+                                    <th class="p-2.5">Sản Phẩm</th>
+                                    <th class="p-2.5">Mã SKU</th>
+                                    <th class="p-2.5 text-center">Số Lượng</th>
+                                    <th class="p-2.5 text-right">Đơn Giá</th>
+                                    <th class="p-2.5 text-right">Thành Tiền</th>
+                                    <th class="p-2.5 text-center">Tình Trạng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalItemTableBody" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="6" class="p-4 text-center text-slate-400 text-xs">Đang tải dữ liệu mặt hàng...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tổng cộng -->
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                    <span class="font-bold text-slate-600">Tổng thanh toán đơn hàng:</span>
+                    <span id="modalTotal" class="text-base font-black text-blue-600 font-mono">0 đ</span>
+                </div>
+
+                <!-- KHU VỰC THÔNG TIN HOÀN TIỀN & XÁC NHẬN GỬI BILL (ADMIN) -->
+                <div id="modalRefundContainer" class="p-4 rounded-2xl border text-xs space-y-3 hidden">
+                    <div class="flex items-center justify-between pb-2 border-b">
+                        <span class="font-black text-slate-900 uppercase flex items-center gap-1.5 text-xs">
+                            <i class="fa-solid fa-money-bill-transfer text-blue-600"></i>
+                            <span>Thông tin hoàn tiền cho khách</span>
+                        </span>
+                        <span id="modalRefundStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-black"></span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div><span class="text-slate-500">Ngân hàng:</span> <b id="modalRefundBank" class="text-slate-900"></b></div>
+                        <div><span class="text-slate-500">Số tài khoản:</span> <b id="modalRefundAcc" class="font-mono text-blue-700"></b></div>
+                        <div><span class="text-slate-500">Chủ tài khoản:</span> <b id="modalRefundName" class="text-slate-900"></b></div>
+                        <div><span class="text-slate-500">Ghi chú của khách:</span> <span id="modalRefundNote" class="italic text-slate-600"></span></div>
+                    </div>
+
+                    <!-- Đã hoàn tiền: hiển thị bill & mã GD -->
+                    <div id="modalRefundDoneBox" class="space-y-2 hidden">
+                        <div class="flex items-center gap-2 text-emerald-800 text-xs font-bold">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                            <span>Đã hoàn tiền vào <span id="modalRefundDate"></span></span>
+                            <span class="font-mono text-slate-500">(Mã GD: <b id="modalRefundTrans"></b>)</span>
+                        </div>
+                        <div id="modalRefundBillPreview" class="pt-1">
+                            <a id="modalRefundBillLink" href="#" target="_blank" class="inline-block relative rounded-lg border border-slate-200 overflow-hidden group">
+                                <img id="modalRefundBillImg" src="" alt="Bill hoàn tiền" class="max-h-36 max-w-xs w-auto object-contain rounded-lg group-hover:scale-102 transition" />
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Chưa hoàn tiền: Form admin chuyển tiền và upload bill -->
+                    <div id="modalRefundActionBox" class="space-y-2 hidden">
+                        <form id="formAdminXacNhanHoanTien" action="" method="post" enctype="multipart/form-data" class="bg-amber-50/70 p-3 rounded-xl border border-amber-200 space-y-2">
+                            <div class="font-bold text-amber-900 text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrow-right-arrow-left text-amber-600"></i>
+                                <span>Xác nhận đã chuyển khoản &amp; Gửi bill cho khách:</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Mã giao dịch / Mã tham chiếu ngân hàng:</label>
+                                    <input type="text" name="maGiaoDichHoanTien" placeholder="VD: FT241026888..." required
+                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-mono" />
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Upload ảnh Bill / Biên lai chuyển khoản:</label>
+                                    <input type="file" name="anhBillFile" accept="image/*"
+                                           class="w-full text-[11px] file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Hoặc dán URL ảnh Bill (nếu có):</label>
+                                <input type="text" name="anhBillUrl" placeholder="https://..."
+                                       class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs" />
+                            </div>
+                            <div class="pt-1 flex justify-end">
+                                <button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-xs">
+                                    Xác nhận hoàn tiền &amp; Lưu bill
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lịch sử trạng thái & Hành trình vận đơn (US22 - Tiêu chí 2) -->
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+                            <span>Lịch sử Trạng thái &amp; Vận đơn</span>
+                        </span>
+                        <span id="modalHistoryCount" class="text-[10px] text-slate-400 font-mono">0 mốc lịch sử</span>
+                    </div>
+                    <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 max-h-48 overflow-y-auto">
+                        <div id="modalTimelineList" class="space-y-3 relative before:absolute before:top-2 before:bottom-2 before:left-3.5 before:w-0.5 before:bg-slate-200">
+                            <div class="text-center text-slate-400 text-xs py-2">Đang tải lịch sử hành trình...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fixed Footer -->
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100 flex-shrink-0">
+                <button id="btnModalChuyenGiaoThanhCong" type="button" onclick="chuyenNhanhGiaoThanhCongTuChiTiet()"
+                        class="hidden px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
+                    Chuyển sang Giao thành công
+                </button>
+                <div class="ml-auto">
+                    <button type="button" onclick="dongModal('modalChiTiet')"
+                            class="px-5 py-2.5 rounded-xl btn-navy font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                        Đóng cửa sổ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CẬP NHẬT TRẠNG THÁI VẬN ĐƠN & GHI LOG LỊCH SỬ (US22 - Validate quy trình Shopee) -->
+    <div id="modalDoiTrangThai" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl sm:max-w-2xl w-full p-6 flex flex-col max-h-[92vh] overflow-hidden">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold shadow-2xs">
+                        <i class="fa-solid fa-truck-ramp-box"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-black text-slate-900">Xử Lý &amp; Chuyển Trạng Thái Đơn Hàng</h3>
+                            <span id="modalCurrentStatusBadge" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-700">Đang xử lý</span>
+                        </div>
+                        <p id="modalStatusOrderCode" class="text-[11px] text-slate-500 font-mono font-bold mt-0.5">#DH...</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalDoiTrangThai')" class="px-2.5 py-1 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-bold text-xs transition cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+
+            <form id="formDoiTrangThai" method="POST" action="" class="flex flex-col flex-1 min-h-0 overflow-hidden" onsubmit="return validateTruocKhiSubmit()">
+                <!-- Khu vực cuộn không bị tràn màn hình -->
+                <div class="overflow-y-auto pr-1.5 space-y-4 flex-1 py-1">
+                    <!-- Thanh tiến trình trạng thái Shopee Stepper -->
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs">
+                        <div class="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400 mb-2">
+                            <span>Tiến trình đơn hàng:</span>
+                            <span class="text-slate-500 normal-case font-medium">Bấm vào bước thao tác bên dưới để chuyển tiếp</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold">
+                            <div id="step-CHO_XAC_NHAN" class="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500">
+                                1. Chờ duyệt
+                            </div>
+                            <div id="step-DANG_XU_LY" class="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500">
+                                2. Chuẩn bị
+                            </div>
+                            <div id="step-DANG_GIAO" class="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500">
+                                3. Đang giao
+                            </div>
+                            <div id="step-HOAN_THANH" class="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500">
+                                4. Hoàn thành
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông báo khi đơn hàng đã kết thúc (Hoàn thành hoặc Đã hủy) -->
+                    <div id="modalLockedAlert" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1.5">
+                        <div class="flex items-center gap-2 font-bold text-amber-900">
+                            <i class="fa-solid fa-circle-exclamation text-amber-600"></i>
+                            <span id="modalLockedTitle">Đơn hàng đã kết thúc quy trình</span>
+                        </div>
+                        <p id="modalLockedDesc" class="text-[11px] leading-relaxed">
+                            Đơn hàng đã ở trạng thái kết thúc, hệ thống đã khóa để đảm bảo tính toàn vẹn số liệu kho và tài chính. Không thể thay đổi trạng thái nữa.
+                        </p>
+                    </div>
+
+                    <div id="modalFormContent" class="space-y-4">
+                        <!-- Smart Action Cards: Chọn hành động trực quan thay thế Dropdown rối rắm -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
+                                    Chọn thao tác tiếp theo <span class="text-rose-500">*</span>
+                                </label>
+                                <span class="text-[10px] text-slate-400">1-Click chuyển trạng thái chính xác</span>
+                            </div>
+                            
+                            <!-- Hidden input lưu trữ mã trạng thái gửi lên backend (Giữ nguyên tương thích 100%) -->
+                            <select id="selectTrangThaiMoi" name="maTrangThai" required onchange="thayDoiLuaChonTrangThaiMoi(this.value)" class="hidden">
+                            </select>
+
+                            <!-- Khung hiển thị các Thẻ thao tác thông minh (Smart Action Cards) -->
+                            <div id="containerActionCards" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <!-- Render động qua Javascript -->
+                            </div>
+                        </div>
+
+                        <!-- HỘP THÔNG BÁO THEO TỪNG BƯỚC NGHIỆP VỤ (Contextual Action Alert) -->
+                        <!-- 1. Khi chọn Đang xử lý (Chuẩn bị hàng) -->
+                        <div id="hopThongBaoChuanBi" class="hidden p-3 rounded-2xl bg-blue-50/80 border border-blue-200 text-blue-900 text-xs space-y-1">
+                            <div class="font-extrabold flex items-center gap-1.5 text-blue-800">
+                                <i class="fa-solid fa-boxes-packing text-blue-600"></i> Xác nhận &amp; Bắt đầu chuẩn bị hàng
+                            </div>
+                            <p class="text-[11px] text-blue-700 leading-relaxed">
+                                Đơn hàng sẽ được chuyển sang <b>Đang xử lý</b>. Nhân viên kho tiến hành lấy hàng theo SKU, kiểm đếm số lượng và đóng gói kiện hàng.
+                            </p>
+                        </div>
+
+                        <!-- 2. Khi chọn Hoàn thành (Giao thành công) -->
+                        <div id="hopThongBaoHoanThanh" class="hidden p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1">
+                            <div class="font-extrabold flex items-center gap-1.5 text-emerald-800">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i> Xác nhận Giao hàng thành công
+                            </div>
+                            <p class="text-[11px] text-emerald-700 leading-relaxed">
+                                Khách hàng đã nhận đủ sản phẩm và thanh toán. Hệ thống sẽ tự động <b>cộng điểm tích lũy CoolCash</b> và mở quyền đánh giá sản phẩm cho khách. Quy trình đơn hàng sẽ được chốt khóa.
+                            </p>
+                        </div>
+
+                        <!-- 3. Khi chọn Hủy đơn hàng -->
+                        <div id="hopThongBaoHuyDon" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs space-y-1">
+                            <div class="font-extrabold flex items-center gap-1.5 text-rose-800">
+                                <i class="fa-solid fa-ban text-rose-600"></i> Cảnh báo Hủy đơn hàng
+                            </div>
+                            <p class="text-[11px] text-rose-700 leading-relaxed">
+                                Đơn hàng sẽ chuyển sang <b>Đã hủy</b>. Hệ thống tự động <b>hoàn trả toàn bộ số lượng tồn kho</b> của các mặt hàng trong đơn về kho bán. Bắt buộc nhập rõ lý do hủy bên dưới.
+                            </p>
+                        </div>
+
+                        <!-- 4. Mã vận đơn (Vận chuyển bên thứ 3 - Chỉ hiện khi Đang giao hàng) -->
+                        <div id="groupMaVanDon" class="p-3.5 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-[11px] font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-truck-fast text-purple-600"></i> Mã Vận Đơn Bên Thứ 3 <span id="labelWaybillRequired" class="text-rose-500">*</span>
+                                </label>
+                                <span class="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <i class="fa-solid fa-cloud-arrow-down"></i> Do ĐVVC cấp tự động
+                                </span>
+                            </div>
+                            <div class="relative flex items-center">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                                    <i class="fa-solid fa-barcode"></i>
+                                </span>
+                                <input type="text" id="inputMaVanDon" name="maVanDon" readonly
+                                       placeholder="Bấm nút bên phải để kết nối ĐVVC lấy mã..."
+                                       class="w-full pl-9 pr-36 py-2.5 rounded-xl border border-purple-300 text-xs font-mono font-black text-purple-800 bg-white shadow-2xs cursor-not-allowed" />
+                                <button type="button" onclick="moModalChonCarrier()"
+                                        class="absolute right-1 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold transition shadow-xs cursor-pointer">
+                                    Kết nối ĐVVC
+                                </button>
+                            </div>
+                            <input type="hidden" id="inputDonViVanChuyen" name="donViVanChuyen" value="">
+                            <input type="hidden" id="checkHangBiThatLac" name="hangBiThatLac" value="false">
+                            <div id="boxCarrierBadge" class="hidden p-2 rounded-lg bg-purple-100/70 border border-purple-200 text-purple-900 text-[11px] flex items-center justify-between font-bold">
+                                <span id="textCarrierName"><i class="fa-solid fa-truck-ramp-box mr-1"></i> ĐVVC: GHTK</span>
+                                <a id="linkCarrierTracking" href="#" target="_blank" class="text-blue-600 hover:underline text-[10px] flex items-center gap-1 font-bold">
+                                    Tra cứu bưu phẩm <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                </a>
+                            </div>
+                            <p id="hintWaybill" class="text-[10px] text-purple-700 font-medium">Bắt buộc cấp mã vận đơn từ đối tác (GHTK, GHN, Viettel Post...) trước khi xuất kho giao hàng.</p>
+                        </div>
+
+                        <!-- CẢNH BÁO HÀNG BỊ MẤT / THẤT LẠC TRÊN ĐƯỜNG GIAO & CHỌN SẢN PHẨM BỊ MẤT -->
+                        <div id="canhBaoHangThatLac" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-300 text-xs text-rose-800 space-y-2.5">
+                            <div class="font-extrabold flex items-center gap-1.5 text-rose-900">
+                                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Xác nhận hàng bị mất trên đường giao (Do ĐVVC)
+                            </div>
+                            <p class="text-[11px] leading-relaxed text-rose-700">
+                                Kiện hàng bị thất lạc trên đường vận chuyển do ĐVVC làm mất. Hệ thống sẽ ghi nhận biên bản thất thoát kho và <b>TUYỆT ĐỐI KHÔNG CỘNG LẠI TỒN KHO</b> cho các món bị mất.
+                            </p>
+
+                            <!-- KHU VỰC TÙY CHỌN SẢN PHẨM BỊ MẤT KHI ĐƠN CÓ NHIỀU SẢN PHẨM -->
+                            <div id="khuVucChonSanPhamMat" class="pt-2.5 border-t border-rose-200 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-extrabold text-[11px] text-rose-900 flex items-center gap-1">
+                                        <i class="fa-solid fa-boxes-stacked text-rose-600"></i> Chọn sản phẩm bị mất trong đơn:
+                                    </span>
+                                    <label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-rose-800 cursor-pointer select-none">
+                                        <input type="checkbox" id="checkChonTatCaSanPhamMat" onchange="toggleChonTatCaSanPhamMat(this.checked)" class="rounded text-rose-600 focus:ring-rose-400">
+                                        <span>Chọn tất cả</span>
+                                    </label>
+                                </div>
+                                <p class="text-[10px] text-rose-600 italic">
+                                    * Chỉ những món được tích chọn dưới đây mới chuyển sang trạng thái <b>Mất hàng</b> (Không cộng kho). Các sản phẩm khác sẽ <b>GIỮ NGUYÊN</b>.
+                                </p>
+
+                                <div id="danhSachSanPhamTrongDonChonMat" class="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                                    <div class="text-center text-slate-400 text-[11px] py-1">Đang tải danh sách mặt hàng...</div>
+                                </div>
+
+                                <div id="tomTatSanPhamMat" class="text-[11px] font-bold text-slate-700 bg-white/90 p-2.5 rounded-xl border border-rose-200 flex justify-between items-center shadow-2xs">
+                                    <span>Đã chọn: <b id="soLuongMatDaChon" class="text-rose-600">0</b>/<span id="tongSoItemTrongDon">0</span> món bị mất</span>
+                                    <span id="badgeKieuMat" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-600">Chưa chọn món nào</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Ghi chú / Lý do thay đổi (Ghi vào log) kèm Canned Response Chips -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                    Ghi chú / Lý do chuyển trạng thái (Ghi log US22)
+                                </label>
+                                <span class="text-[10px] text-slate-400">Chọn mẫu nhanh:</span>
+                            </div>
+
+                            <!-- Gợi ý nhanh (Quick Canned Responses) -->
+                            <div id="cannedResponseChipsContainer" class="flex flex-wrap gap-1.5 mb-2">
+                                <!-- Render động theo hành động đang chọn -->
+                            </div>
+
+                            <textarea id="inputGhiChuTrangThai" name="ghiChu" rows="2" placeholder="Nhập ghi chú hoặc bấm vào các nút mẫu nhanh phía trên..."
+                                      class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fixed Footer with Submit button -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2 flex-shrink-0">
+                    <button type="button" onclick="dongModal('modalDoiTrangThai')"
+                            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                        Đóng
+                    </button>
+                    <button type="submit" id="btnSubmitDoiTrangThai"
+                            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs">
+                        <span id="btnSubmitDoiTrangThaiText">Lưu Cập Nhật &amp; Ghi Log</span>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- MODAL CHỌN ĐỐI TÁC VẬN CHUYỂN BÊN THỨ 3 (GHN, GHTK, Viettel Post, VNPost, J&T) -->
+    <div id="modalChonCarrier" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-5 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 text-white flex items-center justify-between">
+                <div>
+                    <h3 class="font-extrabold text-base flex items-center gap-2">
+                        <i class="fa-solid fa-truck-ramp-box"></i> Kết Nối Đối Tác Vận Chuyển Bên Thứ 3
+                    </h3>
+                    <p class="text-[11px] text-purple-100 mt-0.5">Shop không được tự cấp mã. Chọn ĐVVC để phát sinh mã chuẩn API qua cổng đối tác.</p>
+                </div>
+                <button type="button" onclick="dongModal('modalChonCarrier')" class="px-2.5 py-1 rounded-xl text-white/80 hover:text-white font-bold text-xs transition cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 mb-2">
+                        1. Chọn Đơn vị vận chuyển đối tác:
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 cursor-pointer transition shadow-2xs">
+                            <span class="flex items-center gap-3">
+                                <input type="radio" name="radioCarrier" value="GHTK" checked class="text-emerald-600 focus:ring-emerald-500">
+                                <div>
+                                    <span class="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-truck-fast text-emerald-600"></i> Giao Hàng Tiết Kiệm (GHTK)
+                                    </span>
+                                    <span class="text-[11px] text-slate-500 block">Thời gian: 1 - 3 ngày &bull; Chuyên TMĐT tốc độ cao</span>
+                                </div>
+                            </span>
+                            <span class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">GHTK-HN...</span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-amber-400 bg-white cursor-pointer transition shadow-2xs">
+                            <span class="flex items-center gap-3">
+                                <input type="radio" name="radioCarrier" value="GHN" class="text-amber-500 focus:ring-amber-500">
+                                <div>
+                                    <span class="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-bolt text-amber-500"></i> Giao Hàng Nhanh (GHN)
+                                    </span>
+                                    <span class="text-[11px] text-slate-500 block">Thời gian: 1 - 2 ngày &bull; Tỷ lệ giao thành công 98%</span>
+                                </div>
+                            </span>
+                            <span class="text-[10px] font-mono font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">GHN-VN...</span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-rose-400 bg-white cursor-pointer transition shadow-2xs">
+                            <span class="flex items-center gap-3">
+                                <input type="radio" name="radioCarrier" value="VTP" class="text-rose-600 focus:ring-rose-500">
+                                <div>
+                                    <span class="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-shield-halved text-rose-600"></i> Viettel Post (VTP)
+                                    </span>
+                                    <span class="text-[11px] text-slate-500 block">Thời gian: 2 - 4 ngày &bull; Phủ sóng 100% xã/phường</span>
+                                </div>
+                            </span>
+                            <span class="text-[10px] font-mono font-bold bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full">VTP-...</span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-amber-500 bg-white cursor-pointer transition shadow-2xs">
+                            <span class="flex items-center gap-3">
+                                <input type="radio" name="radioCarrier" value="VNPOST" class="text-amber-600 focus:ring-amber-500">
+                                <div>
+                                    <span class="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-envelope-open-text text-amber-600"></i> VNPost (Bưu Điện Việt Nam)
+                                    </span>
+                                    <span class="text-[11px] text-slate-500 block">Thời gian: 2 - 5 ngày &bull; Mạng lưới bưu chính quốc gia</span>
+                                </div>
+                            </span>
+                            <span class="text-[10px] font-mono font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">VNP-...</span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-red-500 bg-white cursor-pointer transition shadow-2xs">
+                            <span class="flex items-center gap-3">
+                                <input type="radio" name="radioCarrier" value="JT" class="text-red-500 focus:ring-red-500">
+                                <div>
+                                    <span class="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-jet-fighter text-red-500"></i> J&amp;T Express
+                                    </span>
+                                    <span class="text-[11px] text-slate-500 block">Thời gian: 1 - 3 ngày &bull; Chuyển phát thông minh</span>
+                                </div>
+                            </span>
+                            <span class="text-[10px] font-mono font-bold bg-red-100 text-red-800 px-2 py-0.5 rounded-full">JT-...</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1.5">
+                        2. Loại dịch vụ vận chuyển:
+                    </label>
+                    <select id="selectServiceType" class="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-purple-200 focus:border-purple-600">
+                        <option value="Giao tiêu chuẩn" selected>Giao Tiêu Chuẩn (Tiết kiệm chi phí)</option>
+                        <option value="Giao hỏa tốc 24h">Giao Hỏa Tốc (Ưu tiên giao trong 24h)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button type="button" onclick="dongModal('modalChonCarrier')"
+                        class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+                    Hủy bỏ
+                </button>
+                <button type="button" onclick="xacNhanKetNoiCarrier()" id="btnXacNhanCarrier"
+                        class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black uppercase tracking-wider transition shadow-sm cursor-pointer">
+                    Xác Nhận Cấp Mã Vận Đơn
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Xử lý Modals, Fetch Chi tiết & Timeline Lịch sử -->
+    <script>
+        function sinhMaVanDonNhanh() {
+            const prefixes = ['SMPL', 'GHN', 'SPX', 'VTP'];
+            const randPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const randNum = Math.floor(10000000 + Math.random() * 90000000);
+            const generatedCode = randPrefix + '-' + randNum;
+            document.getElementById('inputMaVanDon').value = generatedCode;
+        }
+
+        let currentViewingOrderId = null;
+        let currentViewingOrderBtn = null;
+
+        function chuyenNhanhGiaoThanhCongTuChiTiet() {
+            dongModal('modalChiTiet');
+            if (currentViewingOrderBtn) {
+                moModalDoiTrangThai(currentViewingOrderBtn);
+            } else if (currentViewingOrderId) {
+                const btnRow = document.querySelector(`button[data-id="${currentViewingOrderId}"][onclick*="moModalDoiTrangThai"]`);
+                if (btnRow) {
+                    moModalDoiTrangThai(btnRow);
+                }
+            }
+        }
+
+        function xemChiTietDonHang(btn) {
+            const id = btn.getAttribute('data-id');
+            const code = btn.getAttribute('data-code');
+            const waybill = btn.getAttribute('data-waybill');
+            const receiver = btn.getAttribute('data-receiver');
+            const phone = btn.getAttribute('data-phone');
+            const address = btn.getAttribute('data-address');
+            const note = btn.getAttribute('data-note');
+            const total = btn.getAttribute('data-total');
+            const statusText = btn.getAttribute('data-status-text') || 'Chờ xác nhận';
+            const statusCode = btn.getAttribute('data-status-code') || '';
+
+            currentViewingOrderId = id;
+            currentViewingOrderBtn = btn;
+
+            // Nút chuyển trạng thái nhanh sang Giao thành công khi đơn bị thất lạc 1 phần
+            const btnModalGiaoThanhCong = document.getElementById('btnModalChuyenGiaoThanhCong');
+            if (btnModalGiaoThanhCong) {
+                if (statusCode === 'THAT_LAC_MOT_PHAN') {
+                    btnModalGiaoThanhCong.classList.remove('hidden');
+                } else {
+                    btnModalGiaoThanhCong.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('modalMaDonHang').innerText = '#' + code;
+            document.getElementById('modalReceiver').innerText = receiver;
+            document.getElementById('modalPhone').innerText = phone;
+            document.getElementById('modalAddress').innerText = address;
+            document.getElementById('modalTotal').innerText = total;
+
+            // Mã vận đơn
+            const waybillTextEl = document.getElementById('modalWaybillText');
+            if (waybill && waybill.trim() !== '') {
+                waybillTextEl.innerText = waybill.trim();
+            } else {
+                waybillTextEl.innerText = 'Chưa tạo mã vận đơn';
+            }
+
+            // Trạng thái hiện tại
+            const badgeEl = document.getElementById('modalStatusBadge');
+            badgeEl.innerText = statusText;
+            if (statusCode === 'HOAN_THANH') {
+                badgeEl.className = 'font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+            } else if (statusCode === 'THAT_LAC_MOT_PHAN') {
+                badgeEl.className = 'font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-300';
+            } else if (statusCode === 'DANG_GIAO') {
+                badgeEl.className = 'font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800';
+            } else if (statusCode === 'DANG_XU_LY') {
+                badgeEl.className = 'font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800';
+            } else if (statusCode === 'DA_HUY') {
+                badgeEl.className = 'font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800';
+            } else {
+                badgeEl.className = 'font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800';
+            }
+
+            // Ghi chú
+            const noteRow = document.getElementById('modalNoteRow');
+            if (note && note.trim() !== '') {
+                document.getElementById('modalNote').innerText = note;
+                noteRow.classList.remove('hidden');
+            } else {
+                noteRow.classList.add('hidden');
+            }
+
+            // Thông tin hoàn tiền (Nếu khách đã gửi)
+            const refundBank = btn.getAttribute('data-refund-bank') || '';
+            const refundAcc = btn.getAttribute('data-refund-acc') || '';
+            const refundName = btn.getAttribute('data-refund-name') || '';
+            const refundNote = btn.getAttribute('data-refund-note') || '';
+            const refundStatus = btn.getAttribute('data-refund-status') || '';
+            const refundBill = btn.getAttribute('data-refund-bill') || '';
+            const refundTrans = btn.getAttribute('data-refund-trans') || '';
+            const refundDate = btn.getAttribute('data-refund-date') || '';
+
+            const refundContainer = document.getElementById('modalRefundContainer');
+            if (refundAcc && refundAcc.trim() !== '') {
+                refundContainer.classList.remove('hidden');
+                document.getElementById('modalRefundBank').innerText = refundBank;
+                document.getElementById('modalRefundAcc').innerText = refundAcc;
+                document.getElementById('modalRefundName').innerText = refundName;
+                document.getElementById('modalRefundNote').innerText = refundNote || 'Không có';
+
+                const badge = document.getElementById('modalRefundStatusBadge');
+                const doneBox = document.getElementById('modalRefundDoneBox');
+                const actionBox = document.getElementById('modalRefundActionBox');
+
+                if (refundStatus === 'DA_HOAN_TIEN') {
+                    badge.innerText = 'ĐÃ HOÀN TIỀN';
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200';
+                    doneBox.classList.remove('hidden');
+                    actionBox.classList.add('hidden');
+                    document.getElementById('modalRefundDate').innerText = refundDate;
+                    document.getElementById('modalRefundTrans').innerText = refundTrans || '---';
+                    if (refundBill && refundBill.trim() !== '') {
+                        document.getElementById('modalRefundBillImg').src = refundBill;
+                        document.getElementById('modalRefundBillLink').href = refundBill;
+                        document.getElementById('modalRefundBillPreview').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modalRefundBillPreview').classList.add('hidden');
+                    }
+                } else {
+                    badge.innerText = 'CHỜ SHOP HOÀN TIỀN';
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 animate-pulse';
+                    doneBox.classList.add('hidden');
+                    actionBox.classList.remove('hidden');
+                    document.getElementById('formAdminXacNhanHoanTien').action = '/admin/don-hang/xac-nhan-hoan-tien/' + id;
+                }
+            } else {
+                refundContainer.classList.add('hidden');
+            }
+
+            // 1. Gọi API lấy danh sách chi tiết mặt hàng đã trừ kho thật
+            const tbody = document.getElementById('modalItemTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Đang tải dữ liệu mặt hàng...</td></tr>';
+
+            fetch('/admin/don-hang/api/chi-tiet/' + id)
+                .then(res => res.json())
+                .then(items => {
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Không có mặt hàng nào trong đơn.</td></tr>';
+                        return;
+                    }
+
+                    // Gom nhóm sản phẩm theo Combo (nhomComboToken)
+                    const comboGroups = {};
+                    const orderElements = []; // Lưu thứ tự xuất hiện: { type: 'combo'|'item', data: ... }
+
+                    items.forEach(it => {
+                        const token = it.nhomComboToken && it.nhomComboToken.trim() !== '' ? it.nhomComboToken.trim() : null;
+                        if (token) {
+                            if (!comboGroups[token]) {
+                                const group = {
+                                    token: token,
+                                    comboId: it.maComboId,
+                                    items: []
+                                };
+                                comboGroups[token] = group;
+                                orderElements.push({ type: 'combo', group: group });
+                            }
+                            comboGroups[token].items.push(it);
+                        } else {
+                            orderElements.push({ type: 'item', item: it });
+                        }
+                    });
+
+                    let html = '';
+
+                    orderElements.forEach(el => {
+                        if (el.type === 'combo') {
+                            const group = el.group;
+                            const subItems = group.items;
+                            const firstItem = subItems[0];
+
+                            // Trích xuất tên combo từ [Gói Combo: XYZ] hoặc [Combo: XYZ]
+                            let comboName = 'Gói Combo Ưu Đãi';
+                            for (let s of subItems) {
+                                const match = (s.tenSanPham || '').match(/\[(?:Gói Combo|Thành phần Combo|Combo):\s*([^\]]+)\]/i);
+                                if (match && match[1]) {
+                                    comboName = match[1].trim();
+                                    break;
+                                }
+                            }
+
+                            // Xác định đơn giá combo và thành tiền combo
+                            const priceItem = subItems.find(s => s.donGia && Number(s.donGia) > 0) || firstItem;
+                            const comboDonGia = Number(priceItem.donGia || 0);
+                            const comboSoLuong = firstItem.soLuong || 1;
+                            const comboThanhTien = Number(priceItem.thanhTien && Number(priceItem.thanhTien) > 0 ? priceItem.thanhTien : (comboDonGia * comboSoLuong));
+
+                            const formattedComboDonGia = new Intl.NumberFormat('vi-VN').format(comboDonGia) + ' đ';
+                            const formattedComboThanhTien = new Intl.NumberFormat('vi-VN').format(comboThanhTien) + ' đ';
+
+                            // 1. Dòng Header đại diện cho GÓI COMBO
+                            html += `
+                                <tr class="bg-gradient-to-r from-purple-50/90 to-indigo-50/50 border-t-2 border-purple-200">
+                                    <td class="p-2.5 font-bold text-purple-950">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-600 text-white shadow-2xs">
+                                                <i class="fa-solid fa-gift text-[9px]"></i> GÓI COMBO
+                                            </span>
+                                            <span class="text-xs font-black text-purple-950">${comboName}</span>
+                                            <span class="text-[10px] font-semibold text-purple-700 bg-purple-100/80 px-1.5 py-0.2 rounded-full">(${subItems.length} món con)</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-2.5 font-mono text-purple-700 font-bold text-[11px]">
+                                        <span class="px-2 py-0.5 rounded bg-purple-100 border border-purple-200">${group.token}</span>
+                                    </td>
+                                    <td class="p-2.5 text-center font-black text-purple-950 text-xs">${comboSoLuong}</td>
+                                    <td class="p-2.5 text-right font-mono text-slate-700 font-bold text-xs">${formattedComboDonGia}</td>
+                                    <td class="p-2.5 text-right font-mono font-black text-purple-700 text-xs">${formattedComboThanhTien}</td>
+                                    <td class="p-2.5 text-center font-bold text-xs">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">Gói combo</span>
+                                    </td>
+                                </tr>
+                            `;
+
+                            // 2. Các dòng con thành phần trong combo (thụt lề, hiển thị cấu hình màu, size, SKU)
+                            subItems.forEach(s => {
+                                const cleanSubName = (s.tenSanPham || 'Sản phẩm con')
+                                    .replace(/\[(?:Gói Combo|Thành phần Combo|Combo):[^\]]+\]\s*/i, '')
+                                    .trim();
+                                const isSubLost = (s.trangThaiItem === 'MAT_HANG');
+                                const subBadge = isSubLost
+                                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 inline-flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Đã mất hàng</span>'
+                                    : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i> Bình thường</span>';
+
+                                html += `
+                                    <tr class="${isSubLost ? 'bg-rose-50/40' : 'bg-purple-50/20'} hover:bg-purple-50/40 transition border-b border-purple-100/50">
+                                        <td class="py-2 pl-6 pr-2.5 text-xs text-slate-700">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-purple-400 font-mono font-bold">└─</span>
+                                                <span class="font-medium ${isSubLost ? 'text-rose-900 font-bold line-through' : 'text-slate-800'}">${cleanSubName}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-2.5 font-mono text-slate-400 text-[11px]">${s.maSku || '---'}</td>
+                                        <td class="py-2 px-2.5 text-center text-slate-500 font-semibold text-xs">x${s.soLuong}</td>
+                                        <td class="py-2 px-2.5 text-right text-[11px] text-purple-600/80 italic font-medium">(Trong combo)</td>
+                                        <td class="py-2 px-2.5 text-right font-mono text-[11px] text-slate-400 font-medium">0 đ</td>
+                                        <td class="py-2 px-2.5 text-center">${subBadge}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            // Sản phẩm mua lẻ hoặc Flash Sale
+                            const it = el.item;
+                            const formattedDonGia = new Intl.NumberFormat('vi-VN').format(it.donGia) + ' đ';
+                            const formattedThanhTien = new Intl.NumberFormat('vi-VN').format(it.thanhTien) + ' đ';
+                            const isLost = (it.trangThaiItem === 'MAT_HANG');
+                            const statusBadge = isLost
+                                ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 inline-flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Đã mất hàng</span>'
+                                : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"><i class="fa-solid fa-check text-[9px]"></i> Bình thường</span>';
+
+                            html += `
+                                <tr class="${isLost ? 'bg-rose-50/50' : 'hover:bg-slate-50'} transition border-b border-slate-100">
+                                    <td class="p-2.5 font-medium ${isLost ? 'text-rose-900 font-bold' : 'text-slate-800'} text-xs">
+                                        ${it.tenSanPham || 'Sản phẩm'}
+                                        ${isLost ? '<div class="text-[10px] text-rose-600 font-normal italic">Bị thất lạc trên đường giao (Không hoàn kho)</div>' : ''}
+                                    </td>
+                                    <td class="p-2.5 font-mono text-slate-500 font-semibold text-xs">${it.maSku || '---'}</td>
+                                    <td class="p-2.5 text-center font-bold text-slate-900 text-xs">${it.soLuong}</td>
+                                    <td class="p-2.5 text-right font-mono text-slate-700 text-xs">${formattedDonGia}</td>
+                                    <td class="p-2.5 text-right font-mono font-bold ${isLost ? 'text-rose-600 line-through' : 'text-blue-600'} text-xs">${formattedThanhTien}</td>
+                                    <td class="p-2.5 text-center">${statusBadge}</td>
+                                </tr>
+                            `;
+                        }
+                    });
+
+                    tbody.innerHTML = html;
+                })
+                .catch(err => {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-rose-500 text-xs">Lỗi khi tải chi tiết mặt hàng: ' + err + '</td></tr>';
+                });
+
+            // 2. Gọi API lấy Lịch sử trạng thái & Timeline vận đơn
+            const timelineContainer = document.getElementById('modalTimelineList');
+            const countEl = document.getElementById('modalHistoryCount');
+            timelineContainer.innerHTML = '<div class="text-center text-slate-400 text-xs py-2">Đang tải lịch sử hành trình...</div>';
+
+            fetch('/admin/don-hang/api/lich-su/' + id)
+                .then(res => res.json())
+                .then(historyList => {
+                    if (!historyList || historyList.length === 0) {
+                        timelineContainer.innerHTML = '<div class="text-center text-slate-400 text-xs py-2">Chưa có bản ghi lịch sử nào.</div>';
+                        countEl.innerText = '0 mốc lịch sử';
+                        return;
+                    }
+
+                    countEl.innerText = historyList.length + ' mốc lịch sử';
+                    let tHtml = '';
+
+                    historyList.forEach((h, idx) => {
+                        let dotColor = 'bg-blue-600 ring-blue-100';
+                        let badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+
+                        if (h.maTrangThai === 'HOAN_THANH') {
+                            dotColor = 'bg-emerald-600 ring-emerald-100';
+                            badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        } else if (h.maTrangThai === 'DANG_GIAO') {
+                            dotColor = 'bg-purple-600 ring-purple-100';
+                            badgeColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                        } else if (h.maTrangThai === 'DA_HUY') {
+                            dotColor = 'bg-rose-600 ring-rose-100';
+                            badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                        } else if (h.maTrangThai === 'CHO_XAC_NHAN') {
+                            dotColor = 'bg-amber-500 ring-amber-100';
+                            badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        }
+
+                        tHtml += `
+                            <div class="relative flex items-start gap-3 z-10">
+                                <div class="w-7 h-7 rounded-full ${dotColor} ring-4 text-white flex items-center justify-center text-[10px] shrink-0 shadow-xs font-bold">
+                                    ${idx + 1}
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs flex-1 text-xs">
+                                    <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">
+                                            ${h.tenTrangThai || h.maTrangThai}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                                            <i class="fa-regular fa-clock"></i>
+                                            ${h.formattedNgayChuyen || ''}
+                                        </span>
+                                    </div>
+                                    <div class="text-slate-700 text-[11px] font-medium leading-relaxed">
+                                        ${h.ghiChu || 'Cập nhật trạng thái đơn hàng'}
+                                    </div>
+                                    <div class="mt-1 text-[10px] text-slate-400 flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                                        <i class="fa-solid fa-user-gear text-[9px] text-slate-400"></i>
+                                        <span>Thực hiện: <b>${h.tenNguoiThucHien || 'Hệ thống'}</b></span>
+                                        ${h.maNhanVien ? `<span class="font-mono text-slate-400">(${h.maNhanVien})</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    timelineContainer.innerHTML = tHtml;
+                })
+                .catch(err => {
+                    timelineContainer.innerHTML = '<div class="text-center text-rose-500 text-xs py-2">Lỗi tải lịch sử: ' + err + '</div>';
+                });
+
+            const m = document.getElementById('modalChiTiet');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        let trangThaiHienTaiCuaDon = '';
+        let currentEditingOrderId = null;
+
+        function moModalDoiTrangThai(btn, preferredNextStatus) {
+            const id = btn.getAttribute('data-id');
+            const code = btn.getAttribute('data-code');
+            const currentStatus = btn.getAttribute('data-status');
+            const currentWaybill = btn.getAttribute('data-waybill') || '';
+            trangThaiHienTaiCuaDon = currentStatus;
+            currentEditingOrderId = id;
+
+            document.getElementById('modalStatusOrderCode').innerText = '#' + code;
+            document.getElementById('formDoiTrangThai').action = '/admin/don-hang/cap-nhat-trang-thai/' + id;
+
+            // Cập nhật nhãn trạng thái hiện tại trên tiêu đề modal
+            const badgeEl = document.getElementById('modalCurrentStatusBadge');
+            if (badgeEl) {
+                const mapBadge = {
+                    'CHO_XAC_NHAN': { text: 'Chờ xác nhận', cls: 'bg-amber-100 text-amber-800' },
+                    'DANG_XU_LY': { text: 'Đang xử lý / Chuẩn bị', cls: 'bg-blue-100 text-blue-800' },
+                    'DANG_GIAO': { text: 'Đang giao hàng', cls: 'bg-purple-100 text-purple-800' },
+                    'THAT_LAC_MOT_PHAN': { text: 'Thất lạc 1 phần', cls: 'bg-orange-100 text-orange-800' },
+                    'HANG_THAT_LAC': { text: 'Hàng thất lạc', cls: 'bg-rose-100 text-rose-800' },
+                    'HOAN_THANH': { text: 'Hoàn thành', cls: 'bg-emerald-100 text-emerald-800' },
+                    'DA_HUY': { text: 'Đã hủy', cls: 'bg-rose-100 text-rose-800' },
+                    'DANG_DOI_TRA': { text: 'Đang đổi trả', cls: 'bg-indigo-100 text-indigo-800' },
+                    'DA_DOI_HANG': { text: 'Đã đổi hàng', cls: 'bg-teal-100 text-teal-800' },
+                    'DA_TRA_HANG': { text: 'Đã trả hàng', cls: 'bg-slate-100 text-slate-800' }
+                };
+                const info = mapBadge[currentStatus] || { text: currentStatus, cls: 'bg-slate-100 text-slate-700' };
+                badgeEl.innerText = info.text;
+                badgeEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold ' + info.cls;
+            }
+
+            // Cập nhật Stepper theo trạng thái hiện tại
+            const activeStep = (currentStatus === 'THAT_LAC_MOT_PHAN') ? 'DANG_GIAO' : currentStatus;
+            ['CHO_XAC_NHAN', 'DANG_XU_LY', 'DANG_GIAO', 'HOAN_THANH'].forEach(s => {
+                const el = document.getElementById('step-' + s);
+                if (el) {
+                    if (s === activeStep) {
+                        el.className = (currentStatus === 'THAT_LAC_MOT_PHAN')
+                            ? 'p-1.5 rounded-lg border-2 border-orange-500 bg-orange-50 text-orange-800 font-extrabold shadow-xs'
+                            : 'p-1.5 rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-800 font-extrabold shadow-xs';
+                    } else {
+                        el.className = 'p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400';
+                    }
+                }
+            });
+
+            const lockedAlert = document.getElementById('modalLockedAlert');
+            const formContent = document.getElementById('modalFormContent');
+            const btnSubmit = document.getElementById('btnSubmitDoiTrangThai');
+            const sel = document.getElementById('selectTrangThaiMoi');
+
+            if (currentStatus === 'HOAN_THANH' || currentStatus === 'DA_HUY' || currentStatus === 'DANG_DOI_TRA' || currentStatus === 'DA_TRA_HANG' || currentStatus === 'DA_DOI_HANG') {
+                lockedAlert.classList.remove('hidden');
+                formContent.classList.add('hidden');
+                btnSubmit.classList.add('hidden');
+                if (currentStatus === 'DANG_DOI_TRA') {
+                    document.getElementById('modalLockedTitle').innerText = 'Đơn hàng đang [Đổi / Trả (RMA)]';
+                    document.getElementById('modalLockedDesc').innerText = 'Đơn hàng đang có yêu cầu Đổi/Trả đang được xử lý. Trạng thái đơn hàng chỉ được cập nhật tự động thông qua màn hình Xét duyệt Đổi/Trả.';
+                } else if (currentStatus === 'DA_TRA_HANG') {
+                    document.getElementById('modalLockedTitle').innerText = 'Đơn hàng đã [Trả hàng (Hoàn tiền)]';
+                    document.getElementById('modalLockedDesc').innerText = 'Đơn hàng đã hoàn tất quy trình Trả hàng & Hoàn tiền. Quy trình đã kết thúc, không thể thay đổi trạng thái.';
+                } else if (currentStatus === 'DA_DOI_HANG') {
+                    document.getElementById('modalLockedTitle').innerText = 'Đơn hàng đã [Đổi hàng thành công]';
+                    document.getElementById('modalLockedDesc').innerText = 'Đơn hàng đã hoàn tất xuất kho đổi SKU mới cho khách. Quy trình đã kết thúc.';
+                } else if (currentStatus === 'HOAN_THANH') {
+                    document.getElementById('modalLockedTitle').innerText = 'Đơn hàng đã [Hoàn thành]';
+                    document.getElementById('modalLockedDesc').innerText = 'Đơn hàng đã giao thành công và tích lũy điểm Loyalty. Quy trình đã kết thúc, không thể thay đổi trạng thái nữa.';
+                } else {
+                    document.getElementById('modalLockedTitle').innerText = 'Đơn hàng đã [Bị Hủy]';
+                    document.getElementById('modalLockedDesc').innerText = 'Đơn hàng đã bị hủy và đã hoàn trả tồn kho về hệ thống. Quy trình đã kết thúc, không thể mở lại nữa.';
+                }
+            } else {
+                lockedAlert.classList.add('hidden');
+                formContent.classList.remove('hidden');
+                btnSubmit.classList.remove('hidden');
+
+                // Render Thẻ thao tác thông minh (Smart Action Cards)
+                renderActionCards(currentStatus, preferredNextStatus);
+            }
+
+            const inputWaybill = document.getElementById('inputMaVanDon');
+            if (inputWaybill) {
+                inputWaybill.value = currentWaybill;
+            }
+
+            const inputGhiChu = document.getElementById('inputGhiChuTrangThai');
+            if (inputGhiChu) {
+                inputGhiChu.value = '';
+            }
+
+            // Tải danh sách mặt hàng của đơn để hỗ trợ chọn sản phẩm bị mất khi cần
+            const listMatEl = document.getElementById('danhSachSanPhamTrongDonChonMat');
+            if (listMatEl) {
+                listMatEl.innerHTML = '<div class="text-center text-slate-400 text-xs py-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang tải danh sách mặt hàng...</div>';
+            }
+            fetch('/admin/don-hang/api/chi-tiet/' + id)
+                .then(res => res.json())
+                .then(items => {
+                    renderDanhSachChonSanPhamMat(items || []);
+                })
+                .catch(err => {
+                    console.error('Lỗi tải mặt hàng:', err);
+                    if (listMatEl) listMatEl.innerHTML = '<div class="text-rose-500 text-xs py-1">Lỗi tải danh sách mặt hàng.</div>';
+                });
+
+            const m = document.getElementById('modalDoiTrangThai');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function renderActionCards(currentStatus, preferredNextStatus) {
+            const container = document.getElementById('containerActionCards');
+            const sel = document.getElementById('selectTrangThaiMoi');
+            if (!container || !sel) return;
+
+            container.innerHTML = '';
+            sel.innerHTML = '';
+
+            let actions = [];
+            if (currentStatus === 'CHO_XAC_NHAN') {
+                actions = [
+                    {
+                        val: 'DANG_XU_LY',
+                        title: '1. Xác nhận & Chuẩn bị',
+                        desc: 'Kho kiểm hàng, in phiếu & đóng gói',
+                        icon: 'fa-solid fa-box-open',
+                        color: 'blue',
+                        recommended: true
+                    },
+                    {
+                        val: 'DANG_GIAO',
+                        title: '2. Giao hàng ngay',
+                        desc: 'Bàn giao shipper và cấp mã vận đơn',
+                        icon: 'fa-solid fa-truck-fast',
+                        color: 'purple'
+                    },
+                    {
+                        val: 'DA_HUY',
+                        title: '3. Hủy đơn hàng',
+                        desc: 'Khách đổi ý, hoàn trả tồn kho',
+                        icon: 'fa-solid fa-ban',
+                        color: 'rose'
+                    }
+                ];
+            } else if (currentStatus === 'DANG_XU_LY') {
+                actions = [
+                    {
+                        val: 'DANG_GIAO',
+                        title: '1. Bàn giao Vận chuyển',
+                        desc: 'Đóng gói xong, xuất kho cho bưu tá',
+                        icon: 'fa-solid fa-truck-fast',
+                        color: 'purple',
+                        recommended: true
+                    },
+                    {
+                        val: 'DA_HUY',
+                        title: '2. Hủy đơn hàng',
+                        desc: 'Hủy đơn và hoàn tồn kho về hệ thống',
+                        icon: 'fa-solid fa-ban',
+                        color: 'rose'
+                    },
+                    {
+                        val: 'DANG_XU_LY',
+                        title: '3. Giữ nguyên Đang xử lý',
+                        desc: 'Chỉ cập nhật ghi chú tiến độ',
+                        icon: 'fa-solid fa-clipboard-check',
+                        color: 'slate'
+                    }
+                ];
+            } else if (currentStatus === 'DANG_GIAO') {
+                actions = [
+                    {
+                        val: 'HOAN_THANH',
+                        title: '1. Giao thành công',
+                        desc: 'Khách đã nhận, tích điểm Loyalty',
+                        icon: 'fa-solid fa-circle-check',
+                        color: 'emerald',
+                        recommended: true
+                    },
+                    {
+                        val: 'HANG_THAT_LAC',
+                        title: '2. Báo hàng thất lạc',
+                        desc: 'Bưu tá làm mất hàng khi giao',
+                        icon: 'fa-solid fa-triangle-exclamation',
+                        color: 'amber'
+                    },
+                    {
+                        val: 'DA_HUY',
+                        title: '3. Giao thất bại / Bom hàng',
+                        desc: 'Khách từ chối nhận, hoàn kho',
+                        icon: 'fa-solid fa-ban',
+                        color: 'rose'
+                    },
+                    {
+                        val: 'DANG_GIAO',
+                        title: '4. Giữ nguyên Đang giao',
+                        desc: 'Cập nhật mã vận đơn / Ghi chú',
+                        icon: 'fa-solid fa-clock-rotate-left',
+                        color: 'slate'
+                    }
+                ];
+            } else if (currentStatus === 'THAT_LAC_MOT_PHAN') {
+                actions = [
+                    {
+                        val: 'HOAN_THANH',
+                        title: '1. Giao thành công món còn lại',
+                        desc: 'Khách nhận các món nguyên vẹn',
+                        icon: 'fa-solid fa-circle-check',
+                        color: 'emerald',
+                        recommended: true
+                    },
+                    {
+                        val: 'HANG_THAT_LAC',
+                        title: '2. Cập nhật thêm món mất',
+                        desc: 'Chọn thêm sản phẩm bị thất lạc',
+                        icon: 'fa-solid fa-triangle-exclamation',
+                        color: 'amber'
+                    },
+                    {
+                        val: 'DA_HUY',
+                        title: '3. Hủy đơn các món còn lại',
+                        desc: 'Khách hủy nhận phần còn lại, hoàn kho',
+                        icon: 'fa-solid fa-ban',
+                        color: 'rose'
+                    }
+                ];
+            } else {
+                actions = [
+                    { val: 'DANG_XU_LY', title: 'Đang xử lý', desc: 'Chuẩn bị đơn hàng', icon: 'fa-solid fa-box-open', color: 'blue' },
+                    { val: 'DANG_GIAO', title: 'Đang giao hàng', desc: 'Bàn giao vận chuyển', icon: 'fa-solid fa-truck-fast', color: 'purple' },
+                    { val: 'HOAN_THANH', title: 'Hoàn thành', desc: 'Giao hàng thành công', icon: 'fa-solid fa-circle-check', color: 'emerald' },
+                    { val: 'DA_HUY', title: 'Đã hủy', desc: 'Hủy đơn hoàn kho', icon: 'fa-solid fa-ban', color: 'rose' }
+                ];
+            }
+
+            // Đồng bộ options cho select ẩn
+            actions.forEach(act => {
+                const opt = document.createElement('option');
+                opt.value = act.val;
+                opt.innerText = act.title;
+                sel.appendChild(opt);
+            });
+
+            // Chọn hành động mặc định: ưu tiên preferredNextStatus, nếu không lấy action gợi ý / đầu tiên
+            let selectedVal = preferredNextStatus;
+            if (!selectedVal || !actions.some(a => a.val === selectedVal)) {
+                selectedVal = actions[0] ? actions[0].val : '';
+            }
+
+            // Render action cards trực quan
+            actions.forEach(act => {
+                const card = document.createElement('div');
+                card.id = 'action-card-' + act.val;
+                card.className = 'action-choice-card p-3 rounded-2xl border transition cursor-pointer select-none relative flex items-start gap-2.5';
+                card.setAttribute('data-val', act.val);
+                card.onclick = () => chonHanhDongTrangThai(act.val);
+
+                card.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold action-icon-box">
+                        <i class="${act.icon}"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black action-card-title truncate">${act.title}</span>
+                            ${act.recommended ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-blue-100 text-blue-700">Gợi ý</span>' : ''}
+                        </div>
+                        <p class="text-[11px] action-card-desc text-slate-500 mt-0.5 leading-snug line-clamp-1">${act.desc}</p>
+                    </div>
+                    <div class="action-check-badge hidden absolute top-2 right-2 text-blue-600 text-xs">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            chonHanhDongTrangThai(selectedVal);
+        }
+
+        function chonHanhDongTrangThai(val) {
+            const sel = document.getElementById('selectTrangThaiMoi');
+            if (sel) sel.value = val;
+
+            // Highlight card
+            document.querySelectorAll('.action-choice-card').forEach(c => {
+                const isSelected = c.getAttribute('data-val') === val;
+                const iconBox = c.querySelector('.action-icon-box');
+                const checkBadge = c.querySelector('.action-check-badge');
+                const title = c.querySelector('.action-card-title');
+
+                if (isSelected) {
+                    c.className = 'action-choice-card p-3 rounded-2xl border-2 border-blue-600 bg-blue-50/50 shadow-xs transition cursor-pointer select-none relative flex items-start gap-2.5 ring-2 ring-blue-100';
+                    if (iconBox) iconBox.className = 'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold bg-blue-600 text-white shadow-2xs';
+                    if (title) title.className = 'text-xs font-black text-blue-900 truncate';
+                    if (checkBadge) checkBadge.classList.remove('hidden');
+                } else {
+                    c.className = 'action-choice-card p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 transition cursor-pointer select-none relative flex items-start gap-2.5';
+                    if (iconBox) iconBox.className = 'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold bg-slate-100 text-slate-600';
+                    if (title) title.className = 'text-xs font-bold text-slate-800 truncate';
+                    if (checkBadge) checkBadge.classList.add('hidden');
+                }
+            });
+
+            // Cập nhật nút submit theo ngữ cảnh
+            const btnSubmit = document.getElementById('btnSubmitDoiTrangThai');
+            const submitText = document.getElementById('btnSubmitDoiTrangThaiText');
+            if (btnSubmit && submitText) {
+                if (val === 'DANG_XU_LY') {
+                    btnSubmit.className = 'px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-1.5';
+                    submitText.innerText = 'Xác Nhận & Chuẩn Bị Hàng';
+                } else if (val === 'DANG_GIAO') {
+                    btnSubmit.className = 'px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-1.5';
+                    submitText.innerText = 'Bàn Giao Vận Chuyển';
+                } else if (val === 'HOAN_THANH') {
+                    btnSubmit.className = 'px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-1.5';
+                    submitText.innerText = 'Xác Nhận Giao Thành Công';
+                } else if (val === 'HANG_THAT_LAC' || val === 'THAT_LAC_MOT_PHAN') {
+                    btnSubmit.className = 'px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-1.5';
+                    submitText.innerText = 'Xác Nhận Báo Thất Lạc Hàng';
+                } else if (val === 'DA_HUY') {
+                    btnSubmit.className = 'px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-1.5';
+                    submitText.innerText = 'Xác Nhận Hủy Đơn & Hoàn Kho';
+                } else {
+                    btnSubmit.className = 'px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shadow-xs flex items-center gap-1.5';
+                    submitText.innerText = 'Lưu Cập Nhật & Ghi Log';
+                }
+            }
+
+            // Gợi ý ghi chú nhanh (Canned response chips)
+            renderCannedResponseChips(val);
+
+            // Bật/tắt các khung theo ngữ cảnh
+            thayDoiLuaChonTrangThaiMoi(val);
+        }
+
+        function renderCannedResponseChips(status) {
+            const container = document.getElementById('cannedResponseChipsContainer');
+            if (!container) return;
+
+            const mapChips = {
+                'DANG_XU_LY': [
+                    'Đã xác nhận & in phiếu xuất kho',
+                    'Kho đang chuẩn bị đóng gói',
+                    'Đã kiểm đếm đủ phụ kiện & tem tag'
+                ],
+                'DANG_GIAO': [
+                    'Đã bàn giao bưu tá bưu cục',
+                    'Kiện hàng nguyên vẹn, niêm phong',
+                    'Giao hỏa tốc trong ngày'
+                ],
+                'HOAN_THANH': [
+                    'Khách đã nhận đủ và thanh toán',
+                    'Giao thành công không khiếu nại',
+                    'Khách nhận tại nhà người thân'
+                ],
+                'HANG_THAT_LAC': [
+                    'Thất lạc kiện hàng do đơn vị vận chuyển',
+                    'Bao bì rách rơi mất sản phẩm trên đường giao'
+                ],
+                'DA_HUY': [
+                    'Khách đổi ý không muốn nhận hàng',
+                    'Không liên lạc được khách sau 3 lần gọi',
+                    'Sai thông tin địa chỉ / số điện thoại'
+                ]
+            };
+
+            const chips = mapChips[status] || ['Cập nhật trạng thái đơn hàng'];
+            container.innerHTML = '';
+            chips.forEach(c => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 text-slate-600 text-[10px] font-medium transition cursor-pointer';
+                chip.innerText = c;
+                chip.onclick = () => themGhiChuNhanh(c);
+                container.appendChild(chip);
+            });
+        }
+
+        function themGhiChuNhanh(text) {
+            const txt = document.getElementById('inputGhiChuTrangThai');
+            if (txt) {
+                txt.value = text;
+                txt.focus();
+            }
+        }
+
+        function renderDanhSachChonSanPhamMat(items) {
+            const container = document.getElementById('danhSachSanPhamTrongDonChonMat');
+            const tongSoEl = document.getElementById('tongSoItemTrongDon');
+            if (tongSoEl) tongSoEl.innerText = items.length;
+
+            if (!container) return;
+            if (!items || items.length === 0) {
+                container.innerHTML = '<div class="text-slate-400 text-xs">Không có mặt hàng nào.</div>';
+                return;
+            }
+
+            // Phân loại mặt hàng: Gom nhóm theo Gói Combo (nhomComboToken hoặc maComboId)
+            const comboGroups = {};
+            const orderElements = []; // Danh sách tuần tự { type: 'combo'|'item', data: ... }
+
+            items.forEach(it => {
+                const token = (it.nhomComboToken && it.nhomComboToken.trim() !== '') 
+                    ? it.nhomComboToken.trim() 
+                    : (it.maComboId ? 'COMBO_ID_' + it.maComboId : null);
+
+                if (token) {
+                    if (!comboGroups[token]) {
+                        const grp = {
+                            token: token,
+                            comboId: it.maComboId,
+                            items: []
+                        };
+                        comboGroups[token] = grp;
+                        orderElements.push({ type: 'combo', group: grp });
+                    }
+                    comboGroups[token].items.push(it);
+                } else {
+                    orderElements.push({ type: 'item', item: it });
+                }
+            });
+
+            let html = '';
+
+            orderElements.forEach(el => {
+                if (el.type === 'combo') {
+                    const group = el.group;
+                    const subItems = group.items;
+                    const token = group.token;
+
+                    // Trích xuất tên combo từ tên sản phẩm
+                    let comboName = 'Gói Combo Ưu Đãi';
+                    for (let s of subItems) {
+                        const match = (s.tenSanPham || '').match(/\[(?:Gói Combo|Thành phần Combo|Combo):\s*([^\]]+)\]/i);
+                        if (match && match[1]) {
+                            comboName = match[1].trim();
+                            break;
+                        }
+                    }
+
+                    // Tính tổng tiền gói combo
+                    const priceItem = subItems.find(s => s.donGia && Number(s.donGia) > 0) || subItems[0];
+                    const comboTotal = Number(priceItem.thanhTien && Number(priceItem.thanhTien) > 0 ? priceItem.thanhTien : (Number(priceItem.donGia || 0) * (priceItem.soLuong || 1)));
+                    const formattedComboTotal = new Intl.NumberFormat('vi-VN').format(comboTotal) + ' đ';
+
+                    // Kiểm tra xem tất cả các món trong combo có đang bị mất không
+                    const allLost = subItems.every(s => s.trangThaiItem === 'MAT_HANG');
+
+                    html += `
+                        <div class="p-3 rounded-2xl border-2 ${allLost ? 'border-rose-400 bg-rose-50/70' : 'border-purple-200 bg-purple-50/40'} space-y-2.5 transition combo-box-container" data-combo-container="${token}">
+                            <div class="flex items-center justify-between pb-2 border-b border-purple-200/80">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-purple-600 text-white flex items-center justify-center text-[11px] shadow-2xs">
+                                        <i class="fa-solid fa-gift"></i>
+                                    </span>
+                                    <div>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="font-extrabold text-xs text-purple-950">${comboName}</span>
+                                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-200 text-purple-800">Đóng gói chung</span>
+                                            <span class="text-[10px] font-mono font-bold text-purple-700">${formattedComboTotal}</span>
+                                        </div>
+                                        <span class="text-[10px] text-purple-600 font-medium block">
+                                            <i class="fa-solid fa-circle-info mr-0.5"></i> Mất 1 món sẽ tính mất cả gói combo (${subItems.length} món con đóng gói cùng nhau)
+                                        </span>
+                                    </div>
+                                </div>
+                                <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-purple-300 text-purple-800 hover:border-purple-400 hover:bg-purple-50 cursor-pointer text-[11px] font-bold shadow-2xs transition">
+                                    <input type="checkbox" data-combo-master="${token}" ${allLost ? 'checked' : ''} onchange="toggleComboGroup(this, '${token}')" class="rounded text-purple-600 focus:ring-purple-400 cursor-pointer">
+                                    <span>Chọn cả gói</span>
+                                </label>
+                            </div>
+                            <div class="space-y-1.5 pl-1">
+                    `;
+
+                    subItems.forEach(s => {
+                        const daMat = (s.trangThaiItem === 'MAT_HANG');
+                        const cleanName = (s.tenSanPham || 'Sản phẩm con')
+                            .replace(/\[(?:Gói Combo|Thành phần Combo|Combo):[^\]]+\]\s*/i, '')
+                            .trim();
+
+                        html += `
+                            <label class="flex items-center justify-between p-2 rounded-xl border ${daMat ? 'border-rose-400 bg-rose-100/70' : 'border-purple-100 bg-white/90'} hover:border-purple-300 cursor-pointer transition text-xs shadow-2xs label-item-mat">
+                                <span class="flex items-center gap-2 overflow-hidden pr-2">
+                                    <input type="checkbox" name="chiTietBiMatIds" value="${s.id}"
+                                           data-combo-token="${token}"
+                                           ${daMat ? 'checked' : ''}
+                                           onchange="onComboItemToggle(this, '${token}')"
+                                           class="checkbox-item-mat rounded text-purple-600 focus:ring-purple-400 shrink-0 cursor-pointer">
+                                    <span class="truncate">
+                                        <span class="text-slate-900 block truncate text-[11px] font-bold">
+                                            <span class="text-purple-400 font-mono font-bold mr-1">└─</span>${cleanName}
+                                        </span>
+                                        <span class="text-[10px] font-mono text-slate-500">${s.maSku || '---'} &bull; SL: <b class="text-slate-800">${s.soLuong}</b></span>
+                                    </span>
+                                </span>
+                                <span class="text-right shrink-0">
+                                    <span class="font-mono text-[10px] text-purple-600 block italic font-semibold">${Number(s.thanhTien) > 0 ? Number(s.thanhTien).toLocaleString('vi-VN') + ' đ' : '(Trong combo)'}</span>
+                                    ${daMat ? '<span class="text-[9px] font-extrabold text-rose-600"><i class="fa-solid fa-triangle-exclamation"></i> Mất theo combo</span>' : '<span class="text-[9px] text-emerald-600 font-semibold"><i class="fa-solid fa-check"></i> Bình thường</span>'}
+                                </span>
+                            </label>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Sản phẩm lẻ
+                    const it = el.item;
+                    const daMat = (it.trangThaiItem === 'MAT_HANG');
+                    html += `
+                        <label class="flex items-center justify-between p-2 rounded-xl border ${daMat ? 'border-rose-400 bg-rose-100/60' : 'border-slate-200 bg-white'} hover:border-rose-400 cursor-pointer transition text-xs shadow-2xs label-item-mat">
+                            <span class="flex items-center gap-2.5 overflow-hidden pr-2">
+                                <input type="checkbox" name="chiTietBiMatIds" value="${it.id}"
+                                       ${daMat ? 'checked' : ''}
+                                       onchange="capNhatTomTatSanPhamMat()"
+                                       class="checkbox-item-mat rounded text-rose-600 focus:ring-rose-400 shrink-0 cursor-pointer">
+                                <span class="truncate">
+                                    <b class="text-slate-900 block truncate text-[11px]">${it.tenSanPham}</b>
+                                    <span class="text-[10px] font-mono text-slate-500">${it.maSku || '---'} &bull; Số lượng: <b class="text-slate-800">${it.soLuong}</b></span>
+                                </span>
+                            </span>
+                            <span class="text-right shrink-0">
+                                <span class="font-mono font-bold text-slate-800 text-[11px] block">${Number(it.thanhTien).toLocaleString('vi-VN')} đ</span>
+                                ${daMat ? '<span class="text-[9px] font-extrabold text-rose-600"><i class="fa-solid fa-triangle-exclamation"></i> Đã mất</span>' : '<span class="text-[9px] text-emerald-600 font-semibold"><i class="fa-solid fa-check"></i> Bình thường</span>'}
+                            </span>
+                        </label>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+            capNhatTomTatSanPhamMat();
+        }
+
+        // Khi người dùng click nút "Chọn cả gói" của Combo
+        function toggleComboGroup(masterCb, token) {
+            const isChecked = masterCb.checked;
+            const cbs = document.querySelectorAll(`input.checkbox-item-mat[data-combo-token="${token}"]`);
+            cbs.forEach(cb => {
+                cb.checked = isChecked;
+                syncItemLabelStyle(cb);
+            });
+            syncComboContainerStyle(token, isChecked);
+            capNhatTomTatSanPhamMat();
+        }
+
+        // Khi người dùng click bất kỳ sản phẩm con nào trong Combo -> Tự động chọn/bỏ chọn TẤT CẢ các sản phẩm trong combo đó (Đóng gói chung)
+        function onComboItemToggle(itemCb, token) {
+            const isChecked = itemCb.checked;
+            const cbs = document.querySelectorAll(`input.checkbox-item-mat[data-combo-token="${token}"]`);
+            cbs.forEach(cb => {
+                cb.checked = isChecked;
+                syncItemLabelStyle(cb);
+            });
+            const master = document.querySelector(`input[data-combo-master="${token}"]`);
+            if (master) master.checked = isChecked;
+            syncComboContainerStyle(token, isChecked);
+            capNhatTomTatSanPhamMat();
+        }
+
+        function syncItemLabelStyle(cb) {
+            const label = cb.closest('label');
+            if (label) {
+                if (cb.checked) {
+                    label.classList.add('border-rose-400', 'bg-rose-100/70');
+                    label.classList.remove('border-purple-100', 'border-slate-200', 'bg-white', 'bg-white/90');
+                } else {
+                    label.classList.remove('border-rose-400', 'bg-rose-100/70');
+                    if (cb.hasAttribute('data-combo-token')) {
+                        label.classList.add('border-purple-100', 'bg-white/90');
+                    } else {
+                        label.classList.add('border-slate-200', 'bg-white');
+                    }
+                }
+            }
+        }
+
+        function syncComboContainerStyle(token, isChecked) {
+            const box = document.querySelector(`div[data-combo-container="${token}"]`);
+            if (box) {
+                if (isChecked) {
+                    box.classList.add('border-rose-400', 'bg-rose-50/70');
+                    box.classList.remove('border-purple-200', 'bg-purple-50/40');
+                } else {
+                    box.classList.remove('border-rose-400', 'bg-rose-50/70');
+                    box.classList.add('border-purple-200', 'bg-purple-50/40');
+                }
+            }
+        }
+
+        function toggleChonTatCaSanPhamMat(checked) {
+            const checkboxes = document.querySelectorAll('.checkbox-item-mat');
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                syncItemLabelStyle(cb);
+            });
+            document.querySelectorAll('input[data-combo-master]').forEach(m => m.checked = checked);
+            document.querySelectorAll('div[data-combo-container]').forEach(box => {
+                if (checked) {
+                    box.classList.add('border-rose-400', 'bg-rose-50/70');
+                    box.classList.remove('border-purple-200', 'bg-purple-50/40');
+                } else {
+                    box.classList.remove('border-rose-400', 'bg-rose-50/70');
+                    box.classList.add('border-purple-200', 'bg-purple-50/40');
+                }
+            });
+            capNhatTomTatSanPhamMat();
+        }
+
+        function capNhatTomTatSanPhamMat() {
+            const checkboxes = document.querySelectorAll('.checkbox-item-mat');
+            const checked = document.querySelectorAll('.checkbox-item-mat:checked');
+            const count = checked.length;
+            const total = checkboxes.length;
+
+            const soLuongEl = document.getElementById('soLuongMatDaChon');
+            if (soLuongEl) soLuongEl.innerText = count;
+
+            const checkAll = document.getElementById('checkChonTatCaSanPhamMat');
+            if (checkAll) checkAll.checked = (total > 0 && count === total);
+
+            // Đếm số gói combo bị mất
+            const comboTokensLost = new Set();
+            document.querySelectorAll('.checkbox-item-mat:checked[data-combo-token]').forEach(cb => {
+                comboTokensLost.add(cb.getAttribute('data-combo-token'));
+            });
+
+            const badge = document.getElementById('badgeKieuMat');
+            if (badge) {
+                if (count === 0) {
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-600';
+                    badge.innerText = 'Chưa chọn món nào';
+                } else if (count === total) {
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-800';
+                    badge.innerText = 'Mất toàn bộ đơn hàng';
+                } else {
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-orange-100 text-orange-800';
+                    let text = 'Mất ' + count + '/' + total + ' món';
+                    if (comboTokensLost.size > 0) {
+                        text += ' (Gồm ' + comboTokensLost.size + ' gói Combo đóng gói chung)';
+                    }
+                    text += ' - Các món khác GIỮ NGUYÊN';
+                    badge.innerText = text;
+                }
+            }
+
+            // Tự động gợi ý ghi chú phù hợp
+            const txtGhiChu = document.getElementById('inputGhiChuTrangThai');
+            if (txtGhiChu && (!txtGhiChu.value || txtGhiChu.value.includes('thất lạc') || txtGhiChu.value.includes('mất'))) {
+                if (count === total) {
+                    txtGhiChu.value = 'Đơn vị vận chuyển làm mất toàn bộ kiện hàng. Tồn kho không cộng lại.';
+                } else if (count > 0) {
+                    let note = 'Đơn vị vận chuyển làm mất ' + count + '/' + total + ' món';
+                    if (comboTokensLost.size > 0) {
+                        note += ' (Bao gồm ' + comboTokensLost.size + ' gói Combo đóng gói chung)';
+                    }
+                    note += '. Các món còn lại giữ nguyên.';
+                    txtGhiChu.value = note;
+                }
+            }
+        }
+
+        function thayDoiLuaChonTrangThaiMoi(val) {
+            const reqStar = document.getElementById('labelWaybillRequired');
+            const hint = document.getElementById('hintWaybill');
+            const alertLost = document.getElementById('canhBaoHangThatLac');
+            const checkLost = document.getElementById('checkHangBiThatLac');
+            const txtGhiChu = document.getElementById('inputGhiChuTrangThai');
+
+            const hopChuanBi = document.getElementById('hopThongBaoChuanBi');
+            const hopHoanThanh = document.getElementById('hopThongBaoHoanThanh');
+            const hopHuyDon = document.getElementById('hopThongBaoHuyDon');
+            const groupVanDon = document.getElementById('groupMaVanDon');
+
+            // 1. Khung Chuẩn bị hàng (ĐANG_XU_LY)
+            if (hopChuanBi) {
+                if (val === 'DANG_XU_LY') hopChuanBi.classList.remove('hidden');
+                else hopChuanBi.classList.add('hidden');
+            }
+
+            // 2. Khung Hoàn thành (HOAN_THANH)
+            if (hopHoanThanh) {
+                if (val === 'HOAN_THANH') hopHoanThanh.classList.remove('hidden');
+                else hopHoanThanh.classList.add('hidden');
+            }
+
+            // 3. Khung Hủy đơn (DA_HUY)
+            if (hopHuyDon) {
+                if (val === 'DA_HUY') hopHuyDon.classList.remove('hidden');
+                else hopHuyDon.classList.add('hidden');
+            }
+
+            // 4. Khung Thất lạc hàng (Chọn món mất)
+            if (val === 'HANG_THAT_LAC' || val === 'THAT_LAC_MOT_PHAN') {
+                if (alertLost) alertLost.classList.remove('hidden');
+                if (checkLost) checkLost.value = 'true';
+                capNhatTomTatSanPhamMat();
+            } else {
+                if (alertLost) alertLost.classList.add('hidden');
+                if (checkLost) checkLost.value = 'false';
+            }
+
+            // 5. Khung Mã vận đơn bên thứ 3 (Chỉ hiện khi ĐANG_GIAO)
+            if (groupVanDon) {
+                if (val === 'DANG_GIAO') {
+                    groupVanDon.classList.remove('hidden');
+                    if (reqStar) reqStar.classList.remove('hidden');
+                    if (hint) {
+                        hint.className = 'text-[10px] text-purple-700 font-bold mt-1';
+                        hint.innerText = 'Bắt buộc cấp mã vận đơn từ ĐVVC bên thứ 3 (GHN, GHTK, Viettel Post...) khi giao hàng!';
+                    }
+                } else {
+                    groupVanDon.classList.add('hidden');
+                    if (reqStar) reqStar.classList.add('hidden');
+                }
+            }
+        }
+
+        function moModalChonCarrier() {
+            const m = document.getElementById('modalChonCarrier');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            }
+        }
+
+        function xacNhanKetNoiCarrier() {
+            if (!currentEditingOrderId) {
+                alert('Vui lòng chọn đơn hàng cần cấp mã vận đơn!');
+                return;
+            }
+            const radios = document.getElementsByName('radioCarrier');
+            let selectedCarrier = 'GHTK';
+            for (let r of radios) {
+                if (r.checked) { selectedCarrier = r.value; break; }
+            }
+            const serviceType = document.getElementById('selectServiceType').value;
+            const btn = document.getElementById('btnXacNhanCarrier');
+            btn.disabled = true;
+            btn.innerText = 'Đang kết nối ĐVVC...';
+
+            fetch('/admin/don-hang/api/tao-van-don-carrier/' + currentEditingOrderId + '?maDonVi=' + encodeURIComponent(selectedCarrier) + '&loaiDichVu=' + encodeURIComponent(serviceType), {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerText = 'Xác Nhận Cấp Mã Vận Đơn';
+                if (data.maVanDon) {
+                    document.getElementById('inputMaVanDon').value = data.maVanDon;
+                    const inpDv = document.getElementById('inputDonViVanChuyen');
+                    if (inpDv) inpDv.value = data.tenDonVi;
+
+                    const badge = document.getElementById('boxCarrierBadge');
+                    if (badge) {
+                        badge.classList.remove('hidden');
+                        document.getElementById('textCarrierName').innerHTML = '<i class="fa-solid fa-truck-ramp-box mr-1"></i> ' + data.tenDonVi + ' (' + data.loaiDichVu + ')';
+                        const link = document.getElementById('linkCarrierTracking');
+                        if (link) link.href = data.linkTraCuu || '#';
+                    }
+
+                    dongModal('modalChonCarrier');
+                } else {
+                    alert('Lỗi: ' + (data.thongDiep || 'Không thể tạo mã vận đơn từ đối tác'));
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerText = 'Xác Nhận Cấp Mã Vận Đơn';
+                alert('Lỗi kết nối ĐVVC: ' + err);
+            });
+        }
+
+        function validateTruocKhiSubmit() {
+            const sel = document.getElementById('selectTrangThaiMoi');
+            if (!sel || !sel.value) return true;
+            const val = sel.value;
+            if (val === 'DANG_GIAO') {
+                const wb = document.getElementById('inputMaVanDon');
+                if (!wb || wb.value.trim() === '') {
+                    alert('Quy định: Shop không được tự gõ mã vận đơn. Vui lòng bấm [Kết nối ĐVVC] để đối tác cấp mã vận đơn trước khi giao hàng!');
+                    moModalChonCarrier();
+                    return false;
+                }
+            }
+            if (val === 'HANG_THAT_LAC' || val === 'THAT_LAC_MOT_PHAN') {
+                const checkboxes = document.querySelectorAll('.checkbox-item-mat');
+                const checkedBoxes = document.querySelectorAll('.checkbox-item-mat:checked');
+                if (checkboxes.length > 0 && checkedBoxes.length === 0) {
+                    alert('Vui lòng tích chọn ít nhất 1 sản phẩm bị mất trong danh sách mặt hàng bên dưới!');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function dongModal(id) {
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+    </script>
+</body>
+</html>
