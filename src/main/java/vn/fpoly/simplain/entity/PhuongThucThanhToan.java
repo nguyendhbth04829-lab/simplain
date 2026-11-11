@@ -43,10 +43,6 @@ public class PhuongThucThanhToan {
     private Boolean laTrucTuyen = false;
 
     @Builder.Default
-    @Column(name = "loai_cong", length = 50)
-    private String loaiCong = "KHAC";
-
-    @Builder.Default
     @Column(name = "kich_hoat")
     private Boolean kichHoat = true;
 

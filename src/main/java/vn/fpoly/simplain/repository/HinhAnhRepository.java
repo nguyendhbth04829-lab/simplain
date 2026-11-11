@@ -17,6 +17,8 @@ public interface HinhAnhRepository extends JpaRepository<HinhAnh, Long> {
      */
     List<HinhAnh> findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(Long maBienTheId);
 
+    List<HinhAnh> findByMaBienTheIdInOrderByLaAnhDaiDienDescThuTuAscIdAsc(List<Long> maBienTheIds);
+
     /**
      * Lấy danh sách hình ảnh của một sản phẩm gốc theo thứ tự ưu tiên.
      */
@@ -26,6 +28,8 @@ public interface HinhAnhRepository extends JpaRepository<HinhAnh, Long> {
      * Lấy danh sách hình ảnh cấp sản phẩm (không gắn với biến thể SKU) theo thứ tự ưu tiên (ảnh bìa đại diện lên đầu).
      */
     List<HinhAnh> findByMaSanPhamIdAndMaBienTheIdIsNullOrderByLaAnhDaiDienDescThuTuAscIdAsc(Long maSanPhamId);
+
+    List<HinhAnh> findByMaSanPhamIdInAndMaBienTheIdIsNullOrderByLaAnhDaiDienDescThuTuAscIdAsc(List<Long> maSanPhamIds);
 
     /**
      * Lấy danh sách hình ảnh cấp sản phẩm theo thứ tự hiển thị.

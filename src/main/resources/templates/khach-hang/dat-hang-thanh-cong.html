@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt hàng thành công | Simplain</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts Plus Jakarta Sans -->
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .btn-navy {
+            background-color: #0f172a;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .btn-navy:hover {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .btn-outline {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        .btn-outline:hover {
+            border-color: #94a3b8;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+
+    <!-- Header Navigation Bar -->
+    <header class="w-full bg-white border-b border-slate-200/80 sticky top-0 z-50 backdrop-blur-md bg-white/95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <a href="/cua-hang" class="flex items-center gap-2 group">
+                <span class="w-9 h-9 rounded-xl bg-[#0f172a] text-white flex items-center justify-center font-black text-lg shadow-sm group-hover:scale-105 transition-transform">S</span>
+                <div class="flex flex-col">
+                    <span class="font-extrabold text-base tracking-wider text-[#0f172a] leading-none uppercase">Simplain</span>
+                    <span class="text-[9px] font-semibold text-slate-400 tracking-widest uppercase">Namwear</span>
+                </div>
+            </a>
+
+            <div class="flex items-center gap-4 text-xs font-bold text-slate-600">
+                <a href="/cua-hang" class="hover:text-blue-600 transition">Tiếp tục mua sắm</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1 space-y-8">
+
+        <!-- THIỆP CHÚC MỪNG ĐẶT HÀNG THÀNH CÔNG -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-8 text-center shadow-xs space-y-4">
+            <div class="w-20 h-20 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl shadow-xs ring-8 ring-emerald-50/50">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <div class="space-y-1">
+                <h1 class="text-2xl sm:text-3xl font-black text-[#0f172a] tracking-tight">
+                    Đặt Hàng Thành Công!
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium">
+                    Cảm ơn bạn đã tin tưởng và mua sắm tại Simplain. Đơn hàng của bạn đang được xử lý để giao sớm nhất.
+                </p>
+            </div>
+
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-800">
+                <span>MÃ ĐƠN HÀNG:</span>
+                <span class="text-blue-600" th:text="${'#' + donHang.maDonHang}">#DH123456</span>
+            </div>
+        </div>
+
+        <!-- THÔNG TIN GIAO NHẬN & THANH TOÁN (AC 2) -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+            <h2 class="text-sm font-extrabold text-[#0f172a] uppercase tracking-wide pb-4 border-b border-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-blue-600"></i>
+                <span>Chi tiết hóa đơn &amp; Địa chỉ giao hàng</span>
+            </h2>
+
+            <!-- Grid Thông tin người nhận -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Người nhận hàng</div>
+                    <div class="font-bold text-slate-900 text-sm" th:text="${donHang.tenNguoiNhan}">Nguyễn Văn A</div>
+                    <div class="text-slate-600 font-mono" th:text="${donHang.soDienThoaiNhan}">0987654321</div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Trạng thái đơn hàng</div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span th:text="${donHang.trangThaiDonHang.tenTrangThai}">Chờ xác nhận</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500" th:text="${'Đặt lúc: ' + #temporals.format(donHang.ngayTao, 'dd/MM/yyyy HH:mm')}">
+                        25/10/2026 14:30
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1.5">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Địa chỉ giao nhận</div>
+                    <div class="font-medium text-slate-800" th:text="${donHang.diaChiGiaoHang}">
+                        Số 123 Đường Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội
+                    </div>
+                    <div th:if="${donHang.ghiChu != null and not #strings.isEmpty(donHang.ghiChu)}" class="text-[11px] text-slate-500 italic mt-1" th:text="${'Ghi chú: ' + donHang.ghiChu}">
+                        Giao hàng giờ hành chính
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách mặt hàng trong đơn hàng -->
+            <div class="space-y-3 pt-2">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-700">Mặt hàng đã đặt:</div>
+                <div class="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 overflow-hidden bg-white">
+                    <div th:each="ct : ${danhSachChiTiet}" class="p-3.5 flex items-center justify-between gap-4 text-xs hover:bg-slate-50/50">
+                        <div>
+                            <div class="font-bold text-slate-900" th:text="${ct.tenSanPham}">Áo Polo Excool</div>
+                            <div class="text-[11px] text-slate-500 font-mono mt-0.5" th:text="${'Mã SKU: ' + ct.maSku}">SKU-001</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-slate-900" th:text="${#numbers.formatDecimal(ct.thanhTien, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                                199.000 đ
+                            </div>
+                            <div class="text-[11px] text-slate-500" th:text="${'x ' + ct.soLuong}">
+                                x 1
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẢNG TÍNH TIỀN MINH BẠCH (AC 1) -->
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+                <div class="flex items-center justify-between text-slate-600">
+                    <span>Tổng tiền hàng:</span>
+                    <span class="font-bold text-slate-900" th:text="${#numbers.formatDecimal(donHang.tongTienHang, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                        0 đ
+                    </span>
+                </div>
+
+                <div th:if="${donHang.tienGiamGia != null and donHang.tienGiamGia > 0}" class="flex items-center justify-between text-emerald-600 font-semibold">
+                    <span class="flex items-center gap-1">
+                        <i class="fa-solid fa-tag text-[10px]"></i> Giảm giá Voucher:
+                    </span>
+                    <span th:text="${'- ' + #numbers.formatDecimal(donHang.tienGiamGia, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                        - 0 đ
+                    </span>
+                </div>
+
+                <div th:if="${donHang.tienCoolcashDung != null and donHang.tienCoolcashDung > 0}" class="flex items-center justify-between text-amber-600 font-semibold">
+                    <span class="flex items-center gap-1">
+                        <i class="fa-solid fa-coins text-[10px]"></i> Điểm tích lũy đã dùng:
+                    </span>
+                    <span th:text="${'- ' + #numbers.formatDecimal(donHang.tienCoolcashDung, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                        - 0 đ
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-slate-600">
+                    <span>Phí vận chuyển:</span>
+                    <span class="font-bold text-slate-900"
+                          th:text="${donHang.phiVanChuyen > 0 ? (#numbers.formatDecimal(donHang.phiVanChuyen, 0, 'POINT', 0, 'COMMA') + ' đ') : 'MIỄN PHÍ'}">
+                        MIỄN PHÍ
+                    </span>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 flex items-baseline justify-between">
+                    <div>
+                        <div class="text-xs font-black text-slate-900 uppercase tracking-wide">Tổng thanh toán:</div>
+                        <div class="text-[10px] text-slate-400">Hàng - Voucher - Điểm + Ship</div>
+                    </div>
+                    <div class="text-xl font-black text-blue-600"
+                         th:text="${#numbers.formatDecimal(donHang.tongThanhToan, 0, 'POINT', 0, 'COMMA') + ' đ'}">
+                        0 đ
+                    </div>
+                </div>
+            </div>
+
+            <!-- Các nút hành động -->
+            <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <a href="/cua-hang"
+                   class="w-full sm:w-auto px-6 py-3 rounded-xl btn-navy font-bold text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-xs">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span>Tiếp tục mua hàng</span>
+                </a>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                    <a th:href="@{'/khach-hang/don-hang/' + ${donHang.maDonHang}}"
+                       class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-sm transition">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <span>Theo dõi đơn hàng (US23)</span>
+                    </a>
+                    <a href="/khach-hang/don-hang"
+                       class="flex-1 sm:flex-none px-4 py-3 rounded-xl btn-outline font-bold text-xs text-center flex items-center justify-center gap-1.5 hover:bg-slate-100 transition">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>Lịch sử đơn</span>
+                    </a>
+                    <a href="/khach-hang/hoi-vien"
+                       class="flex-1 sm:flex-none px-4 py-3 rounded-xl btn-outline font-bold text-xs text-center flex items-center justify-center gap-1.5 hover:bg-slate-100 transition">
+                        <i class="fa-solid fa-coins text-amber-500"></i>
+                        <span>Thẻ hội viên</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-slate-200/80 py-8 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span>&copy; 2026 Simplain Menswear. All rights reserved.</span>
+        </div>
+    </footer>
+
+</body>
+</html>

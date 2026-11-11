@@ -21,8 +21,6 @@ public class DonHangItemDto {
     private Long id;
     private Long maBienTheId;
     private Long maSanPhamId;
-    private Long maComboId;
-    private String nhomComboToken;
     private String tenSanPham;
     private String maSku;
     private BigDecimal donGia;

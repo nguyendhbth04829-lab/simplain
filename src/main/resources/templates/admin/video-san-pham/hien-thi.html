@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Video Quảng Cáo Sản Phẩm | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('video-san-pham')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title bên trái + Nút Đen "+ Thêm video" bên phải -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center text-lg border border-slate-800 shadow-sm">
+                    <i class="fa-solid fa-film text-blue-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Video Quảng Cáo Sản Phẩm</span>
+                        <span class="text-xs font-mono font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full" th:text="${tongVideo + ' video'}">0 video</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Mỗi sản phẩm gắn 1 video quảng cáo/review thực tế hiển thị nổi bật trên đầu trang Chi tiết sản phẩm</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="/admin/san-pham/hien-thi"
+                   class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                    <i class="fa-solid fa-shirt"></i>
+                    <span>Sản phẩm</span>
+                </a>
+                <button type="button"
+                        onclick="moModalThemMoi()"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>+ Thêm video quảng cáo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. BỘ LỌC TÌM KIẾM VÀ PHÂN LOẠI TRẠNG THÁI -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5">
+            <form action="/admin/video-san-pham/hien-thi" method="get" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <div class="sm:col-span-6">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-1"></i>Tìm kiếm video
+                    </label>
+                    <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                           placeholder="Nhập tên sản phẩm, mã SP, tiêu đề video hoặc mô tả..."
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        <i class="fa-solid fa-toggle-on text-slate-400 mr-1"></i>Trạng thái hiển thị
+                    </label>
+                    <select name="kichHoat" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true" th:selected="${kichHoatLoc != null and kichHoatLoc == true}">Đang hiển thị</option>
+                        <option value="false" th:selected="${kichHoatLoc != null and kichHoatLoc == false}">Tạm ngưng</option>
+                    </select>
+                </div>
+
+                <div class="sm:col-span-3 flex items-center gap-2">
+                    <button type="submit"
+                            class="flex-1 btn-navy font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition">
+                        <i class="fa-solid fa-filter text-xs"></i>
+                        <span>Lọc kết quả</span>
+                    </button>
+                    <a href="/admin/video-san-pham/hien-thi"
+                       title="Đặt lại bộ lọc"
+                       class="btn-outline font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center justify-center shadow-xs transition">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Thanh Thao Tác Hàng Loạt (Bulk Action Bar) -->
+        <form id="formThaoTacHangLoat" method="post" th:action="@{/admin/video-san-pham/thao-tac-hang-loat}">
+            <div id="bulkActionBar" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-800">
+                        Đã chọn <span id="soLuongDaChon" class="font-black text-blue-600">0</span> video sản phẩm
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" name="hanhDong" value="KICH_HOAT"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn KÍCH HOẠT tất cả các video đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Chuyển thành: Kích hoạt</span>
+                    </button>
+                    <button type="submit" name="hanhDong" value="NGUNG_HOAT_DONG"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn TẠM NGƯNG tất cả các video đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-pause"></i>
+                        <span>Chuyển thành: Tạm ngưng</span>
+                    </button>
+                    <button type="button" onclick="boChonTatCa()"
+                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 text-xs font-bold transition cursor-pointer">
+                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ chọn
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. BẢNG DỮ LIỆU VIDEO QUẢNG CÁO SẢN PHẨM -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-video text-blue-600"></i>
+                        <span>Danh sách Video sản phẩm (<span th:text="${pageData != null ? pageData.totalElements : #lists.size(listVideo)}">0</span>)</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-medium">
+                        Trang <strong class="text-slate-900" th:text="${page + 1}">1</strong> / <strong class="text-slate-900" th:text="${totalPages > 0 ? totalPages : 1}">1</strong>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50/80 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200/90 text-[11px]">
+                            <tr>
+                                <th class="py-3 px-3 w-10 text-center">
+                                    <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)"
+                                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                           title="Chọn tất cả trên trang này">
+                                </th>
+                                <th class="py-3 px-4 w-16">ID</th>
+                                <th class="py-3 px-4 w-64">Sản phẩm liên kết</th>
+                                <th class="py-3 px-4">Tiêu đề &amp; Mô tả video</th>
+                                <th class="py-3 px-4 w-36 text-center">Xem trước</th>
+                                <th class="py-3 px-4 w-36 text-center">Trạng thái</th>
+                                <th class="py-3 px-4 w-44 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr th:each="v : ${listVideo}" class="hover:bg-slate-50/70 transition">
+                                <td class="py-3.5 px-3 text-center">
+                                    <input type="checkbox" name="ids" th:value="${v.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                           class="item-checkbox rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </td>
+                                <td class="py-3.5 px-4 font-mono font-bold text-slate-400" th:text="${v.id}">1</td>
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-3">
+                                    <img th:if="${v.anhSanPham != null and !#strings.isEmpty(v.anhSanPham)}"
+                                         th:src="${v.anhSanPham}"
+                                         alt="Ảnh SP"
+                                         class="w-12 h-14 object-cover rounded-xl border border-slate-200 shadow-2xs flex-shrink-0">
+                                    <div th:unless="${v.anhSanPham != null and !#strings.isEmpty(v.anhSanPham)}"
+                                         class="w-12 h-14 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                        <i class="fa-solid fa-shirt"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <a th:href="@{/cua-hang/san-pham/{id}(id=${v.maSanPhamId})}"
+                                           target="_blank"
+                                           class="font-bold text-slate-900 hover:text-blue-600 block line-clamp-1 transition"
+                                           th:text="${v.tenSanPham != null ? v.tenSanPham : ('Sản phẩm #' + v.maSanPhamId)}">
+                                            Áo Polo Nam Excool
+                                        </a>
+                                        <span class="text-[11px] font-mono font-semibold text-slate-500 block" th:text="${v.maSanPham != null ? v.maSanPham : ('ID: ' + v.maSanPhamId)}">SP-001</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-bold text-slate-900 text-sm block" th:text="${v.tieuDe}">Trải nghiệm vải Sorona</span>
+                                <p class="text-slate-500 text-xs mt-0.5 line-clamp-2" th:text="${v.moTa != null and !#strings.isEmpty(v.moTa) ? v.moTa : '-'}">
+                                    Video quay thực tế độ co giãn 4 chiều
+                                </p>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <button type="button"
+                                        onclick="xemVideoBtn(this)"
+                                        th:data-url="${v.videoUrl}"
+                                        th:data-title="${v.tieuDe}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs transition cursor-pointer shadow-2xs">
+                                    <i class="fa-solid fa-circle-play text-blue-600"></i>
+                                    <span>Xem video</span>
+                                </button>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${v.kichHoat}" class="status-badge-active">
+                                    <span class="pulse-dot bg-emerald-500"></span>
+                                    Đang hiển thị
+                                </span>
+                                <span th:unless="${v.kichHoat}" class="status-badge-inactive">
+                                    <span class="pulse-dot bg-neutral-400"></span>
+                                    Tạm ngưng
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <!-- Nút Sửa (Mở Modal sửa) -->
+                                    <button type="button"
+                                            onclick="moModalSuaBtn(this)"
+                                            th:data-id="${v.id}"
+                                            th:data-sp-id="${v.maSanPhamId}"
+                                            th:data-tieu-de="${v.tieuDe}"
+                                            th:data-video-url="${v.videoUrl}"
+                                            th:data-mo-ta="${v.moTa != null ? v.moTa : ''}"
+                                            th:data-kich-hoat="${v.kichHoat}"
+                                            class="btn-outline px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                                            title="Chỉnh sửa video">
+                                        <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                        <span>Sửa</span>
+                                    </button>
+
+                                    <!-- Nút Đổi trạng thái -->
+                                    <a th:href="@{/admin/video-san-pham/doi-trang-thai(id=${v.id})}"
+                                       th:class="${v.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                       class="px-2.5 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-2xs transition"
+                                       th:title="${v.kichHoat} ? 'Bấm để tạm ngưng hiển thị' : 'Bấm để kích hoạt hiển thị'">
+                                       <i th:class="${v.kichHoat} ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]'"></i>
+                                       <span th:text="${v.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                    </a>
+
+                                    <!-- Nút Xóa -->
+                                    <a th:href="@{/admin/video-san-pham/delete(id=${v.id})}"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa video quảng cáo của sản phẩm này?');"
+                                       class="btn-danger-outline px-2 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                                       title="Xóa video">
+                                        <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(listVideo)}">
+                            <td colspan="7" class="py-12 text-center text-slate-400 italic">
+                                <i class="fa-solid fa-inbox text-3xl mb-2 text-slate-300 block"></i>
+                                Không tìm thấy video quảng cáo nào phù hợp với bộ lọc hiện tại!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang Pagination -->
+            <div th:if="${totalPages > 1}" class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-slate-500">
+                    Hiển thị <strong th:text="${#lists.size(listVideo)}">0</strong> trên tổng số <strong th:text="${pageData.totalElements}">0</strong> video sản phẩm
+                </div>
+
+                <div class="flex items-center gap-1">
+                    <a th:if="${page > 0}"
+                       th:href="@{/admin/video-san-pham/hien-thi(page=${page - 1}, tuKhoa=${tuKhoa}, kichHoat=${kichHoatLoc})}"
+                       class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold">
+                        &larr; Trước
+                    </a>
+
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/admin/video-san-pham/hien-thi(page=${i}, tuKhoa=${tuKhoa}, kichHoat=${kichHoatLoc})}"
+                           th:text="${i + 1}"
+                           th:classappend="${i == page} ? 'bg-[#0f172a] text-white font-bold border-[#0f172a]' : 'btn-outline text-slate-700'"
+                           class="w-8 h-8 rounded-lg border flex items-center justify-center text-xs font-bold transition">
+                            1
+                        </a>
+                    </th:block>
+
+                    <a th:if="${page + 1 < totalPages}"
+                       th:href="@{/admin/video-san-pham/hien-thi(page=${page + 1}, tuKhoa=${tuKhoa}, kichHoat=${kichHoatLoc})}"
+                       class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+        </form>
+
+    </main>
+
+    <!-- 4. MODAL THÊM MỚI VIDEO QUẢNG CÁO SẢN PHẨM -->
+    <div id="modalThemVideo" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200/90 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shadow-xs">
+                        <i class="fa-solid fa-video text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Thêm Video Quảng Cáo Sản Phẩm</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Chọn video từ máy hoặc nhập URL video (1 SP / 1 Video)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalThemVideo')" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/video-san-pham/add}" th:object="${videoSanPham}" method="post" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Chọn Sản phẩm gắn video <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <select th:field="*{maSanPhamId}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">-- Chọn sản phẩm --</option>
+                        <option th:each="sp : ${danhSachSanPham}"
+                                th:value="${sp.id}"
+                                th:text="${'[' + sp.maSanPham + '] ' + sp.tenSanPham}">[SP-01] Áo Polo</option>
+                    </select>
+                    <span class="error" th:if="${#fields.hasErrors('maSanPhamId')}" th:errors="*{maSanPhamId}"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Tiêu đề video quảng cáo <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input type="text" th:field="*{tieuDe}" required
+                           placeholder="VD: Trải nghiệm công nghệ làm mát sợi Sorona Excool"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('tieuDe')}" th:errors="*{tieuDe}"></span>
+                </div>
+
+                <!-- KHU VỰC CHỌN NGUỒN VIDEO (TỪ MÁY HOẶC URL) -->
+                <div class="space-y-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-800">
+                        <i class="fa-solid fa-photo-film text-blue-600 mr-1.5"></i>Nguồn Video Quảng Cáo <span class="text-rose-500 font-bold">*</span>
+                    </label>
+
+                    <!-- Cách 1: Chọn video từ máy tính -->
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-700 mb-1.5">
+                            <i class="fa-solid fa-upload mr-1 text-slate-500"></i>Cách 1: Chọn file video từ máy tính
+                        </span>
+                        <input type="file" id="fileVideoThem" name="fileVideo" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
+                               onchange="xuLyChonFileVideo(this, 'tenFileThemBadge', 'previewVideoThem')"
+                               class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-blue-600 file:cursor-pointer transition">
+                        <div id="tenFileThemBadge" class="hidden text-[11px] text-emerald-600 font-semibold mt-1.5 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i><span></span>
+                        </div>
+                        <div id="previewVideoThem" class="mt-2 hidden aspect-video rounded-xl overflow-hidden bg-black max-h-36"></div>
+                    </div>
+
+                    <!-- HOẶC Divider -->
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-2 text-[10px] uppercase font-bold text-slate-400 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">HOẶC</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <!-- Cách 2: Nhập link URL -->
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-700 mb-1.5">
+                            <i class="fa-solid fa-link mr-1 text-slate-500"></i>Cách 2: Nhập đường dẫn video trực tiếp (URL / YouTube)
+                        </span>
+                        <input type="text" th:field="*{videoUrl}" id="inputUrlThem"
+                               placeholder="VD: https://.../video.mp4 hoặc link YouTube..."
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="text-[10px] text-slate-400 block mt-1">Hỗ trợ link MP4 trực tiếp, WebM hoặc link YouTube / YouTube Shorts.</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Mô tả ngắn gọn video
+                    </label>
+                    <textarea th:field="*{moTa}" rows="2"
+                              placeholder="VD: Video quay cận cảnh bề mặt vải dệt tổ ong và độ co giãn 4 chiều..."
+                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="checkKichHoatThem" th:field="*{kichHoat}" checked class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                    <label for="checkKichHoatThem" class="text-xs font-semibold text-slate-700 cursor-pointer">Kích hoạt hiển thị ngay trên Storefront</label>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="dongModal('modalThemVideo')"
+                            class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Lưu video</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. MODAL CẬP NHẬT VIDEO QUẢNG CÁO SẢN PHẨM -->
+    <div id="modalSuaVideo" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200/90 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold shadow-xs">
+                        <i class="fa-solid fa-pen-to-square text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide text-slate-900">Cập Nhật Video Quảng Cáo</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Chọn video mới từ máy hoặc sửa URL video</p>
+                    </div>
+                </div>
+                <button type="button" onclick="dongModal('modalSuaVideo')" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form th:action="@{/admin/video-san-pham/update}" method="post" enctype="multipart/form-data" class="space-y-4">
+                <input type="hidden" id="editVideoId" name="id">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Sản phẩm liên kết <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <select id="editMaSanPhamId" name="maSanPhamId" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option th:each="sp : ${danhSachSanPham}"
+                                th:value="${sp.id}"
+                                th:text="${'[' + sp.maSanPham + '] ' + sp.tenSanPham}">[SP-01] Áo Polo</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Tiêu đề video quảng cáo <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input type="text" id="editTieuDe" name="tieuDe" required
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                </div>
+
+                <!-- KHU VỰC CẬP NHẬT NGUỒN VIDEO -->
+                <div class="space-y-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-800">
+                            <i class="fa-solid fa-photo-film text-blue-600 mr-1.5"></i>Cập nhật Nguồn Video
+                        </label>
+                        <button type="button" onclick="xemVideoHienTaiSua()" class="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-circle-play text-blue-600"></i>Xem video hiện tại
+                        </button>
+                    </div>
+
+                    <!-- Cách 1: Tải video mới từ máy tính -->
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-700 mb-1.5">
+                            <i class="fa-solid fa-upload mr-1 text-slate-500"></i>Cách 1: Chọn video mới từ máy tính (để thay thế)
+                        </span>
+                        <input type="file" id="fileVideoSua" name="fileVideo" accept="video/mp4,video/webm,video/ogg,video/quicktime,video/*"
+                               onchange="xuLyChonFileVideo(this, 'tenFileSuaBadge', 'previewVideoSua')"
+                               class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-blue-600 file:cursor-pointer transition">
+                        <div id="tenFileSuaBadge" class="hidden text-[11px] text-emerald-600 font-semibold mt-1.5 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i><span></span>
+                        </div>
+                        <div id="previewVideoSua" class="mt-2 hidden aspect-video rounded-xl overflow-hidden bg-black max-h-36"></div>
+                    </div>
+
+                    <!-- HOẶC Divider -->
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-2 text-[10px] uppercase font-bold text-slate-400 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">HOẶC</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <!-- Cách 2: Sửa link URL -->
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-700 mb-1.5">
+                            <i class="fa-solid fa-link mr-1 text-slate-500"></i>Cách 2: Sửa đường dẫn video URL
+                        </span>
+                        <input type="text" id="editVideoUrl" name="videoUrl"
+                               placeholder="VD: https://.../video.mp4 hoặc link YouTube..."
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="text-[10px] text-slate-400 block mt-1">Để trống file mới nếu bạn muốn giữ nguyên video cũ hoặc dùng URL trên.</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Mô tả ngắn gọn video
+                    </label>
+                    <textarea id="editMoTa" name="moTa" rows="2"
+                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="editKichHoat" name="kichHoat" value="true" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+                    <label for="editKichHoat" class="text-xs font-semibold text-slate-700 cursor-pointer">Đang kích hoạt hiển thị trên Storefront</label>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="dongModal('modalSuaVideo')"
+                            class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Cập nhật video</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. MODAL XEM TRƯỚC VIDEO (PREVIEW MODAL) -->
+    <div id="modalXemVideo" class="fixed inset-0 z-50 hidden bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-800 text-white">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-play text-red-500"></i>
+                    <h3 id="previewTitle" class="text-sm sm:text-base font-bold text-white truncate max-w-md">Xem trước Video</h3>
+                </div>
+                <button type="button" onclick="dongModalXemVideo()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Video Player Container -->
+            <div id="videoContainer" class="aspect-video w-full rounded-2xl overflow-hidden bg-black flex items-center justify-center border border-slate-800">
+                <!-- Sẽ được chèn động bằng JavaScript -->
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button type="button" onclick="dongModalXemVideo()" class="btn-outline text-xs font-bold px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 cursor-pointer">
+                    Đóng cửa sổ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function moModalThemMoi() {
+            document.getElementById('modalThemVideo').classList.remove('hidden');
+        }
+        function dongModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        function moModalSuaBtn(btn) {
+            const id = btn.getAttribute('data-id');
+            const maSanPhamId = btn.getAttribute('data-sp-id');
+            const tieuDe = btn.getAttribute('data-tieu-de');
+            const videoUrl = btn.getAttribute('data-video-url');
+            const moTa = btn.getAttribute('data-mo-ta');
+            const kichHoat = btn.getAttribute('data-kich-hoat');
+
+            document.getElementById('editVideoId').value = id;
+            document.getElementById('editMaSanPhamId').value = maSanPhamId;
+            document.getElementById('editTieuDe').value = tieuDe;
+            document.getElementById('editVideoUrl').value = videoUrl;
+            document.getElementById('editMoTa').value = moTa || '';
+            document.getElementById('editKichHoat').checked = (kichHoat === true || kichHoat === 'true');
+
+            // Reset file input preview
+            const fileInput = document.getElementById('fileVideoSua');
+            if (fileInput) fileInput.value = '';
+            const badge = document.getElementById('tenFileSuaBadge');
+            if (badge) badge.classList.add('hidden');
+            const prev = document.getElementById('previewVideoSua');
+            if (prev) {
+                prev.innerHTML = '';
+                prev.classList.add('hidden');
+            }
+
+            document.getElementById('modalSuaVideo').classList.remove('hidden');
+        }
+        function xemVideoHienTaiSua() {
+            const url = document.getElementById('editVideoUrl').value;
+            const tieuDe = document.getElementById('editTieuDe').value;
+            if (!url) {
+                alert('Chưa có đường dẫn video để xem!');
+                return;
+            }
+            xemVideo(url, tieuDe || 'Video hiện tại');
+        }
+        function xemVideoBtn(btn) {
+            const url = btn.getAttribute('data-url');
+            const tieuDe = btn.getAttribute('data-title');
+            xemVideo(url, tieuDe);
+        }
+        function moModalSua(id, maSanPhamId, tieuDe, videoUrl, moTa, kichHoat) {
+            document.getElementById('editVideoId').value = id;
+            document.getElementById('editMaSanPhamId').value = maSanPhamId;
+            document.getElementById('editTieuDe').value = tieuDe;
+            document.getElementById('editVideoUrl').value = videoUrl;
+            document.getElementById('editMoTa').value = moTa || '';
+            document.getElementById('editKichHoat').checked = (kichHoat === true || kichHoat === 'true');
+            document.getElementById('modalSuaVideo').classList.remove('hidden');
+        }
+        function xuLyChonFileVideo(input, badgeId, previewId) {
+            const badge = document.getElementById(badgeId);
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                if (badge) {
+                    badge.querySelector('span').innerText = `Đã chọn: ${file.name} (${sizeMB} MB)`;
+                    badge.classList.remove('hidden');
+                }
+                if (preview) {
+                    preview.innerHTML = '';
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(file);
+                    video.controls = true;
+                    video.autoplay = false;
+                    video.className = 'w-full h-full object-cover';
+                    preview.appendChild(video);
+                    preview.classList.remove('hidden');
+                }
+            } else {
+                if (badge) badge.classList.add('hidden');
+                if (preview) {
+                    preview.innerHTML = '';
+                    preview.classList.add('hidden');
+                }
+            }
+        }
+        function xemVideo(url, tieuDe) {
+            document.getElementById('previewTitle').innerText = tieuDe || 'Xem trước Video';
+            const container = document.getElementById('videoContainer');
+            container.innerHTML = '';
+
+            const lower = url.toLowerCase();
+            if (lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.mov') || lower.endsWith('.ogg') || lower.includes('/uploads/')) {
+                const video = document.createElement('video');
+                video.src = url;
+                video.controls = true;
+                video.autoplay = true;
+                video.className = 'w-full h-full object-contain';
+                container.appendChild(video);
+            } else {
+                let embedUrl = url;
+                if (url.includes('youtube.com/watch?v=')) {
+                    embedUrl = url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
+                } else if (url.includes('youtu.be/')) {
+                    embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+                } else if (url.includes('youtube.com/shorts/')) {
+                    embedUrl = url.replace('youtube.com/shorts/', 'youtube.com/embed/');
+                }
+                const iframe = document.createElement('iframe');
+                iframe.src = embedUrl;
+                iframe.className = 'w-full h-full border-0';
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                iframe.allowFullscreen = true;
+                container.appendChild(iframe);
+            }
+
+            document.getElementById('modalXemVideo').classList.remove('hidden');
+        }
+        function dongModalXemVideo() {
+            const container = document.getElementById('videoContainer');
+            container.innerHTML = '';
+            document.getElementById('modalXemVideo').classList.add('hidden');
+        }
+
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+            const bar = document.getElementById('bulkActionBar');
+            const countSpan = document.getElementById('soLuongDaChon');
+            const checkAll = document.getElementById('checkAll');
+
+            if (countSpan) countSpan.textContent = checkedCount;
+
+            if (checkedCount > 0) {
+                if (bar) bar.classList.remove('hidden');
+            } else {
+                if (bar) bar.classList.add('hidden');
+            }
+
+            if (checkAll && checkboxes.length > 0) {
+                checkAll.checked = (checkedCount === checkboxes.length);
+                checkAll.indeterminate = (checkedCount > 0 && checkedCount < checkboxes.length);
+            }
+        }
+
+        function boChonTatCa() {
+            const checkAll = document.getElementById('checkAll');
+            if (checkAll) checkAll.checked = false;
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function xacNhanThaoTac(message) {
+            const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+            if (checkedCount === 0) {
+                alert('Vui lòng chọn ít nhất một video để thao tác!');
+                return false;
+            }
+            return confirm(message);
+        }
+    </script>
+</body>
+</html>

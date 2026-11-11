@@ -72,72 +72,20 @@ public class MoMoService {
 
         String signature = CryptoUtils.hmacSHA256(secretKey, rawSignature);
 
-        // 1. Thử gọi MoMo Create Order API nếu cấu hình endpoint hợp lệ
-        String paymentUrl = null;
-        String qrCodeUrl = null;
+        // URL MoMo QR deep-link hoặc web gateway
+        String paymentUrl = endpoint + "?partnerCode=" + partnerCode
+                + "&orderId=" + orderId
+                + "&amount=" + amount
+                + "&orderInfo=" + URLEncoderWrapper(orderInfo)
+                + "&signature=" + signature;
 
-        try {
-            Map<String, Object> requestBody = new java.util.LinkedHashMap<>();
-            requestBody.put("partnerCode", partnerCode);
-            requestBody.put("partnerName", "SIMPLAIN STORE");
-            requestBody.put("storeId", "SIMPLAIN_01");
-            requestBody.put("requestId", requestId);
-            requestBody.put("amount", Long.parseLong(amount));
-            requestBody.put("orderId", orderId);
-            requestBody.put("orderInfo", orderInfo);
-            requestBody.put("redirectUrl", returnUrl);
-            requestBody.put("ipnUrl", ipnUrl);
-            requestBody.put("lang", "vi");
-            requestBody.put("extraData", extraData);
-            requestBody.put("requestType", requestType);
-            requestBody.put("signature", signature);
+        // Mã QR Ví điện tử MoMo
+        String qrCodeUrl = "https://img.vietqr.io/image/970422-0901234567-compact2.png"
+                + "?amount=" + amount
+                + "&addInfo=MOMO%20DH%20" + donHang.getMaDonHang()
+                + "&accountName=SIMPLAIN%20MOMO";
 
-            String jsonPayload = objectMapper.writeValueAsString(requestBody);
-
-            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(3))
-                    .build();
-
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(endpoint))
-                    .header("Content-Type", "application/json")
-                    .timeout(java.time.Duration.ofSeconds(3))
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
-                    .build();
-
-            java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-            log.info("MoMo Create Order API status: {}, body: {}", response.statusCode(), response.body());
-
-            if (response.statusCode() == 200) {
-                JsonNode resJson = objectMapper.readTree(response.body());
-                if (resJson.has("resultCode") && resJson.get("resultCode").asInt() == 0) {
-                    if (resJson.has("payUrl") && !resJson.get("payUrl").asText().isBlank()) {
-                        paymentUrl = resJson.get("payUrl").asText();
-                    }
-                    if (resJson.has("qrCodeUrl") && !resJson.get("qrCodeUrl").asText().isBlank()) {
-                        qrCodeUrl = resJson.get("qrCodeUrl").asText();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Không thể gọi MoMo API Sandbox trực tiếp: {}", e.getMessage());
-        }
-
-        // 2. Fallback an toàn: Sử dụng trang MoMo Gateway của hệ thống để không bao giờ bị lỗi 404/405
-        if (paymentUrl == null || paymentUrl.isBlank()) {
-            throw new IllegalStateException("Không tạo được liên kết thanh toán MoMo. Vui lòng thử lại sau.");
-        }
-
-        // 3. Fallback mã QR Ví điện tử MoMo
-        if (qrCodeUrl == null || qrCodeUrl.isBlank()) {
-            qrCodeUrl = "https://img.vietqr.io/image/970422-0901234567-compact2.png"
-                    + "?amount=" + amount
-                    + "&addInfo=MOMO%20DH%20" + donHang.getMaDonHang()
-                    + "&accountName=SIMPLAIN%20MOMO";
-        }
-
-        log.info("Generate MoMo URL thành công cho đơn [{}], OrderId: {}, PaymentUrl: {}",
-                donHang.getMaDonHang(), orderId, paymentUrl);
+        log.info("Generate MoMo URL thành công cho đơn [{}], OrderId: {}", donHang.getMaDonHang(), orderId);
 
         return PaymentUrlResponse.builder()
                 .paymentUrl(paymentUrl)

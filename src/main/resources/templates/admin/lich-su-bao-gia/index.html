@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lịch sử báo giá — Simplain</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{admin/fragments/admin-centre-shell :: styles}"></th:block>
+    <style>
+        .quote-page{width:100%;max-width:none;min-height:0;display:flex;flex:0 0 auto;flex-direction:column;gap:14px;color:#172033}
+        .q-btn{min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 14px;border:1px solid #dbe2ea;border-radius:7px;background:#fff;color:#334155;font:600 13px Inter, sans-serif;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s}
+        .q-btn:hover:not(:disabled){background:#f8fafc;border-color:#94a3b8}
+        .q-btn:focus-visible,.q-field select:focus-visible,.q-field input:focus-visible,.q-field textarea:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+        .q-btn-primary{background:#155eef;border-color:#155eef;color:#fff}
+        .q-btn-primary:hover:not(:disabled){background:#0049cc;border-color:#0049cc}
+        .q-btn:disabled{opacity:.5;cursor:not-allowed}
+        .q-card{background:#fff;border:1px solid #e2e8f0;border-radius:11px;box-shadow:0 1px 2px #0f172a08;overflow:hidden}
+        .q-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #edf0f4}
+        .q-card-head strong{font-size:13px}
+        .q-card-body{padding:16px}
+        .q-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+        .q-field label{font-size:12px;font-weight:650;color:#475569}
+        .q-field select,.q-field input,.q-field textarea{width:100%;min-height:40px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#172033;font:inherit}
+        .q-field select:disabled{background:#f8fafc;color:#94a3b8}
+        .q-hint{margin:9px 0 0;color:#64748b;font-size:12px;line-height:1.5}
+        .q-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+        .q-picker[hidden],.q-history[hidden]{display:none!important}
+        .q-picker{margin-top:16px;border-top:1px solid #edf0f4;padding-top:14px}
+        .q-browser-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+        .q-search{position:relative;flex:1;min-width:0}
+        .q-search input{padding-left:34px}
+        .q-search svg{position:absolute;top:12px;left:11px;color:#94a3b8;pointer-events:none}
+        .q-result-count{flex:0 0 auto;color:#64748b;font-size:12px;white-space:nowrap}
+        .q-product-list{max-height:min(58vh,620px);min-height:120px;overflow:auto;border:1px solid #e6eaf0;border-radius:8px;background:#fff}
+        .q-product-group+.q-product-group{border-top:1px solid #edf0f3}
+        .q-product-head{display:flex;align-items:center;gap:11px;padding:10px 13px}
+        .q-product-toggle{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:10px;flex:1;min-width:0;padding:2px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+        .q-product-toggle:hover .q-product-name{color:#155eef}
+        .q-product-chevron{color:#64748b;transition:transform .15s ease}
+        .q-product-toggle[aria-expanded=true] .q-product-chevron{transform:rotate(90deg)}
+        .q-product-meta{display:flex;flex-direction:column;min-width:0}
+        .q-product-name{overflow:hidden;color:#172033;font-size:13px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+        .q-product-code{margin-top:2px;color:#64748b;font:10.5px 'Roboto Mono',monospace}
+        .q-product-count{color:#64748b;font-size:11px;white-space:nowrap}
+        .q-product-photo,.q-sku-photo{position:relative;display:grid;place-items:center;flex:0 0 auto;overflow:hidden;border:1px solid #e2e8f0;border-radius:7px;background:#f3f4f6;color:#9ca3af}
+        .q-product-photo{width:42px;height:42px}
+        .q-sku-photo{width:34px;height:34px;border-radius:6px}
+        .q-product-photo img,.q-sku-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+        .q-product-photo img[hidden],.q-sku-photo img[hidden]{display:none}
+        .q-product-items[hidden]{display:none}
+        .q-product-items{padding:2px 12px 11px 68px;background:#fafbfc}
+        .q-sku-choice{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-height:54px;padding:7px 10px;border:0;border-top:1px solid #edf0f3;background:#fff;color:#334155;text-align:left;cursor:pointer}
+        .q-sku-choice:first-child{border-radius:6px 6px 0 0}
+        .q-sku-choice:last-child{border-radius:0 0 6px 6px}
+        .q-sku-choice:hover{background:#f2f7ff}
+        .q-sku-choice:focus-visible{position:relative;z-index:1;outline:3px solid #93c5fd;outline-offset:-3px}
+        .q-sku-meta{display:flex;flex-direction:column;gap:4px;min-width:0}
+        .q-sku-code{font:11px 'Roboto Mono',monospace;color:#334155}
+        .q-sku-attributes{display:flex;flex-wrap:wrap;gap:4px}
+        .q-sku-attribute{padding:2px 7px;border:1px solid #e5e7eb;border-radius:99px;background:#f9fafb;color:#64748b;font-size:10px}
+        .q-sku-status{padding:3px 8px;border:1px solid #a7f3d0;border-radius:99px;background:#ecfdf5;color:#047857;font-size:10px;font-weight:600;white-space:nowrap}
+        .q-sku-status.paused{border-color:#fed7aa;background:#fff7ed;color:#9a3412}
+        .q-picker-empty{padding:28px 14px;text-align:center;color:#64748b;font-size:12px}
+        .q-history{margin:-16px}
+        .q-history-head{display:grid;grid-template-columns:44px minmax(0,1fr) max-content;grid-template-rows:44px auto;align-items:center;column-gap:24px;row-gap:0;padding:13px 16px;border-bottom:1px solid #edf0f4}
+        .q-history-heading{grid-column:2;grid-row:1;align-self:center;margin:0;font-size:14px;line-height:1.5}
+        .q-history-subtitle{grid-column:2;grid-row:2;display:-webkit-box;min-width:0;overflow:hidden;margin-top:-.9em;color:#64748b;font-size:11.5px;line-height:1.4;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+        .q-back-button{grid-column:1;grid-row:1;width:44px;height:44px;display:grid;place-items:center;align-self:center;padding:0;border:1px solid #dbe2ea;border-radius:50%;background:#fff;color:#334155;cursor:pointer;transform:translateY(.4em);transition:background .15s,border-color .15s}
+        .q-back-button:hover{background:#f8fafc;border-color:#94a3b8}
+        .q-back-button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+        .q-history-body{min-width:0}
+        .q-history-body[hidden]{display:none!important}
+        .q-legend{grid-column:3;grid-row:1;display:flex;align-items:center;align-self:center;gap:16px;flex-wrap:nowrap;color:#475569;font-size:12px}
+        .q-legend-item{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+        .q-legend-line{width:24px;height:0;border-top:3px solid #059669}
+        .q-legend-line.purchase{border-top:2px dashed #2563eb}
+        .q-legend-mark{width:8px;height:8px;border:2px solid #2563eb;border-radius:50%;background:#fff}
+        .q-legend-square{width:8px;height:8px;background:#059669}
+        .q-range-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #edf0f4}
+        .q-range-toolbar strong{margin-right:4px;color:#64748b;font-size:11px;font-weight:600}
+        .q-range-button{min-height:32px;padding:0 10px;border:1px solid #dbe2ea;border-radius:7px;background:#fff;color:#475569;font:600 11px Inter,sans-serif;cursor:pointer}
+        .q-range-button:hover{border-color:#94a3b8;background:#f8fafc}
+        .q-range-button[aria-pressed=true]{border-color:#93c5fd;background:#eff6ff;color:#155eef}
+        .q-range-button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+        .q-custom-range{display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #edf0f4;background:#fbfcfe}
+        .q-custom-range[hidden],.q-range-notice[hidden],.q-events-footer[hidden]{display:none!important}
+        .q-custom-range .q-field{width:min(190px,100%)}
+        .q-custom-range input{min-height:34px}
+        .q-range-notice{margin:10px 14px 0;padding:9px 11px;border:1px solid #fde68a;border-radius:7px;background:#fffbeb;color:#92400e;font-size:11.5px;line-height:1.45}
+        .q-chart-wrap{position:relative;min-height:340px;padding:10px 14px 4px}
+        .q-chart-wrap[hidden],.q-empty[hidden],.q-summary[hidden],#eventsTableWrap[hidden]{display:none!important}
+        #priceChart{display:block;width:100%;height:auto;min-height:300px;overflow:visible}
+        .q-chart-grid{stroke:#e9eef5;stroke-width:1}
+        .q-chart-axis{stroke:#94a3b8;stroke-width:1}
+        .q-chart-x-tick{stroke:#94a3b8;stroke-width:1}
+        .q-chart-tick{fill:#64748b;font:11px Inter, sans-serif}
+        .q-sale-path{fill:none;stroke:#059669;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+        .q-purchase-path{fill:none;stroke:#2563eb;stroke-width:2.5;stroke-dasharray:7 5;stroke-linejoin:round;stroke-linecap:round}
+        .q-sale-point{fill:#059669;stroke:#fff;stroke-width:2}
+        .q-purchase-point{fill:#fff;stroke:#2563eb;stroke-width:2.5}
+        .q-point-cluster-sale{fill:#059669;stroke:#fff;stroke-width:2}
+        .q-point-cluster-purchase{fill:#2563eb;stroke:#fff;stroke-width:2}
+        .q-point-cluster-label{fill:#fff;font:700 9px Inter,sans-serif;text-anchor:middle;pointer-events:none}
+        .q-price-point{cursor:help}
+        .q-price-point:focus{outline:none;stroke:#0f172a;stroke-width:3}
+        .q-point-cluster{cursor:help}
+        .q-point-cluster:focus{outline:none}
+        .q-point-cluster:focus circle{stroke:#0f172a;stroke-width:3}
+        .q-chart-tooltip{position:fixed;z-index:2147483000;min-width:145px;max-width:min(560px,calc(100vw - 24px));padding:10px 12px;border:1px solid #334155;border-radius:8px;background:#0f172a;color:#fff;box-shadow:0 8px 24px #0f172a33;pointer-events:auto;font-size:12px}
+        .q-chart-tooltip.is-wide{width:min(560px,calc(100vw - 24px))}
+        .q-chart-tooltip[hidden]{display:none!important}
+        .q-chart-tooltip>strong{display:block;margin-bottom:7px}
+        .q-chart-tooltip-items{display:flex;flex-direction:column;gap:6px}
+        .q-chart-tooltip.is-wide .q-chart-tooltip-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px}
+        .q-chart-tooltip-item{display:grid;grid-template-columns:minmax(74px,max-content) minmax(0,1fr);gap:7px;align-items:baseline;font-variant-numeric:tabular-nums}
+        .q-chart-tooltip-item strong{font-size:11px;white-space:nowrap}
+        .q-chart-tooltip-item span{color:#cbd5e1;font-size:10.5px;white-space:nowrap}
+        @media(max-width:480px){.q-chart-tooltip.is-wide .q-chart-tooltip-items{grid-template-columns:1fr}.q-chart-tooltip-item{grid-template-columns:minmax(72px,max-content) minmax(0,1fr)}}
+        .q-empty{display:flex;min-height:310px;align-items:center;justify-content:center;padding:28px;text-align:center;color:#64748b}
+        .q-empty strong{display:block;margin-bottom:5px;color:#334155;font-size:14px}
+        .q-summary{margin:0 16px 14px;padding:10px 12px;border-radius:7px;background:#f8fafc;color:#64748b;font-size:12px}
+        .q-table-wrap{overflow:auto;border-top:1px solid #edf0f4}
+        .q-table{width:100%;border-collapse:collapse;min-width:620px}
+        .q-table th,.q-table td{padding:10px 14px;border-bottom:1px solid #edf0f4;text-align:left;font-size:12px;vertical-align:top}
+        .q-table th{background:#fbfcfe;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+        .q-table td.money{text-align:right;font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+        .q-events-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-top:1px solid #edf0f4;color:#64748b;font-size:11.5px}
+        .q-events-pages{display:flex;align-items:center;gap:6px}
+        .q-page-button{width:30px;height:30px;border:1px solid #dbe2ea;border-radius:7px;background:#fff;color:#334155;font-size:15px;cursor:pointer}
+        .q-page-button:hover:not(:disabled){background:#f8fafc;border-color:#94a3b8}
+        .q-page-button:disabled{opacity:.45;cursor:not-allowed}
+        .q-page-number{min-width:52px;text-align:center;font-variant-numeric:tabular-nums}
+        .q-type{display:inline-flex;align-items:center;gap:6px;font-weight:650;white-space:nowrap}
+        .q-type:before{content:"";width:8px;height:8px;border-radius:50%;background:#2563eb}
+        .q-type.sale:before{border-radius:1px;background:#059669}
+        .q-toast{position:fixed;z-index:2147483647;right:22px;bottom:22px;max-width:min(440px,calc(100vw - 44px));padding:12px 16px;border-radius:8px;background:#0f172a;color:#fff;box-shadow:0 8px 30px #0f172a33;font-size:13px;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .15s,transform .15s}
+        .q-toast.show{opacity:1;transform:translateY(0)}
+        @media(max-width:760px){.q-card-head{align-items:flex-start;flex-direction:column}.q-chart-wrap{min-height:250px;padding:8px}.q-empty{min-height:230px}.q-legend{gap:10px}.q-product-head{gap:7px;padding:9px}.q-product-toggle{grid-template-columns:14px minmax(0,1fr) auto;gap:7px}.q-product-photo{width:38px;height:38px}.q-product-items{padding:2px 8px 9px}.q-sku-choice{grid-template-columns:30px minmax(0,1fr) auto;gap:7px;padding:7px}.q-sku-photo{width:30px;height:30px}.q-history-head{grid-template-columns:44px minmax(0,1fr);grid-template-rows:44px auto auto;column-gap:12px;align-items:center}.q-history-heading{grid-column:2;grid-row:1}.q-history-subtitle{grid-column:2;grid-row:2}.q-legend{grid-column:2;grid-row:3;flex-wrap:wrap}.q-result-count{font-size:11px}.q-events-footer{align-items:flex-start;flex-direction:column}.q-custom-range .q-field{flex:1 1 140px}}
+        @media(prefers-reduced-motion:reduce){.q-btn,.q-toast{transition:none}}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{admin/fragments/admin-centre-shell :: layout(~{::quotePageContent}, 'lich-su-bao-gia')}">
+    <th:block th:fragment="quotePageContent">
+        <section class="quote-page">
+            <section class="q-card" aria-labelledby="workspaceTitle">
+                <div class="q-card-head"><strong id="workspaceTitle">Chọn nhà cung cấp</strong></div>
+                <div class="q-card-body">
+                    <div class="q-field">
+                        <label for="supplierSelect">Nhà cung cấp</label>
+                        <select id="supplierSelect">
+                            <option value="">-- Chọn nhà cung cấp --</option>
+                            <option th:each="ncc : ${listNcc}" th:value="${ncc.id}" th:text="${ncc.tenNcc + ' (' + ncc.maNcc + ')'}">Nhà cung cấp</option>
+                        </select>
+                    </div>
+
+                    <div id="quotePicker" class="q-picker" hidden>
+                        <div class="q-browser-toolbar">
+                            <label class="q-field q-search">
+                                <span class="q-sr-only">Tìm sản phẩm hoặc SKU</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                                <input id="skuSearch" type="search" placeholder="Tìm sản phẩm, mã hàng hoặc SKU…" aria-label="Tìm sản phẩm hoặc SKU" oninput="veDanhSachSkuBaoGia()">
+                            </label>
+                            <span id="skuResultCount" class="q-result-count" aria-live="polite">Đang tải SKU…</span>
+                        </div>
+                        <div id="productList" class="q-product-list" aria-label="Sản phẩm và SKU" aria-live="polite"></div>
+                        <p class="q-hint">Mở một sản phẩm, sau đó chọn SKU để xem lịch sử báo giá và giá niêm yết của SKU đó.</p>
+                    </div>
+
+                    <section id="quoteHistory" class="q-history" aria-label="Lịch sử báo giá SKU" hidden>
+                        <div class="q-history-head">
+                            <button type="button" class="q-back-button" onclick="quayLaiChonSku()" aria-label="Quay lại danh sách sản phẩm và SKU">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"></path><path d="M9 12h12"></path></svg>
+                            </button>
+                            <strong class="q-history-heading">Lịch sử báo giá</strong>
+                            <span id="historySkuLabel" class="q-history-subtitle"></span>
+                            <div class="q-legend" aria-label="Chú giải biểu đồ">
+                                <span class="q-legend-item"><span class="q-legend-line purchase"></span><span class="q-legend-mark"></span>Giá mua / báo giá</span>
+                                <span class="q-legend-item"><span class="q-legend-line"></span><span class="q-legend-square"></span>Giá bán niêm yết</span>
+                            </div>
+                        </div>
+                        <div class="q-history-body">
+                            <div class="q-range-toolbar" role="group" aria-label="Khoảng thời gian biểu đồ">
+                                <strong>Khoảng thời gian</strong>
+                                <button type="button" class="q-range-button" data-range="3m" aria-pressed="false">3 tháng</button>
+                                <button type="button" class="q-range-button" data-range="6m" aria-pressed="false">6 tháng</button>
+                                <button type="button" class="q-range-button" data-range="1y" aria-pressed="true">1 năm</button>
+                                <button type="button" class="q-range-button" data-range="all" aria-pressed="false">Tất cả</button>
+                                <button type="button" id="customRangeToggle" class="q-range-button" data-range="custom" aria-pressed="false" aria-expanded="false" aria-controls="customRangePanel">Tùy chỉnh</button>
+                            </div>
+                            <div id="customRangePanel" class="q-custom-range" hidden>
+                                <label class="q-field"><span>Từ ngày</span><input id="rangeFrom" type="date"></label>
+                                <label class="q-field"><span>Đến ngày</span><input id="rangeTo" type="date"></label>
+                                <button type="button" id="applyCustomRange" class="q-btn q-btn-primary">Áp dụng</button>
+                            </div>
+                            <div id="priceSpreadNotice" class="q-range-notice" role="status" hidden></div>
+                            <div id="chartEmpty" class="q-empty"><div><strong>Chưa có dữ liệu giá</strong>Lưu giá thỏa thuận trong bước thương lượng của đơn mua để ghi nhận giá mua. Giá bán có mốc riêng từ lịch sử niêm yết.</div></div>
+                            <div id="chartContainer" class="q-chart-wrap" hidden>
+                                <svg id="priceChart" viewBox="0 0 1000 360" role="img" aria-label="Biểu đồ giá mua và giá bán theo thời gian"></svg>
+                            </div>
+                            <p id="chartSummary" class="q-summary" hidden></p>
+                            <div class="q-table-wrap" id="eventsTableWrap" hidden>
+                                <table class="q-table">
+                                    <thead><tr><th>Thời điểm</th><th>Loại dữ liệu</th><th style="text-align:right">Giá</th><th>Ghi chú / sự kiện</th></tr></thead>
+                                    <tbody id="eventsBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="eventsFooter" class="q-events-footer" hidden>
+                                <span id="eventCount"></span>
+                                <div class="q-events-pages">
+                                    <button type="button" id="eventPrev" class="q-page-button" aria-label="Trang trước" onclick="doiTrangBaoGia(-1)">&lsaquo;</button>
+                                    <span id="eventPage" class="q-page-number">1 / 1</span>
+                                    <button type="button" id="eventNext" class="q-page-button" aria-label="Trang sau" onclick="doiTrangBaoGia(1)">&rsaquo;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </section>
+    </th:block>
+</th:block>
+
+<div id="quoteToast" class="q-toast" role="status" aria-live="polite"></div>
+<div id="chartTooltip" class="q-chart-tooltip" role="tooltip" hidden><strong id="chartTooltipPrice"></strong><div id="chartTooltipItems" class="q-chart-tooltip-items"></div></div>
+
+<script>
+    const supplierSelect = document.getElementById('supplierSelect');
+    const money = value => Number(value).toLocaleString('vi-VN', {maximumFractionDigits: 2}) + ' đ';
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let latestChartRequest = 0;
+    let supplierLoadRequest = 0;
+    let skuOptions = [];
+    let expandedProducts = new Set();
+    let selectedSku = null;
+    let chartHistory = null;
+    let chartRangeMode = '1y';
+    let customChartRange = null;
+    let chartEvents = [];
+    let chartEventPage = 1;
+    const chartEventPageSize = 10;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let toastTimer;
+
+    async function api(url, options = {}) {
+        const response = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...(options.body ? {'Content-Type':'application/json'} : {}) } });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.thongBao || data.message || 'Không thể thực hiện yêu cầu');
+        return data;
+    }
+
+    const chartTooltip = document.getElementById('chartTooltip');
+    function showChartTooltip(point, x, y) {
+        let items;
+        try {
+            items = point.dataset.tipItems ? JSON.parse(point.dataset.tipItems) : null;
+        } catch (_) {
+            items = null;
+        }
+        const title = document.getElementById('chartTooltipPrice');
+        const details = document.getElementById('chartTooltipItems');
+        if (!items?.length) items = [{price:point.dataset.tipPrice, date:point.dataset.tipDate}];
+        title.textContent = items.length > 1 ? `${items.length} mốc ${point.dataset.tipSeries || 'giá'}` : items[0].price;
+        chartTooltip.classList.toggle('is-wide', items.length > 8);
+        details.replaceChildren(...items.map(item => {
+            const row = document.createElement('div');
+            const price = document.createElement('strong');
+            const date = document.createElement('span');
+            row.className = 'q-chart-tooltip-item';
+            price.textContent = item.price;
+            date.textContent = item.date;
+            row.append(price, date);
+            return row;
+        }));
+        chartTooltip.hidden = false;
+        const rect = chartTooltip.getBoundingClientRect();
+        const left = x + rect.width + 20 > innerWidth ? x - rect.width - 12 : x + 12;
+        const top = y + rect.height + 20 > innerHeight ? y - rect.height - 12 : y + 12;
+        chartTooltip.style.left = `${Math.max(8, Math.min(left, innerWidth - rect.width - 8))}px`;
+        chartTooltip.style.top = `${Math.max(8, Math.min(top, innerHeight - rect.height - 8))}px`;
+    }
+    function hideChartTooltip() { chartTooltip.hidden = true; }
+    chartTooltip.addEventListener('pointerleave', hideChartTooltip);
+    const chartPointFromEvent = event => event.target.closest('[data-tip-date],[data-tip-items]');
+    document.getElementById('priceChart').addEventListener('pointerover', event => {
+        const point = chartPointFromEvent(event);
+        if (point) showChartTooltip(point, event.clientX, event.clientY);
+    });
+    document.getElementById('priceChart').addEventListener('pointermove', event => {
+        const point = chartPointFromEvent(event);
+        if (point && !chartTooltip.hidden) showChartTooltip(point, event.clientX, event.clientY);
+    });
+    document.getElementById('priceChart').addEventListener('pointerout', event => {
+        const targetIsTooltip = event.relatedTarget === chartTooltip || chartTooltip.contains(event.relatedTarget);
+        if (chartPointFromEvent(event) && !targetIsTooltip && !event.relatedTarget?.closest?.('[data-tip-date],[data-tip-items]')) hideChartTooltip();
+    });
+    document.getElementById('priceChart').addEventListener('focusin', event => {
+        const point = chartPointFromEvent(event);
+        if (!point) return;
+        const rect = point.getBoundingClientRect();
+        showChartTooltip(point, rect.left + rect.width / 2, rect.top + rect.height / 2);
+    });
+    document.getElementById('priceChart').addEventListener('focusout', event => {
+        if (chartPointFromEvent(event)) hideChartTooltip();
+    });
+
+    function resetChart(message = 'Đang tải lịch sử báo giá và giá niêm yết…') {
+        latestChartRequest++;
+        chartHistory = null;
+        chartEvents = [];
+        document.getElementById('chartContainer').hidden = true;
+        document.getElementById('chartSummary').hidden = true;
+        document.getElementById('eventsTableWrap').hidden = true;
+        document.getElementById('eventsFooter').hidden = true;
+        document.getElementById('priceSpreadNotice').hidden = true;
+        document.getElementById('chartEmpty').hidden = false;
+        document.getElementById('chartEmpty').innerHTML = `<div><strong>Đang tải dữ liệu…</strong>${escapeHtml(message)}</div>`;
+    }
+
+    supplierSelect.addEventListener('change', async () => {
+        const supplierId = supplierSelect.value;
+        const requestId = ++supplierLoadRequest;
+        selectedSku = null;
+        skuOptions = [];
+        expandedProducts.clear();
+        document.getElementById('skuSearch').value = '';
+        document.getElementById('quoteHistory').hidden = true;
+        document.getElementById('quotePicker').hidden = !supplierId;
+        document.getElementById('productList').innerHTML = supplierId
+            ? '<div class="q-picker-empty">Đang tải danh sách sản phẩm và SKU…</div>' : '';
+        document.getElementById('skuResultCount').textContent = supplierId ? 'Đang tải SKU…' : '';
+        resetChart();
+        if (!supplierId) return;
+        try {
+            const options = await api(`/api/inbound/lich-su-bao-gia/nha-cung-cap/${supplierId}/sku-options`);
+            if (requestId !== supplierLoadRequest || supplierId !== supplierSelect.value) return;
+            skuOptions = options;
+            const firstProduct = gomNhomSanPhamSku(options)[0];
+            if (firstProduct) expandedProducts.add(firstProduct.key);
+            veDanhSachSkuBaoGia();
+        } catch (error) {
+            if (requestId !== supplierLoadRequest || supplierId !== supplierSelect.value) return;
+            document.getElementById('skuResultCount').textContent = 'Không tải được';
+            document.getElementById('productList').innerHTML = `<div class="q-picker-empty">${escapeHtml(error.message)}</div>`;
+            showToast(error.message);
+        }
+    });
+
+    function gomNhomSanPhamSku(options) {
+        const groups = new Map();
+        options.forEach(sku => {
+            const key = String(sku.sanPhamId ?? sku.maSanPham ?? sku.maSku);
+            if (!groups.has(key)) groups.set(key, {
+                key,
+                tenSanPham:sku.tenSanPham || 'Sản phẩm',
+                maSanPham:sku.maSanPham || '',
+                anhSanPhamUrl:sku.anhSanPhamUrl || '',
+                skus:[]
+            });
+            groups.get(key).skus.push(sku);
+        });
+        return [...groups.values()].sort((a,b) => a.tenSanPham.localeCompare(b.tenSanPham, 'vi') || a.maSanPham.localeCompare(b.maSanPham, 'vi'));
+    }
+
+    function taoAnhNho(url, alt, className) {
+        const source = String(url || '').trim();
+        const fallback = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg>';
+        return `<span class="${className}">${source ? `<img src="${escapeHtml(source)}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false">` : ''}<span class="q-photo-fallback" ${source ? 'hidden' : ''} role="img" aria-label="Chưa có ảnh cho ${escapeHtml(alt)}">${fallback}</span></span>`;
+    }
+
+    function veDanhSachSkuBaoGia() {
+        const query = document.getElementById('skuSearch').value.trim().toLocaleLowerCase('vi');
+        const container = document.getElementById('productList');
+        const matches = skuOptions.filter(sku => {
+            const attributes = (sku.thuocTinh || []).map(item => `${item.tenThuocTinh} ${item.giaTri}`).join(' ');
+            return !query || `${sku.tenSanPham} ${sku.maSanPham} ${sku.maSku} ${attributes}`.toLocaleLowerCase('vi').includes(query);
+        });
+        const groups = gomNhomSanPhamSku(matches);
+        document.getElementById('skuResultCount').textContent = `${matches.length.toLocaleString('vi-VN')} SKU · ${groups.length.toLocaleString('vi-VN')} sản phẩm`;
+        if (!groups.length) {
+            container.innerHTML = `<div class="q-picker-empty">${skuOptions.length ? 'Không tìm thấy sản phẩm hoặc SKU phù hợp.' : 'Nhà cung cấp này chưa có SKU được phân công hoặc báo giá.'}</div>`;
+            return;
+        }
+        container.innerHTML = groups.map(group => {
+            const expanded = Boolean(query) || expandedProducts.has(group.key);
+            const itemsId = `quoteSkuItems-${escapeHtml(group.key)}`;
+            const skuRows = group.skus.map(sku => {
+                const attributes = (sku.thuocTinh || []).filter(item => item.tenThuocTinh)
+                    .map(item => `<span class="q-sku-attribute">${escapeHtml(item.tenThuocTinh)}: ${escapeHtml(item.giaTri && item.giaTri !== '—' ? item.giaTri : '—')}</span>`)
+                    .join('') || '<span class="q-sku-attribute">SKU cơ bản</span>';
+                return `<button type="button" class="q-sku-choice" data-bien-the-id="${Number(sku.bienTheId)}" aria-label="Xem lịch sử báo giá SKU ${escapeHtml(sku.maSku)}">
+                    ${taoAnhNho(sku.anhSkuUrl || sku.anhSanPhamUrl, `SKU ${sku.maSku}`, 'q-sku-photo')}
+                    <span class="q-sku-meta"><span class="q-sku-code">${escapeHtml(sku.maSku)}</span><span class="q-sku-attributes">${attributes}</span></span>
+                    <span class="q-sku-status ${sku.kichHoat ? '' : 'paused'}">${sku.kichHoat ? 'Đang kinh doanh' : 'Tạm ngưng'}</span>
+                </button>`;
+            }).join('');
+            return `<section class="q-product-group">
+                <div class="q-product-head">
+                    ${taoAnhNho(group.anhSanPhamUrl, group.tenSanPham, 'q-product-photo')}
+                    <button type="button" class="q-product-toggle" data-product-key="${escapeHtml(group.key)}" aria-expanded="${expanded}" aria-controls="${itemsId}">
+                        <svg class="q-product-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                        <span class="q-product-meta"><span class="q-product-name">${escapeHtml(group.tenSanPham)}</span><span class="q-product-code">${escapeHtml(group.maSanPham)}</span></span>
+                        <span class="q-product-count">${group.skus.length} SKU</span>
+                    </button>
+                </div>
+                <div id="${itemsId}" class="q-product-items" ${expanded ? '' : 'hidden'}>${skuRows}</div>
+            </section>`;
+        }).join('');
+    }
+
+    document.getElementById('productList').addEventListener('click', event => {
+        const skuButton = event.target.closest('[data-bien-the-id]');
+        if (skuButton) {
+            void chonSkuTuDanhSach(skuButton.dataset.bienTheId);
+            return;
+        }
+        const productButton = event.target.closest('[data-product-key]');
+        if (!productButton) return;
+        const key = productButton.dataset.productKey;
+        if (expandedProducts.has(key)) expandedProducts.delete(key); else expandedProducts.add(key);
+        veDanhSachSkuBaoGia();
+    });
+
+    async function chonSkuTuDanhSach(bienTheId) {
+        const option = skuOptions.find(item => String(item.bienTheId) === String(bienTheId));
+        if (!option) return;
+        selectedSku = option;
+        chartHistory = null;
+        document.getElementById('quotePicker').hidden = true;
+        document.getElementById('quoteHistory').hidden = false;
+        document.getElementById('historySkuLabel').textContent = `${supplierSelect.options[supplierSelect.selectedIndex].text} · ${option.tenSanPham} (${option.maSanPham}) · ${option.maSku}`;
+        await taiBieuDo();
+    }
+
+    function quayLaiChonSku() {
+        selectedSku = null;
+        document.getElementById('quoteHistory').hidden = true;
+        document.getElementById('quotePicker').hidden = false;
+        document.getElementById('skuSearch').focus();
+    }
+
+    async function taiBieuDo() {
+        const supplierId = supplierSelect.value;
+        const skuId = selectedSku?.bienTheId;
+        if (!supplierId || !skuId) {
+            resetChart();
+            return;
+        }
+        const requestId = ++latestChartRequest;
+        chartHistory = null;
+        document.getElementById('chartContainer').hidden = true;
+        document.getElementById('chartSummary').hidden = true;
+        document.getElementById('eventsTableWrap').hidden = true;
+        document.getElementById('eventsFooter').hidden = true;
+        document.getElementById('priceSpreadNotice').hidden = true;
+        document.getElementById('chartEmpty').hidden = false;
+        document.getElementById('chartEmpty').innerHTML = '<div><strong>Đang tải dữ liệu…</strong>Đang lấy lịch sử báo giá và giá niêm yết.</div>';
+        try {
+            const data = await api(`/api/inbound/lich-su-bao-gia/nha-cung-cap/${supplierId}/sku/${skuId}`);
+            if (requestId !== latestChartRequest || String(selectedSku?.bienTheId) !== String(skuId)) return;
+            renderChart(data);
+        } catch (error) {
+            if (requestId !== latestChartRequest) return;
+            resetChart(error.message);
+        }
+    }
+
+    function toDate(value) {
+        if (Array.isArray(value)) return new Date(value[0], value[1] - 1, value[2], value[3] || 0, value[4] || 0, value[5] || 0, Math.floor((value[6] || 0) / 1000000));
+        return new Date(value);
+    }
+
+    function localDateInput(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function truThang(date, amount) {
+        const result = new Date(date);
+        const day = result.getDate();
+        result.setDate(1);
+        result.setMonth(result.getMonth() - amount);
+        result.setDate(Math.min(day, new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate()));
+        result.setHours(0, 0, 0, 0);
+        return result;
+    }
+
+    function layKhoangThoiGian() {
+        const now = Date.now();
+        const source = chartHistory || {giaMua:[], giaBan:[]};
+        const times = [...(source.giaMua || []), ...(source.giaBan || [])]
+            .map(item => toDate(item.thoiDiem).getTime()).filter(Number.isFinite);
+        const end = times.length ? Math.max(...times) : now;
+        if (chartRangeMode === 'custom' && customChartRange) {
+            return {...customChartRange, label:`${new Date(customChartRange.start).toLocaleDateString('vi-VN')} – ${new Date(customChartRange.end).toLocaleDateString('vi-VN')}`};
+        }
+        if (chartRangeMode === 'all') {
+            const start = times.length ? new Date(Math.min(...times)) : new Date(end - DAY_MS * 365);
+            start.setHours(0, 0, 0, 0);
+            return {start:start.getTime(), end, label:'Toàn bộ lịch sử'};
+        }
+        const months = chartRangeMode === '3m' ? 3 : chartRangeMode === '6m' ? 6 : 12;
+        const start = chartRangeMode === '1y' ? truThang(new Date(end), 11) : truThang(new Date(end), months);
+        return {start:start.getTime(), end, label:`${months} tháng gần nhất`};
+    }
+
+    function capNhatNutKhoangThoiGian() {
+        document.querySelectorAll('.q-range-button[data-range]').forEach(button => {
+            const active = button.dataset.range === chartRangeMode;
+            button.setAttribute('aria-pressed', String(active));
+        });
+    }
+
+    function chonKhoangThoiGian(range) {
+        if (range === 'custom') { moKhoangTuyChinh(); return; }
+        if (!['3m','6m','1y','all'].includes(range)) return;
+        chartRangeMode = range;
+        customChartRange = null;
+        chartEventPage = 1;
+        document.getElementById('customRangePanel').hidden = true;
+        document.getElementById('customRangeToggle').setAttribute('aria-expanded', 'false');
+        capNhatNutKhoangThoiGian();
+        veBieuDoTheoKhoang();
+    }
+
+    document.querySelector('.q-range-toolbar').addEventListener('click', event => {
+        const button = event.target.closest('.q-range-button[data-range]');
+        if (button) chonKhoangThoiGian(button.dataset.range);
+    });
+    document.getElementById('applyCustomRange').addEventListener('click', apDungKhoangTuyChinh);
+
+    function moKhoangTuyChinh() {
+        const panel = document.getElementById('customRangePanel');
+        const button = document.getElementById('customRangeToggle');
+        if (!panel.hidden) {
+            panel.hidden = true;
+            button.setAttribute('aria-expanded', 'false');
+            return;
+        }
+        const range = layKhoangThoiGian();
+        const from = document.getElementById('rangeFrom');
+        const to = document.getElementById('rangeTo');
+        from.value = customChartRange ? localDateInput(new Date(customChartRange.start)) : localDateInput(new Date(range.start));
+        to.value = customChartRange ? localDateInput(new Date(customChartRange.end)) : localDateInput(new Date());
+        to.max = localDateInput(new Date());
+        panel.hidden = false;
+        button.setAttribute('aria-expanded', 'true');
+        from.focus();
+    }
+
+    function apDungKhoangTuyChinh() {
+        const fromValue = document.getElementById('rangeFrom').value;
+        const toValue = document.getElementById('rangeTo').value;
+        const today = localDateInput(new Date());
+        if (!fromValue || !toValue || fromValue > toValue || toValue > today) {
+            showToast('Chọn khoảng ngày hợp lệ, ngày kết thúc không được ở tương lai.');
+            return;
+        }
+        const [fy, fm, fd] = fromValue.split('-').map(Number);
+        const [ty, tm, td] = toValue.split('-').map(Number);
+        const from = new Date(fy, fm - 1, fd);
+        const to = new Date(ty, tm - 1, td);
+        const endOfToday = toValue === today;
+        to.setHours(endOfToday ? new Date().getHours() : 23, endOfToday ? new Date().getMinutes() : 59,
+            endOfToday ? new Date().getSeconds() : 59, endOfToday ? new Date().getMilliseconds() : 999);
+        customChartRange = {start:from.getTime(), end:to.getTime()};
+        chartRangeMode = 'custom';
+        chartEventPage = 1;
+        document.getElementById('customRangePanel').hidden = true;
+        document.getElementById('customRangeToggle').setAttribute('aria-expanded', 'false');
+        capNhatNutKhoangThoiGian();
+        veBieuDoTheoKhoang();
+    }
+
+    function renderChart(data) {
+        chartHistory = data;
+        chartEventPage = 1;
+        capNhatNutKhoangThoiGian();
+        veBieuDoTheoKhoang();
+    }
+
+    function taoMocTrucThoiGian(start, end) {
+        if (chartRangeMode === '1y') {
+            const lastDate = new Date(end);
+            return Array.from({length:12}, (_, index) => index === 11
+                ? end
+                : truThang(lastDate, 11 - index).getTime());
+        }
+        const span = end - start;
+        return Array.from({length:12}, (_, index) => start + span * index / 11);
+    }
+
+    function gomCumDiem(points, x, y, minimumGapX, minimumGapY) {
+        const clusters = [];
+        points.forEach(point => {
+            const pointX = x(point.date.getTime());
+            const pointY = y(Number(point.gia));
+            const current = clusters[clusters.length - 1];
+            const centerX = current ? current.points.reduce((sum, item) => sum + x(item.date.getTime()), 0) / current.points.length : 0;
+            const centerY = current ? current.points.reduce((sum, item) => sum + y(Number(item.gia)), 0) / current.points.length : 0;
+            if (current && Math.abs(pointX - centerX) < minimumGapX && Math.abs(pointY - centerY) < minimumGapY) {
+                current.points.push(point);
+            } else {
+                clusters.push({points:[point]});
+            }
+        });
+        return clusters;
+    }
+
+    function veMarkerGia(points, x, y, series, type) {
+        const svg = document.getElementById('priceChart');
+        const svgWidth = svg.clientWidth || 1000;
+        const svgHeight = svg.clientHeight || 360;
+        const minimumGapX = 14 * 1000 / svgWidth;
+        const minimumGapY = 16 * 360 / svgHeight;
+        const clusters = gomCumDiem(points, x, y, minimumGapX, minimumGapY);
+        const isSale = type === 'sale';
+        return clusters.map(cluster => {
+            const items = cluster.points.map(point => ({price:money(point.gia), date:point.date.toLocaleString('vi-VN')}));
+            if (cluster.points.length === 1) {
+                const point = cluster.points[0];
+                const px = x(point.date.getTime()), py = y(Number(point.gia));
+                const attrs = `tabindex="0" role="img" aria-label="${series} ${escapeHtml(items[0].price)} lúc ${escapeHtml(items[0].date)}" data-tip-price="${escapeHtml(items[0].price)}" data-tip-date="${escapeHtml(items[0].date)}"`;
+                return isSale
+                    ? `<rect class="q-sale-point q-price-point" x="${px-4}" y="${py-4}" width="8" height="8" ${attrs}/>`
+                    : `<circle class="q-purchase-point q-price-point" cx="${px}" cy="${py}" r="5" ${attrs}/>`;
+            }
+            const px = cluster.points.reduce((sum, point) => sum + x(point.date.getTime()), 0) / cluster.points.length;
+            const py = cluster.points.reduce((sum, point) => sum + y(Number(point.gia)), 0) / cluster.points.length;
+            const label = cluster.points.length > 99 ? '99+' : String(cluster.points.length);
+            const attrs = `class="q-point-cluster" tabindex="0" role="img" aria-label="${cluster.points.length} mốc ${series} trùng sát nhau; di chuột hoặc focus để xem chi tiết" data-tip-series="${series}" data-tip-items="${escapeHtml(JSON.stringify(items))}"`;
+            return `<g ${attrs}>${isSale
+                ? `<rect class="q-point-cluster-sale" x="${px-12}" y="${py-9}" width="24" height="18" rx="6"/>`
+                : `<circle class="q-point-cluster-purchase" cx="${px}" cy="${py}" r="10"/>`}
+                <text class="q-point-cluster-label" x="${px}" y="${py+3}">${label}</text></g>`;
+        }).join('');
+    }
+
+    function veBieuDoTheoKhoang() {
+        if (!chartHistory) return;
+        const purchaseAll = (chartHistory.giaMua || []).map(item => ({...item, date:toDate(item.thoiDiem), type:'purchase'}))
+            .filter(item => !Number.isNaN(item.date.getTime())).sort((a,b) => a.date - b.date || a.id - b.id);
+        const saleAll = (chartHistory.giaBan || []).map(item => ({...item, date:toDate(item.thoiDiem), type:'sale'}))
+            .filter(item => !Number.isNaN(item.date.getTime())).sort((a,b) => a.date - b.date || a.id - b.id);
+        const range = layKhoangThoiGian();
+        let minTime = range.start;
+        const maxTime = Math.max(range.end, minTime + 1);
+        if (maxTime - minTime < 60 * 60 * 1000) minTime = maxTime - DAY_MS;
+        const purchase = purchaseAll.filter(point => point.date.getTime() >= minTime && point.date.getTime() <= maxTime);
+        const sale = saleAll.filter(point => point.date.getTime() >= minTime && point.date.getTime() <= maxTime);
+        const saleBefore = saleAll.filter(point => point.date.getTime() < minTime).at(-1);
+        const salePath = [...(saleBefore ? [{...saleBefore, date:new Date(minTime), rangeAnchor:true}] : []), ...sale];
+        const chartPoints = [...purchase, ...salePath];
+        const svg = document.getElementById('priceChart');
+        if (!chartPoints.length) {
+            document.getElementById('chartContainer').hidden = true;
+            document.getElementById('chartEmpty').hidden = false;
+            document.getElementById('chartEmpty').innerHTML = `<div><strong>Không có dữ liệu trong khoảng này</strong>Thử chọn khoảng dài hơn hoặc “Tất cả”.</div>`;
+            document.getElementById('chartSummary').hidden = true;
+            document.getElementById('eventsTableWrap').hidden = true;
+            document.getElementById('eventsFooter').hidden = true;
+            document.getElementById('priceSpreadNotice').hidden = true;
+            chartEvents = [];
+            return;
+        }
+
+        // shortcut: render raw SVG events for histories below 1,000 points; use monthly downsampling/Canvas if that ceiling is exceeded.
+        const width = 1000, height = 360;
+        const plot = {left:82, right:26, top:22, bottom:52};
+        const plotWidth = width - plot.left - plot.right;
+        const plotHeight = height - plot.top - plot.bottom;
+        const tickTimes = taoMocTrucThoiGian(minTime, maxTime);
+        const domainStart = tickTimes[0];
+        const domainEnd = Math.max(tickTimes[tickTimes.length - 1], domainStart + 1);
+        const prices = chartPoints.map(point => Number(point.gia)).filter(Number.isFinite);
+        let minPrice = Math.min(...prices), maxPrice = Math.max(...prices);
+        const padding = maxPrice === minPrice ? Math.max(Math.abs(maxPrice) * .1, 1) : (maxPrice - minPrice) * .12;
+        minPrice = Math.max(0, minPrice - padding);
+        maxPrice += padding;
+        if (maxPrice === minPrice) maxPrice = minPrice + 1;
+        const x = time => plot.left + (time - domainStart) / (domainEnd - domainStart) * plotWidth;
+        const y = price => plot.top + (maxPrice - price) / (maxPrice - minPrice) * plotHeight;
+        const compactMoney = value => Number(value).toLocaleString('vi-VN', {maximumFractionDigits:0});
+        const rangeStartDate = new Date(domainStart), rangeEndDate = new Date(domainEnd);
+        const calendarMonthSpan = (rangeEndDate.getFullYear() - rangeStartDate.getFullYear()) * 12
+            + rangeEndDate.getMonth() - rangeStartDate.getMonth()
+            - (rangeEndDate.getDate() < rangeStartDate.getDate() ? 1 : 0);
+        const showMonthYear = chartRangeMode === '1y' || calendarMonthSpan > 12;
+        const formatAxisDate = time => {
+            const date = new Date(time);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            return showMonthYear ? `${month}/${year}` : `${String(date.getDate()).padStart(2, '0')}/${month}/${year}`;
+        };
+        const dateRangeLabel = `${new Date(minTime).toLocaleDateString('vi-VN')} – ${new Date(maxTime).toLocaleDateString('vi-VN')}`;
+        let markup = '';
+
+        for (let i = 0; i <= 4; i++) {
+            const price = minPrice + (maxPrice - minPrice) * i / 4;
+            const yPos = y(price);
+            markup += `<line class="q-chart-grid" x1="${plot.left}" y1="${yPos}" x2="${width - plot.right}" y2="${yPos}"/>`;
+            markup += `<text class="q-chart-tick" x="${plot.left - 10}" y="${yPos + 4}" text-anchor="end">${compactMoney(price)}</text>`;
+        }
+        markup += `<line class="q-chart-axis" x1="${plot.left}" y1="${plot.top}" x2="${plot.left}" y2="${height - plot.bottom}"/>`;
+        markup += `<line class="q-chart-axis" x1="${plot.left}" y1="${height - plot.bottom}" x2="${width - plot.right}" y2="${height - plot.bottom}"/>`;
+        tickTimes.forEach(time => {
+            const tickX = x(time);
+            markup += `<line class="q-chart-x-tick" x1="${tickX}" y1="${height - plot.bottom}" x2="${tickX}" y2="${height - plot.bottom + 5}"/>`;
+            markup += `<text class="q-chart-tick" x="${tickX}" y="${height - 20}" text-anchor="middle">${formatAxisDate(time)}</text>`;
+        });
+
+        if (salePath.length) {
+            let path = `M ${x(salePath[0].date.getTime())} ${y(Number(salePath[0].gia))}`;
+            for (let i = 1; i < salePath.length; i++) path += ` L ${x(salePath[i].date.getTime())} ${y(Number(salePath[i].gia))}`;
+            const lastSale = salePath[salePath.length - 1];
+            if (lastSale.date.getTime() < maxTime) path += ` L ${x(maxTime)} ${y(Number(lastSale.gia))}`;
+            markup += `<path class="q-sale-path" d="${path}"/>`;
+            markup += veMarkerGia(sale, x, y, 'giá bán niêm yết', 'sale');
+        }
+        if (purchase.length) {
+            if (purchase.length > 1) {
+                const path = purchase.map((point,index) => `${index ? 'L' : 'M'} ${x(point.date.getTime())} ${y(Number(point.gia))}`).join(' ');
+                markup += `<path class="q-purchase-path" d="${path}"/>`;
+            }
+            markup += veMarkerGia(purchase, x, y, 'giá mua / báo giá', 'purchase');
+        }
+
+        svg.innerHTML = markup;
+        svg.setAttribute('aria-label', `Biểu đồ ${range.label}: ${purchase.length} mốc giá mua, ${sale.length} mốc giá bán niêm yết`);
+        document.getElementById('chartContainer').hidden = false;
+        document.getElementById('chartEmpty').hidden = true;
+        const spreadNotice = document.getElementById('priceSpreadNotice');
+        const positivePrices = prices.filter(price => price > 0);
+        const zeroExists = prices.some(price => price === 0);
+        const wideSpread = positivePrices.length > 1 && Math.max(...positivePrices) / Math.min(...positivePrices) >= 20;
+        spreadNotice.hidden = !(zeroExists || wideSpread);
+        if (!spreadNotice.hidden) spreadNotice.textContent = 'Khoảng này có mốc giá bằng 0 hoặc chênh lệch rất lớn. Biểu đồ vẫn giữ đủ giá trị, không cắt dữ liệu; di chuột vào điểm để kiểm tra tiền và thời điểm.';
+        const summary = document.getElementById('chartSummary');
+        const saleSummary = sale.length ? `${sale.length} mốc thay đổi giá bán` : (saleBefore ? 'giá bán giữ mức trước khoảng' : 'không có mốc giá bán');
+        summary.textContent = `${range.label} (${dateRangeLabel}) · ${purchase.length} lần báo giá · ${saleSummary}. Giá bán giữ mức gần nhất đến lần đổi tiếp theo hoặc hiện tại.`;
+        summary.hidden = false;
+
+        chartEvents = [...purchase, ...sale].sort((a,b) => a.date - b.date || (a.type === b.type ? a.id - b.id : a.type === 'purchase' ? -1 : 1));
+        chartEventPage = 1;
+        veBangSuKienBaoGia();
+    }
+
+    function veBangSuKienBaoGia() {
+        const table = document.getElementById('eventsTableWrap');
+        const footer = document.getElementById('eventsFooter');
+        const body = document.getElementById('eventsBody');
+        table.hidden = chartEvents.length === 0;
+        footer.hidden = chartEvents.length === 0;
+        if (!chartEvents.length) return;
+        const pageCount = Math.max(1, Math.ceil(chartEvents.length / chartEventPageSize));
+        chartEventPage = Math.max(1, Math.min(chartEventPage, pageCount));
+        const start = (chartEventPage - 1) * chartEventPageSize;
+        body.innerHTML = chartEvents.slice(start, start + chartEventPageSize).map(item => {
+            const type = item.type === 'purchase' ? '<span class="q-type">Giá mua / báo giá</span>' : '<span class="q-type sale">Giá bán niêm yết</span>';
+            const note = item.type === 'purchase' ? (item.ghiChu || 'Báo giá NCC') : (item.loaiSuKien === 'TEST_LICHSU' ? 'Dữ liệu kiểm thử' : item.loaiSuKien === 'MOC_BAN_DAU' ? 'Mốc theo dõi ban đầu' : item.loaiSuKien === 'KHOI_TAO' ? 'Tạo SKU' : 'Điều chỉnh giá niêm yết');
+            return `<tr><td>${escapeHtml(item.date.toLocaleString('vi-VN'))}</td><td>${type}</td><td class="money">${money(item.gia)}</td><td>${escapeHtml(note)}</td></tr>`;
+        }).join('');
+        document.getElementById('eventCount').textContent = `${chartEvents.length.toLocaleString('vi-VN')} mốc trong khoảng đang xem`;
+        document.getElementById('eventPage').textContent = `${chartEventPage} / ${pageCount}`;
+        document.getElementById('eventPrev').disabled = chartEventPage <= 1;
+        document.getElementById('eventNext').disabled = chartEventPage >= pageCount;
+    }
+
+    function doiTrangBaoGia(delta) {
+        chartEventPage += delta;
+        veBangSuKienBaoGia();
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('quoteToast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+</script>
+</body>
+</html>

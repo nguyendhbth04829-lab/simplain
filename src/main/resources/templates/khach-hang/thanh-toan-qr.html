@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quét mã QR thanh toán | Simplain Menswear</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -125,7 +122,14 @@
                         <span>Chuyển Tiếp Cổng <span th:text="${paymentInfo.tenPhuongThuc}">VNPay</span> Trực Tiếp</span>
                     </a>
 
-                    <!-- Hủy quay lại giỏ hàng -->
+                    <!-- Nút 2: Giả lập thanh toán thành công (Sandbox Dev Test) -->
+                    <button type="button" onclick="giaLapThanhToanThanhCong()"
+                            class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 transition cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Giả Lập Quét QR Thành Công (Sandbox Test)</span>
+                    </button>
+
+                    <!-- Nút 3: Hủy quay lại giỏ hàng -->
                     <a href="/gio-hang" class="block text-center text-xs text-slate-500 hover:text-slate-800 font-semibold pt-1 transition">
                         &larr; Hủy giao dịch &amp; Quay lại giỏ hàng
                     </a>
@@ -182,6 +186,28 @@
                 .catch(err => console.log('Polling check error:', err));
         }, 3000);
 
+        // 3. Giả lập thanh toán Sandbox tức thì
+        function giaLapThanhToanThanhCong() {
+            if (!confirm('Bạn có muốn giả lập thanh toán QR thành công qua cổng Sandbox không?')) {
+                return;
+            }
+
+            fetch('/thanh-toan/gia-lap-thanh-cong/' + maDonHang, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    window.location.href = data.redirectUrl || ('/thanh-toan/thanh-cong/' + maDonHang);
+                } else {
+                    alert('Lỗi: ' + (data ? data.message : 'Không thể giả lập'));
+                }
+            })
+            .catch(err => {
+                alert('Có lỗi xảy ra: ' + err);
+            });
+        }
         /*]]>*/
     </script>
 </body>

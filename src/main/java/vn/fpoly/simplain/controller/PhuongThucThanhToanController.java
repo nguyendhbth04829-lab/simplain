@@ -42,16 +42,15 @@ public class PhuongThucThanhToanController {
     @GetMapping({"", "/hien-thi"})
     public String hienThi(
             @RequestParam(name = "tuKhoa", required = false) String tuKhoa,
-            @RequestParam(name = "loaiCong", required = false) String loaiCong,
             @RequestParam(name = "laTrucTuyen", required = false) Boolean laTrucTuyen,
             @RequestParam(name = "kichHoat", required = false) Boolean kichHoat,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
             Model model) {
 
-        Pageable pageable = PageRequest.of(Math.max(0, page), size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(Math.max(0, page), size, Sort.by("id").ascending());
         Page<PhuongThucThanhToan> trangDuLieu = phuongThucService.layDanhSachPhanTrang(
-                tuKhoa, loaiCong, laTrucTuyen, kichHoat, pageable);
+                tuKhoa, laTrucTuyen, kichHoat, pageable);
 
         List<PhuongThucThanhToan> tatCa = phuongThucService.layTatCa();
         long soDangBat = tatCa.stream().filter(p -> Boolean.TRUE.equals(p.getKichHoat())).count();
@@ -63,7 +62,6 @@ public class PhuongThucThanhToanController {
         model.addAttribute("soDangTat", soDangTat);
 
         model.addAttribute("tuKhoa", tuKhoa);
-        model.addAttribute("loaiCong", loaiCong);
         model.addAttribute("laTrucTuyen", laTrucTuyen);
         model.addAttribute("kichHoat", kichHoat);
         model.addAttribute("currentPage", page);
@@ -119,10 +117,7 @@ public class PhuongThucThanhToanController {
             RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
-            String errorMsg = result.getFieldErrors().stream()
-                    .map(e -> e.getDefaultMessage())
-                    .collect(java.util.stream.Collectors.joining("; "));
-            redirectAttributes.addFlashAttribute("thongBaoLoi", "Dữ liệu cập nhật chưa đúng định dạng: " + errorMsg);
+            redirectAttributes.addFlashAttribute("thongBaoLoi", "Dữ liệu cập nhật chưa đúng định dạng!");
             return "redirect:/admin/phuong-thuc-thanh-toan/hien-thi";
         }
 
@@ -269,54 +264,14 @@ public class PhuongThucThanhToanController {
     }
 
     /**
-     * API JSON lấy chi tiết phục vụ Modal Chỉnh sửa / Xem cấu hình chuyên nghiệp (US18).
+     * API JSON lấy chi tiết phục vụ Modal Chỉnh sửa / Xem cấu hình (US18).
      */
     @GetMapping("/api/{id}")
     @ResponseBody
     public ResponseEntity<?> layChiTietApi(@PathVariable("id") Long id) {
         try {
             PhuongThucThanhToan pt = phuongThucService.layTheoId(id);
-            PhuongThucThanhToanRequest dto = phuongThucService.layDtoTheoId(id);
-
-            Map<String, Object> res = new HashMap<>();
-            res.put("id", pt.getId());
-            res.put("maPhuongThuc", pt.getMaPhuongThuc());
-            res.put("tenPhuongThuc", pt.getTenPhuongThuc());
-            res.put("loaiCong", pt.getLoaiCong() != null ? pt.getLoaiCong() : "KHAC");
-            res.put("laTrucTuyen", pt.getLaTrucTuyen());
-            res.put("kichHoat", pt.getKichHoat());
-            res.put("moTa", pt.getMoTa());
-            res.put("bieuTuong", pt.getBieuTuong());
-            res.put("cauHinh", pt.getCauHinh());
-
-            // Các trường chi tiết đã giải mã
-            res.put("vnpTmnCode", dto.getVnpTmnCode());
-            res.put("vnpHashSecret", dto.getVnpHashSecret());
-            res.put("vnpUrl", dto.getVnpUrl());
-            res.put("vnpMoiTruong", dto.getVnpMoiTruong());
-
-            res.put("momoPartnerCode", dto.getMomoPartnerCode());
-            res.put("momoAccessKey", dto.getMomoAccessKey());
-            res.put("momoSecretKey", dto.getMomoSecretKey());
-            res.put("momoEndpoint", dto.getMomoEndpoint());
-
-            res.put("maNganHang", dto.getMaNganHang());
-            res.put("tenNganHang", dto.getTenNganHang());
-            res.put("soTaiKhoan", dto.getSoTaiKhoan());
-            res.put("tenChuTaiKhoan", dto.getTenChuTaiKhoan());
-            res.put("chiNhanh", dto.getChiNhanh());
-            res.put("cuPhapChuyenKhoan", dto.getCuPhapChuyenKhoan());
-
-            res.put("phiThuHo", dto.getPhiThuHo());
-            res.put("hanMucCodToiDa", dto.getHanMucCodToiDa());
-            res.put("chinhSachKiemHang", dto.getChinhSachKiemHang());
-
-            res.put("zaloAppId", dto.getZaloAppId());
-            res.put("zaloKey1", dto.getZaloKey1());
-            res.put("zaloKey2", dto.getZaloKey2());
-            res.put("zaloEndpoint", dto.getZaloEndpoint());
-
-            return ResponseEntity.ok(res);
+            return ResponseEntity.ok(pt);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }

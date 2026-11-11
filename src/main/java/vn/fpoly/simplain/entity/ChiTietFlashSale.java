@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US29: Thiet lap khung gio Flash Sale
 package vn.fpoly.simplain.entity;
 
 import jakarta.persistence.*;

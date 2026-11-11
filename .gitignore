@@ -5,7 +5,6 @@
 
 # --- Maven / Java ---
 target/
-uploads/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -66,3 +65,4 @@ application-secret.properties
 
 # --- Opencode / AI ---
 .opencode/
+tmp

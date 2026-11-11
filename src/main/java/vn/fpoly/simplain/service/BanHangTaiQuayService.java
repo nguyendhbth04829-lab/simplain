@@ -9,6 +9,7 @@ import vn.fpoly.simplain.dto.*;
 import vn.fpoly.simplain.entity.*;
 import vn.fpoly.simplain.exception.KhongDuTonKhoException;
 import vn.fpoly.simplain.exception.TrungSoDienThoaiException;
+import vn.fpoly.simplain.inbound.PhanBoTonKhoService;
 import vn.fpoly.simplain.repository.*;
 
 import java.math.BigDecimal;
@@ -48,6 +49,7 @@ public class BanHangTaiQuayService {
     private final GiaoDichThanhToanRepository giaoDichThanhToanRepository;
     private final LichSuTrangThaiDonHangRepository lichSuTrangThaiDonHangRepository;
     private final LoyaltyHoiVienService loyaltyHoiVienService;
+    private final PhanBoTonKhoService phanBoTonKhoService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
@@ -123,7 +125,7 @@ public class BanHangTaiQuayService {
             throw new IllegalArgumentException("Biến thể sản phẩm SKU [" + bt.getMaSku() + "] đang tạm ngưng kinh doanh!");
         }
 
-        int tonKho = (bt.getSoLuong() != null) ? bt.getSoLuong() : 0;
+        int tonKho = phanBoTonKhoService.soLuongKeOffline(bt);
         int soLuongThem = (req.getSoLuong() != null && req.getSoLuong() > 0) ? req.getSoLuong() : 1;
 
         if (tonKho <= 0) {
@@ -181,7 +183,7 @@ public class BanHangTaiQuayService {
             chiTietHoaDonChoRepository.delete(chiTiet);
         } else {
             BienTheSanPham bt = bienTheSanPhamRepository.findById(chiTiet.getMaBienTheId()).orElseThrow();
-            int tonKho = (bt.getSoLuong() != null) ? bt.getSoLuong() : 0;
+            int tonKho = phanBoTonKhoService.soLuongKeOffline(bt);
             if (req.getSoLuong() > tonKho) {
                 throw new IllegalArgumentException("Không đủ hàng! Tồn kho SKU [" + bt.getMaSku() + "] chỉ còn " + tonKho + " cái.");
             }
@@ -401,7 +403,7 @@ public class BanHangTaiQuayService {
             BienTheSanPham bt = bienTheSanPhamRepository.findById(item.getMaBienTheId())
                     .orElseThrow(() -> new IllegalArgumentException("Biến thể ID " + item.getMaBienTheId() + " không tồn tại!"));
 
-            int tonKhoHienCo = (bt.getSoLuong() != null) ? bt.getSoLuong() : 0;
+            int tonKhoHienCo = phanBoTonKhoService.soLuongKeOffline(bt);
             if (tonKhoHienCo < item.getSoLuong()) {
                 throw new KhongDuTonKhoException(bt.getId(), bt.getMaSku(), item.getSoLuong(), tonKhoHienCo);
             }
@@ -718,7 +720,7 @@ public class BanHangTaiQuayService {
                     .tenKichThuoc(kt != null ? kt.getMaKichThuoc() : "")
                     .donGia(it.getDonGia())
                     .soLuong(it.getSoLuong())
-                    .tonKhoHienTai(bt.getSoLuong())
+                    .tonKhoHienTai(phanBoTonKhoService.soLuongKeOffline(bt))
                     .thanhTien(it.getThanhTien())
                     .anhDaiDienUrl(anhUrl)
                     .build());
@@ -774,7 +776,7 @@ public class BanHangTaiQuayService {
                     .maMauHex(ms != null ? ms.getMaMau() : "#000000")
                     .tenKichThuoc(kt != null ? kt.getMaKichThuoc() : "")
                     .donGia(bt.getGiaBan())
-                    .tonKhoHienTai(bt.getSoLuong())
+                    .tonKhoHienTai(phanBoTonKhoService.soLuongKeOffline(bt))
                     .anhDaiDienUrl(anhUrl)
                     .build());
         }

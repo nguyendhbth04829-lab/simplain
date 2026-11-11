@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh mục Sản phẩm | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+        /* Hiệu ứng xoay chevron khi mở rộng */
+        .rotate-chevron { transform: rotate(180deg); }
+        /* Đường kẻ phân nhánh cây */
+        .tree-line-branch {
+            position: relative;
+        }
+        .tree-line-branch::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 22px;
+            width: 18px;
+            height: 2px;
+            background-color: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('danh-muc')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title + Nút "+ Thêm danh mục" -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-lg border border-neutral-800 shadow-xs">
+                    <i class="fa-solid fa-folder-tree"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý danh mục sản phẩm</span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Cấu trúc phân cấp Cha - Con: Danh mục Gốc (Cấp 1) và Danh mục Trực thuộc (Cấp 2)</p>
+                </div>
+            </div>
+
+            <!-- Nút "+ Thêm danh mục" -->
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+                <button type="button"
+                        onclick="moModalThemGoc()"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>+ Thêm danh mục</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. THỐNG KÊ PHÂN CẤP TỔNG QUAN (METRIC CARDS) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" th:if="${thongKePhanCap != null}">
+            <!-- Tổng số danh mục -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tổng danh mục</div>
+                    <div class="text-xl font-black text-slate-900" th:text="${thongKePhanCap['tongSo']}">0</div>
+                </div>
+            </div>
+
+            <!-- Danh mục Gốc Cấp 1 -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-folder"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Danh mục Gốc (Cha)</div>
+                    <div class="text-xl font-black text-blue-600" th:text="${thongKePhanCap['soGoc']}">0</div>
+                </div>
+            </div>
+
+            <!-- Danh mục Con Cấp 2 -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-sitemap"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Danh mục Con</div>
+                    <div class="text-xl font-black text-amber-600" th:text="${thongKePhanCap['soCon']}">0</div>
+                </div>
+            </div>
+
+            <!-- Đang hoạt động -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Đang hoạt động</div>
+                    <div class="text-xl font-black text-emerald-600" th:text="${thongKePhanCap['soDangHoatDong']}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 space-y-4">
+            <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleBoLoc()">
+                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <span>Bộ lọc tìm kiếm</span>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i id="boLocIcon" class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+            </div>
+
+            <form id="boLocContent" action="/admin/danh-muc/hien-thi" method="get" class="space-y-4 pt-2">
+                <input type="hidden" name="cheDoXem" th:value="${cheDoXem}">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Từ khóa tìm kiếm</label>
+                        <input type="text" name="ten" th:value="${ten}"
+                               placeholder="Tên danh mục hoặc slug..."
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Trạng thái</label>
+                        <select name="kichHoat" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true" th:selected="${kichHoatLoc != null and kichHoatLoc == true}">Còn hoạt động</option>
+                            <option value="false" th:selected="${kichHoatLoc != null and kichHoatLoc == false}">Tạm ngưng</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end gap-2">
+                        <button type="submit"
+                                class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer transition">
+                            <i class="fa-solid fa-filter text-xs"></i>
+                            <span>Lọc</span>
+                        </button>
+                        <a th:href="@{/admin/danh-muc/hien-thi(cheDoXem=${cheDoXem})}"
+                           class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                            <span>Bỏ lọc</span>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. CHUYỂN ĐỔI CHẾ ĐỘ XEM: DẠNG CÂY PHÂN CẤP (TREE) vs BẢNG DỮ LIỆU (TABLE) -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-2">
+            <div class="flex items-center gap-2">
+                <!-- Tab Cây phân cấp -->
+                <a th:href="@{/admin/danh-muc/hien-thi(cheDoXem='cay', ten=${ten}, kichHoat=${kichHoatLoc})}"
+                   th:class="${cheDoXem == 'cay'} ? 'px-4 py-2 rounded-xl text-xs font-bold bg-neutral-900 text-white shadow-xs flex items-center gap-2' : 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 flex items-center gap-2 transition'">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>Cấu trúc Phân cấp (Tree View)</span>
+                </a>
+                <!-- Tab Bảng dữ liệu phẳng -->
+                <a th:href="@{/admin/danh-muc/hien-thi(cheDoXem='bang', ten=${ten}, kichHoat=${kichHoatLoc})}"
+                   th:class="${cheDoXem == 'bang'} ? 'px-4 py-2 rounded-xl text-xs font-bold bg-neutral-900 text-white shadow-xs flex items-center gap-2' : 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 flex items-center gap-2 transition'">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span>Bảng Dữ Liệu (Table View)</span>
+                </a>
+            </div>
+
+            <!-- Thao tác nhanh cho Tree View -->
+            <div th:if="${cheDoXem == 'cay'}" class="flex items-center gap-2 text-xs">
+                <button type="button" onclick="moRongTatCa()"
+                        class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                    <i class="fa-solid fa-angles-down text-[11px] text-blue-600"></i>
+                    <span>Mở rộng tất cả</span>
+                </button>
+                <button type="button" onclick="thuGonTatCa()"
+                        class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                    <i class="fa-solid fa-angles-up text-[11px] text-slate-500"></i>
+                    <span>Thu gọn tất cả</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             5. CHẾ ĐỘ 1: CẤU TRÚC CÂY PHÂN CẤP CHA - CON (TREE VIEW)
+             ========================================================================= -->
+        <div th:if="${cheDoXem == 'cay'}" class="space-y-4">
+
+            <!-- Thông báo gợi ý cách dùng -->
+            <div class="bg-blue-50/70 border border-blue-200 text-blue-900 px-4 py-3 rounded-2xl flex items-center justify-between text-xs font-medium">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-blue-600 text-sm"></i>
+                    <span>
+                        <strong>Mẹo quản lý:</strong> Bấm vào dòng Danh mục Gốc để ẩn/hiện danh mục con trực thuộc. Bấm nút <strong>"+ Thêm con"</strong> để tạo nhanh danh mục con gán trực tiếp cho danh mục cha tương ứng.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Danh sách Cây Danh mục -->
+            <div class="space-y-3">
+
+                <!-- Vòng lặp các Danh mục Gốc (Cấp 1) -->
+                <div th:each="goc : ${cayDanhMuc}" class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden transition hover:border-slate-300">
+                    
+                    <!-- Hàng Danh mục Gốc (Cha) -->
+                    <div class="p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+                        
+                        <!-- Cột Trái: Nút Chevron + Icon Folder + Tên + Badges -->
+                        <div class="flex items-center gap-3 min-w-0">
+                            <!-- Nút toggle đóng/mở con -->
+                            <button type="button"
+                                    th:data-goc-id="${goc.id}"
+                                    onclick="toggleCayDanhMuc(this.getAttribute('data-goc-id'))"
+                                    class="w-7 h-7 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center transition flex-shrink-0 cursor-pointer"
+                                    title="Thu gọn / Mở rộng danh mục con">
+                                <i th:id="'chevron-' + ${goc.id}" class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+
+                            <!-- Folder Icon -->
+                            <div class="w-10 h-10 rounded-xl bg-neutral-900 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-xs">
+                                <i class="fa-solid fa-folder"></i>
+                            </div>
+
+                            <!-- Tên & Slug -->
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-black text-slate-900 text-sm sm:text-base hover:text-blue-600 transition" th:text="${goc.tenDanhMuc}">Áo Nam</span>
+                                    <span class="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-layer-group text-[9px]"></i>
+                                        <span>Cấp 1 (Gốc)</span>
+                                    </span>
+                                    <span th:if="${goc.thuTuHienThi > 0}" class="text-[11px] font-mono font-semibold text-slate-400" th:text="'#' + ${goc.thuTuHienThi}">#0</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs mt-1 text-slate-500 flex-wrap">
+                                    <span class="font-mono text-slate-400 text-[11px]" th:text="'/' + ${goc.duongDanSlug}">/ao-nam</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md font-bold text-[11px]">
+                                        <i class="fa-solid fa-sitemap text-[10px]"></i>
+                                        <span th:text="${#lists.size(goc.danhMucConList)} + ' danh mục con'">0 con</span>
+                                    </span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="inline-flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md font-semibold text-[11px]">
+                                        <i class="fa-solid fa-box text-[10px]"></i>
+                                        <span th:text="${goc.soSanPham} + ' sản phẩm'">0 sản phẩm</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cột Phải: Trạng thái + Nút Thao Tác -->
+                        <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+                            <!-- Trạng thái -->
+                            <span th:if="${goc.kichHoat}" class="status-badge-active">
+                                <span class="pulse-dot bg-emerald-500"></span>
+                                Còn hoạt động
+                            </span>
+                            <span th:unless="${goc.kichHoat}" class="status-badge-inactive">
+                                <span class="pulse-dot bg-neutral-400"></span>
+                                Tạm ngưng
+                            </span>
+
+                            <!-- Nút "+ Thêm con" (1-Click tiện lợi) -->
+                            <button type="button"
+                                    th:data-id="${goc.id}"
+                                    th:data-ten="${goc.tenDanhMuc}"
+                                    onclick="moModalThemCon(this.getAttribute('data-id'), this.getAttribute('data-ten'))"
+                                    class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                                    title="Tạo danh mục con trực thuộc danh mục này">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>+ Thêm con</span>
+                            </button>
+
+                            <!-- Nút Sửa -->
+                            <a th:href="@{/admin/danh-muc/view(id=${goc.id})}"
+                               class="btn-outline px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition"
+                               title="Chỉnh sửa danh mục gốc">
+                                <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                <span>Sửa</span>
+                            </a>
+
+                            <!-- Nút Tạm ngưng / Kích hoạt -->
+                            <a th:href="@{/admin/danh-muc/doi-trang-thai(id=${goc.id})}"
+                               th:class="${goc.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                               th:title="${goc.kichHoat} ? 'Tạm ngưng hoạt động' : 'Kích hoạt danh mục'"
+                               class="px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition">
+                                <i th:class="${goc.kichHoat} ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]'"></i>
+                                <span th:text="${goc.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                            </a>
+                        </div>
+
+                    </div>
+
+                    <!-- Vùng Danh mục con trực thuộc (Collapsible Container) -->
+                    <div th:id="'children-' + ${goc.id}" class="border-t border-slate-100 bg-slate-50/60 p-4 sm:pl-12 sm:pr-6 space-y-2.5">
+                        
+                        <!-- Lặp danh mục con -->
+                        <div th:each="con, iterStat : ${goc.danhMucConList}"
+                             class="tree-line-branch bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-blue-300 transition">
+                            
+                            <!-- Nhánh & Chi tiết Danh mục con -->
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0 border border-blue-100">
+                                    <i class="fa-solid fa-tag"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-bold text-slate-800 text-xs sm:text-sm" th:text="${con.tenDanhMuc}">Áo Polo Nam</span>
+                                        <span class="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md font-semibold text-[10px]">
+                                            Cấp 2 (Con)
+                                        </span>
+                                        <span th:if="${con.thuTuHienThi > 0}" class="text-[10px] font-mono text-slate-400" th:text="'#' + ${con.thuTuHienThi}">#0</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 text-[11px] text-slate-500 mt-0.5">
+                                        <span class="font-mono text-slate-400 truncate" th:text="'/' + ${con.duongDanSlug}">/ao-polo-nam</span>
+                                        <span class="text-slate-300">•</span>
+                                        <span class="inline-flex items-center gap-1 text-slate-600">
+                                            <i class="fa-solid fa-box text-[9px] text-slate-400"></i>
+                                            <span th:text="${con.soSanPham} + ' sản phẩm'">0 sản phẩm</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Thao tác cho Danh mục con -->
+                            <div class="flex items-center gap-2 self-end sm:self-auto">
+                                <span th:if="${con.kichHoat}" class="status-badge-active text-[10px]">
+                                    <span class="pulse-dot bg-emerald-500"></span>
+                                    Còn hoạt động
+                                </span>
+                                <span th:unless="${con.kichHoat}" class="status-badge-inactive text-[10px]">
+                                    <span class="pulse-dot bg-neutral-400"></span>
+                                    Tạm ngưng
+                                </span>
+
+                                <a th:href="@{/admin/danh-muc/view(id=${con.id})}"
+                                   class="btn-outline px-2.5 py-1 rounded-lg font-bold text-xs flex items-center gap-1 transition"
+                                   title="Chỉnh sửa danh mục con">
+                                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                                    <span>Sửa</span>
+                                </a>
+
+                                <a th:href="@{/admin/danh-muc/doi-trang-thai(id=${con.id})}"
+                                   th:class="${con.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                   class="px-2 py-1 rounded-lg font-bold text-xs flex items-center gap-1 transition">
+                                    <i th:class="${con.kichHoat} ? 'fa-solid fa-pause text-[9px]' : 'fa-solid fa-play text-[9px]'"></i>
+                                    <span th:text="${con.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                </a>
+                            </div>
+
+                        </div>
+
+                        <!-- Nếu chưa có danh mục con -->
+                        <div th:if="${#lists.isEmpty(goc.danhMucConList)}" class="py-3 px-4 rounded-xl border border-dashed border-slate-200 bg-white/70 text-slate-400 text-xs flex items-center justify-between">
+                            <span class="italic flex items-center gap-1.5">
+                                <i class="fa-regular fa-folder-open text-slate-300"></i>
+                                Chưa có danh mục con trực thuộc.
+                            </span>
+                            <button type="button"
+                                    th:data-id="${goc.id}"
+                                    th:data-ten="${goc.tenDanhMuc}"
+                                    onclick="moModalThemCon(this.getAttribute('data-id'), this.getAttribute('data-ten'))"
+                                    class="text-blue-600 hover:text-blue-800 font-bold text-xs flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>Thêm danh mục con đầu tiên</span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Nếu không có danh mục nào -->
+                <div th:if="${#lists.isEmpty(cayDanhMuc)}" class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400">
+                    <i class="fa-solid fa-folder-tree text-4xl mb-3 block text-slate-300"></i>
+                    <p class="font-bold text-slate-700 text-sm">Chưa có danh mục nào phù hợp với bộ lọc tìm kiếm!</p>
+                    <p class="text-xs text-slate-400 mt-1">Bấm nút bên dưới để tạo danh mục sản phẩm mới</p>
+                    <button type="button" onclick="moModalThemGoc()"
+                            class="mt-4 btn-navy text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>+ Thêm danh mục mới</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================================================================
+             6. CHẾ ĐỘ 2: BẢNG DỮ LIỆU PHẲNG (TABLE VIEW CÓ PHÂN TRANG VÀ BULK ACTIONS)
+             ========================================================================= -->
+        <div th:if="${cheDoXem == 'bang'}" class="space-y-4">
+
+            <!-- Thanh Thao Tác Hàng Loạt (Bulk Action Bar) -->
+            <form id="formThaoTacHangLoat" method="post" th:action="@{/admin/danh-muc/thao-tac-hang-loat}">
+                <div id="bulkActionBar" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                            <i class="fa-solid fa-list-check"></i>
+                        </span>
+                        <span class="text-xs font-bold text-slate-800">
+                            Đã chọn <span id="soLuongDaChon" class="font-black text-blue-600">0</span> danh mục
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="submit" name="hanhDong" value="KICH_HOAT"
+                                onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn KÍCH HOẠT tất cả các danh mục đã chọn?')"
+                                class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Chuyển thành: Còn hoạt động</span>
+                        </button>
+                        <button type="submit" name="hanhDong" value="NGUNG_HOAT_DONG"
+                                onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn NGƯNG HOẠT ĐỘNG tất cả các danh mục đã chọn?')"
+                                class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                            <i class="fa-solid fa-circle-pause"></i>
+                            <span>Chuyển thành: Ngưng hoạt động</span>
+                        </button>
+                        <button type="button" onclick="boChonTatCa()"
+                                class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 text-xs font-bold transition cursor-pointer">
+                            <i class="fa-solid fa-xmark mr-1"></i>Bỏ chọn
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bảng dữ liệu Danh mục -->
+                <div class="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-neutral-200 bg-neutral-50 text-neutral-600 font-bold uppercase text-[11px] tracking-wider">
+                                    <th class="py-3.5 px-3 w-10 text-center">
+                                        <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)"
+                                               class="rounded border-neutral-300 text-black focus:ring-black cursor-pointer"
+                                               title="Chọn tất cả trên trang này">
+                                    </th>
+                                    <th class="py-3.5 px-2 w-8 text-center text-neutral-400">⠿</th>
+                                    <th class="py-3.5 px-4 font-bold">Tên danh mục</th>
+                                    <th class="py-3.5 px-4">Phân cấp (Cha / Con)</th>
+                                    <th class="py-3.5 px-4 text-center">Thứ tự ưu tiên</th>
+                                    <th class="py-3.5 px-4 text-center">Sản phẩm</th>
+                                    <th class="py-3.5 px-4 text-center">Trạng thái</th>
+                                    <th class="py-3.5 px-4 text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+
+                            <tbody class="divide-y divide-neutral-100 text-neutral-700">
+                                <tr th:each="dm : ${listDanhMuc}" class="hover:bg-neutral-50 transition group items-center">
+                                    
+                                    <!-- Checkbox -->
+                                    <td class="py-3.5 px-3 text-center">
+                                        <input type="checkbox" name="ids" th:value="${dm.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                               class="item-checkbox rounded border-neutral-300 text-black focus:ring-black cursor-pointer">
+                                    </td>
+
+                                    <!-- Drag handle -->
+                                    <td class="py-3.5 px-2 text-center text-neutral-300 group-hover:text-neutral-600 cursor-grab">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i><i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </td>
+
+                                    <!-- Cột Tên danh mục: Icon + Tên + Slug -->
+                                    <td class="py-3.5 px-4 max-w-xs">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-lg bg-neutral-100 text-neutral-800 border border-neutral-200 flex items-center justify-center flex-shrink-0 text-xs">
+                                                <i class="fa-solid fa-folder"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="font-bold text-neutral-900 truncate hover:text-black transition flex items-center gap-1.5">
+                                                    <span th:if="${dm.maDanhMucCha != null}" class="text-neutral-400 font-mono">↳</span>
+                                                    <span th:text="${dm.tenDanhMuc}">Áo Polo Nam</span>
+                                                </div>
+                                                <div class="text-[11px] text-neutral-400 font-mono mt-0.5 truncate" th:text="'/' + ${dm.duongDanSlug}">
+                                                    /ao-polo-nam
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Cột Phân cấp -->
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <span th:if="${dm.maDanhMucCha != null}"
+                                              class="border border-neutral-200 bg-neutral-50 text-neutral-700 px-2.5 py-0.5 rounded-full font-medium text-[11px] inline-flex items-center gap-1">
+                                            <i class="fa-solid fa-sitemap text-[9px] text-neutral-500"></i>
+                                            <span>Cha: <strong th:text="${dm.tenDanhMucCha != null ? dm.tenDanhMucCha : ('#' + dm.maDanhMucCha)}">Áo Nam</strong></span>
+                                        </span>
+                                        <span th:if="${dm.maDanhMucCha == null}"
+                                              class="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-bold text-[11px] inline-flex items-center gap-1">
+                                            <i class="fa-solid fa-layer-group text-[9px]"></i>
+                                            <span>Danh mục gốc (Cấp 1)</span>
+                                        </span>
+                                    </td>
+
+                                    <!-- Thứ tự ưu tiên -->
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap font-mono font-bold text-neutral-700" th:text="${dm.thuTuHienThi}">
+                                        0
+                                    </td>
+
+                                    <!-- Số lượng sản phẩm -->
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        <span class="inline-flex items-center gap-1 text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full font-bold text-[11px]">
+                                            <i class="fa-solid fa-box text-[9px] text-slate-400"></i>
+                                            <span th:text="${dm.soSanPham}">0</span>
+                                        </span>
+                                    </td>
+
+                                    <!-- Cột Trạng thái -->
+                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                        <span th:if="${dm.kichHoat}" class="status-badge-active">
+                                            <span class="pulse-dot bg-emerald-500"></span>
+                                            Còn hoạt động
+                                        </span>
+                                        <span th:unless="${dm.kichHoat}" class="status-badge-inactive">
+                                            <span class="pulse-dot bg-neutral-400"></span>
+                                            Tạm ngưng
+                                        </span>
+                                    </td>
+
+                                    <!-- Cột Thao tác -->
+                                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <a th:href="@{/admin/danh-muc/view(id=${dm.id})}"
+                                               class="btn-outline px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                               title="Chỉnh sửa danh mục">
+                                                <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                                <span>Sửa</span>
+                                            </a>
+                                            <a th:href="@{/admin/danh-muc/doi-trang-thai(id=${dm.id})}"
+                                               th:class="${dm.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                               th:title="${dm.kichHoat} ? 'Tạm ngưng hoạt động danh mục này' : 'Kích hoạt danh mục này'"
+                                               class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition">
+                                                <i th:class="${dm.kichHoat} ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]'"></i>
+                                                <span th:text="${dm.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                            </a>
+                                        </div>
+                                    </td>
+
+                                </tr>
+
+                                <tr th:if="${listDanhMuc.empty}">
+                                    <td colspan="8" class="py-12 text-center text-slate-400">
+                                        <i class="fa-solid fa-folder-open text-3xl mb-2 block text-slate-300"></i>
+                                        Không có danh mục nào phù hợp. Bấm <strong>+ Thêm danh mục</strong> ở trên để tạo mới!
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Phân trang Table View -->
+                    <div class="px-5 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500" th:if="${totalPages > 1}">
+                        <div>
+                            Trang <span class="font-bold text-slate-900" th:text="${page + 1}">1</span> / <span th:text="${totalPages}">1</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <a th:if="${page > 0}"
+                               th:href="@{/admin/danh-muc/hien-thi(cheDoXem='bang', page=${page - 1}, ten=${ten}, kichHoat=${kichHoatLoc})}"
+                               class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                                &larr; Trước
+                            </a>
+                            <a th:if="${page < totalPages - 1}"
+                               th:href="@{/admin/danh-muc/hien-thi(cheDoXem='bang', page=${page + 1}, ten=${ten}, kichHoat=${kichHoatLoc})}"
+                               class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                                Sau &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </main>
+
+    <!-- =========================================================================
+         7. MODAL FORM: THÊM MỚI DANH MỤC (HỖ TRỢ TẠO GỐC & TẠO CON 1-CLICK)
+         ========================================================================= -->
+    <div id="modalThemDanhMuc"
+         data-modal
+         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full my-8 overflow-hidden border border-slate-200/90 flex flex-col">
+            
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-folder-tree"></i>
+                    </div>
+                    <div>
+                        <h3 id="modalThemTitle" class="text-sm font-black uppercase tracking-wide text-slate-900">Thêm mới danh mục</h3>
+                        <p id="modalThemSubtitle" class="text-[11px] text-slate-500">Thiết lập danh mục gốc hoặc danh mục con trực thuộc</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModal('modalThemDanhMuc')"
+                        class="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition focus:outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Banner chỉ báo khi thêm con nhanh -->
+            <div id="bannerThemConNhanh" class="hidden bg-blue-50 px-6 py-2.5 border-b border-blue-100 text-xs text-blue-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sitemap text-blue-600"></i>
+                    <span>Tạo danh mục con trực thuộc: <strong id="tenDanhMucChaText" class="font-bold text-blue-900">Áo Nam</strong></span>
+                </div>
+                <button type="button" onclick="chuyenVeThemGoc()" class="text-blue-600 hover:text-blue-900 text-[11px] underline font-semibold">
+                    Đổi thành Cấp 1
+                </button>
+            </div>
+
+            <form th:object="${danhMuc}" action="/admin/danh-muc/add" method="post" class="space-y-4 p-6" novalidate>
+                
+                <!-- Chọn Cấp bậc Phân cấp: Cấp 1 (Gốc) vs Cấp 2 (Con) -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Cấp độ phân loại danh mục</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label id="labelCapGoc" class="p-3 rounded-xl border border-blue-600 bg-blue-50/50 flex items-center gap-2.5 cursor-pointer transition">
+                            <input type="radio" name="capDoPhanLoai" id="radioCapGoc" value="goc" checked onchange="thayDoiCapDo('goc')" class="text-blue-600 focus:ring-blue-500">
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">Danh mục Gốc</div>
+                                <div class="text-[10px] text-slate-500">Cấp 1 &bull; Đứng độc lập</div>
+                            </div>
+                        </label>
+                        <label id="labelCapCon" class="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer transition">
+                            <input type="radio" name="capDoPhanLoai" id="radioCapCon" value="con" onchange="thayDoiCapDo('con')" class="text-blue-600 focus:ring-blue-500">
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">Danh mục Con</div>
+                                <div class="text-[10px] text-slate-500">Cấp 2 &bull; Có cha quản lý</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Chọn Danh mục cha (Chỉ hiện khi chọn Cấp 2) -->
+                <div id="vungChonDanhMucCha" class="hidden">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Chọn Danh mục cha trực thuộc <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <select id="selectDanhMucCha" th:field="*{maDanhMucCha}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <option value="">-- Chọn danh mục cha --</option>
+                        <option th:each="dmGoc : ${listDanhMucGoc}"
+                                th:value="${dmGoc.id}"
+                                th:text="'📁 ' + ${dmGoc.tenDanhMuc} + ' (ID: ' + ${dmGoc.id} + ')'"></option>
+                    </select>
+                    <span class="error" th:if="${#fields.hasErrors('maDanhMucCha')}" th:errors="*{maDanhMucCha}"></span>
+                </div>
+
+                <!-- Tên danh mục -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên danh mục <span class="text-rose-500 font-bold">*</span></label>
+                    <input type="text" id="tenDanhMucInput" th:field="*{tenDanhMuc}" oninput="tuDongTaoSlugDanhMuc(this.value)"
+                           placeholder="VD: Áo Polo Thể Thao Nam"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('tenDanhMuc')}" th:errors="*{tenDanhMuc}"></span>
+                </div>
+
+                <!-- Đường dẫn Slug -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Đường dẫn Slug (URL) <span class="text-rose-500 font-bold">*</span></label>
+                        <span class="text-[10px] text-slate-400">Tự động tạo từ tên</span>
+                    </div>
+                    <input type="text" id="duongDanSlugInput" th:field="*{duongDanSlug}"
+                           placeholder="VD: ao-polo-the-thao-nam"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                </div>
+
+                <!-- Thứ tự hiển thị -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Thứ tự ưu tiên hiển thị</label>
+                    <input type="number" th:field="*{thuTuHienThi}" min="0" max="9999"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('thuTuHienThi')}" th:errors="*{thuTuHienThi}"></span>
+                </div>
+
+                <!-- Checkbox Trạng thái -->
+                <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-50">
+                    <div>
+                        <div class="text-xs font-bold text-slate-800">Trạng thái hoạt động</div>
+                        <div class="text-[10px] text-slate-400">Hiển thị trong menu phân loại Storefront</div>
+                    </div>
+                    <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+                </label>
+
+                <!-- Action buttons -->
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button"
+                            onclick="dongModal('modalThemDanhMuc')"
+                            class="btn-outline font-semibold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-6 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Lưu danh mục</span>
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT ĐIỀU KHIỂN CÂY PHÂN CẤP, TỰ TẠO SLUG & BULK ACTIONS -->
+    <script>
+        // 1. Thu gọn / Mở rộng Danh mục con trong Cây phân cấp
+        function toggleCayDanhMuc(gocId) {
+            const container = document.getElementById('children-' + gocId);
+            const chevron = document.getElementById('chevron-' + gocId);
+            if (!container) return;
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                if (chevron) chevron.classList.remove('rotate-chevron');
+            } else {
+                container.classList.add('hidden');
+                if (chevron) chevron.classList.add('rotate-chevron');
+            }
+        }
+
+        function moRongTatCa() {
+            document.querySelectorAll('[id^="children-"]').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('[id^="chevron-"]').forEach(el => el.classList.remove('rotate-chevron'));
+        }
+
+        function thuGonTatCa() {
+            document.querySelectorAll('[id^="children-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="chevron-"]').forEach(el => el.classList.add('rotate-chevron'));
+        }
+
+        // 2. Chuyển đổi Radio Cấp 1 (Gốc) vs Cấp 2 (Con)
+        function thayDoiCapDo(cap) {
+            const vungCha = document.getElementById('vungChonDanhMucCha');
+            const selectCha = document.getElementById('selectDanhMucCha');
+            const labelGoc = document.getElementById('labelCapGoc');
+            const labelCon = document.getElementById('labelCapCon');
+            const bannerThemCon = document.getElementById('bannerThemConNhanh');
+
+            if (cap === 'con') {
+                if (vungCha) vungCha.classList.remove('hidden');
+                if (labelCon) {
+                    labelCon.classList.add('border-blue-600', 'bg-blue-50/50');
+                    labelCon.classList.remove('border-slate-200');
+                }
+                if (labelGoc) {
+                    labelGoc.classList.remove('border-blue-600', 'bg-blue-50/50');
+                    labelGoc.classList.add('border-slate-200');
+                }
+            } else {
+                if (vungCha) vungCha.classList.add('hidden');
+                if (selectCha) selectCha.value = '';
+                if (bannerThemCon) bannerThemCon.classList.add('hidden');
+                if (labelGoc) {
+                    labelGoc.classList.add('border-blue-600', 'bg-blue-50/50');
+                    labelGoc.classList.remove('border-slate-200');
+                }
+                if (labelCon) {
+                    labelCon.classList.remove('border-blue-600', 'bg-blue-50/50');
+                    labelCon.classList.add('border-slate-200');
+                }
+            }
+        }
+
+        // 3. Mở Modal thêm Danh mục Gốc
+        function moModalThemGoc() {
+            const radioGoc = document.getElementById('radioCapGoc');
+            if (radioGoc) {
+                radioGoc.checked = true;
+                thayDoiCapDo('goc');
+            }
+            const banner = document.getElementById('bannerThemConNhanh');
+            if (banner) banner.classList.add('hidden');
+            document.getElementById('modalThemTitle').innerText = 'Thêm mới danh mục';
+            moModal('modalThemDanhMuc');
+        }
+
+        // 4. Mở Modal thêm Danh mục Con (1-Click từ Cây)
+        function moModalThemCon(chaId, tenCha) {
+            const radioCon = document.getElementById('radioCapCon');
+            if (radioCon) {
+                radioCon.checked = true;
+                thayDoiCapDo('con');
+            }
+            const selectCha = document.getElementById('selectDanhMucCha');
+            if (selectCha) {
+                selectCha.value = chaId;
+            }
+            const banner = document.getElementById('bannerThemConNhanh');
+            const tenChaText = document.getElementById('tenDanhMucChaText');
+            if (banner && tenChaText) {
+                tenChaText.innerText = tenCha;
+                banner.classList.remove('hidden');
+            }
+            document.getElementById('modalThemTitle').innerText = 'Thêm danh mục con';
+            moModal('modalThemDanhMuc');
+            setTimeout(() => {
+                document.getElementById('tenDanhMucInput')?.focus();
+            }, 100);
+        }
+
+        function chuyenVeThemGoc() {
+            moModalThemGoc();
+        }
+
+        // 5. Tự động sinh Slug tiếng Việt URL-friendly
+        function tuDongTaoSlugDanhMuc(str) {
+            const slugInput = document.getElementById('duongDanSlugInput');
+            if (!slugInput || slugInput.dataset.daSuaThuCong === 'true') return;
+            const slug = str.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+            slugInput.value = slug;
+        }
+
+        document.getElementById('duongDanSlugInput')?.addEventListener('input', function() {
+            this.dataset.daSuaThuCong = 'true';
+        });
+
+        // 6. Bulk Actions (Dành cho Table View)
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            const count = checkedBoxes.length;
+            const bar = document.getElementById('bulkActionBar');
+            const countText = document.getElementById('soLuongDaChon');
+            const masterCheck = document.getElementById('checkAll');
+
+            if (countText) countText.innerText = count;
+
+            if (count > 0) {
+                if (bar) bar.classList.remove('hidden');
+            } else {
+                if (bar) bar.classList.add('hidden');
+            }
+
+            if (masterCheck && checkboxes.length > 0) {
+                masterCheck.checked = (count === checkboxes.length);
+                masterCheck.indeterminate = (count > 0 && count < checkboxes.length);
+            }
+        }
+
+        function boChonTatCa() {
+            const masterCheck = document.getElementById('checkAll');
+            if (masterCheck) masterCheck.checked = false;
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function xacNhanThaoTac(msg) {
+            const count = document.querySelectorAll('.item-checkbox:checked').length;
+            if (count === 0) {
+                alert('Vui lòng tích chọn ít nhất một danh mục!');
+                return false;
+            }
+            return confirm(msg);
+        }
+
+        function toggleBoLoc() {
+            const content = document.getElementById('boLocContent');
+            const icon = document.getElementById('boLocIcon');
+            if (!content) return;
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-up text-xs';
+            } else {
+                content.classList.add('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-down text-xs';
+            }
+        }
+    </script>
+
+    <script th:if="${thongBaoLoi != null}">
+        window.addEventListener('DOMContentLoaded', function() {
+            moModal('modalThemDanhMuc');
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hội Viên &amp; Tích Điểm Thưởng | Simplain</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- FontAwesome 6 Pro Icons -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .card-dong { background: linear-gradient(135deg, #78350f 0%, #b45309 50%, #451a03 100%); }
+        .card-bac { background: linear-gradient(135deg, #334155 0%, #64748b 50%, #1e293b 100%); }
+        .card-vang { background: linear-gradient(135deg, #78350f 0%, #d97706 30%, #f59e0b 70%, #92400e 100%); }
+        .card-bach-kim { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #020617 100%); }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar (Header) -->
+    <header class="bg-[#0f172a] text-white sticky top-0 z-50 border-b border-slate-800 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <a href="/cua-hang" class="text-2xl font-black tracking-widest uppercase text-white flex items-center">
+                    <span class="text-blue-500 mr-1.5"><i class="fa-solid fa-shapes"></i></span>SIMPLAIN
+                </a>
+                <nav class="hidden md:flex space-x-6 text-xs font-bold uppercase tracking-wider text-slate-300">
+                    <a href="/cua-hang" class="hover:text-white transition">Cửa Hàng</a>
+                    <a href="/khach-hang/hoi-vien" class="text-amber-400 font-extrabold flex items-center gap-1.5">
+                        <i class="fa-solid fa-crown text-xs"></i>Hội Viên &amp; Điểm Thưởng (US16)
+                    </a>
+                    <a href="/khach-hang/yeu-thich" class="hover:text-rose-400 transition flex items-center gap-1">
+                        <i class="fa-solid fa-heart text-xs"></i>Yêu thích
+                    </a>
+                    <a href="/gio-hang" class="hover:text-blue-400 transition flex items-center gap-1" title="Giỏ hàng (US17)">
+                        <i class="fa-solid fa-cart-shopping text-xs"></i>Giỏ hàng
+                    </a>
+                </nav>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <a href="/khach-hang/thong-tin" class="flex items-center space-x-2.5 bg-slate-800/80 hover:bg-slate-700/80 px-3.5 py-1.5 rounded-full border border-slate-700 transition">
+                    <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
+                        <span th:text="${thongTin != null and thongTin.hoTen != null ? #strings.substring(thongTin.hoTen, 0, 1) : 'U'}">U</span>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-200" th:text="${thongTin != null ? thongTin.hoTen : 'Tài khoản'}">Nguyễn Văn A</span>
+                </a>
+                <a href="/khach-hang/dang-xuat" class="text-xs text-slate-400 hover:text-white transition" title="Đăng xuất">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex text-xs text-slate-500 mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-2">
+                <li><a href="/cua-hang" class="hover:text-blue-600"><i class="fa-solid fa-house mr-1"></i>Trang chủ</a></li>
+                <li><i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i></li>
+                <li><a href="/khach-hang/thong-tin" class="hover:text-blue-600">Tài khoản</a></li>
+                <li><i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i></li>
+                <li class="font-bold text-slate-800">Chương trình Hội viên &amp; Tích điểm thưởng (US16)</li>
+            </ol>
+        </nav>
+
+        <!-- Tiêu đề Header Page -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-coins text-amber-500"></i>Simplain Loyalty Program &bull; US16
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">
+                    Hội Viên &amp; Tích Điểm Thưởng
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                    Tự động tích lũy hoàn tiền điểm thưởng trên mỗi đơn hàng hoàn thành &amp; tự động nâng hạng thành viên khi đạt mốc chi tiêu.
+                </p>
+            </div>
+
+            <!-- Quick Action Links -->
+            <div class="flex items-center gap-3">
+                <a href="/cua-hang" class="px-4 py-2.5 rounded-xl bg-[#0f172a] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping"></i>Mua sắm tích điểm
+                </a>
+                <a href="/khach-hang/thong-tin" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider transition border border-slate-200 shadow-xs flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear"></i>Hồ sơ cá nhân
+                </a>
+            </div>
+        </div>
+
+        <!-- 2 Columns Grid: Left (Member Card + Progress), Right (Tier Table + Transaction Log) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- ================= CỘT TRÁI (5 COLS): THẺ THÀNH VIÊN VÀ TIẾN TRÌNH LÊN HẠNG ================= -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- 1. VIRTUAL MEMBER CARD (Thẻ Hội Viên Ảo) -->
+                <div th:class="${hoiVien.tenHang == 'Bạch Kim'} ? 'card-bach-kim rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-indigo-500/30' :
+                              (${hoiVien.tenHang == 'Vàng'} ? 'card-vang rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-amber-400/40' :
+                              (${hoiVien.tenHang == 'Bạc'} ? 'card-bac rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-slate-400/30' :
+                              'card-dong rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-amber-800/40'))">
+                    
+                    <!-- Background Watermark Pattern -->
+                    <div class="absolute -right-6 -bottom-6 text-white/10 text-9xl font-black pointer-events-none select-none">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+
+                    <div class="relative z-10 flex flex-col justify-between h-56 sm:h-60">
+                        <!-- Top Row: Logo & Tier Badge -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-sm">
+                                    <i class="fa-solid fa-shapes"></i>
+                                </div>
+                                <span class="text-sm font-black tracking-widest uppercase">SIMPLAIN CLUB</span>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md border border-white/30 flex items-center gap-1.5 shadow-xs">
+                                <i class="fa-solid fa-crown text-amber-300"></i>
+                                <span th:text="'Hạng ' + ${hoiVien.tenHang}">Hạng Đồng</span>
+                            </span>
+                        </div>
+
+                        <!-- Center Row: Số dư Điểm thưởng khả dụng (Tiêu chí 1) -->
+                        <div class="space-y-1">
+                            <span class="text-[11px] font-semibold text-white/80 uppercase tracking-widest block">
+                                Số Dư Điểm Thưởng Tích Lũy
+                            </span>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white"
+                                      th:text="${#numbers.formatDecimal(hoiVien.soDuCoolcash, 0, 'COMMA', 0, 'POINT')}">
+                                    0
+                                </span>
+                                <span class="text-xs font-bold text-amber-300 uppercase tracking-wider">Điểm (VNĐ)</span>
+                            </div>
+                            <p class="text-[11px] text-white/70">
+                                1 điểm thưởng = 1 VNĐ &bull; Dùng trừ tiền trực tiếp khi đặt hàng
+                            </p>
+                        </div>
+
+                        <!-- Bottom Row: Cardholder & Member Code -->
+                        <div class="flex items-center justify-between pt-3 border-t border-white/15 text-xs">
+                            <div>
+                                <span class="text-[10px] text-white/60 uppercase tracking-wider block">Chủ thẻ</span>
+                                <span class="font-bold uppercase tracking-wide text-white" th:text="${hoiVien.hoTen}">NGUYEN VAN A</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-white/60 uppercase tracking-wider block">Mã hội viên</span>
+                                <span class="font-mono font-bold text-white tracking-widest" th:text="${hoiVien.maKhachHang}">KH10001</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. TIẾN TRÌNH THĂNG HẠNG TỰ ĐỘNG (Tiêu chí 2: Đạt mốc tự động lên Hạng) -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line-up text-blue-600"></i>Tiến trình thăng hạng
+                        </h3>
+                        <span class="text-xs font-bold text-blue-600 font-mono"
+                              th:text="${hoiVien.phanTramTienTrinh} + '%'">0%</span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div class="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500 rounded-full transition-all duration-700"
+                             th:style="'width: ' + ${hoiVien.phanTramTienTrinh} + '%'"></div>
+                    </div>
+
+                    <!-- Details: Chi tiêu năm & Mục tiêu tiếp theo -->
+                    <div class="grid grid-cols-2 gap-3 pt-2 text-xs">
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Chi tiêu trong năm</span>
+                            <span class="font-black font-mono text-slate-800 text-sm"
+                                  th:text="${#numbers.formatDecimal(hoiVien.tongChiTieuNam, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Mục tiêu tiếp theo</span>
+                            <span class="font-bold text-slate-800 truncate block text-sm"
+                                  th:text="${hoiVien.tenHangTiepTheo}">Hạng Bạc</span>
+                        </div>
+                    </div>
+
+                    <!-- Thông báo cần thêm chi tiêu để lên hạng -->
+                    <div th:if="${hoiVien.chiTieuCanThemDeLenHang > 0}"
+                         class="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5">
+                        <i class="fa-solid fa-circle-info text-amber-600 text-sm flex-shrink-0"></i>
+                        <span>
+                            Chi tiêu thêm <strong class="font-mono text-amber-700" th:text="${#numbers.formatDecimal(hoiVien.chiTieuCanThemDeLenHang, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.000.000 đ</strong> 
+                            để tự động được thăng hạng <strong th:text="${hoiVien.tenHangTiepTheo}">Bạc</strong>!
+                        </span>
+                    </div>
+
+                    <div th:unless="${hoiVien.chiTieuCanThemDeLenHang > 0}"
+                         class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2.5">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-sm flex-shrink-0"></i>
+                        <span>Chúc mừng bạn đã đạt <strong>Hạng Hội viên cao nhất</strong> của Simplain Club!</span>
+                    </div>
+
+                    <!-- Đặc quyền hoàn tiền hiện tại -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500 font-medium">Tỷ lệ hoàn tiền hiện tại:</span>
+                        <span class="font-black text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full"
+                              th:text="${hoiVien.phanTramHoanTien} + '% hoàn điểm'">1.0% hoàn điểm</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= CỘT PHẢI (7 COLS): BẢNG MỐC HẠNG & LỊCH SỬ BIẾN ĐỘNG ĐIỂM ================= -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- 1. BẢNG MỐC QUY CHUẨN 4 HẠNG THÀNH VIÊN (US16 - TIÊU CHÍ 2) -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-sm font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-blue-600"></i>Bảng Mốc Hạng Thành Viên &amp; % Hoàn Tiền
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Hệ thống tự động xét duyệt nâng hạng theo tổng chi tiêu thực tế trong năm</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/60">
+                                    <th class="py-3 px-4 rounded-l-xl">Hạng thành viên</th>
+                                    <th class="py-3 px-4">Chi tiêu năm tối thiểu</th>
+                                    <th class="py-3 px-4">Tích điểm hoàn tiền</th>
+                                    <th class="py-3 px-4 text-center rounded-r-xl">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <!-- Hạng Đồng -->
+                                <tr th:class="${hoiVien.tenHang == 'Đồng'} ? 'bg-amber-50/60 font-semibold' : 'hover:bg-slate-50/50'">
+                                    <td class="py-3 px-4 flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-700 text-white flex items-center justify-center text-[10px]">
+                                            <i class="fa-solid fa-medal"></i>
+                                        </span>
+                                        <span class="font-bold text-slate-900">Hạng Đồng</span>
+                                    </td>
+                                    <td class="py-3 px-4 font-mono">0 đ</td>
+                                    <td class="py-3 px-4 font-bold text-amber-600">1.0%</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span th:if="${hoiVien.tenHang == 'Đồng'}" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-600 text-white">Hiện tại</span>
+                                        <span th:unless="${hoiVien.tenHang == 'Đồng'}" class="text-slate-400 text-[11px]">Đã qua</span>
+                                    </td>
+                                </tr>
+
+                                <!-- Hạng Bạc -->
+                                <tr th:class="${hoiVien.tenHang == 'Bạc'} ? 'bg-blue-50/60 font-semibold' : 'hover:bg-slate-50/50'">
+                                    <td class="py-3 px-4 flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-slate-500 text-white flex items-center justify-center text-[10px]">
+                                            <i class="fa-solid fa-medal"></i>
+                                        </span>
+                                        <span class="font-bold text-slate-900">Hạng Bạc</span>
+                                    </td>
+                                    <td class="py-3 px-4 font-mono">1.000.000 đ</td>
+                                    <td class="py-3 px-4 font-bold text-blue-600">3.0%</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span th:if="${hoiVien.tenHang == 'Bạc'}" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white">Hiện tại</span>
+                                        <span th:if="${hoiVien.tongChiTieuNam >= 1000000 and hoiVien.tenHang != 'Bạc'}" class="text-slate-400 text-[11px]">Đã qua</span>
+                                        <span th:if="${hoiVien.tongChiTieuNam < 1000000}" class="text-slate-400 text-[11px]">Chưa đạt</span>
+                                    </td>
+                                </tr>
+
+                                <!-- Hạng Vàng -->
+                                <tr th:class="${hoiVien.tenHang == 'Vàng'} ? 'bg-amber-50/80 font-semibold' : 'hover:bg-slate-50/50'">
+                                    <td class="py-3 px-4 flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[10px]">
+                                            <i class="fa-solid fa-crown"></i>
+                                        </span>
+                                        <span class="font-bold text-slate-900">Hạng Vàng</span>
+                                    </td>
+                                    <td class="py-3 px-4 font-mono">3.000.000 đ</td>
+                                    <td class="py-3 px-4 font-bold text-amber-600">5.0%</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span th:if="${hoiVien.tenHang == 'Vàng'}" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">Hiện tại</span>
+                                        <span th:if="${hoiVien.tongChiTieuNam >= 3000000 and hoiVien.tenHang != 'Vàng'}" class="text-slate-400 text-[11px]">Đã qua</span>
+                                        <span th:if="${hoiVien.tongChiTieuNam < 3000000}" class="text-slate-400 text-[11px]">Chưa đạt</span>
+                                    </td>
+                                </tr>
+
+                                <!-- Hạng Bạch Kim -->
+                                <tr th:class="${hoiVien.tenHang == 'Bạch Kim'} ? 'bg-indigo-50/80 font-semibold' : 'hover:bg-slate-50/50'">
+                                    <td class="py-3 px-4 flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-indigo-700 text-white flex items-center justify-center text-[10px]">
+                                            <i class="fa-solid fa-gem"></i>
+                                        </span>
+                                        <span class="font-bold text-slate-900">Hạng Bạch Kim (VIP)</span>
+                                    </td>
+                                    <td class="py-3 px-4 font-mono">6.000.000 đ</td>
+                                    <td class="py-3 px-4 font-bold text-indigo-600">8.0%</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span th:if="${hoiVien.tenHang == 'Bạch Kim'}" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-700 text-white">Hiện tại</span>
+                                        <span th:if="${hoiVien.tongChiTieuNam < 6000000}" class="text-slate-400 text-[11px]">Chưa đạt</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. LỊCH SỬ BIẾN ĐỘNG ĐIỂM THƯỞNG (bien_dong_diem) -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-sm font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>Lịch Sử Tích Lũy &amp; Biến Động Điểm Thưởng
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Nhật ký chi tiết các giao dịch tích điểm và sử dụng điểm của bạn</p>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-slate-400"
+                              th:text="${hoiVien.danhSachBienDong != null ? #lists.size(hoiVien.danhSachBienDong) : 0} + ' giao dịch'">
+                            0 giao dịch
+                        </span>
+                    </div>
+
+                    <!-- Khi chưa có biến động điểm nào -->
+                    <div th:if="${hoiVien.danhSachBienDong == null or #lists.isEmpty(hoiVien.danhSachBienDong)}"
+                         class="text-center py-12 space-y-3">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto border border-amber-200">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-700">Chưa có lịch sử tích điểm thưởng</h4>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                            Khi bạn hoàn thành đơn hàng đầu tiên, điểm thưởng sẽ tự động được cộng vào tài khoản của bạn ngay lập tức!
+                        </p>
+                        <a href="/cua-hang" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition">
+                            <i class="fa-solid fa-bag-shopping"></i>Khám phá mua sắm ngay
+                        </a>
+                    </div>
+
+                    <!-- Danh sách các lần biến động điểm -->
+                    <div th:unless="${hoiVien.danhSachBienDong == null or #lists.isEmpty(hoiVien.danhSachBienDong)}"
+                         class="divide-y divide-slate-100">
+                        <div th:each="bd : ${hoiVien.danhSachBienDong}"
+                             class="py-3.5 flex items-center justify-between hover:bg-slate-50/60 px-3 rounded-2xl transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center text-sm font-black flex-shrink-0">
+                                    <i class="fa-solid fa-plus"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800" th:text="${bd.noiDung}">
+                                        Tích lũy điểm thưởng từ đơn hàng #CM-1001
+                                    </h4>
+                                    <p class="text-[11px] text-slate-400 font-mono mt-0.5">
+                                        <i class="fa-regular fa-clock mr-1"></i>
+                                        <span th:text="${bd.ngayTao != null ? #temporals.format(bd.ngayTao, 'dd/MM/yyyy HH:mm:ss') : 'Vừa xong'}">25/10/2026 10:00</span>
+                                        <span th:if="${bd.maDonHangId != null}" class="ml-2 font-semibold text-slate-500" th:text="'(Đơn ID: #' + ${bd.maDonHangId} + ')'">(Đơn ID: #1)</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <span class="text-sm font-black font-mono text-emerald-600"
+                                      th:text="'+' + ${#numbers.formatDecimal(bd.soDiem, 0, 'COMMA', 0, 'POINT')}">
+                                    +4,800
+                                </span>
+                                <span class="text-[10px] text-slate-400 uppercase font-bold block">Điểm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-400 mt-12">
+        <p>&copy; 2026 Simplain Store - Hệ thống Hội viên &amp; Loyalty Tích điểm tự động.</p>
+    </footer>
+
+</body>
+</html>

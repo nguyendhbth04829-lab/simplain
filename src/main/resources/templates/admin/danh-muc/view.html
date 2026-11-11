@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật Danh mục | SIMPLAIN CMS</title>
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('danh-muc')}"></div>
+
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-8 space-y-6">
+        <div class="max-w-3xl mx-auto space-y-6">
+
+            <!-- Thông báo Lỗi nếu có -->
+            <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-2xs">
+                <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                    <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                    <span th:text="${thongBaoLoi}">Dữ liệu chưa hợp lệ!</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Card Form Chỉnh Sửa Danh Mục -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xs border border-slate-200/90 space-y-6">
+                
+                <!-- Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-lg font-bold shadow-xs flex-shrink-0">
+                            <i class="fa-solid fa-folder-tree"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span th:if="${danhMuc.maDanhMucCha == null}"
+                                      class="text-[10px] font-extrabold text-neutral-900 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-layer-group text-[9px]"></i> Cấp 1 &bull; Danh mục Gốc
+                                </span>
+                                <span th:if="${danhMuc.maDanhMucCha != null}"
+                                      class="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-sitemap text-[9px]"></i> Cấp 2 &bull; Danh mục Con
+                                </span>
+                            </div>
+                            <h2 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight mt-1" th:text="'Chỉnh sửa: ' + ${danhMuc.tenDanhMuc}">
+                                Cập nhật Danh mục
+                            </h2>
+                        </div>
+                    </div>
+                    
+                    <a href="/admin/danh-muc/hien-thi" class="btn-outline px-3.5 py-2 rounded-xl text-xs font-bold transition self-start sm:self-auto">
+                        <i class="fa-solid fa-arrow-left mr-1.5"></i>Quay lại danh sách
+                    </a>
+                </div>
+
+                <!-- Breadcrumb Phân cấp (Nếu là danh mục con) -->
+                <div th:if="${danhMuc.maDanhMucCha != null}" class="bg-blue-50/70 border border-blue-200 p-3.5 rounded-2xl flex items-center justify-between text-xs text-blue-900">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-blue-600 text-sm"></i>
+                        <span>
+                            Trực thuộc Danh mục Cha: 
+                            <a th:href="@{/admin/danh-muc/view(id=${danhMuc.maDanhMucCha})}"
+                               class="font-bold underline hover:text-blue-700"
+                               th:text="${danhMuc.tenDanhMucCha != null ? danhMuc.tenDanhMucCha : ('ID #' + danhMuc.maDanhMucCha)}">
+                                Áo Nam
+                            </a>
+                        </span>
+                    </div>
+                    <a th:href="@{/admin/danh-muc/view(id=${danhMuc.maDanhMucCha})}"
+                       class="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
+                        <span>Xem danh mục cha</span>
+                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                </div>
+
+                <form th:object="${danhMuc}" action="/admin/danh-muc/update" method="post" class="space-y-4.5" novalidate>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- ID Danh mục -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mã ID danh mục</label>
+                            <input type="text" th:field="*{id}" readonly class="w-full rounded-xl border border-slate-200 bg-slate-100 text-slate-500 text-xs p-2.5 outline-none cursor-not-allowed font-mono">
+                        </div>
+
+                        <!-- Thứ tự hiển thị -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Thứ tự ưu tiên hiển thị</label>
+                            <input type="number" th:field="*{thuTuHienThi}" min="0" max="9999" class="w-full rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono p-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <span class="error" th:if="${#fields.hasErrors('thuTuHienThi')}" th:errors="*{thuTuHienThi}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Tên danh mục -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên danh mục <span class="text-rose-500 font-bold">*</span></label>
+                        <input type="text" id="tenDanhMucInput" th:field="*{tenDanhMuc}" oninput="tuDongTaoSlugDanhMuc(this.value)" class="w-full rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs p-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="error" th:if="${#fields.hasErrors('tenDanhMuc')}" th:errors="*{tenDanhMuc}"></span>
+                    </div>
+
+                    <!-- Slug -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Đường dẫn Slug (URL) <span class="text-rose-500 font-bold">*</span></label>
+                            <button type="button" onclick="taiLaiSlugTheoTen()" class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i>Tạo lại từ tên
+                            </button>
+                        </div>
+                        <input type="text" id="duongDanSlugInput" th:field="*{duongDanSlug}" class="w-full rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono p-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                    </div>
+
+                    <!-- Danh mục cha -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Danh mục cha (Phân cấp trực thuộc)</label>
+                        <select th:field="*{maDanhMucCha}" class="w-full rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs p-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="">-- Không có (Danh mục gốc cấp 1) --</option>
+                            <option th:each="dm : ${listTatCa}"
+                                    th:value="${dm.id}"
+                                    th:text="${(dm.maDanhMucCha != null ? '↳ ' : '• ') + dm.tenDanhMuc + ' (ID: ' + dm.id + ')'}"
+                                    th:if="${dm.id != danhMuc.id}">
+                            </option>
+                        </select>
+                        <p class="text-[11px] text-slate-400 mt-1">Hệ thống tự động ngăn chặn chọn chính mình hoặc tạo vòng lặp quan hệ cha - con.</p>
+                    </div>
+
+                    <!-- Trạng thái -->
+                    <div class="p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">Trạng thái hoạt động</div>
+                            <div class="text-[10px] text-slate-400">Hiển thị trên menu cửa hàng và cho phép gán sản phẩm</div>
+                        </div>
+                        <div class="flex items-center space-x-4 text-xs font-semibold">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" th:field="*{kichHoat}" value="true" class="text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                                <span class="ml-1.5 text-slate-700">Còn hoạt động</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" th:field="*{kichHoat}" value="false" class="text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                                <span class="ml-1.5 text-slate-700">Tạm ngưng</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="pt-4 flex gap-3 border-t border-slate-100">
+                        <button type="submit" class="flex-1 btn-navy font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Lưu cập nhật</span>
+                        </button>
+                        <a href="/admin/danh-muc/hien-thi" class="flex-1 text-center btn-outline font-semibold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-2xs flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Quay lại</span>
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+
+            <!-- Card Danh Sách Danh Mục Con Trực Thuộc (Nếu có con) -->
+            <div th:if="${danhMucConList != null and !danhMucConList.empty}" class="bg-white p-6 sm:p-7 rounded-3xl shadow-2xs border border-slate-200/90 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold border border-blue-100">
+                            <i class="fa-solid fa-sitemap"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">
+                                Danh mục con trực thuộc (<span th:text="${#lists.size(danhMucConList)}">0</span>)
+                            </h3>
+                            <p class="text-[10px] text-slate-400">Các danh mục con thuộc sự quản lý của danh mục này</p>
+                        </div>
+                    </div>
+                    <a th:href="@{/admin/danh-muc/hien-thi}" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1">
+                        <span>Quản lý trên cây</span>
+                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                                <th class="py-2.5 px-3">Tên danh mục con</th>
+                                <th class="py-2.5 px-3">Đường dẫn Slug</th>
+                                <th class="py-2.5 px-3 text-center">Thứ tự</th>
+                                <th class="py-2.5 px-3 text-center">Trạng thái</th>
+                                <th class="py-2.5 px-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            <tr th:each="con : ${danhMucConList}" class="hover:bg-slate-50/70 transition">
+                                <td class="py-2.5 px-3 font-semibold text-slate-900" th:text="${con.tenDanhMuc}">Áo Polo</td>
+                                <td class="py-2.5 px-3 font-mono text-slate-400 text-[11px]" th:text="'/' + ${con.duongDanSlug}">/ao-polo</td>
+                                <td class="py-2.5 px-3 text-center font-mono" th:text="${con.thuTuHienThi}">0</td>
+                                <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                    <span th:if="${con.kichHoat}" class="status-badge-active text-[10px]">Còn hoạt động</span>
+                                    <span th:unless="${con.kichHoat}" class="status-badge-inactive text-[10px]">Tạm ngưng</span>
+                                </td>
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                    <a th:href="@{/admin/danh-muc/view(id=${con.id})}" class="text-blue-600 hover:text-blue-800 font-bold mr-2">Sửa</a>
+                                    <a th:href="@{/admin/danh-muc/doi-trang-thai(id=${con.id})}" class="text-slate-500 hover:text-slate-800">
+                                        <span th:text="${con.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function tuDongTaoSlugDanhMuc(str) {
+            const slugInput = document.getElementById('duongDanSlugInput');
+            if (!slugInput || slugInput.dataset.daSuaThuCong === 'true') return;
+            slugInput.value = taoSlug(str);
+        }
+
+        function taiLaiSlugTheoTen() {
+            const ten = document.getElementById('tenDanhMucInput')?.value || '';
+            const slugInput = document.getElementById('duongDanSlugInput');
+            if (slugInput) {
+                slugInput.dataset.daSuaThuCong = 'false';
+                slugInput.value = taoSlug(ten);
+            }
+        }
+
+        function taoSlug(str) {
+            return str.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+        }
+
+        document.getElementById('duongDanSlugInput')?.addEventListener('input', function() {
+            this.dataset.daSuaThuCong = 'true';
+        });
+    </script>
+
+</body>
+</html>

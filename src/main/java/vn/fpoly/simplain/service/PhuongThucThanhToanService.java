@@ -83,20 +83,13 @@ public class PhuongThucThanhToanService {
     }
 
     /**
-     * Lấy danh sách phân trang có tìm kiếm và bộ lọc đa tiêu chí (loại cổng, từ khóa, hình thức, trạng thái).
+     * Lấy danh sách phân trang có tìm kiếm và bộ lọc.
      */
     @Transactional(readOnly = true)
     public Page<PhuongThucThanhToan> layDanhSachPhanTrang(
-            String tuKhoa, String loaiCong, Boolean laTrucTuyen, Boolean kichHoat, Pageable pageable) {
-        String keyword = (tuKhoa != null && !tuKhoa.trim().isEmpty()) ? tuKhoa.trim() : null;
-        String provider = (loaiCong != null && !loaiCong.trim().isEmpty()) ? loaiCong.trim() : null;
-        return repository.timKiemPhanTrang(keyword, provider, laTrucTuyen, kichHoat, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<PhuongThucThanhToan> layDanhSachPhanTrang(
             String tuKhoa, Boolean laTrucTuyen, Boolean kichHoat, Pageable pageable) {
-        return layDanhSachPhanTrang(tuKhoa, null, laTrucTuyen, kichHoat, pageable);
+        String keyword = (tuKhoa != null && !tuKhoa.trim().isEmpty()) ? tuKhoa.trim() : null;
+        return repository.timKiemPhanTrang(keyword, laTrucTuyen, kichHoat, pageable);
     }
 
     /**
@@ -128,93 +121,6 @@ public class PhuongThucThanhToanService {
     }
 
     /**
-     * Xác thực dữ liệu cấu hình chuyên sâu theo từng loại cổng thanh toán (US18).
-     */
-    public void validateCauHinhTheoLoaiCong(PhuongThucThanhToanRequest request) {
-        if (request == null) return;
-        String loai = request.getLoaiCong() != null ? request.getLoaiCong().trim().toUpperCase() : "KHAC";
-
-        switch (loai) {
-            case "VNPAY" -> {
-                if (request.getVnpTmnCode() == null || request.getVnpTmnCode().trim().length() < 3) {
-                    throw new IllegalArgumentException("Mã TMN Code của VNPay không được để trống (tối thiểu 3 ký tự)!");
-                }
-                if (request.getVnpHashSecret() == null || request.getVnpHashSecret().trim().length() < 8) {
-                    throw new IllegalArgumentException("Chuỗi bí mật Hash Secret của VNPay không được để trống (tối thiểu 8 ký tự)!");
-                }
-                if (request.getVnpUrl() != null && !request.getVnpUrl().isBlank()
-                        && !request.getVnpUrl().startsWith("http://") && !request.getVnpUrl().startsWith("https://")) {
-                    throw new IllegalArgumentException("Địa chỉ URL cổng VNPay phải bắt đầu bằng http:// hoặc https://");
-                }
-            }
-            case "MOMO" -> {
-                if (request.getMomoPartnerCode() == null || request.getMomoPartnerCode().trim().isBlank()) {
-                    throw new IllegalArgumentException("Mã đối tác (Partner Code) của Ví MoMo không được để trống!");
-                }
-                if (request.getMomoAccessKey() == null || request.getMomoAccessKey().trim().isBlank()) {
-                    throw new IllegalArgumentException("Khóa truy cập (Access Key) của Ví MoMo không được để trống!");
-                }
-                if (request.getMomoSecretKey() == null || request.getMomoSecretKey().trim().isBlank()) {
-                    throw new IllegalArgumentException("Khóa bảo mật (Secret Key) của Ví MoMo không được để trống!");
-                }
-            }
-            case "VIETQR" -> {
-                if (request.getSoTaiKhoan() == null || request.getSoTaiKhoan().trim().isBlank()) {
-                    throw new IllegalArgumentException("Số tài khoản nhận tiền qua VietQR không được để trống!");
-                }
-                String stk = request.getSoTaiKhoan().trim();
-                if (!stk.matches("^[0-9A-Za-z]{6,25}$")) {
-                    throw new IllegalArgumentException("Số tài khoản ngân hàng không hợp lệ (từ 6 đến 25 ký tự)!");
-                }
-                if (request.getTenChuTaiKhoan() == null || request.getTenChuTaiKhoan().trim().isBlank()) {
-                    throw new IllegalArgumentException("Tên chủ tài khoản thụ hưởng không được để trống!");
-                }
-                if (request.getMaNganHang() == null || request.getMaNganHang().trim().isBlank()) {
-                    throw new IllegalArgumentException("Vui lòng chọn ngân hàng thụ hưởng cho VietQR!");
-                }
-            }
-            case "COD" -> {
-                if (request.getPhiThuHo() != null && request.getPhiThuHo().compareTo(java.math.BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Phí thu hộ COD không thể là số âm!");
-                }
-                if (request.getHanMucCodToiDa() != null && request.getHanMucCodToiDa().compareTo(java.math.BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Hạn mức tối đa cho phép ship COD không thể là số âm!");
-                }
-            }
-            case "ZALOPAY" -> {
-                if (request.getZaloAppId() == null || request.getZaloAppId().trim().isBlank()) {
-                    throw new IllegalArgumentException("App ID của ZaloPay không được để trống!");
-                }
-                if (request.getZaloKey1() == null || request.getZaloKey1().trim().isBlank()) {
-                    throw new IllegalArgumentException("Key 1 (Mac Key) của ZaloPay không được để trống!");
-                }
-            }
-            default -> {}
-        }
-    }
-
-    /**
-     * Lấy thông tin chi tiết dưới dạng DTO có giải mã cấu hình JSON.
-     */
-    @Transactional(readOnly = true)
-    public PhuongThucThanhToanRequest layDtoTheoId(Long id) {
-        PhuongThucThanhToan entity = layTheoId(id);
-        PhuongThucThanhToanRequest dto = PhuongThucThanhToanRequest.builder()
-                .id(entity.getId())
-                .maPhuongThuc(entity.getMaPhuongThuc())
-                .tenPhuongThuc(entity.getTenPhuongThuc())
-                .loaiCong(entity.getLoaiCong() != null ? entity.getLoaiCong() : "KHAC")
-                .laTrucTuyen(entity.getLaTrucTuyen())
-                .kichHoat(entity.getKichHoat())
-                .moTa(entity.getMoTa())
-                .bieuTuong(entity.getBieuTuong())
-                .cauHinh(entity.getCauHinh())
-                .build();
-        dto.giaiMaCauHinhJson(entity.getCauHinh(), entity.getLoaiCong());
-        return dto;
-    }
-
-    /**
      * Thêm mới phương thức thanh toán (C trong CRUD).
      */
     @Transactional
@@ -231,18 +137,10 @@ public class PhuongThucThanhToanService {
             throw new IllegalArgumentException("Dữ liệu phương thức thanh toán không được để trống!");
         }
 
-        validateCauHinhTheoLoaiCong(request);
-
         String maChuan = request.getMaPhuongThuc() != null ? request.getMaPhuongThuc().trim().toUpperCase() : "";
         if (repository.existsByMaPhuongThucIgnoreCase(maChuan)) {
             throw new IllegalArgumentException("Mã phương thức thanh toán [" + maChuan + "] đã tồn tại trên hệ thống!");
         }
-
-        String loaiCong = request.getLoaiCong() != null && !request.getLoaiCong().isBlank()
-                ? request.getLoaiCong().trim().toUpperCase()
-                : "KHAC";
-
-        String cauHinhJson = request.dongGoiCauHinhJson();
 
         String bieuTuong = null;
         if (fileBieuTuong != null && !fileBieuTuong.isEmpty()) {
@@ -258,12 +156,11 @@ public class PhuongThucThanhToanService {
         PhuongThucThanhToan entity = PhuongThucThanhToan.builder()
                 .maPhuongThuc(maChuan)
                 .tenPhuongThuc(request.getTenPhuongThuc().trim())
-                .loaiCong(loaiCong)
                 .laTrucTuyen(Boolean.TRUE.equals(request.getLaTrucTuyen()))
                 .kichHoat(request.getKichHoat() == null || request.getKichHoat())
                 .moTa(request.getMoTa() != null ? request.getMoTa().trim() : null)
                 .bieuTuong(bieuTuong != null ? bieuTuong.trim() : null)
-                .cauHinh(cauHinhJson)
+                .cauHinh(request.getCauHinh() != null ? request.getCauHinh().trim() : null)
                 .build();
 
         return repository.save(entity);
@@ -284,26 +181,13 @@ public class PhuongThucThanhToanService {
     public PhuongThucThanhToan sua(Long id, PhuongThucThanhToanRequest request, MultipartFile fileBieuTuong) {
         PhuongThucThanhToan entity = layTheoId(id);
 
-        if (request == null) {
-            throw new IllegalArgumentException("Dữ liệu cập nhật không được để trống!");
-        }
-
-        validateCauHinhTheoLoaiCong(request);
-
         String maChuan = request.getMaPhuongThuc() != null ? request.getMaPhuongThuc().trim().toUpperCase() : "";
         if (repository.existsByMaPhuongThucIgnoreCaseAndIdNot(maChuan, id)) {
             throw new IllegalArgumentException("Mã phương thức thanh toán [" + maChuan + "] đã được sử dụng bởi cổng khác!");
         }
 
-        String loaiCong = request.getLoaiCong() != null && !request.getLoaiCong().isBlank()
-                ? request.getLoaiCong().trim().toUpperCase()
-                : (entity.getLoaiCong() != null ? entity.getLoaiCong() : "KHAC");
-
-        String cauHinhJson = request.dongGoiCauHinhJson();
-
         entity.setMaPhuongThuc(maChuan);
         entity.setTenPhuongThuc(request.getTenPhuongThuc().trim());
-        entity.setLoaiCong(loaiCong);
         entity.setLaTrucTuyen(Boolean.TRUE.equals(request.getLaTrucTuyen()));
         if (request.getKichHoat() != null) {
             entity.setKichHoat(request.getKichHoat());
@@ -317,7 +201,7 @@ public class PhuongThucThanhToanService {
             entity.setBieuTuong(request.getBieuTuong().trim());
         }
 
-        entity.setCauHinh(cauHinhJson);
+        entity.setCauHinh(request.getCauHinh() != null ? request.getCauHinh().trim() : null);
 
         return repository.save(entity);
     }

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Bộ sưu tập &amp; Banner | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('bo-suu-tap')}"></div>
+
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title + Nút "+ Thêm bộ sưu tập" -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-lg border border-neutral-800 shadow-xs">
+                    <i class="fa-solid fa-images"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý Bộ sưu tập &amp; Banner</span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Thiết lập các bộ sưu tập chiến dịch thời trang, tải ảnh Banner và gán sản phẩm cho khách xem &amp; mua</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+                <a href="/bo-suu-tap" target="_blank"
+                   class="btn-outline text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-blue-600"></i>
+                    <span>Xem trang khách</span>
+                </a>
+                <button type="button"
+                        onclick="moModal('modalThemBoSuuTap')"
+                        class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>+ Thêm bộ sưu tập</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. THỐNG KÊ TỔNG QUAN (METRIC CARDS) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" th:if="${thongKe != null}">
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-images"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tổng bộ sưu tập</div>
+                    <div class="text-xl font-black text-slate-900" th:text="${thongKe['tongSo']}">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Đang hoạt động</div>
+                    <div class="text-xl font-black text-emerald-600" th:text="${thongKe['soDangHoatDong']}">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-panorama"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Đã có ảnh Banner</div>
+                    <div class="text-xl font-black text-amber-600" th:text="${thongKe['soCoBanner']}">0</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base flex-shrink-0">
+                    <i class="fa-solid fa-shirt"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Sản phẩm trong BST</div>
+                    <div class="text-xl font-black text-blue-600" th:text="${thongKe['tongSanPhamTrongBST']}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BỘ LỌC TÌM KIẾM -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+            
+            <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleBoLoc()">
+                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <span>Bộ lọc tìm kiếm</span>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i id="boLocIcon" class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+            </div>
+
+            <form id="boLocContent" action="/admin/bo-suu-tap/hien-thi" method="get" class="space-y-4 pt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tìm kiếm</label>
+                        <input type="text" name="ten" th:value="${ten}"
+                               placeholder="Tên bộ sưu tập hoặc slug..."
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Trạng thái</label>
+                        <select name="kichHoat" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true" th:selected="${kichHoatLoc != null and kichHoatLoc == true}">Còn hoạt động</option>
+                            <option value="false" th:selected="${kichHoatLoc != null and kichHoatLoc == false}">Tạm ngưng</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end gap-2">
+                        <button type="submit"
+                                class="btn-navy font-bold text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer transition">
+                            <i class="fa-solid fa-filter text-xs"></i>
+                            <span>Lọc</span>
+                        </button>
+                        <a href="/admin/bo-suu-tap/hien-thi"
+                           class="btn-outline font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-xs transition">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                            <span>Bỏ lọc</span>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+
+        <!-- Thanh Thao Tác Hàng Loạt (Bulk Action Bar) -->
+        <form id="formThaoTacHangLoat" method="post" th:action="@{/admin/bo-suu-tap/thao-tac-hang-loat}">
+            <div id="bulkActionBar" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-800">
+                        Đã chọn <span id="soLuongDaChon" class="font-black text-blue-600">0</span> bộ sưu tập
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" name="hanhDong" value="KICH_HOAT"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn KÍCH HOẠT tất cả các bộ sưu tập đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Chuyển thành: Còn hoạt động</span>
+                    </button>
+                    <button type="submit" name="hanhDong" value="NGUNG_HOAT_DONG"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn ẨN tất cả các bộ sưu tập đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-pause"></i>
+                        <span>Chuyển thành: Đã ẩn</span>
+                    </button>
+                    <button type="button" onclick="boChonTatCa()"
+                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 text-xs font-bold transition cursor-pointer">
+                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ chọn
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. DATA TABLE CARD: Bảng dữ liệu Bộ sưu tập -->
+            <div class="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden">
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-neutral-200 bg-neutral-50 text-neutral-600 font-bold uppercase text-[11px] tracking-wider">
+                                <th class="py-3.5 px-3 w-10 text-center">
+                                    <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)"
+                                           class="rounded border-neutral-300 text-black focus:ring-black cursor-pointer"
+                                           title="Chọn tất cả trên trang này">
+                                </th>
+                                <th class="py-3.5 px-2 w-8 text-center text-neutral-400">⠿</th>
+                                <th class="py-3.5 px-4 font-bold">Bộ sưu tập &amp; Slug</th>
+                                <th class="py-3.5 px-4">Hình Banner</th>
+                                <th class="py-3.5 px-4 text-center">Sản phẩm</th>
+                                <th class="py-3.5 px-4 text-center">Trạng thái</th>
+                                <th class="py-3.5 px-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-neutral-100 text-neutral-700">
+                            <tr th:each="bst : ${listBoSuuTap}" class="hover:bg-neutral-50 transition group items-center">
+                                
+                                <!-- Checkbox -->
+                                <td class="py-3.5 px-3 text-center">
+                                    <input type="checkbox" name="ids" th:value="${bst.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                           class="item-checkbox rounded border-neutral-300 text-black focus:ring-black cursor-pointer">
+                                </td>
+
+                                <!-- Drag handle -->
+                                <td class="py-3.5 px-2 text-center text-neutral-300 group-hover:text-neutral-600 cursor-grab">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i><i class="fa-solid fa-ellipsis-vertical"></i>
+                                </td>
+
+                                <!-- Cột Tên BST -->
+                                <td class="py-3.5 px-4 max-w-sm">
+                                    <div class="font-bold text-neutral-900 truncate hover:text-black transition text-sm" th:text="${bst.tenBoSuuTap}">
+                                        Bộ Sưu Tập Chạy Bộ Pro
+                                    </div>
+                                    <div class="text-[11px] text-neutral-400 font-mono mt-0.5 truncate flex items-center gap-1">
+                                        <i class="fa-solid fa-link text-[10px]"></i>
+                                        <span th:text="'/' + ${bst.duongDanSlug}">/bst-chay-bo-pro</span>
+                                    </div>
+                                </td>
+
+                                <!-- Cột Hình Banner -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <div th:if="${bst.hinhBannerUrl != null and bst.hinhBannerUrl != ''}" class="flex items-center gap-3">
+                                        <div class="h-12 w-24 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100 flex-shrink-0 shadow-2xs">
+                                            <img th:src="${bst.hinhBannerUrl}" alt="Banner" class="w-full h-full object-cover">
+                                        </div>
+                                        <span class="border border-neutral-200 bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded text-[10px] font-mono">Banner sẵn sàng</span>
+                                    </div>
+                                    <span th:unless="${bst.hinhBannerUrl != null and bst.hinhBannerUrl != ''}" class="text-neutral-400 text-xs italic">
+                                        Chưa tải ảnh banner
+                                    </span>
+                                </td>
+
+                                <!-- Cột Số lượng Sản phẩm -->
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <a th:href="@{/admin/bo-suu-tap/view(id=${bst.id})}"
+                                       class="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold text-[11px] hover:bg-blue-100 transition"
+                                       title="Xem và quản lý sản phẩm trong BST">
+                                        <i class="fa-solid fa-shirt text-[9px]"></i>
+                                        <span th:text="${bst.soSanPham} + ' SP'">0 SP</span>
+                                    </a>
+                                </td>
+
+                                <!-- Cột Trạng thái -->
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <span th:if="${bst.kichHoat}" class="status-badge-active">
+                                        <span class="pulse-dot bg-emerald-500"></span>
+                                        Còn hoạt động
+                                    </span>
+                                    <span th:unless="${bst.kichHoat}" class="status-badge-inactive">
+                                        <span class="pulse-dot bg-neutral-400"></span>
+                                        Tạm ngưng
+                                    </span>
+                                </td>
+
+                                <!-- Cột Thao tác -->
+                                <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1.5">
+                                        <!-- Quản lý Sản phẩm trong BST -->
+                                        <a th:href="@{/admin/bo-suu-tap/view(id=${bst.id})}"
+                                           class="btn-navy px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                           title="Quản lý sản phẩm trong BST">
+                                            <i class="fa-solid fa-boxes-stacked text-[10px]"></i>
+                                            <span>Sản phẩm</span>
+                                        </a>
+
+                                        <!-- Xem trang khách -->
+                                        <a th:href="@{/bo-suu-tap/{slug}(slug=${bst.duongDanSlug})}" target="_blank"
+                                           class="btn-outline px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                           title="Mở trang khách xem bộ sưu tập">
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-blue-600"></i>
+                                            <span class="hidden sm:inline">Xem web</span>
+                                        </a>
+
+                                        <!-- Chỉnh sửa -->
+                                        <a th:href="@{/admin/bo-suu-tap/view(id=${bst.id})}"
+                                           class="btn-outline px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition"
+                                           title="Chỉnh sửa thông tin BST">
+                                            <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                            <span>Sửa</span>
+                                        </a>
+
+                                        <!-- Đổi trạng thái -->
+                                        <a th:href="@{/admin/bo-suu-tap/doi-trang-thai(id=${bst.id})}"
+                                           th:class="${bst.kichHoat} ? 'btn-toggle-inactive' : 'btn-toggle-active'"
+                                           th:title="${bst.kichHoat} ? 'Tạm ngưng hoạt động' : 'Kích hoạt bộ sưu tập'"
+                                           class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition">
+                                            <i th:class="${bst.kichHoat} ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]'"></i>
+                                            <span th:text="${bst.kichHoat} ? 'Tạm ngưng' : 'Kích hoạt'"></span>
+                                        </a>
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                            <tr th:if="${listBoSuuTap.empty}">
+                                <td colspan="7" class="py-12 text-center text-slate-400">
+                                    <i class="fa-solid fa-images text-3xl mb-2 block text-slate-300"></i>
+                                    Không có bộ sưu tập nào. Bấm <strong>+ Thêm bộ sưu tập</strong> ở trên để tạo mới!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-5 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500" th:if="${totalPages > 1}">
+                    <div>
+                        Trang <span class="font-bold text-slate-900" th:text="${page + 1}">1</span> / <span th:text="${totalPages}">1</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <a th:if="${page > 0}"
+                           th:href="@{/admin/bo-suu-tap/hien-thi(page=${page - 1}, ten=${ten}, kichHoat=${kichHoatLoc})}"
+                           class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                            &larr; Trước
+                        </a>
+                        <a th:if="${page < totalPages - 1}"
+                           th:href="@{/admin/bo-suu-tap/hien-thi(page=${page + 1}, ten=${ten}, kichHoat=${kichHoatLoc})}"
+                           class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                            Sau &rarr;
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- =========================================================================
+         5. MODAL FORM: THÊM MỚI BỘ SƯU TẬP
+         ========================================================================= -->
+    <div id="modalThemBoSuuTap"
+         data-modal
+         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full my-8 overflow-hidden border border-slate-200/90 flex flex-col">
+            
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">Thêm mới bộ sưu tập</h3>
+                        <p class="text-[11px] text-slate-500">Tạo chủ đề phối đồ chiến dịch &amp; tải ảnh Banner tiếp thị</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModal('modalThemBoSuuTap')"
+                        class="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition focus:outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form th:object="${boSuuTap}" action="/admin/bo-suu-tap/add" method="post" enctype="multipart/form-data" class="space-y-4 p-6" novalidate>
+                
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên bộ sưu tập <span class="text-rose-500 font-bold">*</span></label>
+                    <input type="text" id="tenBoSuuTapInput" th:field="*{tenBoSuuTap}" oninput="tuDongTaoSlugBoSuuTap(this.value)"
+                           placeholder="VD: BST Thu Đông Active 2026"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('tenBoSuuTap')}" th:errors="*{tenBoSuuTap}"></span>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Đường dẫn Slug (URL) <span class="text-rose-500 font-bold">*</span></label>
+                        <span class="text-[10px] text-slate-400">Tự động sinh từ tên</span>
+                    </div>
+                    <input type="text" id="duongDanSlugBstInput" th:field="*{duongDanSlug}"
+                           placeholder="VD: bst-thu-dong-active-2026"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Chọn ảnh Banner từ máy tính (Tối đa 5MB)</label>
+                    <input type="file" id="fileBannerInput" name="fileBanner" accept="image/*"
+                           onchange="xemTruocBannerModal(this)"
+                           class="w-full text-xs text-slate-700 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-blue-600 cursor-pointer bg-slate-50/60 p-1.5 rounded-xl border border-slate-300 transition">
+                    <div id="khungPreviewBannerModal" class="hidden mt-2">
+                        <img id="imgPreviewBannerModal" src="#" alt="Preview Banner" class="w-full h-28 object-cover rounded-xl border border-slate-200 shadow-2xs">
+                    </div>
+                </div>
+
+                <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-50">
+                    <div>
+                        <div class="text-xs font-bold text-slate-800">Trạng thái hoạt động</div>
+                        <div class="text-[10px] text-slate-400">Cho phép khách xem trên Storefront và gán sản phẩm</div>
+                    </div>
+                    <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+                </label>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button"
+                            onclick="dongModal('modalThemBoSuuTap')"
+                            class="btn-outline font-semibold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="btn-navy font-bold text-xs px-6 py-2.5 rounded-xl shadow-xs hover:shadow flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Lưu bộ sưu tập</span>
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Xử lý Thao tác hàng loạt (Bulk Actions)
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            const count = checkedBoxes.length;
+            const bar = document.getElementById('bulkActionBar');
+            const countText = document.getElementById('soLuongDaChon');
+            const masterCheck = document.getElementById('checkAll');
+
+            if (countText) countText.innerText = count;
+
+            if (count > 0) {
+                if (bar) bar.classList.remove('hidden');
+            } else {
+                if (bar) bar.classList.add('hidden');
+            }
+
+            if (masterCheck && checkboxes.length > 0) {
+                masterCheck.checked = (count === checkboxes.length);
+                masterCheck.indeterminate = (count > 0 && count < checkboxes.length);
+            }
+        }
+
+        function boChonTatCa() {
+            const masterCheck = document.getElementById('checkAll');
+            if (masterCheck) masterCheck.checked = false;
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function xacNhanThaoTac(msg) {
+            const count = document.querySelectorAll('.item-checkbox:checked').length;
+            if (count === 0) {
+                alert('Vui lòng tích chọn ít nhất một bộ sưu tập!');
+                return false;
+            }
+            return confirm(msg);
+        }
+
+        function tuDongTaoSlugBoSuuTap(str) {
+            const slugInput = document.getElementById('duongDanSlugBstInput');
+            if (!slugInput || slugInput.dataset.daSuaThuCong === 'true') return;
+            const slug = str.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+            slugInput.value = slug;
+        }
+        document.getElementById('duongDanSlugBstInput')?.addEventListener('input', function() {
+            this.dataset.daSuaThuCong = 'true';
+        });
+
+        function xemTruocBannerModal(input) {
+            const k = document.getElementById('khungPreviewBannerModal');
+            const img = document.getElementById('imgPreviewBannerModal');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    img.src = e.target.result;
+                    k.classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                k.classList.add('hidden');
+            }
+        }
+
+        function toggleBoLoc() {
+            const content = document.getElementById('boLocContent');
+            const icon = document.getElementById('boLocIcon');
+            if (!content) return;
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-up text-xs';
+            } else {
+                content.classList.add('hidden');
+                if (icon) icon.className = 'fa-solid fa-chevron-down text-xs';
+            }
+        }
+    </script>
+
+    <script th:if="${thongBaoLoi != null}">
+        window.addEventListener('DOMContentLoaded', function() {
+            moModal('modalThemBoSuuTap');
+        });
+    </script>
+
+</body>
+</html>

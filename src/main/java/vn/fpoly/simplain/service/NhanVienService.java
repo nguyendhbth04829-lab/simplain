@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.fpoly.simplain.dto.CapNhatHoSoNhanVienRequest;
 import vn.fpoly.simplain.dto.DangNhapNhanVienRequest;
 import vn.fpoly.simplain.dto.NhanVienRequest;
 import vn.fpoly.simplain.dto.XacThucNhanVienResponse;
@@ -457,82 +456,6 @@ public class NhanVienService {
         }
 
         nhanVienRepository.delete(nhanVien);
-    }
-
-    /**
-     * Cập nhật thông tin hồ sơ cá nhân của nhân sự (Họ tên, SĐT, Email, Đổi mật khẩu).
-     * Áp dụng chung cho tất cả các vai trò (ADMIN, CSKH, BAN_HANG, v.v.).
-     */
-    @Transactional
-    public XacThucNhanVienResponse capNhatHoSoCaNhan(Long nhanVienId, CapNhatHoSoNhanVienRequest request) {
-        if (nhanVienId == null) {
-            throw new IllegalArgumentException("Không xác định được danh tính nhân sự hiện tại");
-        }
-        NhanVien nhanVien = nhanVienRepository.findById(nhanVienId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin nhân sự với ID: " + nhanVienId));
-
-        if (request.getHoTen() == null || request.getHoTen().trim().isBlank()) {
-            throw new IllegalArgumentException("Họ và tên không được để trống");
-        }
-
-        // 1. Kiểm tra trùng lặp email (ngoại trừ ID chính mình)
-        String email = (request.getEmail() != null && !request.getEmail().trim().isEmpty()) ? request.getEmail().trim() : null;
-        if (email != null && nhanVienRepository.existsByEmailAndIdNot(email, nhanVienId)) {
-            throw new IllegalArgumentException("Email '" + email + "' đã được sử dụng bởi nhân viên khác");
-        }
-
-        // 2. Kiểm tra trùng lặp số điện thoại (ngoại trừ ID chính mình)
-        String sdt = (request.getSoDienThoai() != null && !request.getSoDienThoai().trim().isEmpty())
-                ? request.getSoDienThoai().replaceAll("[\\s.-]", "").trim()
-                : null;
-        if (sdt != null && nhanVienRepository.existsBySoDienThoaiAndIdNot(sdt, nhanVienId)) {
-            throw new IllegalArgumentException("Số điện thoại '" + sdt + "' đã được sử dụng bởi nhân viên khác");
-        }
-
-        // 3. Đổi mật khẩu nếu có nhập mật khẩu mới
-        if (request.getMatKhauMoi() != null && !request.getMatKhauMoi().trim().isEmpty()) {
-            String passMoi = request.getMatKhauMoi().trim();
-            if (passMoi.length() < 6) {
-                throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 6 ký tự");
-            }
-            if (request.getXacNhanMatKhau() != null && !passMoi.equals(request.getXacNhanMatKhau().trim())) {
-                throw new IllegalArgumentException("Mật khẩu mới và xác nhận mật khẩu không trùng khớp");
-            }
-            nhanVien.setMatKhauHash(passwordEncoder.encode(passMoi));
-        }
-
-        nhanVien.setHoTen(request.getHoTen().trim());
-        nhanVien.setEmail(email);
-        nhanVien.setSoDienThoai(sdt);
-        nhanVien = nhanVienRepository.save(nhanVien);
-
-        // Tạo JWT Token mới phản ánh thông tin cập nhật
-        String newToken = jwtUtil.generateToken(nhanVien);
-        VaiTro vaiTro = nhanVien.getVaiTro();
-        List<String> danhSachQuyen = vaiTro != null ? layDanhSachQuyenTheoVaiTro(vaiTro) : List.of();
-
-        return XacThucNhanVienResponse.builder()
-                .token(newToken)
-                .loaiToken("Bearer")
-                .id(nhanVien.getId())
-                .maNhanVien(nhanVien.getMaNhanVien())
-                .hoTen(nhanVien.getHoTen())
-                .tenDangNhap(nhanVien.getTenDangNhap())
-                .maVaiTro(vaiTro != null ? vaiTro.getMaVaiTro() : "ADMIN")
-                .tenVaiTro(vaiTro != null ? vaiTro.getTenVaiTro() : "Quản trị viên")
-                .email(nhanVien.getEmail())
-                .soDienThoai(nhanVien.getSoDienThoai())
-                .trangThai(nhanVien.getTrangThai())
-                .danhSachQuyen(danhSachQuyen)
-                .thongBao("Cập nhật thông tin cá nhân thành công!")
-                .build();
-    }
-
-    /**
-     * Lấy tài khoản nhân viên đầu tiên trong database làm fallback khi cần.
-     */
-    public NhanVien layNhanVienDauTien() {
-        return nhanVienRepository.findAll().stream().findFirst().orElse(null);
     }
 
     /**

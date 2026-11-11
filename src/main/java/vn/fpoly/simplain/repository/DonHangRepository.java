@@ -43,12 +43,11 @@ public interface DonHangRepository extends JpaRepository<DonHang, Long> {
                                        @Param("ketThuc") LocalDateTime ketThuc);
 
     /**
-     * Tính tổng doanh thu thực tế trong khoảng thời gian (Chỉ tính các đơn giao thành công HOAN_THANH hoặc DA_DOI_HANG).
-     * Loại trừ các đơn chưa hoàn thành (CHO_XAC_NHAN, DANG_XU_LY, DANG_GIAO), đơn hủy (DA_HUY) và đơn đã hoàn tiền (DA_TRA_HANG).
+     * Tính tổng doanh thu trong khoảng thời gian (Loại trừ các đơn hàng đã hủy DA_HUY).
      */
     @Query("SELECT COALESCE(SUM(d.tongThanhToan), 0) FROM DonHang d " +
            "WHERE d.ngayTao BETWEEN :batDau AND :ketThuc " +
-           "AND d.trangThaiDonHang.maTrangThai IN ('HOAN_THANH', 'DA_DOI_HANG')")
+           "AND d.trangThaiDonHang.maTrangThai <> 'DA_HUY'")
     BigDecimal tinhDoanhThuTrongKhoang(@Param("batDau") LocalDateTime batDau,
                                        @Param("ketThuc") LocalDateTime ketThuc);
 
@@ -62,12 +61,10 @@ public interface DonHangRepository extends JpaRepository<DonHang, Long> {
                                                 @Param("ketThuc") LocalDateTime ketThuc);
 
     /**
-     * Tính tổng doanh thu toàn hệ thống của các đơn đã giao thành công (HOAN_THANH hoặc DA_DOI_HANG).
-     * Khi đơn hàng giao thành công (HOAN_THANH) -> Doanh thu được cộng.
-     * Khi khách trả hàng hoàn tiền xong (DA_TRA_HANG) -> Doanh thu tự động giảm tương ứng.
+     * Tính tổng doanh thu toàn hệ thống (Loại trừ đơn đã hủy DA_HUY).
      */
     @Query("SELECT COALESCE(SUM(d.tongThanhToan), 0) FROM DonHang d " +
-           "WHERE d.trangThaiDonHang.maTrangThai IN ('HOAN_THANH', 'DA_DOI_HANG')")
+           "WHERE d.trangThaiDonHang.maTrangThai <> 'DA_HUY'")
     BigDecimal tinhTongDoanhThuToanHeThong();
 
     /**
@@ -115,7 +112,7 @@ public interface DonHangRepository extends JpaRepository<DonHang, Long> {
            "     LOWER(d.tenNguoiNhan) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR " +
            "     d.soDienThoaiNhan LIKE CONCAT('%', :tuKhoa, '%') OR " +
            "     LOWER(d.maVanDon) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) " +
-           "ORDER BY d.id DESC, d.ngayTao DESC")
+           "ORDER BY d.ngayTao DESC")
     org.springframework.data.domain.Page<DonHang> timKiemDonHangCuaKhachHang(
             @Param("khachHangId") Long khachHangId,
             @Param("soDienThoai") String soDienThoai,

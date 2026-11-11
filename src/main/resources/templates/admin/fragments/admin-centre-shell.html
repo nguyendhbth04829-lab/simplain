@@ -1,0 +1,503 @@
+<th:block th:fragment="styles">
+    <style>
+        :root {
+            --cf-bg: #f9fafb;
+            --cf-white: #ffffff;
+            --cf-border: #eaedf0;
+            --cf-border-dark: #d1d5db;
+            --cf-text-primary: #111827;
+            --cf-text-secondary: #4b5563;
+            --cf-text-muted: #6b7280;
+            --cf-text-faint: #9ca3af;
+            --cf-blue: #0051c3;
+            --cf-blue-hover: #00409a;
+            --cf-blue-soft: #eff6ff;
+            --cf-blue-border: #bfdbfe;
+            --cf-green: #059669;
+            --cf-green-soft: #ecfdf5;
+            --cf-green-border: #a7f3d0;
+            --cf-radius: 6px;
+            --cf-radius-lg: 8px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'Roboto Mono', Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* KHÓA CHẶT 100VH - TUYỆT ĐỐI KHÔNG CÓ SCROLLBAR NGOÀI CỬA SỔ TRÌNH DUYỆT */
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--cf-bg);
+            color: var(--cf-text-primary);
+            font-family: var(--font-sans);
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        button, input, select, textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* 1. KHUNG APP TOÀN MÀN HÌNH CHUẨN CLOUDFLARE DASHBOARD */
+        .cf-shell {
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOPBAR TOÀN CỤC CHUẨN SIMPLAIN */
+        .cf-header {
+            height: 48px;
+            min-height: 48px;
+            background: var(--cf-white);
+            border-bottom: 1px solid var(--cf-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .cf-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .simplain-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .simplain-badge {
+            width: 26px;
+            height: 26px;
+            border-radius: var(--cf-radius);
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 13px;
+            display: grid;
+            place-items: center;
+            letter-spacing: -0.03em;
+        }
+
+        .simplain-name {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            color: var(--cf-text-primary);
+        }
+
+        .simplain-name span {
+            color: var(--cf-blue);
+        }
+
+        .cf-account-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+            border: 1px solid var(--cf-border);
+            background: #fcfdfe;
+        }
+
+        .cf-header-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cf-header-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+            background: transparent;
+            border: none;
+            transition: all 0.12s ease;
+        }
+
+        .cf-header-link:hover {
+            background: #f3f4f6;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-admin-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #334155;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* 2. BỐ CỤC SIDEBAR + VÙNG LÀM VIỆC (KHÔNG BỊ TRÀN VIEWPORT) */
+        .cf-layout {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* CỘT ĐIỀU HƯỚNG TRÁI SIMPLAIN */
+        .cf-sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: var(--cf-white);
+            border-right: 1px solid var(--cf-border);
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 14px 8px;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .cf-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .cf-sidebar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+
+        .cf-nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cf-nav-group-title {
+            padding: 4px 10px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--cf-text-faint);
+        }
+
+        .cf-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cf-text-secondary);
+            transition: all 0.12s ease;
+        }
+
+        .cf-nav-item:hover {
+            background: #f3f4f6;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-nav-item.active {
+            background: var(--cf-blue-soft);
+            color: var(--cf-blue);
+            font-weight: 600;
+        }
+
+        .cf-nav-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cf-nav-item-left svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .cf-nav-chevron {
+            font-size: 9px;
+            color: var(--cf-text-faint);
+        }
+
+        .cf-nav-sub-list {
+            display: flex;
+            flex-direction: column;
+            padding-left: 24px;
+            gap: 2px;
+            margin-top: 2px;
+        }
+
+        .cf-nav-sub-item {
+            padding: 5px 10px;
+            border-radius: var(--cf-radius);
+            font-size: 12px;
+            color: var(--cf-text-secondary);
+            font-weight: 500;
+            display: block;
+        }
+
+        .cf-nav-sub-item:hover {
+            background: #f3f4f6;
+            color: var(--cf-text-primary);
+        }
+
+        .cf-nav-sub-item.active {
+            color: var(--cf-blue);
+            font-weight: 600;
+            background: var(--cf-blue-soft);
+        }
+
+        /* VÙNG NỘI DUNG CHÍNH (SCROLL NỘI BỘ, KHÔNG GÂY SCROLLBAR TOÀN TRANG) */
+        .cf-main {
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 28px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-width: 1680px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .cf-main::-webkit-scrollbar {
+            width: 5px;
+        }
+        .cf-main::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        .cf-main::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* Shared Admin Centre action buttons. */
+        .btn-primary-lg {
+            height: 36px;
+            padding: 0 15px;
+            border: none;
+            border-radius: var(--cf-radius);
+            background: var(--cf-blue);
+            color: var(--cf-white);
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background 0.15s ease;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .btn-primary-lg:hover:not(:disabled) { background: var(--cf-blue-hover); }
+        .btn-primary-lg:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+
+        .cf-action-btn {
+            height: 28px;
+            line-height: 26px;
+            padding: 0 10px;
+            border: 1px solid var(--cf-border);
+            border-radius: var(--cf-radius);
+            background: var(--cf-white);
+            color: var(--cf-text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            margin: 0;
+            vertical-align: middle;
+            white-space: nowrap;
+            user-select: none;
+            text-decoration: none;
+            transition: all 0.12s ease;
+        }
+        .cf-action-btn:hover:not(:disabled) {
+            border-color: var(--cf-border-dark);
+            background: #f9fafb;
+            color: var(--cf-text-primary);
+        }
+        .cf-action-btn:disabled { opacity: .55; cursor: not-allowed; }
+        .cf-action-btn:focus-visible,.btn-primary-lg:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 2px;
+        }
+
+        /* CHÂN TRANG SIMPLAIN */
+        .cf-footer {
+            margin-top: auto;
+            padding: 14px 0 4px;
+            border-top: 1px solid var(--cf-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            font-size: 11.5px;
+            color: var(--cf-text-muted);
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .cf-footer a:hover {
+            color: var(--cf-text-primary);
+            text-decoration: underline;
+        }
+    </style>
+</th:block>
+
+<th:block th:fragment="layout(content, activeView)">
+    <div class="cf-shell">
+    <header class="cf-header">
+        <div class="cf-header-left">
+            <div class="simplain-brand">
+                <div class="simplain-badge">S</div>
+                <div class="simplain-name">SIMPLAIN<span>.</span></div>
+            </div>
+            <div class="cf-account-pill">
+                <span>the666khoa@gmail.com</span>
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="cf-header-tools">
+            <!-- NÚT CHẾT ASK AI THEO YÊU CẦU CLOUDFLARE -->
+            <button type="button" class="cf-header-link" style="cursor: default;" title="Ask AI">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2l2.4 7.2L21 10.5l-6.6 2.3L12 20l-2.4-7.2L3 10.5l6.6-2.3L12 2z"></path>
+                </svg>
+                Ask AI
+            </button>
+            <button type="button" class="cf-header-link" onclick="if(typeof hienToast==='function')hienToast('Hệ thống Simplain kết nối trực tiếp cơ sở dữ liệu!');else if(typeof toast==='function')toast('Hệ thống Simplain kết nối trực tiếp cơ sở dữ liệu!')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Support
+            </button>
+            <div class="cf-admin-avatar">AD</div>
+        </div>
+    </header>
+        <div class="cf-layout">
+        <aside class="cf-sidebar">
+            <div class="cf-nav-group">
+                <span class="cf-nav-group-title">Kho &amp; Nguồn Hàng</span>
+                <div class="cf-nav-item active">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                        Nhà cung cấp
+                    </span>
+                    <span class="cf-nav-chevron">▾</span>
+                </div>
+                <div class="cf-nav-sub-list">
+                    <a href="/admin/nha-cung-cap" class="cf-nav-sub-item" th:classappend="${activeView == 'overview'} ? ' active' : ''">Danh sách nhà cung cấp</a>
+                    <a href="/admin/nha-cung-cap-sku" class="cf-nav-sub-item" th:classappend="${activeView == 'ncc-sku'} ? ' active' : ''">Phân công NCC – SKU</a>
+                    <a href="/admin/don-mua" class="cf-nav-sub-item" th:classappend="${activeView == 'don-mua'} ? ' active' : ''">Đơn mua</a>
+                    <a href="/admin/lay-hang" class="cf-nav-sub-item">Tạo đơn mua nháp</a>
+                    <a href="/admin/lich-su-bao-gia" class="cf-nav-sub-item" th:classappend="${activeView == 'lich-su-bao-gia'} ? ' active' : ''">Lịch sử báo giá</a>
+                    <a href="/admin/bien-the/hien-thi" class="cf-nav-sub-item">Tồn kho &amp; Biến thể</a>
+                    <a href="/admin/san-pham/hien-thi" class="cf-nav-sub-item">Sản phẩm &amp; Danh mục</a>
+                </div>
+            </div>
+
+            <div class="cf-nav-group">
+                <span class="cf-nav-group-title">Bán Hàng &amp; Giao Dịch</span>
+                <a href="/admin/ban-hang-tai-quay" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        Bán hàng POS
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+                <a href="/admin/don-hang" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        Đơn hàng
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+                <a href="/admin/doi-tra/hien-thi" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                        Đổi trả &amp; RMA
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+                <a href="/admin/khach-hang" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        Khách hàng
+                    </span>
+                    <span class="cf-nav-chevron">›</span>
+                </a>
+            </div>
+
+            <div class="cf-nav-group" style="margin-top: auto;">
+                <span class="cf-nav-group-title">Hệ Thống</span>
+                <a href="/admin/nhan-vien" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Nhân viên
+                    </span>
+                </a>
+                <a href="/admin/vai-tro/hien-thi" class="cf-nav-item">
+                    <span class="cf-nav-item-left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        Phân quyền
+                    </span>
+                </a>
+            </div>
+        </aside>
+            <main class="cf-main">
+                <th:block th:replace="${content}"></th:block>
+            <footer class="cf-footer">
+                <a href="#" onclick="event.preventDefault()">Hỗ trợ kỹ thuật</a>
+                <span>&bull;</span>
+                <a href="#" onclick="event.preventDefault()">Trạng thái hệ thống</a>
+                <span>&bull;</span>
+                <a href="#" onclick="event.preventDefault()">Quy chuẩn kiểm đếm kho</a>
+                <span>&bull;</span>
+                <a href="#" onclick="event.preventDefault()">Bảo mật dữ liệu</a>
+                <span>&bull;</span>
+                <span>&copy; 2026 Simplain Studio. Bản quyền thuộc về dự án.</span>
+            </footer>
+            </main>
+        </div>
+    </div>
+</th:block>

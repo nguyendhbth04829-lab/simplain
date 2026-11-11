@@ -1,0 +1,493 @@
+<th:block th:fragment="styles">
+    <style>
+        .ncc-sku-view{display:flex;flex-direction:column;gap:14px;min-height:0}
+        .ncc-sku-head{align-items:flex-end}
+        .ncc-sku-panel{container:ncc-sku-panel/inline-size;display:flex;flex:1 1 0%;flex-direction:column;min-height:0;background:var(--cf-white);border:1px solid var(--cf-border);border-radius:var(--cf-radius-lg);overflow:hidden}
+        .ncc-sku-controls{display:grid;grid-template-columns:minmax(240px,1fr) minmax(180px,220px);gap:12px;align-items:end;padding:14px 16px;border-bottom:1px solid var(--cf-border)}
+        .ncc-sku-controls,.ncc-sku-bulk{flex-shrink:0}
+        .ncc-sku-label{display:block;margin-bottom:5px;color:var(--cf-text-secondary);font-size:11.5px;font-weight:600}
+        .ncc-sku-input{width:100%;height:36px;border:1px solid var(--cf-border-dark);border-radius:var(--cf-radius);background:#fff;color:var(--cf-text-primary);padding:0 10px;font:inherit}
+        .ncc-sku-input:focus-visible,.ncc-sku-view input:focus-visible,.ncc-sku-view button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+        .ncc-sku-count{padding:8px 11px;border:1px solid var(--cf-border);border-radius:var(--cf-radius);background:#f9fafb}
+        .ncc-sku-count-label{color:var(--cf-text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+        .ncc-sku-count-value{margin-top:2px;color:var(--cf-text-primary);font-size:18px;font-weight:700}
+        .ncc-sku-workspace{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,220px);gap:12px;flex:1;min-height:0;padding:12px}
+        .ncc-sku-filter-panel{grid-column:2;grid-row:1;min-width:0;overflow:auto;padding:12px;border:1px solid var(--cf-border);border-radius:var(--cf-radius-lg);background:#fafbfc}
+        .ncc-sku-filter-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px;color:var(--cf-text-primary);font-size:12px;font-weight:700}
+        .ncc-sku-filter-close,.ncc-sku-filter-toggle{display:none}
+        .ncc-sku-filter-backdrop[hidden]{display:none}
+        .ncc-sku-filter-field{display:block;margin-bottom:10px}
+        .ncc-sku-filter-field .ncc-sku-label{margin-bottom:4px}
+        .ncc-sku-attribute-filters{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+        .ncc-sku-attribute-group{overflow:hidden;border:1px solid var(--cf-border);border-radius:7px;background:#fff}
+        .ncc-sku-attribute-group summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;color:var(--cf-text-primary);font-size:11px;font-weight:650;cursor:pointer;list-style:none}
+        .ncc-sku-attribute-group summary::-webkit-details-marker{display:none}
+        .ncc-sku-attribute-group summary:after{content:'+';color:var(--cf-text-muted);font-size:14px}
+        .ncc-sku-attribute-group[open] summary:after{content:'−'}
+        .ncc-sku-attribute-values{display:flex;flex-direction:column;gap:5px;max-height:150px;overflow:auto;padding:0 10px 9px}
+        .ncc-sku-attribute-value{display:flex;align-items:center;gap:7px;color:var(--cf-text-secondary);font-size:11px;cursor:pointer}
+        .ncc-sku-attribute-value input{width:15px;height:15px;accent-color:var(--cf-blue)}
+        .ncc-sku-no-values{padding:0 10px 9px;color:var(--cf-text-muted);font-size:10.5px}
+        .ncc-sku-clear-filters{width:100%;height:32px;margin-top:10px}
+        .ncc-sku-results{container:ncc-sku-results/inline-size;grid-column:1;grid-row:1;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+        #nccSkuSave:disabled{cursor:not-allowed;opacity:.52;box-shadow:none}
+        .ncc-sku-bulk{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 16px;border-bottom:1px solid var(--cf-border);background:#fafbfc}
+        .ncc-sku-bulk-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+        .ncc-sku-bulk .cf-action-btn{height:32px;padding:0 10px}
+        .ncc-sku-visible-count{color:var(--cf-text-muted);font-size:11.5px;text-align:right}
+        .ncc-sku-product-scroll{flex:1 1 auto;min-height:0;overflow:auto}
+        .ncc-sku-product-list{min-height:120px}
+        .ncc-sku-product{border-bottom:1px solid #edf0f3}
+        .ncc-sku-product:last-child{border-bottom:0}
+        .ncc-sku-product-head{display:flex;align-items:center;gap:12px;padding:11px 16px}
+        .ncc-sku-product-select,.ncc-sku-check{display:flex;align-items:center;justify-content:center;flex:0 0 24px}
+        .ncc-sku-view input[type=checkbox]{width:18px;height:18px;accent-color:var(--cf-blue);cursor:pointer}
+        .ncc-sku-product-toggle{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:11px;flex:1;min-width:0;padding:0;border:0;background:transparent;color:inherit;text-align:left}
+        .ncc-sku-product-toggle:hover .ncc-sku-product-name{color:var(--cf-blue)}
+        .ncc-sku-chevron{color:var(--cf-text-muted);transition:transform .16s ease}
+        .ncc-sku-product-toggle[aria-expanded=true] .ncc-sku-chevron{transform:rotate(90deg)}
+        .ncc-sku-product-image{position:relative;display:grid;place-items:center;width:46px;height:46px;flex:0 0 auto;overflow:hidden;padding:0;border:1px solid var(--cf-border);border-radius:7px;background:#f3f4f6;color:#9ca3af;cursor:zoom-in}
+        .ncc-sku-product-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+        .ncc-sku-product-image [hidden]{display:none}
+        .ncc-sku-product-placeholder{display:grid;place-items:center;width:100%;height:100%}
+        .ncc-sku-product-meta{display:flex;flex-direction:column;min-width:0}
+        .ncc-sku-product-name{overflow:hidden;color:var(--cf-text-primary);font-size:13px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+        .ncc-sku-product-code{margin-top:2px;color:var(--cf-text-muted);font-family:var(--font-mono);font-size:10.5px}
+        .ncc-sku-product-stats{display:flex;align-items:center;gap:5px;white-space:nowrap;color:var(--cf-text-muted);font-size:11px}
+        .ncc-sku-product-stats strong{color:var(--cf-text-primary);font-size:12px}
+        .ncc-sku-variants{padding:2px 16px 12px 82px;background:#fafbfc}
+        .ncc-sku-variants[hidden]{display:none}
+        .ncc-sku-variant{display:grid;grid-template-columns:24px 38px minmax(100px,180px) minmax(0,1fr) 130px;align-items:center;gap:10px;min-height:48px;padding:7px 10px;border-top:1px solid #edf0f3;background:#fff}
+        .ncc-sku-variant:first-child{border-radius:6px 6px 0 0}
+        .ncc-sku-variant:last-child{border-radius:0 0 6px 6px}
+        .ncc-sku-variant-image{position:relative;display:grid;place-items:center;width:36px;height:36px;overflow:hidden;padding:0;border:1px solid var(--cf-border);border-radius:6px;background:#f3f4f6;color:#9ca3af;cursor:zoom-in}
+        .ncc-sku-variant-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+        .ncc-sku-variant-image [hidden]{display:none}
+        .ncc-sku-photo-preview:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+        .ncc-sku-code{font-family:var(--font-mono);font-size:11px;color:var(--cf-text-secondary);white-space:nowrap}
+        .ncc-sku-attributes{display:flex;flex-wrap:wrap;gap:5px}
+        .ncc-sku-attribute{padding:2px 7px;border:1px solid #e5e7eb;border-radius:99px;background:#f9fafb;color:var(--cf-text-secondary);font-size:10.5px}
+        .ncc-sku-status{justify-self:start;display:inline-flex;align-items:center;padding:3px 8px;border:1px solid var(--cf-green-border);border-radius:99px;background:var(--cf-green-soft);color:#047857;font-size:10.5px;font-weight:600;white-space:nowrap}
+        .ncc-sku-status.paused{border-color:#fed7aa;background:#fff7ed;color:#9a3412}
+        .ncc-sku-empty{padding:38px 14px;text-align:center;color:var(--cf-text-muted)}
+        .ncc-sku-note{flex-shrink:0;padding:10px 16px;border-top:1px solid var(--cf-border);color:var(--cf-text-muted);font-size:11px;line-height:1.5}
+        @container ncc-sku-results (max-width:400px){.ncc-sku-product-head{gap:8px;padding:10px}.ncc-sku-product-toggle{grid-template-columns:16px 40px minmax(0,1fr);gap:8px}.ncc-sku-product-image{width:40px;height:40px}.ncc-sku-product-stats{grid-column:3;grid-row:2;font-size:10px}.ncc-sku-variants{padding:0 10px 10px}.ncc-sku-variant{grid-template-columns:24px 34px minmax(0,1fr) max-content;gap:7px;min-height:60px}.ncc-sku-variant-image{grid-column:2;grid-row:1/3;width:32px;height:32px}.ncc-sku-variant .ncc-sku-code{grid-column:3;grid-row:1}.ncc-sku-variant .ncc-sku-attributes{grid-column:3/5;grid-row:2;min-width:0}.ncc-sku-variant .ncc-sku-status{grid-column:4;grid-row:1}}
+        @container ncc-sku-panel (max-width:600px){.ncc-sku-workspace{grid-template-columns:minmax(0,1fr)}.ncc-sku-filter-toggle{display:inline-flex}.ncc-sku-filter-panel{grid-column:1;grid-row:auto;display:none;position:fixed;top:64px;right:12px;bottom:12px;left:auto;z-index:251;width:min(330px,calc(100vw - 24px));max-height:none;background:#fff;box-shadow:0 18px 55px rgba(15,23,42,.24)}.ncc-sku-filter-panel.is-open{display:block}.ncc-sku-filter-close{display:inline-flex}.ncc-sku-filter-backdrop:not([hidden]){position:fixed;inset:0;z-index:250;display:block;border:0;background:rgba(15,23,42,.38)}.ncc-sku-results{grid-column:1;grid-row:auto;min-height:0}}
+        @media(max-width:620px){.ncc-sku-controls{grid-template-columns:1fr}.ncc-sku-bulk{align-items:flex-start;flex-direction:column}.ncc-sku-visible-count{text-align:left}.ncc-sku-product-head{gap:8px;padding:10px}.ncc-sku-product-toggle{grid-template-columns:16px 40px minmax(0,1fr);gap:8px}.ncc-sku-product-image{width:40px;height:40px}.ncc-sku-product-stats{grid-column:3;grid-row:2;font-size:10px}.ncc-sku-variants{padding:0 10px 10px}.ncc-sku-variant{grid-template-columns:24px 34px minmax(0,1fr) max-content;gap:7px;min-height:60px}.ncc-sku-variant-image{grid-column:2;grid-row:1/3;width:32px;height:32px}.ncc-sku-variant .ncc-sku-code{grid-column:3;grid-row:1}.ncc-sku-variant .ncc-sku-attributes{grid-column:3/5;grid-row:2}.ncc-sku-variant .ncc-sku-status{grid-column:4;grid-row:1}}
+        .ncc-sku-product-toggle{grid-template-columns:18px minmax(0,1fr) auto}
+        @container ncc-sku-results (max-width:400px){.ncc-sku-product-toggle{grid-template-columns:16px minmax(0,1fr) auto;gap:8px}.ncc-sku-product-stats{grid-column:auto;grid-row:auto;font-size:10px}}
+        @media(max-width:620px){.ncc-sku-product-toggle{grid-template-columns:16px minmax(0,1fr) auto;gap:8px}.ncc-sku-product-stats{grid-column:auto;grid-row:auto;font-size:10px}}
+        .ncc-sku-image-modal{width:86vw;height:86vh;max-width:none;max-height:none;margin:auto;padding:0;overflow:hidden;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#172033;box-shadow:0 24px 80px rgba(15,23,42,.28)}
+        .ncc-sku-image-modal::backdrop{background:rgba(15,23,42,.65)}
+        .ncc-sku-image-modal[open]{display:flex;flex-direction:column}
+        .ncc-sku-image-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:8px 14px;border-bottom:1px solid #e2e8f0}
+        .ncc-sku-image-modal-title{min-width:0;overflow:hidden;font-size:13px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+        .ncc-sku-image-modal-close{flex:0 0 36px;width:36px;height:36px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#172033;font-size:21px;cursor:pointer}
+        .ncc-sku-image-modal-body{display:grid;place-items:center;flex:1;min-height:0;padding:16px;background:#fff}
+        .ncc-sku-image-modal-body img{display:block;width:auto;height:auto;max-width:100%;max-height:calc(86vh - 86px);object-fit:contain}
+        .ncc-sku-image-modal-body img[hidden],.ncc-sku-image-modal-error[hidden]{display:none!important}
+        .ncc-sku-image-modal-error{color:#cbd5e1;font-size:13px}
+    </style>
+</th:block>
+
+<section th:fragment="content" id="vungNhaCungCapSku" class="ncc-sku-view">
+    <div class="page-header ncc-sku-head">
+        <div>
+            <div class="cf-title-row">
+                <h1 class="page-title">Phân công nhà cung cấp – SKU</h1>
+                <span class="cf-docs-badge">Danh mục cung ứng</span>
+            </div>
+            <p class="page-subtitle">Tích chọn SKU mà nhà cung cấp có thể cung ứng. Đây là phân công nguồn hàng, không phải tạo đơn mua.</p>
+        </div>
+        <button id="nccSkuSave" type="button" class="btn-primary-lg" onclick="luuPhanCongNccSku()" disabled>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l4 4L19 6"></path></svg>
+            Lưu phân công
+        </button>
+    </div>
+
+    <section class="ncc-sku-panel" aria-label="Cấu hình nhà cung cấp và SKU">
+        <div class="ncc-sku-controls">
+            <div>
+                <label class="ncc-sku-label" for="nccSkuSupplier">Nhà cung cấp</label>
+                <select id="nccSkuSupplier" class="ncc-sku-input" onchange="doiNhaCungCapSku(this)">
+                    <option value="">-- Chọn nhà cung cấp --</option>
+                    <option th:each="ncc : ${listNcc}" th:value="${ncc.id}"
+                            th:data-ma="${ncc.maNcc}" th:data-status="${ncc.trangThaiHopTac.nhan}"
+                            th:selected="${nccMacDinhId != null and ncc.id == nccMacDinhId}"
+                            th:text="${ncc.tenNcc + ' (' + ncc.maNcc + ')'}">Nhà cung cấp</option>
+                </select>
+            </div>
+            <div class="ncc-sku-count" aria-live="polite">
+                <div class="ncc-sku-count-label">SKU được phân công</div>
+                <div class="ncc-sku-count-value"><span id="nccSkuSelectedCount">0</span> SKU</div>
+            </div>
+        </div>
+
+        <div class="ncc-sku-workspace">
+            <button id="nccSkuFilterBackdrop" type="button" class="ncc-sku-filter-backdrop" aria-label="Đóng bộ lọc SKU" onclick="dongBoLocNccSku()" hidden></button>
+            <aside id="nccSkuFilterPanel" class="ncc-sku-filter-panel" aria-label="Bộ lọc SKU">
+                <div class="ncc-sku-filter-heading"><span><i class="fa-solid fa-filter" aria-hidden="true"></i> Lọc SKU</span><button type="button" class="ncc-sku-filter-close cf-action-btn" onclick="dongBoLocNccSku()" aria-label="Đóng bộ lọc">×</button></div>
+                <label class="ncc-sku-filter-field">
+                    <span class="ncc-sku-label">Tìm kiếm</span>
+                    <input id="nccSkuSearch" class="ncc-sku-input" type="search" placeholder="Sản phẩm, SKU, thuộc tính…" aria-label="Tìm sản phẩm, SKU hoặc thuộc tính" oninput="timNccSku()" disabled>
+                </label>
+                <label class="ncc-sku-filter-field">
+                    <span class="ncc-sku-label">Sản phẩm (không bắt buộc)</span>
+                    <select id="nccSkuProductFilter" class="ncc-sku-input" aria-label="Lọc sản phẩm" onchange="veDanhSachNccSku()" disabled><option value="">Tất cả sản phẩm</option></select>
+                </label>
+                <label class="ncc-sku-filter-field">
+                    <span class="ncc-sku-label">Trạng thái SKU</span>
+                    <select id="nccSkuAvailability" class="ncc-sku-input" aria-label="Lọc trạng thái SKU" onchange="veDanhSachNccSku()" disabled>
+                        <option value="">Mọi trạng thái</option><option value="active">Đang kinh doanh</option><option value="inactive">Tạm ngưng</option>
+                    </select>
+                </label>
+                <div id="nccSkuAttributeFilters" class="ncc-sku-attribute-filters" role="group" aria-label="Lọc theo thuộc tính biến thể"></div>
+                <button id="nccSkuClearFilters" type="button" class="cf-action-btn ncc-sku-clear-filters" onclick="xoaBoLocNccSku()" disabled>Xóa bộ lọc</button>
+            </aside>
+
+            <section class="ncc-sku-results" aria-label="Danh sách sản phẩm và SKU">
+                <div class="ncc-sku-bulk">
+                    <div class="ncc-sku-bulk-actions">
+                        <button id="nccSkuFilterToggle" type="button" class="cf-action-btn ncc-sku-filter-toggle" onclick="moBoLocNccSku()" aria-controls="nccSkuFilterPanel" aria-expanded="false"><i class="fa-solid fa-filter" aria-hidden="true"></i> Lọc SKU</button>
+                        <button id="nccSkuSelectVisible" type="button" class="cf-action-btn" onclick="chonSkuDangHien(true)" disabled>Chọn SKU đang hiển thị</button>
+                        <button id="nccSkuClearVisible" type="button" class="cf-action-btn" onclick="chonSkuDangHien(false)" disabled>Bỏ chọn đang hiển thị</button>
+                        <button id="nccSkuClearAll" type="button" class="cf-action-btn" onclick="boTatCaSku()" disabled>Bỏ tất cả</button>
+                    </div>
+                    <div id="nccSkuVisibleCount" class="ncc-sku-visible-count">Chưa chọn nhà cung cấp</div>
+                </div>
+
+                <div class="ncc-sku-product-scroll">
+                    <div id="nccSkuRows" class="ncc-sku-product-list" aria-live="polite">
+                        <div class="ncc-sku-empty">Chọn một nhà cung cấp để xem sản phẩm.</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="ncc-sku-note">Lưu chỉ cập nhật liên kết của nhà cung cấp đang chọn; không tạo đơn mua, không thay đổi tồn kho. SKU tạm ngưng vẫn có thể phân công nhưng cần kích hoạt lại trước khi sử dụng.</div>
+        <dialog id="nccSkuImageModal" class="ncc-sku-image-modal" aria-labelledby="nccSkuImageModalTitle"
+                onclick="if(event.target === this) dongAnhNccSku()">
+            <div class="ncc-sku-image-modal-header">
+                <strong id="nccSkuImageModalTitle" class="ncc-sku-image-modal-title">Ảnh SKU</strong>
+                <button type="button" class="ncc-sku-image-modal-close" aria-label="Đóng ảnh" autofocus onclick="dongAnhNccSku()">×</button>
+            </div>
+            <div class="ncc-sku-image-modal-body">
+                <img id="nccSkuImageFull" alt="">
+                <div id="nccSkuImageModalError" class="ncc-sku-image-modal-error" hidden>Không tải được ảnh này.</div>
+            </div>
+        </dialog>
+    </section>
+</section>
+
+<th:block th:fragment="scripts">
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const nccSkuOptions = /*[[${skuOptions}]]*/ [];
+        const nccSkuAttributeDefinitions = /*[[${skuAttributeDefinitions}]]*/ [];
+        const nccSkuDefaultId = /*[[${nccMacDinhId}]]*/ null;
+        /*]]>*/
+        let nccSkuSelected = new Set();
+        let nccSkuExpandedProducts = new Set();
+        let nccSkuCurrentSupplier = '';
+        let nccSkuRequestId = 0;
+        let nccSkuDirty = false;
+
+        function escNccSku(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function xemAnhNccSku(url, label) {
+            if (!url) return;
+            const modal = document.getElementById('nccSkuImageModal');
+            const image = document.getElementById('nccSkuImageFull');
+            const error = document.getElementById('nccSkuImageModalError');
+            image.hidden = false;
+            error.hidden = true;
+            image.alt = label || 'Ảnh sản phẩm';
+            image.onerror = () => { image.hidden = true; error.hidden = false; };
+            image.src = url;
+            document.getElementById('nccSkuImageModalTitle').textContent = label || 'Ảnh sản phẩm';
+            modal.showModal();
+        }
+        function dongAnhNccSku() {
+            const modal = document.getElementById('nccSkuImageModal');
+            if (modal.open) modal.close();
+        }
+        function capNhatDemNccSku() {
+            document.getElementById('nccSkuSelectedCount').textContent = nccSkuSelected.size.toLocaleString('vi-VN');
+            document.getElementById('nccSkuVisibleCount').textContent = nccSkuCurrentSupplier
+                ? `${laySkuNccDangHien().length.toLocaleString('vi-VN')} SKU đang hiển thị · ${nccSkuSelected.size.toLocaleString('vi-VN')} SKU đã chọn`
+                : 'Chưa chọn nhà cung cấp';
+        }
+        function laySkuNccDangHien() {
+            const query = document.getElementById('nccSkuSearch').value.trim().toLocaleLowerCase('vi');
+            const product = document.getElementById('nccSkuProductFilter').value;
+            const availability = document.getElementById('nccSkuAvailability').value;
+            const selectedByAttribute = new Map();
+            document.querySelectorAll('#nccSkuAttributeFilters input[type=checkbox]:checked').forEach(filter => {
+                if (!selectedByAttribute.has(filter.dataset.attributeKey)) selectedByAttribute.set(filter.dataset.attributeKey, new Set());
+                selectedByAttribute.get(filter.dataset.attributeKey).add(filter.value);
+            });
+            return nccSkuOptions.filter(sku => {
+                const attributes = Array.isArray(sku.thuocTinh) ? sku.thuocTinh : [];
+                const text = `${sku.tenSanPham} ${sku.maSanPham} ${sku.maSku} ${attributes.map(attribute => `${attribute.tenThuocTinh} ${attribute.giaTri}`).join(' ')}`.toLocaleLowerCase('vi');
+                return (!query || text.includes(query))
+                    && (!product || layKhoaSanPhamSku(sku) === product)
+                    && [...selectedByAttribute].every(([key, values]) => attributes.some(attribute =>
+                        String(attribute.maThuocTinh || attribute.tenThuocTinh) === key
+                        && values.has(String(attribute.giaTri || '').trim().toLocaleLowerCase('vi'))))
+                    && (availability !== 'active' || sku.kichHoat)
+                    && (availability !== 'inactive' || !sku.kichHoat);
+            });
+        }
+        function taoBoLocThuocTinhNccSku() {
+            const facets = new Map(nccSkuAttributeDefinitions.map(attribute => [attribute.maThuocTinh, {
+                key:attribute.maThuocTinh, name:attribute.tenThuocTinh, values:new Map()
+            }]));
+            nccSkuOptions.forEach(sku => (Array.isArray(sku.thuocTinh) ? sku.thuocTinh : []).forEach(attribute => {
+                const key = String(attribute.maThuocTinh || attribute.tenThuocTinh || '').trim();
+                const value = String(attribute.giaTri || '').trim();
+                if (!key || !value || value === '—' || !facets.has(key)) return;
+                const facet = facets.get(key);
+                const normalized = value.toLocaleLowerCase('vi');
+                if (!facet.values.has(normalized)) facet.values.set(normalized, value);
+            }));
+            document.getElementById('nccSkuAttributeFilters').innerHTML = [...facets.values()].map(facet =>
+                `<details class="ncc-sku-attribute-group">
+                    <summary>${escNccSku(facet.name)}</summary>
+                    ${facet.values.size
+                        ? `<div class="ncc-sku-attribute-values">${[...facet.values].sort((a,b) => a[1].localeCompare(b[1],'vi')).map(([value,label],index) => {
+                            const id = `nccSkuAttr-${escNccSku(facet.key)}-${index}`;
+                            return `<label class="ncc-sku-attribute-value" for="${id}"><input id="${id}" type="checkbox" data-attribute-key="${escNccSku(facet.key)}" value="${escNccSku(value)}" onchange="veDanhSachNccSku()" disabled><span>${escNccSku(label)}</span></label>`;
+                        }).join('')}</div>`
+                        : '<div class="ncc-sku-no-values">Chưa có giá trị trong CSDL</div>'}
+                </details>`).join('');
+        }
+        function layKhoaSanPhamSku(sku) {
+            return sku.sanPhamId != null ? String(sku.sanPhamId) : `sku-${String(sku.maSku).toUpperCase()}`;
+        }
+        function gomNhomSanPhamSku(danhSach) {
+            const groups = new Map();
+            danhSach.forEach(sku => {
+                const key = layKhoaSanPhamSku(sku);
+                if (!groups.has(key)) groups.set(key, {
+                    key,
+                    tenSanPham: sku.tenSanPham || 'Sản phẩm',
+                    maSanPham: sku.maSanPham || '',
+                    anhSanPhamUrl: sku.anhSanPhamUrl || '',
+                    skus: []
+                });
+                groups.get(key).skus.push(sku);
+            });
+            return [...groups.values()].sort((a,b) => a.tenSanPham.localeCompare(b.tenSanPham, 'vi') || a.maSanPham.localeCompare(b.maSanPham, 'vi'));
+        }
+        function veAnhSanPham(url, tenSanPham) {
+            const source = String(url || '').trim();
+            const label = `Xem ảnh sản phẩm ${tenSanPham || ''}`;
+            const placeholder = `<span class="ncc-sku-product-placeholder" role="img" aria-label="Chưa có ảnh cho ${escNccSku(tenSanPham)}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10M7.5 5l9 4"/></svg></span>`;
+            if (!source) return `<span class="ncc-sku-product-image">${placeholder}</span>`;
+            return `<button type="button" class="ncc-sku-product-image ncc-sku-photo-preview" data-image-url="${escNccSku(source)}" data-image-label="${escNccSku(label)}" aria-label="${escNccSku(label)}" title="Xem ảnh lớn" onclick="xemAnhNccSku(this.dataset.imageUrl,this.dataset.imageLabel)"><img src="${escNccSku(source)}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="ncc-sku-product-placeholder" hidden>${placeholder}</span></button>`;
+        }
+        function veAnhSku(sku) {
+            const url = String(sku.anhSkuUrl || sku.anhSanPhamUrl || '').trim();
+            const label = `Xem ảnh SKU ${sku.maSku}`;
+            const placeholder = `<span role="img" aria-label="Chưa có ảnh cho SKU ${escNccSku(sku.maSku)}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg></span>`;
+            if (!url) return `<span class="ncc-sku-variant-image">${placeholder}</span>`;
+            return `<button type="button" class="ncc-sku-variant-image ncc-sku-photo-preview" data-image-url="${escNccSku(url)}" data-image-label="${escNccSku(label)}" aria-label="${escNccSku(label)}" title="Xem ảnh lớn" onclick="xemAnhNccSku(this.dataset.imageUrl,this.dataset.imageLabel)"><img src="${escNccSku(url)}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${placeholder}</span></button>`;
+        }
+        function veThuocTinhSku(sku) {
+            return (Array.isArray(sku.thuocTinh) ? sku.thuocTinh : [])
+                .filter(attribute => attribute.tenThuocTinh)
+                .map(attribute => `<span class="ncc-sku-attribute">${escNccSku(attribute.tenThuocTinh)}: ${escNccSku(attribute.giaTri && attribute.giaTri !== '—' ? attribute.giaTri : '—')}</span>`)
+                .join('') || '<span class="ncc-sku-attribute">SKU cơ bản</span>';
+        }
+        function capNhatNccSkuThayDoi() {
+            nccSkuDirty = true;
+            document.getElementById('nccSkuSave').disabled = !nccSkuCurrentSupplier;
+            capNhatDemNccSku();
+        }
+        function veDanhSachNccSku() {
+            const body = document.getElementById('nccSkuRows');
+            if (!nccSkuCurrentSupplier) {
+                body.innerHTML = '<div class="ncc-sku-empty">Chọn một nhà cung cấp để xem sản phẩm.</div>';
+                capNhatDemNccSku();
+                return;
+            }
+            const visibleGroups = gomNhomSanPhamSku(laySkuNccDangHien());
+            const allGroups = new Map(gomNhomSanPhamSku(nccSkuOptions).map(group => [group.key, group]));
+            body.innerHTML = visibleGroups.length ? visibleGroups.map(group => {
+                const allSkus = allGroups.get(group.key)?.skus || group.skus;
+                const selectedCount = allSkus.filter(sku => nccSkuSelected.has(String(sku.maSku).toUpperCase())).length;
+                const isExpanded = nccSkuExpandedProducts.has(group.key);
+                const variantsId = `nccSkuVariants-${escNccSku(group.key)}`;
+                return `<section class="ncc-sku-product">
+                    <div class="ncc-sku-product-head">
+                        <label class="ncc-sku-product-select" title="Chọn tất cả SKU của sản phẩm, kể cả SKU đang bị ẩn bởi bộ lọc.">
+                            <input type="checkbox" data-product-key="${escNccSku(group.key)}" aria-label="Chọn tất cả SKU của ${escNccSku(group.tenSanPham)}" ${selectedCount === allSkus.length ? 'checked' : ''} onchange="chonTatCaSkuSanPham(this.dataset.productKey, this.checked)">
+                        </label>
+                        ${veAnhSanPham(group.anhSanPhamUrl, group.tenSanPham)}
+                        <button type="button" class="ncc-sku-product-toggle" data-product-key="${escNccSku(group.key)}" aria-expanded="${isExpanded}" aria-controls="${variantsId}" onclick="doiMoNhomSku(this.dataset.productKey)">
+                            <svg class="ncc-sku-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                            <span class="ncc-sku-product-meta"><span class="ncc-sku-product-name">${escNccSku(group.tenSanPham)}</span><span class="ncc-sku-product-code">${escNccSku(group.maSanPham || 'Sản phẩm')}</span></span>
+                            <span class="ncc-sku-product-stats"><strong>${selectedCount}/${allSkus.length}</strong> SKU đã phân công</span>
+                        </button>
+                    </div>
+                    <div id="${variantsId}" class="ncc-sku-variants" ${isExpanded ? '' : 'hidden'}>
+                        ${group.skus.map(sku => `<div class="ncc-sku-variant">
+                            <label class="ncc-sku-check"><input type="checkbox" data-sku="${escNccSku(sku.maSku)}" aria-label="Phân công ${escNccSku(sku.maSku)} cho nhà cung cấp" ${nccSkuSelected.has(String(sku.maSku).toUpperCase()) ? 'checked' : ''} onchange="doiChonNccSku(this)"></label>
+                            ${veAnhSku(sku)}
+                            <span class="ncc-sku-code">${escNccSku(sku.maSku)}</span>
+                            <span class="ncc-sku-attributes">${veThuocTinhSku(sku)}</span>
+                            <span class="ncc-sku-status ${sku.kichHoat ? '' : 'paused'}">${sku.kichHoat ? 'Đang kinh doanh' : 'Tạm ngưng'}</span>
+                        </div>`).join('')}
+                    </div>
+                </section>`;
+            }).join('') : '<div class="ncc-sku-empty">Không tìm thấy sản phẩm hoặc SKU phù hợp.</div>';
+            body.querySelectorAll('input[data-product-key]').forEach(input => {
+                const group = allGroups.get(input.dataset.productKey);
+                const selectedCount = group ? group.skus.filter(sku => nccSkuSelected.has(String(sku.maSku).toUpperCase())).length : 0;
+                input.indeterminate = selectedCount > 0 && selectedCount < (group?.skus.length || 0);
+            });
+            capNhatDemNccSku();
+        }
+        function doiMoNhomSku(key) {
+            if (nccSkuExpandedProducts.has(key)) nccSkuExpandedProducts.delete(key);
+            else nccSkuExpandedProducts.add(key);
+            veDanhSachNccSku();
+        }
+        function timNccSku() {
+            if (document.getElementById('nccSkuSearch').value.trim()) {
+                laySkuNccDangHien().forEach(sku => nccSkuExpandedProducts.add(layKhoaSanPhamSku(sku)));
+            }
+            veDanhSachNccSku();
+        }
+        function xoaBoLocNccSku() {
+            document.getElementById('nccSkuSearch').value = '';
+            document.getElementById('nccSkuProductFilter').value = '';
+            document.getElementById('nccSkuAvailability').value = '';
+            document.querySelectorAll('#nccSkuAttributeFilters input[type=checkbox]').forEach(filter => filter.checked = false);
+            nccSkuExpandedProducts.clear();
+            veDanhSachNccSku();
+        }
+        function moBoLocNccSku() {
+            const panel = document.getElementById('nccSkuFilterPanel');
+            panel.classList.add('is-open');
+            document.getElementById('nccSkuFilterBackdrop').hidden = false;
+            document.getElementById('nccSkuFilterToggle').setAttribute('aria-expanded', 'true');
+            if (getComputedStyle(document.getElementById('nccSkuFilterToggle')).display !== 'none') {
+                panel.setAttribute('role', 'dialog');
+                panel.setAttribute('aria-modal', 'true');
+                document.getElementById('nccSkuSearch').focus();
+            }
+        }
+        function dongBoLocNccSku() {
+            const panel = document.getElementById('nccSkuFilterPanel');
+            panel.classList.remove('is-open');
+            panel.removeAttribute('role');
+            panel.removeAttribute('aria-modal');
+            document.getElementById('nccSkuFilterBackdrop').hidden = true;
+            document.getElementById('nccSkuFilterToggle').setAttribute('aria-expanded', 'false');
+            document.getElementById('nccSkuFilterToggle').focus();
+        }
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && document.getElementById('nccSkuFilterPanel').classList.contains('is-open')) {
+                dongBoLocNccSku();
+            }
+        });
+        function doiChonNccSku(input) {
+            const sku = input.dataset.sku.toUpperCase();
+            if (input.checked) nccSkuSelected.add(sku); else nccSkuSelected.delete(sku);
+            capNhatNccSkuThayDoi();
+        }
+        function chonTatCaSkuSanPham(key, chon) {
+            const group = gomNhomSanPhamSku(nccSkuOptions).find(item => item.key === key);
+            if (!group) return;
+            group.skus.forEach(sku => {
+                const code = String(sku.maSku).toUpperCase();
+                if (chon) nccSkuSelected.add(code); else nccSkuSelected.delete(code);
+            });
+            capNhatNccSkuThayDoi();
+            veDanhSachNccSku();
+        }
+        function chonSkuDangHien(chon) {
+            laySkuNccDangHien().forEach(sku => {
+                const code = sku.maSku.toUpperCase();
+                if (chon) nccSkuSelected.add(code); else nccSkuSelected.delete(code);
+            });
+            capNhatNccSkuThayDoi();
+            veDanhSachNccSku();
+        }
+        function boTatCaSku() {
+            nccSkuSelected.clear();
+            capNhatNccSkuThayDoi();
+            veDanhSachNccSku();
+        }
+        function doiNhaCungCapSku(select) {
+            if (nccSkuDirty && !confirm('Bạn có thay đổi chưa lưu. Đổi nhà cung cấp sẽ bỏ các thay đổi này. Tiếp tục?')) {
+                select.value = nccSkuCurrentSupplier;
+                return;
+            }
+            void taiPhanCongNccSku();
+        }
+        async function taiPhanCongNccSku() {
+            const select = document.getElementById('nccSkuSupplier');
+            const id = select.value;
+            const version = ++nccSkuRequestId;
+            nccSkuCurrentSupplier = id;
+            nccSkuSelected = new Set();
+            nccSkuDirty = false;
+            const enabled = Boolean(id);
+            ['nccSkuSearch','nccSkuProductFilter','nccSkuAvailability','nccSkuSelectVisible','nccSkuClearVisible','nccSkuClearAll','nccSkuClearFilters'].forEach(key => {
+                document.getElementById(key).disabled = !enabled;
+            });
+            document.querySelectorAll('#nccSkuAttributeFilters input[type=checkbox]').forEach(filter => filter.disabled = !enabled);
+            document.getElementById('nccSkuSave').disabled = true;
+            nccSkuExpandedProducts.clear();
+            if (!id) { veDanhSachNccSku(); return; }
+            document.getElementById('nccSkuRows').innerHTML = '<div class="ncc-sku-empty">Đang tải danh sách phân công…</div>';
+            document.getElementById('nccSkuVisibleCount').textContent = 'Đang tải…';
+            try {
+                const response = await fetch(`/api/inbound/nha-cung-cap/${encodeURIComponent(id)}/sku`);
+                const data = await response.json().catch(() => []);
+                if (!response.ok) throw new Error(data.thongBao || 'Không tải được danh sách phân công.');
+                if (version !== nccSkuRequestId) return;
+                nccSkuSelected = new Set(data.map(code => String(code).toUpperCase()));
+                veDanhSachNccSku();
+            } catch (error) {
+                if (version !== nccSkuRequestId) return;
+                document.getElementById('nccSkuRows').innerHTML = `<div class="ncc-sku-empty">${escNccSku(error.message)}</div>`;
+                hienToast('Lỗi: ' + error.message);
+            }
+        }
+        async function luuPhanCongNccSku() {
+            if (!nccSkuCurrentSupplier || !nccSkuDirty) return;
+            const button = document.getElementById('nccSkuSave');
+            button.disabled = true;
+            button.textContent = 'Đang lưu…';
+            try {
+                const response = await fetch(`/api/inbound/nha-cung-cap/${encodeURIComponent(nccSkuCurrentSupplier)}/sku`, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({maSku:[...nccSkuSelected]})
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.thongBao || data.message || 'Không lưu được phân công SKU.');
+                nccSkuSelected = new Set(data.map(code => String(code).toUpperCase()));
+                nccSkuDirty = false;
+                hienToast('Đã lưu danh sách SKU cung cấp.');
+                veDanhSachNccSku();
+            } catch (error) {
+                hienToast('Lỗi: ' + error.message);
+            } finally {
+                button.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l4 4L19 6"></path></svg> Lưu phân công';
+                button.disabled = !nccSkuCurrentSupplier || !nccSkuDirty;
+            }
+        }
+        function khoiTaoPhanCongNccSku() {
+            taoBoLocThuocTinhNccSku();
+            const products = gomNhomSanPhamSku(nccSkuOptions);
+            const filter = document.getElementById('nccSkuProductFilter');
+            filter.innerHTML = '<option value="">Tất cả sản phẩm</option>' + products.map(product => `<option value="${escNccSku(product.key)}">${escNccSku(product.tenSanPham)}${product.maSanPham ? ` (${escNccSku(product.maSanPham)})` : ''}</option>`).join('');
+            if (nccSkuDefaultId) document.getElementById('nccSkuSupplier').value = String(nccSkuDefaultId);
+            void taiPhanCongNccSku();
+        }
+        khoiTaoPhanCongNccSku();
+    </script>
+</th:block>

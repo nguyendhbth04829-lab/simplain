@@ -243,40 +243,18 @@ public class DonHangService {
         }
         if (gioHang.getDanhSachBocCombo() != null) {
             for (BocComboDto combo : gioHang.getDanhSachBocCombo()) {
-                if (combo.getDanhSachMonCon() != null && !combo.getDanhSachMonCon().isEmpty()) {
-                    boolean isFirst = true;
-                    int comboSoLuong = (combo.getSoLuong() != null && combo.getSoLuong() > 0) ? combo.getSoLuong() : 1;
-                    BigDecimal giaCombo = combo.getGiaCombo() != null ? combo.getGiaCombo() : BigDecimal.ZERO;
-                    BigDecimal thanhTienCombo = combo.getThanhTien() != null ? combo.getThanhTien() : giaCombo.multiply(BigDecimal.valueOf(comboSoLuong));
-
+                if (combo.getDanhSachMonCon() != null) {
                     for (ItemGioHangDto monCon : combo.getDanhSachMonCon()) {
-                        int slMonCon = (monCon.getSoLuong() != null && monCon.getSoLuong() > 0) ? monCon.getSoLuong() : 1;
-                        if (isFirst) {
-                            // Món đầu tiên đại diện cho gói Combo nhận toàn bộ đơn giá và thành tiền của gói
-                            dsChiTiet.add(ChiTietDonHangItemRequest.builder()
-                                    .maBienTheId(monCon.getMaBienTheId())
-                                    .soLuong(slMonCon)
-                                    .donGia(giaCombo)
-                                    .thanhTien(thanhTienCombo)
-                                    .tenSanPham("[Gói Combo: " + combo.getTenCombo() + "] " + monCon.getTenSanPham() + " (" + monCon.getTenMau() + " / " + monCon.getTenKichThuoc() + ")")
-                                    .maSku(monCon.getMaSku())
-                                    .maComboId(combo.getMaComboId())
-                                    .nhomComboToken(combo.getNhomComboToken())
-                                    .build());
-                            isFirst = false;
-                        } else {
-                            // Các món thành phần tiếp theo trong combo có đơn giá và thành tiền = 0 (đã bao gồm trong giá gói)
-                            dsChiTiet.add(ChiTietDonHangItemRequest.builder()
-                                    .maBienTheId(monCon.getMaBienTheId())
-                                    .soLuong(slMonCon)
-                                    .donGia(BigDecimal.ZERO)
-                                    .thanhTien(BigDecimal.ZERO)
-                                    .tenSanPham("[Thành phần Combo: " + combo.getTenCombo() + "] " + monCon.getTenSanPham() + " (" + monCon.getTenMau() + " / " + monCon.getTenKichThuoc() + ")")
-                                    .maSku(monCon.getMaSku())
-                                    .maComboId(combo.getMaComboId())
-                                    .nhomComboToken(combo.getNhomComboToken())
-                                    .build());
-                        }
+                        dsChiTiet.add(ChiTietDonHangItemRequest.builder()
+                                .maBienTheId(monCon.getMaBienTheId())
+                                .soLuong(monCon.getSoLuong())
+                                .donGia(combo.getGiaCombo())
+                                .thanhTien(monCon.getThanhTien())
+                                .tenSanPham("[Combo: " + combo.getTenCombo() + "] " + monCon.getTenSanPham() + " (" + monCon.getTenMau() + " / " + monCon.getTenKichThuoc() + ")")
+                                .maSku(monCon.getMaSku())
+                                .maComboId(combo.getMaComboId())
+                                .nhomComboToken(combo.getNhomComboToken())
+                                .build());
                     }
                 }
             }
@@ -440,8 +418,6 @@ public class DonHangService {
                     .id(it.getId())
                     .maBienTheId(it.getMaBienTheId())
                     .maSanPhamId(sanPhamId)
-                    .maComboId(it.getMaComboId())
-                    .nhomComboToken(it.getNhomComboToken())
                     .tenSanPham(it.getTenSanPham())
                     .maSku(it.getMaSku())
                     .donGia(it.getDonGia())

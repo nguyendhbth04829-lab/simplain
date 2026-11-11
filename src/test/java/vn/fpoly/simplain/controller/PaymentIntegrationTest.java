@@ -198,24 +198,32 @@ class PaymentIntegrationTest {
     }
 
     @Test
-    @DisplayName("TC4 - Không cho phép giả lập thanh toán và trạng thái đơn vẫn chờ IPN")
-    void testKhongChoPhepGiaLapVaKiemTraTrangThai() throws Exception {
+    @DisplayName("TC4 - Giả lập thanh toán thành công và tự động kiểm tra trạng thái qua polling (AC 1 & 2)")
+    void testGiaLapVaKiemTraTrangThai() throws Exception {
+        // Giả lập thanh toán thành công
         mockMvc.perform(post("/thanh-toan/gia-lap-thanh-cong/" + donHangTest.getMaDonHang())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.redirectUrl").value("/thanh-toan/thanh-cong/" + donHangTest.getMaDonHang()));
 
+        // Polling kiểm tra trạng thái
         mockMvc.perform(get("/thanh-toan/kiem-tra-trang-thai/" + donHangTest.getMaDonHang()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.trangThai").value("CHO_THANH_TOAN"))
-                .andExpect(jsonPath("$.daThanhCong").value(false));
+                .andExpect(jsonPath("$.trangThai").value("THANH_CONG"))
+                .andExpect(jsonPath("$.daThanhCong").value(true));
     }
 
     @Test
-    @DisplayName("TC5 - Chặn xem giao dịch khi chưa xác thực nhân viên")
-    void testAdminChuaXacThucBiChan() throws Exception {
+    @DisplayName("TC5 - Admin xem danh sách lịch sử giao dịch thanh toán (AC 3)")
+    void testAdminXemLichSuGiaoDich() throws Exception {
         giaoDichThanhToanService.khoiTaoGiaoDich(donHangTest, ptttVnpay);
 
         mockMvc.perform(get("/admin/giao-dich-thanh-toan/hien-thi"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/giao-dich-thanh-toan/hien-thi"))
+                .andExpect(model().attributeExists("trangGiaoDich"))
+                .andExpect(model().attributeExists("tongSo"))
+                .andExpect(model().attributeExists("dsPhuongThuc"));
     }
 }

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Chi tiết đơn hàng #' + donHangDto.donHang.maDonHang + ' (US23) | SIMPLAIN STORE'}">Chi tiết đơn hàng | SIMPLAIN STORE</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-[#0a192f] text-slate-200 text-xs py-2 text-center font-medium tracking-wide border-b border-slate-800 px-4">
+        Simplain Hub: Theo dõi hành trình đơn hàng trực tiếp &bull; Hotline CSKH 24/7: 1900.272737
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+        <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="/cua-hang" class="flex items-center space-x-2">
+                    <span class="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">SIMPLAIN<span class="text-blue-600">.</span></span>
+                </a>
+                <span class="hidden sm:inline-block text-slate-300">|</span>
+                <span class="text-xs font-extrabold uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-receipt text-blue-600"></i> Chi Tiết Đơn Hàng
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs font-semibold">
+                <a href="/khach-hang/don-hang" class="text-blue-600 hover:text-blue-800 transition flex items-center gap-1 py-1 px-2.5 rounded-lg bg-blue-50">
+                    <i class="fa-solid fa-arrow-left text-xs"></i> Danh sách đơn
+                </a>
+                <a href="/cua-hang" class="text-slate-600 hover:text-blue-600 transition flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-slate-100">
+                    <i class="fa-solid fa-store text-blue-600"></i> Cửa hàng
+                </a>
+                <a href="/khach-hang/dang-xuat" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 px-3 py-1.5 rounded-xl transition flex items-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+        <!-- Breadcrumb & Back Link -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
+            <nav class="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                <a href="/cua-hang" class="hover:text-blue-600">Trang chủ</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                <a href="/khach-hang/don-hang" class="hover:text-blue-600">Đơn hàng của tôi</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                <span class="font-bold text-slate-900 font-mono" th:text="${'#' + donHangDto.donHang.maDonHang}">#DH123456</span>
+            </nav>
+
+            <a href="/khach-hang/don-hang" class="text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-chevron-left text-[10px]"></i> Quay lại danh sách đơn hàng
+            </a>
+        </div>
+
+        <!-- Alert Notifications -->
+        <div th:if="${thongBaoThanhCong}" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-2xs">
+            <div class="flex items-center space-x-3 text-xs">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+                <span class="font-bold" th:text="${thongBaoThanhCong}">Thao tác thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div th:if="${loiHuyDon}" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-2xs">
+            <div class="flex items-center space-x-3 text-xs">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg"></i>
+                <div>
+                    <h4 class="font-black">Không thể hủy đơn hàng!</h4>
+                    <p class="text-[11px]" th:text="${loiHuyDon}">Lỗi xảy ra khi hủy đơn</p>
+                </div>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div th:if="${loiFormHuy}" class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-between shadow-2xs">
+            <div class="flex items-center space-x-3 text-xs">
+                <i class="fa-solid fa-circle-exclamation text-amber-600 text-lg"></i>
+                <span class="font-bold" th:text="${loiFormHuy}">Dữ liệu form hủy đơn không hợp lệ!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-amber-500 hover:text-amber-700 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 1. Shopee-style Order Stepper / Progress Bar (Quy Trình Tiến Trình Vận Đơn) -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-slate-100">
+                <div>
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-0.5">Mã đơn hàng</div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg sm:text-xl font-black text-slate-900 font-mono tracking-tight"
+                              th:text="${'#' + donHangDto.donHang.maDonHang}">#DH123456</span>
+                        <button type="button" th:data-copy="${donHangDto.donHang.maDonHang}"
+                                onclick="saoChepVanBan(this.getAttribute('data-copy'), 'Đã sao chép mã đơn hàng!')"
+                                class="text-slate-400 hover:text-blue-600 p-1 text-xs cursor-pointer" title="Sao chép mã đơn">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span th:if="${donHangDto.donHang.loaiDonHang == 'TAI_QUAY'}"
+                          class="px-2.5 py-1 rounded-xl font-bold text-xs uppercase bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-shop"></i> Mua tại quầy thu ngân
+                    </span>
+                    <span th:unless="${donHangDto.donHang.loaiDonHang == 'TAI_QUAY'}"
+                          class="px-2.5 py-1 rounded-xl font-bold text-xs uppercase bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-truck"></i> Giao hàng Online
+                    </span>
+
+                    <!-- Status Badge -->
+                    <span th:if="${donHangDto.donHang.trangThaiDonHang != null}"
+                          th:style="${donHangDto.donHang.trangThaiDonHang.maMauHex != null ? 'background-color: ' + donHangDto.donHang.trangThaiDonHang.maMauHex + '15; color: ' + donHangDto.donHang.trangThaiDonHang.maMauHex + '; border-color: ' + donHangDto.donHang.trangThaiDonHang.maMauHex + '30' : ''}"
+                          class="px-3.5 py-1 rounded-full font-black text-xs border uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+                        <span class="w-2 h-2 rounded-full" th:style="${'background-color: ' + (donHangDto.donHang.trangThaiDonHang.maMauHex != null ? donHangDto.donHang.trangThaiDonHang.maMauHex : '#3b82f6')}"></span>
+                        <span th:text="${donHangDto.donHang.trangThaiDonHang.tenTrangThai}">Chờ xác nhận</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Stepper Progress UI -->
+            <div th:if="${donHangDto.stepperIndex != -1}" class="pt-8 pb-2">
+                <div class="relative flex items-center justify-between w-full max-w-4xl mx-auto px-4 sm:px-12">
+                    <!-- Progress Line Background -->
+                    <div class="absolute left-10 right-10 top-5 h-1 bg-slate-200 -z-0"></div>
+                    <!-- Progress Line Filled Active -->
+                    <div class="absolute left-10 top-5 h-1 bg-emerald-500 transition-all duration-500 -z-0"
+                         th:style="${'width: ' + ((donHangDto.stepperIndex - 1) * 33.33) + '%'}"></div>
+
+                    <!-- Step 1: Đặt hàng -->
+                    <div class="flex flex-col items-center relative z-10">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition"
+                             th:classappend="${donHangDto.stepperIndex >= 1 ? 'bg-emerald-500 text-white ring-4 ring-emerald-100' : 'bg-slate-200 text-slate-500'}">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-2 text-slate-800 text-center">Đặt hàng</span>
+                        <span class="text-[10px] text-slate-400 font-mono"
+                              th:text="${#temporals.format(donHangDto.donHang.ngayTao, 'dd/MM HH:mm')}">26/10 15:30</span>
+                    </div>
+
+                    <!-- Step 2: Chuẩn bị hàng -->
+                    <div class="flex flex-col items-center relative z-10">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition"
+                             th:classappend="${donHangDto.stepperIndex >= 2 ? 'bg-emerald-500 text-white ring-4 ring-emerald-100' : 'bg-slate-200 text-slate-500'}">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-2 text-center"
+                              th:classappend="${donHangDto.stepperIndex >= 2 ? 'text-slate-900 font-black' : 'text-slate-400'}">Chuẩn bị hàng</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Kho xử lý</span>
+                    </div>
+
+                    <!-- Step 3: Đang giao -->
+                    <div class="flex flex-col items-center relative z-10">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition"
+                             th:classappend="${donHangDto.stepperIndex >= 3 ? 'bg-emerald-500 text-white ring-4 ring-emerald-100' : 'bg-slate-200 text-slate-500'}">
+                            <i class="fa-solid fa-truck-fast"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-2 text-center"
+                              th:classappend="${donHangDto.stepperIndex >= 3 ? 'text-slate-900 font-black' : 'text-slate-400'}">Đang giao hàng</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Vận chuyển</span>
+                    </div>
+
+                    <!-- Step 4: Hoàn thành -->
+                    <div class="flex flex-col items-center relative z-10">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition"
+                             th:classappend="${donHangDto.stepperIndex >= 4 ? 'bg-emerald-500 text-white ring-4 ring-emerald-100' : 'bg-slate-200 text-slate-500'}">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <span class="text-xs font-bold mt-2 text-center"
+                              th:classappend="${donHangDto.stepperIndex >= 4 ? 'text-emerald-700 font-black' : 'text-slate-400'}">Đã nhận hàng</span>
+                        <span class="text-[10px] text-slate-400 font-medium">Hoàn thành</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancelled Order Banner (Nếu Đã Hủy) -->
+            <div th:if="${donHangDto.stepperIndex == -1}" class="pt-6">
+                <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-3">
+                    <i class="fa-solid fa-ban text-rose-600 text-xl mt-0.5"></i>
+                    <div class="space-y-1 text-xs">
+                        <div class="font-extrabold text-sm text-rose-800">Đơn hàng này đã bị hủy</div>
+                        <div class="text-rose-700">
+                            Toàn bộ số lượng sản phẩm trong đơn đã được tự động hoàn lại kho hàng. Nếu đơn hàng có sử dụng điểm tích lũy, số điểm này cũng đã được hoàn lại đầy đủ vào ví hội viên của bạn.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trạng thái tóm tắt hiện tại -->
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-600">
+                <i class="fa-solid fa-circle-info text-blue-600"></i>
+                <span>Trạng thái hiện tại: <strong class="text-slate-900 font-bold" th:text="${donHangDto.moTaTrangThaiHienTai}">Đang xử lý</strong></span>
+            </div>
+        </div>
+
+        <!-- 2 Columns Grid: Shipping & Tracking Details (Left) + Order Items & Price Summary (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Cột trái: Mã Vận Đơn, Địa Chỉ & Hành Trình Vận Chuyển (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Tracking Card (Mã Vận Đơn) -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-barcode text-purple-600 text-sm"></i> Mã Vận Đơn & Vận Chuyển
+                        </h2>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-mono">
+                            Express
+                        </span>
+                    </div>
+
+                    <!-- Hiển thị Mã Vận Đơn -->
+                    <div th:if="${donHangDto.donHang.maVanDon != null and !donHangDto.donHang.maVanDon.empty}"
+                         class="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200 text-xs space-y-2">
+                        <div class="text-[11px] font-bold text-purple-800 uppercase tracking-wider">Mã vận đơn bưu kiện:</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-base font-black font-mono text-purple-900 tracking-wider"
+                                  th:text="${donHangDto.donHang.maVanDon}">SMPL-VD123456</span>
+                            <button type="button" th:data-copy="${donHangDto.donHang.maVanDon}"
+                                    onclick="saoChepVanBan(this.getAttribute('data-copy'), 'Đã sao chép mã vận đơn!')"
+                                    class="px-2.5 py-1 rounded-lg bg-white border border-purple-300 hover:bg-purple-100 text-purple-800 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs">
+                                <i class="fa-regular fa-copy"></i> Sao chép
+                            </button>
+                        </div>
+                        <div class="text-[11px] text-purple-700 flex items-center gap-1.5 pt-1 border-t border-purple-200/60">
+                            <i class="fa-solid fa-truck-moving"></i>
+                            <span th:text="${donHangDto.tenDonViVanChuyen}">Simplain Express & GHTK</span>
+                        </div>
+                    </div>
+
+                    <div th:unless="${donHangDto.donHang.maVanDon != null and !donHangDto.donHang.maVanDon.empty}"
+                         class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>
+                        <span>Đang xử lý tạo mã vận đơn với đơn vị vận chuyển...</span>
+                    </div>
+
+                    <!-- Thông Tin Giao Nhận (Recipient Information) -->
+                    <div class="space-y-3 pt-2 text-xs">
+                        <div class="font-extrabold uppercase text-slate-400 text-[10px] tracking-wider">Địa chỉ nhận hàng</div>
+                        <div class="space-y-1.5">
+                            <div class="font-black text-slate-900 text-sm flex items-center gap-1.5">
+                                <i class="fa-solid fa-user text-slate-400 text-xs"></i>
+                                <span th:text="${donHangDto.donHang.tenNguoiNhan}">Nguyễn Văn An</span>
+                            </div>
+                            <div class="font-mono font-bold text-blue-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-phone text-slate-400 text-xs"></i>
+                                <span th:text="${donHangDto.donHang.soDienThoaiNhan}">0912345678</span>
+                            </div>
+                            <div class="text-slate-600 flex items-start gap-1.5 pt-0.5">
+                                <i class="fa-solid fa-location-dot text-rose-500 text-xs mt-0.5 flex-shrink-0"></i>
+                                <span th:text="${donHangDto.donHang.diaChiGiaoHang}">Số 123 đường Cầu Giấy, Hà Nội</span>
+                            </div>
+                            <div th:if="${donHangDto.donHang.ghiChu != null and !donHangDto.donHang.ghiChu.empty}"
+                                 class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] italic">
+                                <span class="font-bold text-slate-700 not-italic">Ghi chú:</span> <span th:text="${donHangDto.donHang.ghiChu}">Giao hàng giờ hành chính</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Lịch Sử Trạng Thái Vận Đơn (Tracking History Timeline) -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-timeline text-blue-600 text-sm"></i> Lịch Sử Trạng Thái Vận Đơn (US22)
+                        </h2>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono"
+                              th:text="${donHangDto.lichSuVanDon != null ? #lists.size(donHangDto.lichSuVanDon) + ' mốc' : '0'}">
+                            0 mốc
+                        </span>
+                    </div>
+
+                    <!-- Vertical Timeline -->
+                    <div th:if="${donHangDto.lichSuVanDon != null and !donHangDto.lichSuVanDon.empty}"
+                         class="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+
+                        <div th:each="ls, iter : ${donHangDto.lichSuVanDon}" class="relative text-xs">
+                            <!-- Bullet Icon -->
+                            <div class="absolute -left-6 top-0.5 w-4 h-4 rounded-full border-2 border-white shadow-2xs flex items-center justify-center"
+                                 th:classappend="${iter.last ? 'bg-blue-600 ring-4 ring-blue-100' : 'bg-slate-300'}">
+                            </div>
+
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                    <span class="font-black text-slate-900 uppercase text-[11px] tracking-wide"
+                                          th:text="${ls.tenTrangThai}">Đang giao hàng</span>
+                                    <span class="text-[10px] font-mono text-slate-400"
+                                          th:text="${ls.formattedNgayChuyen != null ? ls.formattedNgayChuyen : #temporals.format(ls.ngayChuyen, 'dd/MM/yyyy HH:mm:ss')}">
+                                        26/10/2026 16:30:00
+                                    </span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 leading-relaxed" th:text="${ls.ghiChu}">
+                                    Đã bàn giao kiện hàng cho đơn vị vận chuyển GHN.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div th:unless="${donHangDto.lichSuVanDon != null and !donHangDto.lichSuVanDon.empty}"
+                         class="text-xs text-slate-400 italic text-center py-4">
+                        Chưa có lịch sử cập nhật trạng thái nào được ghi nhận.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Cột phải: Danh Sách Sản Phẩm & Chi Tiết Thanh Toán (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Products in Order (Danh Sách Sản Phẩm) -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-shirt text-blue-600 text-sm"></i> Mặt Hàng Đã Đặt
+                        </h2>
+                        <span class="text-xs font-mono font-bold text-slate-500"
+                              th:text="${donHangDto.tongSoLuong + ' món'}">1 món</span>
+                    </div>
+
+                    <!-- Items List -->
+                    <div class="divide-y divide-slate-100">
+                        <div th:each="it : ${donHangDto.danhSachItem}" class="py-4 flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center">
+                                    <img th:if="${it.hinhAnhUrl != null and !it.hinhAnhUrl.empty}"
+                                         th:src="${it.hinhAnhUrl}" alt="Product"
+                                         class="w-full h-full object-cover" />
+                                    <i th:unless="${it.hinhAnhUrl != null and !it.hinhAnhUrl.empty}"
+                                       class="fa-solid fa-shirt text-slate-300 text-2xl"></i>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm" th:text="${it.tenSanPham}">
+                                        Áo Thun Simplain Classic
+                                    </h3>
+                                    <div class="flex items-center gap-2 flex-wrap text-[11px] text-slate-500">
+                                        <span th:if="${it.tenMau != null and !it.tenMau.empty}" class="bg-slate-100 px-2 py-0.5 rounded font-medium text-slate-700" th:text="${'Màu: ' + it.tenMau}">Trắng</span>
+                                        <span th:if="${it.tenKichThuoc != null and !it.tenKichThuoc.empty}" class="bg-slate-100 px-2 py-0.5 rounded font-medium text-slate-700" th:text="${'Size: ' + it.tenKichThuoc}">XL</span>
+                                        <span class="font-mono text-slate-400" th:text="${'SKU: ' + it.maSku}">SKU-123</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-600 font-medium">
+                                        Đơn giá: <span class="font-mono font-bold text-slate-900" th:text="${#numbers.formatDecimal(it.donGia, 0, 'COMMA', 0, 'POINT') + ' đ'}">250.000 đ</span>
+                                        &bull; Số lượng: <strong class="text-blue-700 font-bold" th:text="${'x' + it.soLuong}">x1</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-right flex-shrink-0 font-black text-slate-900 text-sm sm:text-base font-mono"
+                                 th:text="${#numbers.formatDecimal(it.thanhTien, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                250.000 đ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown & Payment Info (Chi Tiết Thanh Toán) -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h2 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-file-invoice-dollar text-emerald-600 text-sm"></i> Chi Tiết Thanh Toán
+                        </h2>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                            VND (VNĐ)
+                        </span>
+                    </div>
+
+                    <div class="divide-y divide-slate-100 text-xs">
+                        <div class="py-2.5 flex justify-between items-center">
+                            <span class="text-slate-500 font-medium">Tổng tiền hàng:</span>
+                            <span class="font-bold text-slate-900 font-mono"
+                                  th:text="${#numbers.formatDecimal(donHangDto.donHang.tongTienHang, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                250.000 đ
+                            </span>
+                        </div>
+
+                        <div th:if="${donHangDto.donHang.tienGiamGia != null and donHangDto.donHang.tienGiamGia > 0}"
+                             class="py-2.5 flex justify-between items-center text-emerald-700">
+                            <span class="font-medium flex items-center gap-1.5">
+                                <i class="fa-solid fa-ticket"></i> Giảm giá Voucher:
+                            </span>
+                            <span class="font-bold font-mono"
+                                  th:text="${'- ' + #numbers.formatDecimal(donHangDto.donHang.tienGiamGia, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                - 20.000 đ
+                            </span>
+                        </div>
+
+                        <div th:if="${donHangDto.donHang.tienCoolcashDung != null and donHangDto.donHang.tienCoolcashDung > 0}"
+                             class="py-2.5 flex justify-between items-center text-amber-700">
+                            <span class="font-medium flex items-center gap-1.5">
+                                <i class="fa-solid fa-coins text-amber-500"></i> Trừ điểm tích lũy:
+                            </span>
+                            <span class="font-bold font-mono"
+                                  th:text="${'- ' + #numbers.formatDecimal(donHangDto.donHang.tienCoolcashDung, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                - 20.000 đ
+                            </span>
+                        </div>
+
+                        <div class="py-2.5 flex justify-between items-center">
+                            <span class="text-slate-500 font-medium">Phí vận chuyển:</span>
+                            <span class="font-bold text-slate-900 font-mono"
+                                  th:text="${(donHangDto.donHang.phiVanChuyen != null and donHangDto.donHang.phiVanChuyen > 0) ? #numbers.formatDecimal(donHangDto.donHang.phiVanChuyen, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Miễn phí (0 đ)'}">
+                                Miễn phí (0 đ)
+                            </span>
+                        </div>
+
+                        <div class="pt-3 pb-1 flex justify-between items-center">
+                            <span class="text-sm font-black text-slate-900">Tổng thanh toán:</span>
+                            <span class="text-xl font-black text-blue-900 font-mono"
+                                  th:text="${#numbers.formatDecimal(donHangDto.donHang.tongThanhToan, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                250.000 đ
+                            </span>
+                        </div>
+
+                        <div class="pt-3 flex justify-between items-center text-slate-600">
+                            <span class="font-medium">Hình thức thanh toán:</span>
+                            <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-credit-card text-blue-600"></i>
+                                <span th:text="${donHangDto.donHang.phuongThucThanhToan != null ? donHangDto.donHang.phuongThucThanhToan.tenPhuongThuc : 'Thanh toán trực tiếp'}">Tiền mặt</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+                        <a href="/khach-hang/don-hang"
+                           class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs uppercase tracking-wider text-center transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-arrow-left"></i> Danh sách đơn
+                        </a>
+
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <!-- Nút Hủy Đơn Hàng (Nếu đang Chờ xác nhận) -->
+                            <button th:if="${donHangDto.coTheHuy}" type="button" onclick="moModalHuyDon()"
+                                    class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-ban"></i> Hủy đơn hàng
+                            </button>
+
+                            <!-- Nút Yêu Cầu Đổi/Trả (Nếu đơn đã HOAN_THANH - US24) -->
+                            <a th:if="${donHangDto.donHang.trangThaiDonHang != null && (donHangDto.donHang.trangThaiDonHang.maTrangThai == 'HOAN_THANH' || donHangDto.donHang.trangThaiDonHang.id == 4)}"
+                               th:href="@{'/khach-hang/don-hang/' + ${donHangDto.donHang.maDonHang} + '/doi-tra'}"
+                               class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition text-center flex items-center justify-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-arrows-rotate"></i> Yêu cầu Đổi / Trả (US24)
+                            </a>
+
+                            <a href="/cua-hang"
+                               class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition text-center flex items-center justify-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-bag-shopping"></i> Tiếp tục mua hàng
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- =========================================================================
+         MODAL HỦY ĐƠN HÀNG (US23 - FORM VALIDATION CHUYÊN NGHIỆP)
+         ========================================================================= -->
+    <div id="modalHuyDon" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2 font-black text-sm text-rose-700 uppercase tracking-wide">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i> Xác Nhận Hủy Đơn Hàng
+                </div>
+                <button type="button" onclick="dongModalHuyDon()" class="text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form th:action="@{'/khach-hang/don-hang/' + ${donHangDto.donHang.maDonHang} + '/huy'}"
+                  th:object="${huyDonHangRequest}"
+                  method="post" class="p-6 space-y-4 text-xs">
+
+                <!-- Alert Warning -->
+                <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-exclamation text-amber-600 text-base mt-0.5 flex-shrink-0"></i>
+                    <div>
+                        <div class="font-bold">Lưu ý quan trọng:</div>
+                        <p class="text-[11px] text-amber-800">
+                            Sau khi hủy, đơn hàng sẽ không thể khôi phục lại. Toàn bộ số lượng sản phẩm sẽ được hoàn lại kho hàng và điểm tích lũy (nếu có sử dụng) cũng sẽ được hoàn lại vào ví hội viên của bạn.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Radio Chọn Lý Do Hủy (Validate Form) -->
+                <div>
+                    <label class="block font-bold text-slate-800 mb-2">
+                        Vui lòng chọn lý do hủy đơn hàng <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/50">
+                        <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer transition">
+                            <input type="radio" th:field="*{lyDoHuy}" value="Tôi muốn thay đổi địa chỉ nhận hàng"
+                                   onchange="toggleGhiChuKhac()" class="text-blue-600 focus:ring-blue-500" required />
+                            <span class="font-medium text-slate-800">Tôi muốn thay đổi địa chỉ nhận hàng</span>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer transition">
+                            <input type="radio" th:field="*{lyDoHuy}" value="Tôi muốn thay đổi sản phẩm trong đơn (màu, size, số lượng...)"
+                                   onchange="toggleGhiChuKhac()" class="text-blue-600 focus:ring-blue-500" />
+                            <span class="font-medium text-slate-800">Tôi muốn thay đổi sản phẩm trong đơn (màu sắc, kích thước, số lượng...)</span>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer transition">
+                            <input type="radio" th:field="*{lyDoHuy}" value="Tôi muốn đổi phương thức thanh toán"
+                                   onchange="toggleGhiChuKhac()" class="text-blue-600 focus:ring-blue-500" />
+                            <span class="font-medium text-slate-800">Tôi muốn đổi phương thức thanh toán</span>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer transition">
+                            <input type="radio" th:field="*{lyDoHuy}" value="Tôi tìm thấy giá tốt hơn ở nơi khác"
+                                   onchange="toggleGhiChuKhac()" class="text-blue-600 focus:ring-blue-500" />
+                            <span class="font-medium text-slate-800">Tôi tìm thấy giá tốt hơn ở nơi khác</span>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer transition">
+                            <input type="radio" th:field="*{lyDoHuy}" value="Tôi không có nhu cầu mua nữa"
+                                   onchange="toggleGhiChuKhac()" class="text-blue-600 focus:ring-blue-500" />
+                            <span class="font-medium text-slate-800">Tôi không có nhu cầu mua nữa</span>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white cursor-pointer transition">
+                            <input type="radio" th:field="*{lyDoHuy}" value="Lý do khác" id="radioLyDoKhac"
+                                   onchange="toggleGhiChuKhac()" class="text-blue-600 focus:ring-blue-500" />
+                            <span class="font-medium text-slate-800">Lý do khác</span>
+                        </label>
+                    </div>
+                    <p th:if="${#fields.hasErrors('lyDoHuy')}" th:errors="*{lyDoHuy}" class="text-rose-600 text-[11px] font-bold mt-1"></p>
+                </div>
+
+                <!-- Textarea Chi Tiết -->
+                <div id="containerGhiChuKhac">
+                    <label class="block font-bold text-slate-800 mb-1">
+                        Chi tiết lý do hoặc phản hồi đóng góp cho Simplain
+                    </label>
+                    <textarea th:field="*{ghiChuChiTiet}" id="textareaGhiChuChiTiet" rows="3"
+                              placeholder="Ví dụ: Địa chỉ nhận mới hoặc lý do cụ thể..."
+                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs font-medium"></textarea>
+                    <p th:if="${#fields.hasErrors('ghiChuChiTiet')}" th:errors="*{ghiChuChiTiet}" class="text-rose-600 text-[11px] font-bold mt-1"></p>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2.5 border-t border-slate-100">
+                    <button type="button" onclick="dongModalHuyDon()"
+                            class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold text-slate-700 uppercase cursor-pointer">
+                        Không, giữ lại đơn
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase transition cursor-pointer flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-ban"></i> Xác nhận hủy đơn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="posToast" class="fixed bottom-6 right-6 z-50 hidden px-5 py-3.5 rounded-2xl shadow-xl text-white font-bold text-xs flex items-center gap-2.5 transition-all">
+        <i id="posToastIcon" class="fa-solid fa-circle-check text-base"></i>
+        <span id="posToastMsg">Thông báo</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-slate-200 py-6 text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+            <span>&copy; 2026 SIMPLAIN STORE &bull; Nền tảng thời trang nam tối giản.</span>
+        </div>
+    </footer>
+
+    <!-- JavaScript Functions -->
+    <script>
+        function saoChepVanBan(text, msg = 'Đã sao chép vào bộ nhớ đệm!') {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => hienToast(msg, 'success'));
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                hienToast(msg, 'success');
+            }
+        }
+
+        function hienToast(msg, type = 'success') {
+            const toast = document.getElementById('posToast');
+            const toastMsg = document.getElementById('posToastMsg');
+            const toastIcon = document.getElementById('posToastIcon');
+            if (!toast) return;
+
+            toastMsg.innerText = msg;
+            toast.className = 'fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl text-white font-bold text-xs flex items-center gap-2.5 transition-all ';
+            if (type === 'success') {
+                toast.className += 'bg-slate-900 border border-slate-700';
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-base';
+            } else {
+                toast.className += 'bg-rose-600 border border-rose-700';
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-white text-base';
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function moModalHuyDon() {
+            const modal = document.getElementById('modalHuyDon');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dongModalHuyDon() {
+            const modal = document.getElementById('modalHuyDon');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+
+        function toggleGhiChuKhac() {
+            const rKhac = document.getElementById('radioLyDoKhac');
+            const textarea = document.getElementById('textareaGhiChuChiTiet');
+            if (rKhac && textarea) {
+                if (rKhac.checked) {
+                    textarea.required = true;
+                    textarea.focus();
+                } else {
+                    textarea.required = false;
+                }
+            }
+        }
+
+        // Tự động mở modal hủy đơn nếu URL có hash #modalHuyDon
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash === '#modalHuyDon') {
+                moModalHuyDon();
+            }
+        });
+    </script>
+
+</body>
+</html>

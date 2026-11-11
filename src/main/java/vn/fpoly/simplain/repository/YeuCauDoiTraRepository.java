@@ -62,7 +62,7 @@ public interface YeuCauDoiTraRepository extends JpaRepository<YeuCauDoiTra, Long
            "  AND (:tuKhoa IS NULL OR :tuKhoa = '' OR " +
            "       LOWER(r.maYeuCauRma) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR " +
            "       LOWER(r.lyDo) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) " +
-           "ORDER BY r.id DESC, r.ngayTao DESC")
+           "ORDER BY r.ngayTao DESC")
     Page<YeuCauDoiTra> timKiemCuaKhachHang(@Param("khachHangId") Long khachHangId,
                                           @Param("trangThai") String trangThai,
                                           @Param("tuKhoa") String tuKhoa,
@@ -82,7 +82,7 @@ public interface YeuCauDoiTraRepository extends JpaRepository<YeuCauDoiTra, Long
            "       LOWER(kh.hoTen) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR " +
            "       kh.soDienThoai LIKE CONCAT('%', :tuKhoa, '%') OR " +
            "       LOWER(r.lyDo) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) " +
-           "ORDER BY r.id DESC, r.ngayTao DESC")
+           "ORDER BY r.ngayTao DESC")
     Page<YeuCauDoiTra> timKiemPhanTrangChoAdmin(
             @Param("tuKhoa") String tuKhoa,
             @Param("trangThai") String trangThai,

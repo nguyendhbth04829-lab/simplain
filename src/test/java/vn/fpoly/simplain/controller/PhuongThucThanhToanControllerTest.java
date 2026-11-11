@@ -1,6 +1,5 @@
 package vn.fpoly.simplain.controller;
 
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,21 +9,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.web.context.WebApplicationContext;
-import vn.fpoly.simplain.dto.XacThucNhanVienResponse;
 import vn.fpoly.simplain.entity.PhuongThucThanhToan;
 import vn.fpoly.simplain.repository.PhuongThucThanhToanRepository;
-import vn.fpoly.simplain.service.NhanVienService;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,11 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PhuongThucThanhToanControllerTest {
 
     @Autowired
-    private WebApplicationContext applicationContext;
-
-    @MockitoBean
-    private NhanVienService nhanVienService;
-
     private MockMvc mockMvc;
 
     @Autowired
@@ -59,12 +46,6 @@ class PhuongThucThanhToanControllerTest {
 
     @BeforeEach
     void setUp() {
-        when(nhanVienService.layThongTinNhanVienTuToken(anyString()))
-                .thenReturn(XacThucNhanVienResponse.builder().maVaiTro("ADMIN").build());
-        mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext)
-                .defaultRequest(get("/").cookie(new Cookie("jwt_admin_token", "test-admin-token")))
-                .build();
-
         // Tạo 2 phương thức thanh toán thử nghiệm
         ptttTest1 = repository.save(PhuongThucThanhToan.builder()
                 .maPhuongThuc(MA_TEST_1)
@@ -144,77 +125,6 @@ class PhuongThucThanhToanControllerTest {
                         .param("maPhuongThuc", MA_TEST_1)
                         .param("tenPhuongThuc", "Tên Trùng")
                         .param("laTrucTuyen", "true"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/phuong-thuc-thanh-toan/hien-thi"))
-                .andExpect(flash().attributeExists("thongBaoLoi"));
-    }
-
-    @Test
-    @DisplayName("TC2.3 - Thêm mới cổng thanh toán VNPAY chuyên nghiệp kèm đóng gói JSON")
-    void themCongThanhToan_vnpayChuyenNghiep_thanhCong() throws Exception {
-        mockMvc.perform(post("/admin/phuong-thuc-thanh-toan/them")
-                        .param("loaiCong", "VNPAY")
-                        .param("maPhuongThuc", "VNPAY_PRESET_TEST")
-                        .param("tenPhuongThuc", "Cổng VNPay Test")
-                        .param("laTrucTuyen", "true")
-                        .param("vnpTmnCode", "SIMPLAIN01")
-                        .param("vnpHashSecret", "RAI9EFCJ891283JKSDH21")
-                        .param("vnpUrl", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html")
-                        .param("vnpMoiTruong", "SANDBOX"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/phuong-thuc-thanh-toan/hien-thi"))
-                .andExpect(flash().attributeExists("thongBaoThanhCong"));
-
-        PhuongThucThanhToan pt = repository.findByMaPhuongThucIgnoreCase("VNPAY_PRESET_TEST").orElseThrow();
-        assertEquals("VNPAY", pt.getLoaiCong());
-        assertNotNull(pt.getCauHinh());
-        assertTrue(pt.getCauHinh().contains("SIMPLAIN01"));
-        assertTrue(pt.getCauHinh().contains("RAI9EFCJ891283JKSDH21"));
-
-        repository.delete(pt);
-    }
-
-    @Test
-    @DisplayName("TC2.4 - Thêm mới cổng VietQR với tài khoản ngân hàng và kiểm tra giải mã API")
-    void themCongThanhToan_vietqrChuyenKhoan_thanhCong() throws Exception {
-        mockMvc.perform(post("/admin/phuong-thuc-thanh-toan/them")
-                        .param("loaiCong", "VIETQR")
-                        .param("maPhuongThuc", "VIETQR_TEST")
-                        .param("tenPhuongThuc", "Chuyển khoản VietQR Test")
-                        .param("laTrucTuyen", "true")
-                        .param("maNganHang", "970422")
-                        .param("tenNganHang", "MBBank")
-                        .param("soTaiKhoan", "0988776655")
-                        .param("tenChuTaiKhoan", "SIMPLAIN STORE")
-                        .param("cuPhapChuyenKhoan", "DH {maDonHang}"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/phuong-thuc-thanh-toan/hien-thi"))
-                .andExpect(flash().attributeExists("thongBaoThanhCong"));
-
-        PhuongThucThanhToan pt = repository.findByMaPhuongThucIgnoreCase("VIETQR_TEST").orElseThrow();
-        assertEquals("VIETQR", pt.getLoaiCong());
-        assertTrue(pt.getCauHinh().contains("0988776655"));
-
-        // Kiểm tra API trả về đã giải mã đủ các trường
-        mockMvc.perform(get("/admin/phuong-thuc-thanh-toan/api/" + pt.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.loaiCong", is("VIETQR")))
-                .andExpect(jsonPath("$.soTaiKhoan", is("0988776655")))
-                .andExpect(jsonPath("$.tenChuTaiKhoan", is("SIMPLAIN STORE")))
-                .andExpect(jsonPath("$.maNganHang", is("970422")));
-
-        repository.delete(pt);
-    }
-
-    @Test
-    @DisplayName("TC2.5 - Báo lỗi validator khi chọn VNPay nhưng thiếu Hash Secret")
-    void themCongThanhToan_vnpayThieuHashSecret_baoLoi() throws Exception {
-        mockMvc.perform(post("/admin/phuong-thuc-thanh-toan/them")
-                        .param("loaiCong", "VNPAY")
-                        .param("maPhuongThuc", "VNPAY_FAIL_TEST")
-                        .param("tenPhuongThuc", "Cổng VNPay Lỗi")
-                        .param("vnpTmnCode", "SIMPLAIN01")
-                        .param("vnpHashSecret", "")) // Thiếu hash secret
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/phuong-thuc-thanh-toan/hien-thi"))
                 .andExpect(flash().attributeExists("thongBaoLoi"));

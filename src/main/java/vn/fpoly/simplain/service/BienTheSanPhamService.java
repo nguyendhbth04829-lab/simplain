@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.fpoly.simplain.dto.BienTheHangLoatItemRequest;
 import vn.fpoly.simplain.dto.ThemNhanhBienTheRequest;
 import vn.fpoly.simplain.entity.*;
+import vn.fpoly.simplain.inbound.LichSuBaoGiaService;
 import vn.fpoly.simplain.repository.*;
 
 import java.io.IOException;
@@ -44,7 +46,10 @@ public class BienTheSanPhamService {
     private final SanPhamRepository sanPhamRepository;
     private final MauSacRepository mauSacRepository;
     private final KichThuocRepository kichThuocRepository;
+    private final ThuocTinhBienTheRepository thuocTinhRepository;
+    private final BienTheSanPhamThuocTinhRepository bienTheThuocTinhRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final LichSuBaoGiaService lichSuBaoGiaService;
 
     @Autowired
     public BienTheSanPhamService(BienTheSanPhamRepository bienTheRepository,
@@ -52,13 +57,19 @@ public class BienTheSanPhamService {
                                  SanPhamRepository sanPhamRepository,
                                  MauSacRepository mauSacRepository,
                                  KichThuocRepository kichThuocRepository,
-                                 JdbcTemplate jdbcTemplate) {
+                                 ThuocTinhBienTheRepository thuocTinhRepository,
+                                 BienTheSanPhamThuocTinhRepository bienTheThuocTinhRepository,
+                                 JdbcTemplate jdbcTemplate,
+                                 LichSuBaoGiaService lichSuBaoGiaService) {
         this.bienTheRepository = bienTheRepository;
         this.hinhAnhRepository = hinhAnhRepository;
         this.sanPhamRepository = sanPhamRepository;
         this.mauSacRepository = mauSacRepository;
         this.kichThuocRepository = kichThuocRepository;
+        this.thuocTinhRepository = thuocTinhRepository;
+        this.bienTheThuocTinhRepository = bienTheThuocTinhRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.lichSuBaoGiaService = lichSuBaoGiaService;
     }
 
     /**
@@ -125,6 +136,14 @@ public class BienTheSanPhamService {
         return hinhAnhRepository.count();
     }
 
+    @Transactional(readOnly = true)
+    public List<ThuocTinhBienThe> layDanhSachThuocTinhTuyChinh() {
+        return thuocTinhRepository.findByKichHoatTrueOrderByThuTuAscIdAsc().stream()
+                .filter(thuocTinh -> !"mauSac".equalsIgnoreCase(thuocTinh.getMaThuocTinh())
+                        && !"kichThuoc".equalsIgnoreCase(thuocTinh.getMaThuocTinh()))
+                .toList();
+    }
+
     /**
      * Tạo mới biến thể sản phẩm (Map Sản phẩm + Màu sắc + Kích thước), quản lý giá/tồn kho và upload nhiều hình ảnh (US09).
      */
@@ -141,8 +160,8 @@ public class BienTheSanPhamService {
                 .orElseThrow(() -> new IllegalArgumentException("Kích thước (Size) được chọn không tồn tại trên hệ thống!"));
 
         // 2. Kiểm tra trùng cặp (Sản phẩm + Màu sắc + Kích thước)
-        if (bienTheRepository.existsByMaSanPhamIdAndMaMauSacIdAndMaKichThuocId(
-                bienThe.getMaSanPhamId(), bienThe.getMaMauSacId(), bienThe.getMaKichThuocId())) {
+        if (coBienTheTrung(bienThe.getMaSanPhamId(), bienThe.getMaMauSacId(), bienThe.getMaKichThuocId(),
+                bienThe.getGiaTriThuocTinh(), null)) {
             throw new IllegalArgumentException(
                     "Biến thể của sản phẩm [" + sp.getTenSanPham() + "] với Màu [" + ms.getTenMau() +
                     "] và Size [" + kt.getMaKichThuoc() + "] đã tồn tại trên hệ thống!"
@@ -163,6 +182,8 @@ public class BienTheSanPhamService {
         List<MultipartFile> danhSachFileHopLe = locVaValidateDanhSachFileAnh(filesAnh);
 
         BienTheSanPham saved = bienTheRepository.save(bienThe);
+        lichSuBaoGiaService.ghiGiaBanBanDau(saved);
+        capNhatGiaTriThuocTinh(saved, Map.of());
 
         // 6. Lưu nhiều hình ảnh gắn với biến thể và sản phẩm
         luuDanhSachHinhAnhSauValidate(saved.getMaSanPhamId(), saved.getId(), danhSachFileHopLe, duongDanAnhUrl);
@@ -176,6 +197,7 @@ public class BienTheSanPhamService {
     @Transactional
     public BienTheSanPham sua(Long id, BienTheSanPham duLieuMoi, MultipartFile[] filesAnh, String duongDanAnhUrl) {
         BienTheSanPham hienTai = layTheoId(id);
+        Map<String, String> giaTriCu = layGiaTriThuocTinhDaLuu(id);
         chuanHoaVaValidateCoBan(duLieuMoi);
 
         // 1. Kiểm tra Sản phẩm, Màu sắc, Kích thước tồn tại
@@ -187,8 +209,9 @@ public class BienTheSanPhamService {
                 .orElseThrow(() -> new IllegalArgumentException("Kích thước (Size) được chọn không tồn tại trên hệ thống!"));
 
         // 2. Kiểm tra trùng cặp (Sản phẩm + Màu sắc + Kích thước) loại trừ chính ID đang sửa
-        if (bienTheRepository.existsByMaSanPhamIdAndMaMauSacIdAndMaKichThuocIdAndIdNot(
-                duLieuMoi.getMaSanPhamId(), duLieuMoi.getMaMauSacId(), duLieuMoi.getMaKichThuocId(), id)) {
+        Map<String, String> giaTriMoiDeKiemTra = hopNhatGiaTriThuocTinh(duLieuMoi.getGiaTriThuocTinh(), giaTriCu);
+        if (coBienTheTrung(duLieuMoi.getMaSanPhamId(), duLieuMoi.getMaMauSacId(), duLieuMoi.getMaKichThuocId(),
+                giaTriMoiDeKiemTra, id)) {
             throw new IllegalArgumentException(
                     "Biến thể của sản phẩm [" + sp.getTenSanPham() + "] với Màu [" + ms.getTenMau() +
                     "] và Size [" + kt.getMaKichThuoc() + "] đã tồn tại ở SKU khác!"
@@ -208,9 +231,11 @@ public class BienTheSanPhamService {
         // 5. Validate danh sách file ảnh mới nếu có
         List<MultipartFile> danhSachFileHopLe = locVaValidateDanhSachFileAnh(filesAnh);
 
+        BigDecimal giaBanCu = hienTai.getGiaBan();
         hienTai.setMaSanPhamId(duLieuMoi.getMaSanPhamId());
         hienTai.setMaMauSacId(duLieuMoi.getMaMauSacId());
         hienTai.setMaKichThuocId(duLieuMoi.getMaKichThuocId());
+        hienTai.setGiaTriThuocTinh(duLieuMoi.getGiaTriThuocTinh());
         hienTai.setMaSku(duLieuMoi.getMaSku());
         hienTai.setMaVachBarcode(duLieuMoi.getMaVachBarcode());
         hienTai.setSoLuong(duLieuMoi.getSoLuong());
@@ -219,6 +244,8 @@ public class BienTheSanPhamService {
         hienTai.setKichHoat(duLieuMoi.getKichHoat());
 
         BienTheSanPham updated = bienTheRepository.save(hienTai);
+        lichSuBaoGiaService.ghiGiaBanNeuThayDoi(updated, giaBanCu);
+        capNhatGiaTriThuocTinh(updated, giaTriCu);
 
         // 6. Lưu thêm các hình ảnh mới (nếu người dùng chọn upload thêm)
         luuDanhSachHinhAnhSauValidate(updated.getMaSanPhamId(), updated.getId(), danhSachFileHopLe, duongDanAnhUrl);
@@ -246,9 +273,12 @@ public class BienTheSanPhamService {
             bt.setGiaGoc(giaGocMoi);
         }
 
+        BigDecimal giaBanCu = bt.getGiaBan();
         bt.setSoLuong(soLuongMoi);
         bt.setGiaBan(giaBanMoi);
-        return bienTheRepository.save(bt);
+        BienTheSanPham updated = bienTheRepository.save(bt);
+        lichSuBaoGiaService.ghiGiaBanNeuThayDoi(updated, giaBanCu);
+        return updated;
     }
 
     /**
@@ -364,6 +394,7 @@ public class BienTheSanPhamService {
             // Xóa các hình ảnh gắn riêng với biến thể này trước khi xóa biến thể
             hinhAnhRepository.deleteByMaBienTheId(id);
             hinhAnhRepository.flush();
+            bienTheThuocTinhRepository.deleteByBienThe_Id(id);
 
             bienTheRepository.delete(bt);
             bienTheRepository.flush();
@@ -385,6 +416,15 @@ public class BienTheSanPhamService {
                 .collect(Collectors.toMap(MauSac::getId, ms -> ms, (a, b) -> a));
         Map<Long, KichThuoc> mapKichThuoc = kichThuocRepository.findAll().stream()
                 .collect(Collectors.toMap(KichThuoc::getId, kt -> kt, (a, b) -> a));
+        List<ThuocTinhBienThe> danhSachThuocTinh = thuocTinhRepository.findAll(Sort.by("thuTu").ascending().and(Sort.by("id").ascending()));
+        List<Long> bienTheIds = danhSach.stream().map(BienTheSanPham::getId).filter(Objects::nonNull).toList();
+        Map<Long, Map<String, String>> giaTriTheoSku = new HashMap<>();
+        if (!bienTheIds.isEmpty()) {
+            for (BienTheSanPhamThuocTinh giaTri : bienTheThuocTinhRepository.findByBienThe_IdIn(bienTheIds)) {
+                giaTriTheoSku.computeIfAbsent(giaTri.getBienThe().getId(), ignored -> new LinkedHashMap<>())
+                        .put(giaTri.getThuocTinh().getMaThuocTinh(), giaTri.getGiaTri());
+            }
+        }
 
         for (BienTheSanPham bt : danhSach) {
             SanPham sp = mapSanPham.get(bt.getMaSanPhamId());
@@ -413,6 +453,17 @@ public class BienTheSanPhamService {
                 bt.setMaKichThuoc("SIZE#" + bt.getMaKichThuocId());
             }
 
+            Map<String, String> giaTriSku = giaTriTheoSku.getOrDefault(bt.getId(), Map.of());
+            Map<String, String> hienThiThuocTinh = new LinkedHashMap<>();
+            for (ThuocTinhBienThe thuocTinh : danhSachThuocTinh) {
+                String ma = thuocTinh.getMaThuocTinh();
+                String giaTri = giaTriSku.get(ma);
+                if ("mauSac".equalsIgnoreCase(ma) && ms != null) giaTri = ms.getTenMau();
+                if ("kichThuoc".equalsIgnoreCase(ma) && kt != null) giaTri = kt.getTenKichThuoc();
+                hienThiThuocTinh.put(ma, giaTri != null ? giaTri : "");
+            }
+            bt.setGiaTriThuocTinh(hienThiThuocTinh);
+
             List<HinhAnh> dsAnh = hinhAnhRepository.findByMaBienTheIdOrderByLaAnhDaiDienDescThuTuAscIdAsc(bt.getId());
             bt.setDanhSachHinhAnh(dsAnh);
             if (!dsAnh.isEmpty()) {
@@ -421,6 +472,89 @@ public class BienTheSanPhamService {
                 bt.setAnhDaiDienUrl(null);
             }
         }
+    }
+
+    private boolean coBienTheTrung(Long sanPhamId, Long mauSacId, Long kichThuocId,
+                                   Map<String, String> giaTriDeKiemTra, Long idBoQua) {
+        Map<String, String> giaTriMoi = chuanHoaGiaTriSoSanh(giaTriDeKiemTra);
+        for (BienTheSanPham hienCo : bienTheRepository.findByMaSanPhamIdAndMaMauSacIdAndMaKichThuocId(
+                sanPhamId, mauSacId, kichThuocId)) {
+            if (Objects.equals(hienCo.getId(), idBoQua)) continue;
+            if (chuanHoaGiaTriSoSanh(layGiaTriThuocTinhDaLuu(hienCo.getId())).equals(giaTriMoi)) return true;
+        }
+        return false;
+    }
+
+    private Map<String, String> chuanHoaGiaTriSoSanh(Map<String, String> values) {
+        if (values == null || values.isEmpty()) return Map.of();
+        return values.entrySet().stream()
+                .filter(entry -> entry.getKey() != null && !entry.getKey().isBlank())
+                .filter(entry -> !"mauSac".equalsIgnoreCase(entry.getKey()) && !"kichThuoc".equalsIgnoreCase(entry.getKey()))
+                .filter(entry -> entry.getValue() != null && !entry.getValue().isBlank())
+                .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(Locale.ROOT),
+                        entry -> entry.getValue().trim().toLowerCase(Locale.ROOT), (a, b) -> b, TreeMap::new));
+    }
+
+    private Map<String, String> layGiaTriThuocTinhDaLuu(Long bienTheId) {
+        Map<String, String> result = new LinkedHashMap<>();
+        if (bienTheId == null) return result;
+        bienTheThuocTinhRepository.findByBienThe_Id(bienTheId).forEach(value ->
+                result.put(value.getThuocTinh().getMaThuocTinh(), value.getGiaTri()));
+        return result;
+    }
+
+    private Map<String, String> hopNhatGiaTriThuocTinh(Map<String, String> submitted, Map<String, String> existing) {
+        Map<String, String> merged = new LinkedHashMap<>(existing == null ? Map.of() : existing);
+        if (submitted != null) {
+            for (Map.Entry<String, String> entry : submitted.entrySet()) {
+                merged.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return merged;
+    }
+
+    private void capNhatGiaTriThuocTinh(BienTheSanPham bienThe, Map<String, String> giaTriCu) {
+        List<ThuocTinhBienThe> definitions = thuocTinhRepository.findAll(Sort.by("thuTu").ascending().and(Sort.by("id").ascending()));
+        Map<String, ThuocTinhBienThe> theoMa = definitions.stream().collect(Collectors.toMap(
+                definition -> definition.getMaThuocTinh().toLowerCase(Locale.ROOT), definition -> definition, (a, b) -> a));
+        Map<String, String> submitted = bienThe.getGiaTriThuocTinh() == null ? Map.of() : bienThe.getGiaTriThuocTinh();
+        for (String key : submitted.keySet()) {
+            ThuocTinhBienThe definition = theoMa.get(key.toLowerCase(Locale.ROOT));
+            if (definition == null || !Boolean.TRUE.equals(definition.getKichHoat())
+                    || "mauSac".equalsIgnoreCase(key) || "kichThuoc".equalsIgnoreCase(key)) {
+                throw new IllegalArgumentException("Thuộc tính biến thể không hợp lệ hoặc đã ngừng sử dụng: " + key);
+            }
+            String value = submitted.get(key);
+            if (value != null && value.length() > 500) {
+                throw new IllegalArgumentException("Giá trị thuộc tính [" + definition.getTenThuocTinh() + "] không được vượt quá 500 ký tự.");
+            }
+        }
+
+        Map<String, String> merged = hopNhatGiaTriThuocTinh(submitted, giaTriCu);
+        MauSac mauSac = mauSacRepository.findById(bienThe.getMaMauSacId()).orElse(null);
+        KichThuoc kichThuoc = kichThuocRepository.findById(bienThe.getMaKichThuocId()).orElse(null);
+        Map<String, String> valuesToPersist = new LinkedHashMap<>();
+        for (ThuocTinhBienThe definition : definitions) {
+            String key = definition.getMaThuocTinh();
+            String value;
+            if ("mauSac".equalsIgnoreCase(key)) value = mauSac != null ? mauSac.getTenMau() : null;
+            else if ("kichThuoc".equalsIgnoreCase(key)) value = kichThuoc != null ? kichThuoc.getTenKichThuoc() : null;
+            else value = merged.get(key);
+            if (value != null && !value.isBlank()) valuesToPersist.put(key, value.trim());
+        }
+
+        bienTheThuocTinhRepository.deleteByBienThe_Id(bienThe.getId());
+        bienTheThuocTinhRepository.flush();
+        List<BienTheSanPhamThuocTinh> records = definitions.stream()
+                .filter(definition -> valuesToPersist.containsKey(definition.getMaThuocTinh()))
+                .map(definition -> BienTheSanPhamThuocTinh.builder()
+                        .bienThe(bienThe)
+                        .thuocTinh(definition)
+                        .giaTri(valuesToPersist.get(definition.getMaThuocTinh()))
+                        .build())
+                .toList();
+        if (!records.isEmpty()) bienTheThuocTinhRepository.saveAll(records);
+        bienThe.setGiaTriThuocTinh(valuesToPersist);
     }
 
     private void chuanHoaVaValidateCoBan(BienTheSanPham bt) {
@@ -709,6 +843,7 @@ public class BienTheSanPhamService {
             if (btOpt.isPresent()) {
                 // Đã tồn tại -> Cập nhật giá bán, giá gốc và cộng dồn số lượng tồn kho
                 BienTheSanPham btCu = btOpt.get();
+                BigDecimal giaBanCu = btCu.getGiaBan();
                 if (item.getGiaBan() != null && item.getGiaBan().compareTo(BigDecimal.ZERO) >= 0) {
                     btCu.setGiaBan(item.getGiaBan());
                 }
@@ -719,7 +854,9 @@ public class BienTheSanPhamService {
                     btCu.setSoLuong((btCu.getSoLuong() != null ? btCu.getSoLuong() : 0) + item.getSoLuong());
                 }
                 btCu.setKichHoat(item.getKichHoat() != null ? item.getKichHoat() : true);
-                ketQua.add(bienTheRepository.save(btCu));
+                BienTheSanPham updated = bienTheRepository.save(btCu);
+                lichSuBaoGiaService.ghiGiaBanNeuThayDoi(updated, giaBanCu);
+                ketQua.add(updated);
             } else {
                 // Tạo mới biến thể
                 String sku = item.getMaSku();
@@ -758,7 +895,10 @@ public class BienTheSanPhamService {
                         .kichHoat(item.getKichHoat() != null ? item.getKichHoat() : true)
                         .build();
 
-                ketQua.add(bienTheRepository.saveAndFlush(btMoi));
+                BienTheSanPham saved = bienTheRepository.saveAndFlush(btMoi);
+                lichSuBaoGiaService.ghiGiaBanBanDau(saved);
+                capNhatGiaTriThuocTinh(saved, Map.of());
+                ketQua.add(saved);
             }
         }
 

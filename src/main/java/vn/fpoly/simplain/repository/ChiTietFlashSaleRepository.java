@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US29: Thiet lap khung gio Flash Sale
 package vn.fpoly.simplain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,10 +18,6 @@ import java.util.Optional;
 public interface ChiTietFlashSaleRepository extends JpaRepository<ChiTietFlashSale, Long> {
 
     List<ChiTietFlashSale> findByMaFlashSaleId(Long maFlashSaleId);
-
-    List<ChiTietFlashSale> findByMaBienTheId(Long maBienTheId);
-
-    boolean existsByMaBienTheId(Long maBienTheId);
 
     Optional<ChiTietFlashSale> findByMaFlashSaleIdAndMaBienTheId(Long maFlashSaleId, Long maBienTheId);
 

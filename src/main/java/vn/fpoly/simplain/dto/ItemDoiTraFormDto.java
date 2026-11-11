@@ -32,16 +32,6 @@ public class ItemDoiTraFormDto {
     private BigDecimal thanhTien;
     private String hinhAnhUrl;
 
-    // Các thông tin phân loại Combo & Flash Sale (US24)
-    private Long maComboId;
-    private String nhomComboToken;
-    private String tenCombo;
-    private String loaiHang; // "COMBO", "FLASH_SALE", "LE"
-    private BigDecimal giaTriHoanTien; // Đơn giá hoàn tiền ước tính (được phân bổ chính xác nếu là Combo)
-    @Builder.Default
-    private boolean coBienTheFlashSaleKhaDung = true;
-    private Integer soLuongMonTrongCombo;
-
     /**
      * Danh sách các biến thể SKU cùng sản phẩm còn hàng trong kho để khách hàng chọn đổi sang.
      */

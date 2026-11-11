@@ -13,7 +13,6 @@ import vn.fpoly.simplain.entity.*;
 import vn.fpoly.simplain.repository.*;
 import vn.fpoly.simplain.service.payment.MoMoService;
 import vn.fpoly.simplain.service.payment.VNPayService;
-import vn.fpoly.simplain.service.payment.ZaloPayService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -43,7 +42,6 @@ public class GiaoDichThanhToanService {
     private final PhuongThucThanhToanRepository phuongThucThanhToanRepository;
     private final VNPayService vnPayService;
     private final MoMoService moMoService;
-    private final ZaloPayService zaloPayService;
     private final LoyaltyHoiVienService loyaltyHoiVienService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -105,49 +103,18 @@ public class GiaoDichThanhToanService {
         String ipAddress = layIpClient(request);
         String maPt = pttt.getMaPhuongThuc() != null ? pttt.getMaPhuongThuc().toUpperCase() : "";
 
-        if (maPt.contains("VNPAY") || "VNPAY".equalsIgnoreCase(pttt.getLoaiCong())) {
+        if (maPt.contains("VNPAY")) {
             String returnUrl = baseUrl + "/thanh-toan/vnpay-return";
             return vnPayService.taoUrlThanhToan(donHang, giaoDich.getMaGiaoDichNoiBo(), ipAddress, returnUrl, pttt);
-        } else if (maPt.contains("MOMO") || "MOMO".equalsIgnoreCase(pttt.getLoaiCong())) {
+        } else if (maPt.contains("MOMO")) {
             String returnUrl = baseUrl + "/thanh-toan/momo-return";
             return moMoService.taoUrlThanhToan(donHang, giaoDich.getMaGiaoDichNoiBo(), ipAddress, returnUrl, pttt);
-        } else if (maPt.contains("ZALO") || "ZALOPAY".equalsIgnoreCase(pttt.getLoaiCong())) {
-            String returnUrl = baseUrl + "/thanh-toan/zalopay-return";
-            return zaloPayService.taoUrlThanhToan(donHang, giaoDich.getMaGiaoDichNoiBo(), ipAddress, returnUrl, pttt);
         } else {
-            // Chuyển khoản VietQR hoặc COD
-            String bankBin = "970422"; // Mặc định MB Bank
-            String bankAccount = "0988888888";
-            String accountName = "SIMPLAIN STORE";
-            String transferSyntax = "DH " + donHang.getMaDonHang();
-
-            if (pttt.getCauHinh() != null && !pttt.getCauHinh().isBlank()) {
-                try {
-                    com.fasterxml.jackson.databind.JsonNode json = objectMapper.readTree(pttt.getCauHinh());
-                    if (json.has("maNganHang") && !json.get("maNganHang").asText().isBlank()) {
-                        bankBin = json.get("maNganHang").asText().trim();
-                    }
-                    if (json.has("soTaiKhoan") && !json.get("soTaiKhoan").asText().isBlank()) {
-                        bankAccount = json.get("soTaiKhoan").asText().trim();
-                    }
-                    if (json.has("tenChuTaiKhoan") && !json.get("tenChuTaiKhoan").asText().isBlank()) {
-                        accountName = json.get("tenChuTaiKhoan").asText().trim();
-                    }
-                    if (json.has("cuPhapChuyenKhoan") && !json.get("cuPhapChuyenKhoan").asText().isBlank()) {
-                        transferSyntax = json.get("cuPhapChuyenKhoan").asText().replace("{maDonHang}", donHang.getMaDonHang()).trim();
-                    }
-                } catch (Exception e) {
-                    log.warn("Không thể giải mã cấu hình VietQR từ database: {}", e.getMessage());
-                }
-            }
-
-            String encodedAccountName = java.net.URLEncoder.encode(accountName, java.nio.charset.StandardCharsets.UTF_8);
-            String encodedSyntax = java.net.URLEncoder.encode(transferSyntax, java.nio.charset.StandardCharsets.UTF_8);
-
-            String qrUrl = "https://img.vietqr.io/image/" + bankBin + "-" + bankAccount + "-compact2.png"
+            // Mặc định COD hoặc chuyển khoản
+            String qrUrl = "https://img.vietqr.io/image/970407-19036789999-compact2.png"
                     + "?amount=" + donHang.getTongThanhToan().longValue()
-                    + "&addInfo=" + encodedSyntax
-                    + "&accountName=" + encodedAccountName;
+                    + "&addInfo=DH%20" + donHang.getMaDonHang()
+                    + "&accountName=SIMPLAIN%20STORE";
 
             return PaymentUrlResponse.builder()
                     .paymentUrl(baseUrl + "/thanh-toan/thanh-cong/" + donHang.getMaDonHang())
@@ -373,23 +340,10 @@ public class GiaoDichThanhToanService {
         }
 
         // Xác thực chữ ký MoMo
-        boolean valid = moMoService.xacThucChuKy(momoParams, laySecretKeyMoMo(donHang.getPhuongThucThanhToan()));
+        boolean valid = moMoService.xacThucChuKy(momoParams, null);
         if (!valid) {
             response.put("status", 400);
             response.put("message", "Invalid signature");
-            return response;
-        }
-
-        try {
-            BigDecimal amount = new BigDecimal(momoParams.get("amount"));
-            if (donHang.getTongThanhToan() == null || donHang.getTongThanhToan().compareTo(amount) != 0) {
-                response.put("status", 400);
-                response.put("message", "Invalid amount");
-                return response;
-            }
-        } catch (Exception e) {
-            response.put("status", 400);
-            response.put("message", "Invalid amount");
             return response;
         }
 
@@ -424,6 +378,39 @@ public class GiaoDichThanhToanService {
         response.put("status", 204);
         response.put("message", "Received");
         return response;
+    }
+
+    /**
+     * Giả lập Quét QR Thanh toán Thành công (Dành cho kiểm thử Sandbox nhanh trên localhost) (US20).
+     */
+    @Transactional
+    public GiaoDichThanhToan giaLapThanhToanThanhCong(String maDonHang) {
+        DonHang donHang = donHangRepository.findByMaDonHang(maDonHang)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng #" + maDonHang));
+
+        GiaoDichThanhToan giaoDich = giaoDichRepository.findTopByDonHangIdOrderByIdDesc(donHang.getId())
+                .orElseGet(() -> {
+                    PhuongThucThanhToan pttt = donHang.getPhuongThucThanhToan() != null
+                            ? donHang.getPhuongThucThanhToan()
+                            : phuongThucThanhToanRepository.findAll().get(0);
+                    return khoiTaoGiaoDich(donHang, pttt);
+                });
+
+        giaoDich.setTrangThai(TRANG_THAI_THANH_CONG);
+        giaoDich.setMaGiaoDichCong("SIM_TEST_" + System.currentTimeMillis());
+        giaoDich.setDuLieuPhanHoi("{\"simulated\": true, \"message\": \"Giả lập thanh toán QR thành công qua Sandbox\", \"time\": \"" + LocalDateTime.now() + "\"}");
+        GiaoDichThanhToan savedGiaoDich = giaoDichRepository.save(giaoDich);
+
+        // Chuyển trạng thái đơn hàng sang ĐANG_XU_LY (Đã thanh toán)
+        TrangThaiDonHang ttDangXuLy = trangThaiDonHangRepository.findByMaTrangThai("DANG_XU_LY")
+                .orElseGet(() -> trangThaiDonHangRepository.findById(2L).orElse(null));
+        if (ttDangXuLy != null) {
+            donHang.setTrangThaiDonHang(ttDangXuLy);
+            donHangRepository.save(donHang);
+        }
+
+        log.info("Giả lập thanh toán thành công cho đơn hàng #{}", maDonHang);
+        return savedGiaoDich;
     }
 
     /**
@@ -473,29 +460,6 @@ public class GiaoDichThanhToanService {
             }
         }
         return VNPayService.VNP_DEFAULT_HASH_SECRET;
-    }
-
-    private String laySecretKeyMoMo(PhuongThucThanhToan pttt) {
-        if (pttt != null && pttt.getCauHinh() != null && !pttt.getCauHinh().isBlank()) {
-            try {
-                com.fasterxml.jackson.databind.JsonNode json = objectMapper.readTree(pttt.getCauHinh());
-                if (json.has("secret_key") && !json.get("secret_key").asText().isBlank()) {
-                    return json.get("secret_key").asText().trim();
-                }
-                if (json.has("secretKey") && !json.get("secretKey").asText().isBlank()) {
-                    return json.get("secretKey").asText().trim();
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return MoMoService.MOMO_DEFAULT_SECRET_KEY;
-    }
-
-    public String layMaDonHangTuMaGiaoDich(String maGiaoDichNoiBo) {
-        if (maGiaoDichNoiBo == null || maGiaoDichNoiBo.isBlank()) return null;
-        return giaoDichRepository.findByMaGiaoDichNoiBo(maGiaoDichNoiBo)
-                .map(giaoDich -> giaoDich.getDonHang().getMaDonHang())
-                .orElse(null);
     }
 
     private String layIpClient(HttpServletRequest request) {

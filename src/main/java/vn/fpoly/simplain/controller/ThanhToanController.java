@@ -15,7 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import vn.fpoly.simplain.dto.*;
 import vn.fpoly.simplain.entity.*;
 import vn.fpoly.simplain.service.*;
-import vn.fpoly.simplain.service.CheckoutOrderService;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -45,7 +44,6 @@ public class ThanhToanController {
     private final KhachHangService khachHangService;
     private final GiaoDichThanhToanService giaoDichThanhToanService;
     private final vn.fpoly.simplain.service.payment.VNPayService vnPayService;
-    private final CheckoutOrderService checkoutOrderService;
 
     /**
      * Màn hình Thanh toán đơn hàng / Checkout (US19).
@@ -145,7 +143,33 @@ public class ThanhToanController {
         model.addAttribute("chiPhi", chiPhiBanDau);
         model.addAttribute("daDangNhap", khachHangId != null);
 
-        return "khach-hang/checkout";
+        return "khach-hang/thanh-toan";
+    }
+
+    /**
+     * API tính toán chi phí Checkout động qua AJAX khi nhập Voucher hoặc đổi điểm Coolcash (US19).
+     */
+    @PostMapping("/tinh-phi")
+    @ResponseBody
+    public ResponseEntity<CheckoutTinhTienResponse> tinhPhiDong(
+            @RequestParam(name = "maVoucher", required = false) String maVoucher,
+            @RequestParam(name = "soDiemCoolcash", required = false) BigDecimal soDiemCoolcash,
+            HttpServletRequest request) {
+
+        Long khachHangId = layKhachHangIdTuCookie(request);
+        Long cartIdVangLai = layCartIdVangLaiTuCookie(request);
+
+        GioHangResponse gioHang = gioHangService.layThongTinGioHang(khachHangId, cartIdVangLai);
+        BigDecimal tongTienHang = (gioHang != null) ? gioHang.getTongTienHang() : BigDecimal.ZERO;
+
+        CheckoutTinhTienResponse response = donHangService.tinhToanChiPhi(
+                tongTienHang,
+                maVoucher,
+                soDiemCoolcash,
+                khachHangId
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -169,9 +193,7 @@ public class ThanhToanController {
         }
 
         try {
-            request.setMaVoucher(null);
-            request.setSoDiemCoolcash(BigDecimal.ZERO);
-            DonHang donHangMoi = checkoutOrderService.taoDonHang(khachHangId, cartIdVangLai, request);
+            DonHang donHangMoi = donHangService.taoDonHangTuGioHang(khachHangId, cartIdVangLai, request);
 
             // Kiểm tra nếu là cổng thanh toán trực tuyến (VNPay / MoMo) thì chuyển sang màn hình QR / Thanh toán trực tuyến (US20)
             PhuongThucThanhToan pttt = donHangMoi.getPhuongThucThanhToan();
@@ -250,67 +272,16 @@ public class ThanhToanController {
         String orderId = allParams.get("orderId");
         String resultCode = allParams.get("resultCode");
         String message = allParams.getOrDefault("message", "Thanh toán qua MoMo không thành công!");
-        String maDonHang = allParams.getOrDefault("maDonHang", "");
-        if (maDonHang.isBlank() && orderId != null) {
-            maDonHang = giaoDichThanhToanService.layMaDonHangTuMaGiaoDich(orderId);
-        }
 
-        log.info("Khách hàng quay lại từ MoMo: OrderId = {}, ResultCode = {}, maDonHang = {}", orderId, resultCode, maDonHang);
+        log.info("Khách hàng quay lại từ MoMo: OrderId = {}, ResultCode = {}", orderId, resultCode);
 
         if ("0".equals(resultCode)) {
-            if (!maDonHang.isBlank()) {
-                try {
-                    Map<String, Object> ketQua = giaoDichThanhToanService.xuLyIpnMoMo(allParams);
-                    Object status = ketQua.get("status");
-                    if (Integer.valueOf(200).equals(status) || Integer.valueOf(204).equals(status)) {
-                        return "redirect:/thanh-toan/thanh-cong/" + maDonHang;
-                    }
-                    message = String.valueOf(ketQua.getOrDefault("message", message));
-                } catch (Exception e) {
-                    log.warn("Không thể xác minh MoMo return cho đơn #{}: {}", maDonHang, e.getMessage());
-                }
-            }
+            giaoDichThanhToanService.xuLyIpnMoMo(allParams);
+            return "redirect:/thanh-toan/thanh-cong/" + orderId;
+        } else {
+            redirectAttributes.addFlashAttribute("thongBaoLoi", message);
+            return "redirect:/thanh-toan/that-bai/" + orderId + "?lyDo=" + java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8);
         }
-        redirectAttributes.addFlashAttribute("thongBaoLoi", message);
-        return "redirect:/thanh-toan/that-bai/" + (maDonHang != null ? maDonHang : "")
-                + "?lyDo=" + java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Màn hình Gateway Ví ZaloPay Sandbox giả lập trực tiếp (US20).
-     */
-    @GetMapping("/zalopay-gateway")
-    public String hienThiZaloPayGateway(
-            @RequestParam(name = "apptransid", required = false) String apptransid,
-            @RequestParam(name = "amount", required = false) Long amount,
-            @RequestParam(name = "maDonHang", required = false) String maDonHang,
-            @RequestParam(name = "returnUrl", required = false) String returnUrl,
-            Model model) {
-
-        model.addAttribute("apptransid", apptransid != null ? apptransid : "");
-        model.addAttribute("amount", amount != null ? amount : 0L);
-        model.addAttribute("maDonHang", maDonHang != null ? maDonHang : "");
-        model.addAttribute("returnUrl", returnUrl != null ? returnUrl : "/");
-        return "khach-hang/zalopay-gateway";
-    }
-
-    /**
-     * Tiếp nhận Return URL từ cổng ví ZaloPay (US20).
-     */
-    @GetMapping("/zalopay-return")
-    public String xuLyReturnZaloPay(
-            @RequestParam Map<String, String> allParams,
-            RedirectAttributes redirectAttributes) {
-
-        String appTransId = allParams.get("apptransid");
-        String status = allParams.getOrDefault("status", "1");
-        String maDonHang = allParams.getOrDefault("maDonHang", "");
-
-        log.info("Khách hàng quay lại từ ZaloPay: apptransid = {}, status = {}", appTransId, status);
-
-        String loi = "Kết quả ZaloPay chỉ được xác nhận qua IPN đã xác thực.";
-        redirectAttributes.addFlashAttribute("thongBaoLoi", loi);
-        return "redirect:/thanh-toan/that-bai/" + maDonHang;
     }
 
     /**
@@ -348,6 +319,26 @@ public class ThanhToanController {
     }
 
     /**
+     * API Giả lập thanh toán thành công tức thì trên Sandbox để dễ dàng kiểm thử local (US20).
+     */
+    @PostMapping("/gia-lap-thanh-cong/{maDonHang}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> giaLapThanhCong(@PathVariable("maDonHang") String maDonHang) {
+        try {
+            giaoDichThanhToanService.giaLapThanhToanThanhCong(maDonHang);
+            Map<String, Object> res = new HashMap<>();
+            res.put("success", true);
+            res.put("redirectUrl", "/thanh-toan/thanh-cong/" + maDonHang);
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(err);
+        }
+    }
+
+    /**
      * Trang thông báo Đặt hàng thành công & Chi tiết hóa đơn (US19).
      */
     @GetMapping("/thanh-cong/{maDonHang}")
@@ -362,7 +353,7 @@ public class ThanhToanController {
 
             model.addAttribute("donHang", donHang);
             model.addAttribute("danhSachChiTiet", danhSachChiTiet);
-            return "khach-hang/order-success";
+            return "khach-hang/dat-hang-thanh-cong";
         } catch (Exception e) {
             log.error("Không tìm thấy đơn hàng #{}: {}", maDonHang, e.getMessage());
             redirectAttributes.addFlashAttribute("thongBaoLoi", "Không tìm thấy thông tin đơn hàng #" + maDonHang);

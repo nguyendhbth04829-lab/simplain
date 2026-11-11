@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sản phẩm | SIMPLAIN CMS</title>
+    <!-- Tailwind CSS CDN -->
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <!-- Font Awesome 6 -->
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Thanh Menu Điều hướng Quản trị (Sidebar Dark Navy + Topbar Trắng) -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('san-pham')}"></div>
+
+    <!-- Main Content Area: Căn lề trái 64 (256px) tương ứng chiều rộng Sidebar -->
+    <main class="lg:pl-64 flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- Thông báo Thành công / Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 1. PAGE HEADER: Title bên trái + Nút Đen "+ Thêm sản phẩm" bên phải -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-neutral-900 text-white flex items-center justify-center text-lg border border-neutral-800">
+                    <i class="fa-solid fa-shirt"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight flex items-center gap-2">
+                        <span>Quản lý sản phẩm</span>
+                    </h1>
+                    <p class="text-xs text-neutral-500 mt-0.5">Quản lý danh mục hàng hóa, phân loại sản phẩm, chất liệu và form dáng</p>
+                </div>
+            </div>
+
+            <!-- Nút Đen Thêm mới: Kích hoạt Modal Popup -->
+            <button type="button"
+                    onclick="moModal('modalThemSanPham')"
+                    class="btn-navy font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer self-start sm:self-auto transition">
+                <i class="fa-solid fa-plus"></i>
+                <span>+ Thêm sản phẩm</span>
+            </button>
+        </div>
+
+        <!-- 2. CARD BỘ LỌC TÌM KIẾM (Thu phóng được, giống chính xác ảnh thiết kế) -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+            
+            <!-- Tiêu đề bộ lọc có nút thu gọn -->
+            <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleBoLoc()">
+                <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <span>Bộ lọc tìm kiếm</span>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i id="boLocIcon" class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Nội dung các trường lọc -->
+            <form id="boLocContent" action="/admin/san-pham/hien-thi" method="get" class="space-y-4 pt-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Chuyên mục (Danh mục) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Chuyên mục</label>
+                        <select name="maDanhMucId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả chuyên mục</option>
+                            <option th:each="dm : ${listDanhMuc}"
+                                    th:value="${dm.id}"
+                                    th:selected="${maDanhMucLoc != null and maDanhMucLoc == dm.id}"
+                                    th:text="${dm.tenDanhMuc}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Bộ sưu tập -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Bộ sưu tập</label>
+                        <select name="maBoSuuTapId" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả bộ sưu tập</option>
+                            <option th:each="bst : ${listBoSuuTap}"
+                                    th:value="${bst.id}"
+                                    th:selected="${maBoSuuTapLoc != null and maBoSuuTapLoc == bst.id}"
+                                    th:text="${bst.tenBoSuuTap}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Tìm kiếm từ khóa -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tìm kiếm</label>
+                        <input type="text" name="tuKhoa" th:value="${tuKhoa}"
+                               placeholder="Tên sản phẩm, slug, mô tả..."
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                    </div>
+
+                    <!-- Trạng thái -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Trạng thái</label>
+                        <select name="kichHoat" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 font-medium transition">
+                            <option value="">Tất cả</option>
+                            <option value="true" th:selected="${kichHoatLoc == true}">Đang bán</option>
+                            <option value="false" th:selected="${kichHoatLoc == false}">Ngừng bán</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Hàng 2: Form dáng & Cụm nút bấm Lọc/Bỏ lọc -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-slate-100">
+                    <div class="w-full sm:w-64">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Form dáng</label>
+                        <select name="formDang" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-slate-700">
+                            <option value="">Tất cả Form dáng</option>
+                            <option th:each="fd : ${listFormDang}"
+                                    th:value="${fd.tenFormDang}"
+                                    th:text="${fd.tenFormDang}"
+                                    th:selected="${formDangLoc == fd.tenFormDang}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Hai nút: Đen (Lọc) và Outline (Bỏ lọc) -->
+                    <div class="flex items-center gap-2 self-end">
+                        <button type="submit"
+                                class="btn-black font-bold text-xs px-5 py-2 rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <i class="fa-solid fa-filter text-xs"></i>
+                            <span>Lọc</span>
+                        </button>
+                        <a href="/admin/san-pham/hien-thi"
+                           class="btn-outline font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-xs transition">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                            <span>Bỏ lọc</span>
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+
+        <!-- Thanh Thao Tác Hàng Loạt (Bulk Action Bar) -->
+        <form id="formThaoTacHangLoat" method="post" th:action="@{/admin/san-pham/thao-tac-hang-loat}">
+            <div id="bulkActionBar" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    <span class="text-xs font-bold text-slate-800">
+                        Đã chọn <span id="soLuongDaChon" class="font-black text-blue-600">0</span> sản phẩm
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" name="hanhDong" value="KICH_HOAT"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn MỞ BÁN tất cả các sản phẩm đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Chuyển thành: Đang mở bán</span>
+                    </button>
+                    <button type="submit" name="hanhDong" value="NGUNG_HOAT_DONG"
+                            onclick="return xacNhanThaoTac('Bạn có chắc chắn muốn NGỪNG KINH DOANH tất cả các sản phẩm đã chọn?')"
+                            class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-circle-pause"></i>
+                        <span>Chuyển thành: Ngừng kinh doanh</span>
+                    </button>
+                    <button type="button" onclick="boChonTatCa()"
+                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 text-xs font-bold transition cursor-pointer">
+                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ chọn
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. DATA TABLE CARD: Bảng dữ liệu sản phẩm chuẩn theo ảnh giao diện mẫu -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <!-- Table Header -->
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+                                <th class="py-3.5 px-3 w-10 text-center">
+                                    <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)"
+                                           class="rounded border-slate-300 text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
+                                           title="Chọn tất cả trên trang này">
+                                </th>
+                            <th class="py-3.5 px-2 w-8 text-center text-slate-400">⠿</th>
+                            <th class="py-3.5 px-4 font-bold">Tên sản phẩm</th>
+                            <th class="py-3.5 px-4">Chuyên mục</th>
+                            <th class="py-3.5 px-4">Bộ sưu tập</th>
+                            <th class="py-3.5 px-4 text-center">Số lượng SKU</th>
+                            <th class="py-3.5 px-4 text-center">Trạng thái</th>
+                            <th class="py-3.5 px-4">Ngày tạo</th>
+                            <th class="py-3.5 px-4 text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <!-- Table Body -->
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        <tr th:each="sp : ${listSanPham}" class="hover:bg-slate-50/80 transition group items-center">
+                            
+                            <!-- Checkbox -->
+                            <td class="py-3.5 px-3 text-center">
+                                <input type="checkbox" name="ids" th:value="${sp.id}" onchange="capNhatThanhThaoTacHangLoat()"
+                                       class="item-checkbox rounded border-slate-300 text-[#2563eb] focus:ring-[#2563eb] cursor-pointer">
+                            </td>
+
+                            <!-- Drag dots handle -->
+                            <td class="py-3.5 px-2 text-center text-slate-300 group-hover:text-slate-500 cursor-grab">
+                                <i class="fa-solid fa-ellipsis-vertical"></i><i class="fa-solid fa-ellipsis-vertical"></i>
+                            </td>
+
+                            <!-- Cột Tên sản phẩm: Ảnh vuông bo góc + Tên đậm + Đường dẫn slug -->
+                            <td class="py-3.5 px-4 max-w-sm">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center cursor-pointer group/thumb"
+                                         th:data-id="${sp.id}"
+                                         th:data-ten="${sp.tenSanPham}"
+                                         onclick="moModalAlbumAnhBtn(this)"
+                                         title="Nhấp để mở album quản lý ảnh bìa & ảnh phụ">
+                                        <img th:id="'img-sp-thumb-' + ${sp.id}"
+                                             th:src="${sp.anhDaiDienUrl}"
+                                             th:alt="${sp.tenSanPham}"
+                                             class="w-full h-full object-cover">
+                                        <div class="absolute inset-0 bg-slate-900/50 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center text-white text-xs">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </div>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-slate-900 truncate hover:text-[#2563eb] transition flex items-center gap-2">
+                                            <span th:text="${sp.tenSanPham}">Sản phẩm Figma</span>
+                                            <span th:if="${sp.noiBat}" class="text-[9px] font-black uppercase bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.2 rounded">HOT</span>
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-1 truncate">
+                                            <i class="fa-solid fa-link text-[10px]"></i>
+                                            <span th:text="${sp.duongDanSlug}">san-pham-figma</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Cột Chuyên mục (Danh mục): Badge màu xanh Cyan nhạt -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span class="badge-sky px-2.5 py-1 rounded-full text-[11px] font-medium inline-block"
+                                      th:text="${sp.tenDanhMuc}">
+                                    Tiện ích &bull; Thiết kế
+                                </span>
+                            </td>
+
+                            <!-- Cột Bộ sưu tập -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span th:if="${sp.tenBoSuuTap != null}"
+                                      class="bg-pink-50 text-pink-700 border border-pink-100 px-2.5 py-1 rounded-full text-[11px] font-medium inline-block"
+                                      th:text="${sp.tenBoSuuTap}">
+                                    BST Hè 2026
+                                </span>
+                                <span th:if="${sp.tenBoSuuTap == null}" class="text-slate-400 text-xs italic">
+                                    Không gắn BST
+                                </span>
+                            </td>
+
+                            <!-- Cột Số lượng SKU / Gói: Badge màu tím nhạt (#faf5ff / #7e22ce) -->
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <span class="badge-purple px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1.5">
+                                    <i class="fa-solid fa-boxes-stacked text-[10px]"></i>
+                                    <span th:text="${sp.soBienThe}">2</span>
+                                </span>
+                            </td>
+
+                            <!-- Cột Trạng thái: Hiển thị RÕ RÀNG để người dùng nhận biết -->
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <span th:if="${sp.kichHoat}" class="status-badge-active">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>Đang mở bán</span>
+                                </span>
+                                <span th:unless="${sp.kichHoat}" class="status-badge-inactive">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                                    <span>Ngưng bán</span>
+                                </span>
+                            </td>
+
+                            <!-- Cột Ngày tạo: Clock icon -->
+                            <td class="py-3.5 px-4 whitespace-nowrap text-slate-500 text-[11px]">
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock text-slate-400"></i>
+                                    <span th:text="${#temporals.format(sp.ngayTao != null ? sp.ngayTao : #temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">2026-10-24 12:00:00</span>
+                                </span>
+                            </td>
+
+                            <!-- Cột Thao tác: Bỏ nút xóa, thay bằng chuyển đổi trạng thái ngưng và còn hoạt động -->
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5">
+                                    
+                                    <!-- Nút Quản lý Album ảnh (Popup nhanh) -->
+                                    <button type="button"
+                                            th:data-id="${sp.id}"
+                                            th:data-ten="${sp.tenSanPham}"
+                                            onclick="moModalAlbumAnhBtn(this)"
+                                            class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-slate-700 shadow-2xs transition cursor-pointer"
+                                            title="Quản lý Album ảnh (Ảnh bìa & Ảnh phụ)">
+                                        <i class="fa-solid fa-images text-[11px] text-blue-500"></i>
+                                        <span>Ảnh</span>
+                                    </button>
+
+                                    <!-- Nút Đen: Quản lý biến thể -->
+                                    <a th:href="@{/admin/bien-the/hien-thi(maSanPhamId=${sp.id})}"
+                                       class="btn-black px-2.5 py-1.5 rounded-md font-bold text-xs flex items-center gap-1.5 shadow-2xs hover:shadow"
+                                       title="Quản lý biến thể SKU">
+                                        <i class="fa-solid fa-boxes-stacked text-[11px]"></i>
+                                        <span>Biến thể</span>
+                                    </a>
+
+                                    <!-- Nút Outline: Sửa -->
+                                    <a th:href="@{/admin/san-pham/view(id=${sp.id})}"
+                                       class="btn-outline px-2.5 py-1.5 rounded-md font-bold text-xs flex items-center gap-1 shadow-2xs"
+                                       title="Chỉnh sửa thông tin sản phẩm">
+                                        <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                        <span>Sửa</span>
+                                    </a>
+
+                                    <!-- Nút Chuyển đổi trạng thái (Thay thế cho nút xóa) -->
+                                    <a th:if="${sp.kichHoat}"
+                                       th:href="@{/admin/san-pham/doi-trang-thai(id=${sp.id})}"
+                                       class="btn-toggle-inactive px-2.5 py-1.5 rounded-md font-bold text-xs flex items-center gap-1 shadow-2xs"
+                                       title="Bấm để ngưng kinh doanh sản phẩm này">
+                                        <i class="fa-solid fa-ban text-[11px]"></i>
+                                        <span>Tạm ngưng</span>
+                                    </a>
+                                    <a th:unless="${sp.kichHoat}"
+                                       th:href="@{/admin/san-pham/doi-trang-thai(id=${sp.id})}"
+                                       class="btn-toggle-active px-2.5 py-1.5 rounded-md font-bold text-xs flex items-center gap-1 shadow-2xs"
+                                       title="Bấm để kích hoạt mở bán lại">
+                                        <i class="fa-solid fa-check text-[11px]"></i>
+                                        <span>Kích hoạt</span>
+                                    </a>
+
+                                </div>
+                            </td>
+
+                        </tr>
+
+                        <!-- Empty state khi không có dữ liệu -->
+                        <tr th:if="${#lists.isEmpty(listSanPham)}">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-shirt text-3xl mb-2 block text-slate-300"></i>
+                                Không tìm thấy sản phẩm nào phù hợp. Click nút <strong>+ Thêm sản phẩm</strong> ở trên để tạo mới!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang chuẩn -->
+            <div class="px-5 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500" th:if="${totalPages > 0}">
+                <div>
+                    Trang <span class="font-bold text-slate-900" th:text="${page + 1}">1</span> / <span th:text="${totalPages}">1</span>
+                    &bull; Tổng <span class="font-bold text-slate-900" th:text="${tongSanPham}">0</span> sản phẩm
+                </div>
+                    <a th:if="${page > 0}"
+                       th:href="@{/admin/san-pham/hien-thi(page=${page - 1}, tuKhoa=${tuKhoa}, maDanhMucId=${maDanhMucLoc}, maBoSuuTapId=${maBoSuuTapLoc}, formDang=${formDangLoc}, kichHoat=${kichHoatLoc})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                        &larr; Trước
+                    </a>
+                    <a th:if="${page + 1 < totalPages}"
+                       th:href="@{/admin/san-pham/hien-thi(page=${page + 1}, tuKhoa=${tuKhoa}, maDanhMucId=${maDanhMucLoc}, maBoSuuTapId=${maBoSuuTapLoc}, formDang=${formDangLoc}, kichHoat=${kichHoatLoc})}"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                        Sau &rarr;
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        </form>
+
+    </main>
+
+    <!-- =========================================================================
+         4. MODAL FORM: THÊM MỚI SẢN PHẨM (PHONG CÁCH POPUP CHUYÊN NGHIỆP)
+         ========================================================================= -->
+    <div id="modalThemSanPham"
+         data-modal
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full my-8 overflow-hidden border border-slate-200/90 flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-shirt"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wide text-slate-900">Thêm mới sản phẩm</h3>
+                        <p class="text-[11px] text-slate-500">Nhập thông tin chung, chọn danh mục, chất liệu và form dáng</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModal('modalThemSanPham')"
+                        class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition focus:outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Form cuộn dọc) -->
+            <form th:object="${sanPham}" action="/admin/san-pham/add" method="post" enctype="multipart/form-data" class="flex flex-col flex-grow overflow-hidden" novalidate>
+                
+                <div class="p-6 overflow-y-auto space-y-4 flex-grow">
+
+                    <!-- Hàng 1: Mã SP & Giá cơ bản -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Mã sản phẩm <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="tuSinhMaSP()" class="text-[10px] font-bold text-[#2563eb] hover:underline cursor-pointer">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>Tự sinh mã
+                                </button>
+                            </div>
+                            <input type="text" id="inputMaSP" th:field="*{maSanPham}"
+                                   placeholder="VD: SP-POLO-001"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs font-mono uppercase transition">
+                            <span class="error" th:if="${#fields.hasErrors('maSanPham')}" th:errors="*{maSanPham}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Giá bán cơ bản (VNĐ) <span class="text-red-500">*</span></label>
+                            <input type="number" th:field="*{giaCoBan}" min="0" step="1000"
+                                   placeholder="VD: 299000"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs font-mono transition">
+                            <span class="error" th:if="${#fields.hasErrors('giaCoBan')}" th:errors="*{giaCoBan}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 2: Tên sản phẩm & Slug SEO -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Tên sản phẩm <span class="text-red-500">*</span></label>
+                            <input type="text" id="inputTenSP" th:field="*{tenSanPham}"
+                                   oninput="tuDongTaoSlug(this.value)"
+                                   placeholder="VD: Áo Polo Nam Excool Công Nghệ Làm Mát"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs transition">
+                            <span class="error" th:if="${#fields.hasErrors('tenSanPham')}" th:errors="*{tenSanPham}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Đường dẫn Slug (SEO URL) <span class="text-red-500">*</span></label>
+                            <input type="text" id="inputSlugSP" th:field="*{duongDanSlug}"
+                                   placeholder="VD: ao-polo-nam-excool"
+                                   class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs font-mono transition">
+                            <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 3: Gắn Danh mục & Bộ sưu tập -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Danh mục sản phẩm <span class="text-red-500">*</span></label>
+                            <select th:field="*{maDanhMucId}" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs bg-white transition">
+                                <option value="">-- Chọn danh mục --</option>
+                                <option th:each="dm : ${listDanhMuc}"
+                                        th:value="${dm.id}"
+                                        th:text="${(dm.maDanhMucCha != null ? '↳ ' : '• ') + dm.tenDanhMuc}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('maDanhMucId')}" th:errors="*{maDanhMucId}"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Bộ sưu tập (Tùy chọn)</label>
+                            <select th:field="*{maBoSuuTapId}" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs bg-white transition">
+                                <option value="">-- Không thuộc BST --</option>
+                                <option th:each="bst : ${listBoSuuTap}"
+                                        th:value="${bst.id}"
+                                        th:text="${bst.tenBoSuuTap}"></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 4: Chất liệu vải & Form dáng (Combobox liên kết CSDL) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                <i class="fa-solid fa-scroll text-[#2563eb] mr-1"></i>Chất liệu vải <span class="text-red-500">*</span>
+                            </label>
+                            <select id="inputChatLieu" th:field="*{chatLieu}"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-[#2563eb] text-slate-700 font-medium">
+                                <option value="">-- Chọn chất liệu vải từ CSDL --</option>
+                                <option th:each="cl : ${listChatLieu}"
+                                        th:value="${cl.tenChatLieu}"
+                                        th:text="${cl.tenChatLieu + (cl.moTa != null ? ' - ' + cl.moTa : '')}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('chatLieu')}" th:errors="*{chatLieu}"></span>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                <i class="fa-solid fa-person-rays text-[#2563eb] mr-1"></i>Form dáng <span class="text-red-500">*</span>
+                            </label>
+                            <select id="inputFormDang" th:field="*{formDang}"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-[#2563eb] text-slate-700 font-medium">
+                                <option value="">-- Chọn form dáng từ CSDL --</option>
+                                <option th:each="fd : ${listFormDang}"
+                                        th:value="${fd.tenFormDang}"
+                                        th:text="${fd.tenFormDang + (fd.moTa != null ? ' (' + fd.moTa + ')' : '')}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('formDang')}" th:errors="*{formDang}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 5: Mô tả chi tiết sản phẩm -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Mô tả chi tiết sản phẩm <span class="text-red-500">*</span></label>
+                            <button type="button" onclick="chenMauMoTa()" class="text-[10px] font-bold text-[#2563eb] hover:underline cursor-pointer">
+                                + Chèn mẫu mô tả chuẩn
+                            </button>
+                        </div>
+                        <textarea id="inputMoTa" th:field="*{moTaChiTiet}" rows="3"
+                                  placeholder="Đặc điểm thiết kế, công nghệ hoàn thiện, đường may và cảm giác mặc..."
+                                  class="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none text-xs transition"></textarea>
+                        <span class="error" th:if="${#fields.hasErrors('moTaChiTiet')}" th:errors="*{moTaChiTiet}"></span>
+                    </div>
+
+                    <!-- Hàng 5.1: ẢNH ĐẠI DIỆN CHÍNH (ẢNH BÌA / THUMBNAIL) -->
+                    <div class="p-4 rounded-2xl bg-amber-50/40 border border-amber-200/90 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                <span class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs">
+                                    <i class="fa-solid fa-star"></i>
+                                </span>
+                                <span>Ảnh đại diện chính (Ảnh bìa sản phẩm)</span>
+                            </label>
+                            <span class="text-[10px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                                Hiển thị trang chủ, danh mục & giỏ hàng
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                            <!-- Khung preview ảnh đại diện 1:1 -->
+                            <div class="sm:col-span-3 flex flex-col items-center justify-center">
+                                <div id="previewAnhDaiDienBox" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-2 border-dashed border-amber-300 bg-white flex flex-col items-center justify-center text-center p-1.5 overflow-hidden relative shadow-2xs group">
+                                    <img id="imgPreviewDaiDien" src="" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-xl hidden">
+                                    <div id="placeholderPreviewDaiDien" class="flex flex-col items-center text-amber-400">
+                                        <i class="fa-regular fa-image text-2xl mb-1"></i>
+                                        <span class="text-[10px] font-bold text-slate-500 leading-tight">Chưa có ảnh</span>
+                                        <span class="text-[9px] text-slate-400">Tỉ lệ 1:1 vuông</span>
+                                    </div>
+                                    <button type="button" id="btnXoaPreviewDaiDien" onclick="xoaPreviewAnhDaiDienAdd()"
+                                            class="hidden absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600 text-white text-[11px] items-center justify-center shadow-md hover:bg-rose-700 transition cursor-pointer"
+                                            title="Bỏ chọn ảnh này">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 2 Tùy chọn: Chọn file hoặc Dán URL -->
+                            <div class="sm:col-span-9 space-y-2">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                        <i class="fa-solid fa-upload text-amber-600 mr-1"></i>Tải file ảnh đại diện từ máy tính:
+                                    </label>
+                                    <input type="file" id="fileAnhDaiDienAdd" name="fileAnhDaiDien" accept="image/*"
+                                           onchange="xuLyChonFileDaiDienAdd(this)"
+                                           class="w-full text-xs text-slate-600 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
+                                </div>
+
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                        <i class="fa-solid fa-link text-amber-600 mr-1"></i>Hoặc dán đường dẫn link URL ảnh online:
+                                    </label>
+                                    <input type="text" id="urlAnhDaiDienAdd" name="urlAnhDaiDien"
+                                           oninput="xuLyNhapUrlDaiDienAdd(this.value)"
+                                           placeholder="/images/placeholder.jpg"
+                                           class="w-full px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-200 transition font-mono">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 5.2: ALBUM ẢNH PHỤ CHI TIẾT (SECONDARY IMAGES) -->
+                    <div class="p-4 rounded-2xl bg-blue-50/40 border border-blue-200/90 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs shadow-xs">
+                                    <i class="fa-solid fa-images"></i>
+                                </span>
+                                <span>Album ảnh phụ chi tiết (Góc chụp, chất liệu, form dáng)</span>
+                            </label>
+                            <span class="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full">
+                                Không giới hạn số lượng ảnh
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                    <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-1"></i>Tải nhiều file ảnh phụ từ máy tính:
+                                </label>
+                                <input type="file" id="filesAnhPhuAdd" name="filesAnhPhu" multiple accept="image/*"
+                                       onchange="xuLyChonFilesPhuAdd(this)"
+                                       class="w-full text-xs text-slate-600 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer">
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Chọn nhiều file cùng lúc (JPG, PNG, WEBP, GIF)</span>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                    <i class="fa-solid fa-list-ul text-blue-600 mr-1"></i>Hoặc nhập nhiều link URL ảnh phụ:
+                                </label>
+                                <input type="text" id="urlsAnhPhuAdd" name="urlsAnhPhu"
+                                       placeholder="https://... (nhiều link cách nhau bằng dấu phẩy)"
+                                       class="w-full px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition font-mono">
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Nhiều link phân cách bằng dấu phẩy hoặc xuống dòng</span>
+                            </div>
+                        </div>
+
+                        <!-- Khung xem trước các ảnh phụ đã chọn -->
+                        <div id="previewAnhPhuContainer" class="hidden pt-2 border-t border-blue-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                                    <i class="fa-solid fa-check-circle text-blue-600"></i>
+                                    <span>Đã chọn <strong id="soLuongAnhPhuChon" class="text-blue-600 font-black">0</strong> ảnh phụ</span>
+                                </span>
+                                <button type="button" onclick="xoaTatCaPreviewAnhPhuAdd()" class="text-rose-600 hover:underline text-[11px] font-semibold cursor-pointer">
+                                    Bỏ chọn tất cả
+                                </button>
+                            </div>
+                            <div id="gridPreviewAnhPhu" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1 bg-white/60 rounded-xl border border-blue-100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 6: Checkbox Nổi bật & Kích hoạt bán -->
+                    <div class="grid grid-cols-2 gap-4 pt-1">
+                        <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-50">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">Sản phẩm Nổi bật</div>
+                                <div class="text-[10px] text-slate-400">Gắn nhãn HOT / Best Seller</div>
+                            </div>
+                            <input type="checkbox" th:field="*{noiBat}" class="w-4 h-4 rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer">
+                        </label>
+
+                        <label class="p-3 rounded-xl border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-50">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">Mở bán ngay</div>
+                                <div class="text-[10px] text-slate-400">Hiển thị trên Cửa hàng Storefront</div>
+                            </div>
+                            <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer">
+                        </label>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/60 flex-shrink-0">
+                    <button type="button"
+                            onclick="dongModal('modalThemSanPham')"
+                            class="btn-outline font-bold text-xs px-4 py-2 rounded-lg cursor-pointer">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="btn-black font-bold text-xs px-6 py-2 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Lưu sản phẩm</span>
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- =========================================================================
+         5. MODAL POPUP: QUẢN LÝ BỘ SƯU TẬP ẢNH SẢN PHẨM (ẢNH BÌA & ẢNH PHỤ CHUẨN SÀN TMĐT)
+         ========================================================================= -->
+    <div id="modalQuanLyAlbumAnh"
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        
+        <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full my-8 overflow-hidden border border-slate-200/90 flex flex-col max-h-[92vh]">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm sm:text-base font-black uppercase tracking-wide text-slate-900" id="albumModalTenSP">Bộ sưu tập hình ảnh</h3>
+                            <span id="albumModalMaSP" class="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200"></span>
+                            <span id="albumModalCount" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Quản lý <strong>Ảnh bìa đại diện (1:1)</strong> và toàn bộ <strong>Ảnh phụ chi tiết</strong> của sản phẩm</p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="dongModalAlbumAnh()"
+                        class="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition focus:outline-none cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                
+                <!-- Toast thông báo trong modal -->
+                <div id="albumModalAlert" class="hidden p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
+                    <span id="albumModalAlertText"></span>
+                    <button type="button" onclick="document.getElementById('albumModalAlert').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <!-- Khu vực 1: Ảnh đại diện chính hiện tại -->
+                <div class="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/90 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                            <span class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs">
+                                <i class="fa-solid fa-star"></i>
+                            </span>
+                            <span>Ảnh đại diện chính (Ảnh bìa sản phẩm)</span>
+                        </label>
+                        <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">Ảnh bìa hiển thị chính</span>
+                    </div>
+
+                    <div id="albumModalCoverContainer" class="flex items-center gap-4">
+                        <!-- Render qua JS/AJAX -->
+                    </div>
+                </div>
+
+                <!-- Khu vực 2: Danh sách ảnh phụ chi tiết -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                            <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs shadow-xs">
+                                <i class="fa-solid fa-images"></i>
+                            </span>
+                            <span>Album ảnh phụ chi tiết</span>
+                        </label>
+                        <span id="albumModalPhuCount" class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">0 ảnh phụ</span>
+                    </div>
+
+                    <!-- Container danh sách ảnh phụ -->
+                    <div id="albumModalGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+                        <!-- Render qua JS/AJAX -->
+                    </div>
+
+                    <div id="albumModalEmpty" class="hidden py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <i class="fa-regular fa-image text-3xl text-slate-300 mb-1.5"></i>
+                        <p class="text-xs font-bold text-slate-600">Sản phẩm này chưa có ảnh phụ nào</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Tải thêm ảnh ở khung bên dưới để bổ sung góc nhìn chi tiết cho khách hàng.</p>
+                    </div>
+                </div>
+
+                <!-- Khu vực 3: Tải lên thêm hình ảnh mới (Dropzone + URL) -->
+                <div class="p-4.5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3.5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <label class="block text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
+                            <span>Tải lên hình ảnh mới</span>
+                        </label>
+
+                        <!-- Tùy chọn mục đích tải lên: Ảnh phụ hay Ảnh đại diện -->
+                        <div class="flex items-center gap-2 bg-white px-2 py-1 rounded-xl border border-slate-200 text-xs font-bold">
+                            <label class="flex items-center gap-1 cursor-pointer text-blue-700 px-1.5 py-0.5 rounded-lg hover:bg-blue-50">
+                                <input type="radio" name="modalUploadType" id="uploadTypePhu" value="PHU" checked class="text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                <span>Thêm vào Ảnh phụ</span>
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer text-amber-700 px-1.5 py-0.5 rounded-lg hover:bg-amber-50">
+                                <input type="radio" name="modalUploadType" id="uploadTypeDaiDien" value="DAI_DIEN" class="text-amber-500 focus:ring-amber-500 cursor-pointer">
+                                <span>Đổi làm Ảnh đại diện chính</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <!-- Dropzone kéo thả -->
+                        <div id="albumModalDropzone"
+                             onclick="document.getElementById('albumModalFileInput').click()"
+                             ondragover="xuLyDragOverModal(event)"
+                             ondragleave="xuLyDragLeaveModal(event)"
+                             ondrop="xuLyDropModal(event)"
+                             class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-white hover:bg-blue-50/30 rounded-xl p-4 text-center cursor-pointer transition select-none">
+                            <input type="file" id="albumModalFileInput" multiple accept="image/*" class="hidden" onchange="xuLyChonFileModal(this)">
+                            <div class="w-9 h-9 mx-auto rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-base mb-1.5">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div class="text-xs font-bold text-slate-800">Chọn hoặc kéo thả file ảnh vào đây</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">JPG, PNG, WEBP, GIF, SVG (Tối đa 10MB/ảnh)</div>
+                        </div>
+
+                        <!-- Ô nhập URL -->
+                        <div class="flex flex-col justify-between">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Hoặc nhập link URL ảnh online:</label>
+                                <textarea id="albumModalUrlInput" rows="2"
+                                          placeholder="https://... (nhiều link cách nhau bằng dấu phẩy hoặc xuống dòng)"
+                                          class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs outline-none focus:border-blue-600 transition font-mono"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung preview file vừa chọn trong modal -->
+                    <div id="albumModalFilePreview" class="hidden flex flex-wrap gap-2 p-2.5 bg-white rounded-xl border border-slate-200">
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        <button type="button"
+                                id="btnUploadModalAlbum"
+                                onclick="thucHienUploadModal()"
+                                class="btn-black font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Tải lên ngay</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 border-t border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
+                <span class="text-[11px] text-slate-400 italic">Mọi thay đổi ảnh bìa sẽ được cập nhật trực tiếp ra bảng và ngoài Storefront.</span>
+                <button type="button"
+                        onclick="dongModalAlbumAnh()"
+                        class="btn-black font-bold text-xs px-5 py-2 rounded-xl cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Xem phóng to hình ảnh (Lightbox) -->
+    <div id="modalZoomAnhList" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="dongZoomAnhList()">
+        <div class="relative max-w-4xl max-h-[90vh] bg-transparent rounded-2xl overflow-hidden flex flex-col items-center" onclick="event.stopPropagation()">
+            <button type="button" onclick="dongZoomAnhList()" class="absolute top-3 right-3 text-white bg-black/60 hover:bg-black p-2.5 rounded-full transition cursor-pointer z-10">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <img id="imgZoomTargetList" src="" alt="Ảnh sản phẩm phóng to" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl">
+        </div>
+    </div>
+
+    <!-- Script tương tác Modal & Helpers & Bulk Actions -->
+    <script>
+        // Xử lý Thao tác hàng loạt (Bulk Actions)
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function capNhatThanhThaoTacHangLoat() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            const count = checkedBoxes.length;
+            const bar = document.getElementById('bulkActionBar');
+            const countText = document.getElementById('soLuongDaChon');
+            const masterCheck = document.getElementById('checkAll');
+
+            if (countText) countText.innerText = count;
+
+            if (count > 0) {
+                if (bar) bar.classList.remove('hidden');
+            } else {
+                if (bar) bar.classList.add('hidden');
+            }
+
+            if (masterCheck && checkboxes.length > 0) {
+                masterCheck.checked = (count === checkboxes.length);
+                masterCheck.indeterminate = (count > 0 && count < checkboxes.length);
+            }
+        }
+
+        function boChonTatCa() {
+            const masterCheck = document.getElementById('checkAll');
+            if (masterCheck) masterCheck.checked = false;
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            capNhatThanhThaoTacHangLoat();
+        }
+
+        function xacNhanThaoTac(msg) {
+            const count = document.querySelectorAll('.item-checkbox:checked').length;
+            if (count === 0) {
+                alert('Vui lòng tích chọn ít nhất một sản phẩm!');
+                return false;
+            }
+            return confirm(msg);
+        }
+
+        function tuSinhMaSP() {
+            const rd = Math.floor(100 + Math.random() * 900);
+            document.getElementById('inputMaSP').value = 'SP-SIMPLAIN-' + rd;
+        }
+
+        function tuDongTaoSlug(val) {
+            if (!val) return;
+            const slug = val.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-');
+            document.getElementById('inputSlugSP').value = slug;
+        }
+
+        function chonChatLieu(cl) {
+            document.getElementById('inputChatLieu').value = cl;
+        }
+
+        function chonForm(f) {
+            document.getElementById('inputFormDang').value = f;
+        }
+
+        function chenMauMoTa() {
+            document.getElementById('inputMoTa').value = 
+                "- 100% Cotton chải kỹ mềm mịn, thấm hút mồ hôi tối ưu cả ngày dài.\n" +
+                "- Bo cổ dệt gân chống bai giãn sau nhiều lần giặt.\n" +
+                "- Công nghệ nhuộm hoạt tính bền màu, không xơ xù bề mặt vải.\n" +
+                "- Form dáng thoải mái tôn vóc dáng nam giới Việt.";
+        }
+
+        // =========================================================================
+        // XỬ LÝ PREVIEW ẢNH ĐẠI DIỆN VÀ ẢNH PHỤ TRONG MODAL THÊM SẢN PHẨM
+        // =========================================================================
+        let selectedFilesPhuModalAdd = [];
+
+        function xuLyChonFileDaiDienAdd(input) {
+            if (!input || !input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                hienThiPreviewDaiDienSrc(e.target.result);
+            };
+            reader.readAsDataURL(file);
+            const urlInput = document.getElementById('urlAnhDaiDienAdd');
+            if (urlInput) urlInput.value = '';
+        }
+
+        function xuLyNhapUrlDaiDienAdd(url) {
+            const clean = (url || '').trim();
+            if (clean) {
+                hienThiPreviewDaiDienSrc(clean);
+                const fileInput = document.getElementById('fileAnhDaiDienAdd');
+                if (fileInput) fileInput.value = '';
+            } else {
+                xoaPreviewAnhDaiDienAdd();
+            }
+        }
+
+        function hienThiPreviewDaiDienSrc(src) {
+            const img = document.getElementById('imgPreviewDaiDien');
+            const placeholder = document.getElementById('placeholderPreviewDaiDien');
+            const btnXoa = document.getElementById('btnXoaPreviewDaiDien');
+            if (img && placeholder && btnXoa) {
+                img.src = src;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                btnXoa.classList.remove('hidden');
+                btnXoa.classList.add('flex');
+            }
+        }
+
+        function xoaPreviewAnhDaiDienAdd() {
+            const img = document.getElementById('imgPreviewDaiDien');
+            const placeholder = document.getElementById('placeholderPreviewDaiDien');
+            const btnXoa = document.getElementById('btnXoaPreviewDaiDien');
+            const fileInput = document.getElementById('fileAnhDaiDienAdd');
+            const urlInput = document.getElementById('urlAnhDaiDienAdd');
+            if (img) { img.src = ''; img.classList.add('hidden'); }
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (btnXoa) { btnXoa.classList.add('hidden'); btnXoa.classList.remove('flex'); }
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+        }
+
+        function xuLyChonFilesPhuAdd(input) {
+            if (!input || !input.files) return;
+            selectedFilesPhuModalAdd = Array.from(input.files);
+            renderPreviewAnhPhuAdd();
+        }
+
+        function renderPreviewAnhPhuAdd() {
+            const container = document.getElementById('previewAnhPhuContainer');
+            const grid = document.getElementById('gridPreviewAnhPhu');
+            const countEl = document.getElementById('soLuongAnhPhuChon');
+            if (!container || !grid) return;
+
+            if (selectedFilesPhuModalAdd.length === 0) {
+                container.classList.add('hidden');
+                grid.innerHTML = '';
+                if (countEl) countEl.textContent = '0';
+                return;
+            }
+
+            container.classList.remove('hidden');
+            if (countEl) countEl.textContent = selectedFilesPhuModalAdd.length;
+            grid.innerHTML = '';
+
+            selectedFilesPhuModalAdd.forEach((file, idx) => {
+                const item = document.createElement('div');
+                item.className = 'relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-white group shadow-2xs';
+                
+                const img = document.createElement('img');
+                img.className = 'w-full h-full object-cover';
+                const reader = new FileReader();
+                reader.onload = function(e) { img.src = e.target.result; };
+                reader.readAsDataURL(file);
+                
+                const badge = document.createElement('span');
+                badge.className = 'absolute bottom-0 inset-x-0 bg-slate-900/70 text-white text-[8px] font-bold text-center py-0.5';
+                badge.textContent = '#' + (idx + 1);
+
+                const btnDel = document.createElement('button');
+                btnDel.type = 'button';
+                btnDel.className = 'absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] hidden group-hover:flex items-center justify-center cursor-pointer';
+                btnDel.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                btnDel.onclick = function() { xoaMotPreviewAnhPhuAdd(idx); };
+
+                item.appendChild(img);
+                item.appendChild(badge);
+                item.appendChild(btnDel);
+                grid.appendChild(item);
+            });
+        }
+
+        function xoaMotPreviewAnhPhuAdd(index) {
+            selectedFilesPhuModalAdd.splice(index, 1);
+            capNhatInputFilesPhuAdd();
+            renderPreviewAnhPhuAdd();
+        }
+
+        function xoaTatCaPreviewAnhPhuAdd() {
+            selectedFilesPhuModalAdd = [];
+            capNhatInputFilesPhuAdd();
+            renderPreviewAnhPhuAdd();
+        }
+
+        function capNhatInputFilesPhuAdd() {
+            const input = document.getElementById('filesAnhPhuAdd');
+            if (!input) return;
+            const dt = new DataTransfer();
+            selectedFilesPhuModalAdd.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+        }
+
+        // =========================================================================
+        // AJAX: QUẢN LÝ BỘ SƯU TẬP ẢNH SẢN PHẨM (ẢNH BÌA & ẢNH PHỤ CHUẨN SÀN TMĐT)
+        // =========================================================================
+        let currentModalSpId = null;
+        let modalSelectedFiles = [];
+
+        function moModalAlbumAnhBtn(el) {
+            if (!el) return;
+            const spId = el.getAttribute('data-id');
+            const tenSp = el.getAttribute('data-ten');
+            moModalAlbumAnh(spId, tenSp);
+        }
+
+        function moModalAlbumAnh(spId, tenSp) {
+            currentModalSpId = spId;
+            modalSelectedFiles = [];
+            const modal = document.getElementById('modalQuanLyAlbumAnh');
+            const title = document.getElementById('albumModalTenSP');
+            const alertBox = document.getElementById('albumModalAlert');
+            const previewBox = document.getElementById('albumModalFilePreview');
+            const urlInput = document.getElementById('albumModalUrlInput');
+            const fileInput = document.getElementById('albumModalFileInput');
+
+            if (alertBox) alertBox.classList.add('hidden');
+            if (previewBox) { previewBox.innerHTML = ''; previewBox.classList.add('hidden'); }
+            if (urlInput) urlInput.value = '';
+            if (fileInput) fileInput.value = '';
+            if (title) title.innerText = tenSp || 'Bộ sưu tập hình ảnh';
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            taiDanhSachAnhModal(spId);
+        }
+
+        function dongModalAlbumAnh() {
+            const modal = document.getElementById('modalQuanLyAlbumAnh');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function xemPhongToModal(url) {
+            if (!url) return;
+            const img = document.getElementById('imgZoomTargetList');
+            const modal = document.getElementById('modalZoomAnhList');
+            if (img && modal) {
+                img.src = url;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dongZoomAnhList() {
+            const modal = document.getElementById('modalZoomAnhList');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function hienThiThongBaoModal(msg, laLoi) {
+            const box = document.getElementById('albumModalAlert');
+            const text = document.getElementById('albumModalAlertText');
+            if (!box || !text) return;
+            text.innerText = msg;
+            box.className = laLoi
+                ? 'p-3 rounded-xl text-xs font-semibold flex items-center justify-between bg-red-50 text-red-700 border border-red-200'
+                : 'p-3 rounded-xl text-xs font-semibold flex items-center justify-between bg-emerald-50 text-emerald-800 border border-emerald-200';
+            box.classList.remove('hidden');
+            setTimeout(() => {
+                if (box) box.classList.add('hidden');
+            }, 4000);
+        }
+
+        function capNhatThumbBang(spId, anhUrl) {
+            if (!spId || !anhUrl) return;
+            const img = document.getElementById('img-sp-thumb-' + spId);
+            if (img) img.src = anhUrl;
+        }
+
+        function taiDanhSachAnhModal(spId) {
+            const grid = document.getElementById('albumModalGrid');
+            const empty = document.getElementById('albumModalEmpty');
+            const countBadge = document.getElementById('albumModalCount');
+            const maBadge = document.getElementById('albumModalMaSP');
+            
+            if (grid) grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-xs"><i class="fa-solid fa-spinner fa-spin text-lg mr-1.5"></i>Đang tải danh sách ảnh...</div>';
+
+            fetch(`/admin/san-pham/api/danh-sach-anh?sanPhamId=${spId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (maBadge) maBadge.innerText = data.maSanPham || '';
+                        if (countBadge) countBadge.innerText = (data.danhSachHinhAnh ? data.danhSachHinhAnh.length : 0) + ' ảnh';
+                        renderDanhSachAnhModal(data.danhSachHinhAnh || []);
+                        if (data.anhDaiDienUrl) capNhatThumbBang(spId, data.anhDaiDienUrl);
+                    } else {
+                        hienThiThongBaoModal(data.message || 'Lỗi khi tải ảnh', true);
+                    }
+                })
+                .catch(err => {
+                    hienThiThongBaoModal('Không thể kết nối máy chủ: ' + err.message, true);
+                });
+        }
+
+        function renderDanhSachAnhModal(ds) {
+            const coverBox = document.getElementById('albumModalCoverContainer');
+            const grid = document.getElementById('albumModalGrid');
+            const empty = document.getElementById('albumModalEmpty');
+            const countBadge = document.getElementById('albumModalCount');
+            const phuCountBadge = document.getElementById('albumModalPhuCount');
+            if (countBadge) countBadge.innerText = ds.length + ' ảnh';
+
+            const anhDaiDien = ds.find(ha => Boolean(ha.laAnhDaiDien)) || (ds.length > 0 ? ds[0] : null);
+            const dsAnhPhu = ds.filter(ha => anhDaiDien == null || ha.id !== anhDaiDien.id);
+
+            if (phuCountBadge) phuCountBadge.innerText = dsAnhPhu.length + ' ảnh phụ';
+
+            // 1. Render Ảnh đại diện chính
+            if (coverBox) {
+                if (anhDaiDien) {
+                    coverBox.innerHTML = `
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-amber-400 bg-white relative shadow-sm flex-shrink-0 cursor-pointer group" onclick="xemPhongToModal('${anhDaiDien.duongDanAnh}')">
+                            <img src="${anhDaiDien.duongDanAnh}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <span class="absolute top-1 left-1 bg-amber-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded-md shadow-xs">
+                                <i class="fa-solid fa-star mr-0.5"></i>Bìa
+                            </span>
+                        </div>
+                        <div class="flex-grow space-y-1.5 overflow-hidden">
+                            <div class="flex items-center gap-1.5 text-xs font-black text-slate-800">
+                                <i class="fa-solid fa-crown text-amber-500"></i>
+                                <span>Ảnh đại diện chính hiện tại</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 truncate font-mono">${anhDaiDien.duongDanAnh}</p>
+                            <div class="flex items-center gap-2 pt-1">
+                                <button type="button" onclick="xemPhongToModal('${anhDaiDien.duongDanAnh}')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-400 text-slate-700 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-magnifying-glass-plus text-blue-500"></i> Phóng to
+                                </button>
+                                <button type="button" onclick="xoaAnhModal(${anhDaiDien.id})" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-trash"></i> Xóa ảnh bìa
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    coverBox.innerHTML = `
+                        <div class="w-16 h-16 rounded-xl border border-dashed border-amber-300 bg-white flex items-center justify-center text-amber-400 flex-shrink-0">
+                            <i class="fa-regular fa-image text-xl"></i>
+                        </div>
+                        <div class="text-xs text-amber-800">
+                            <span class="font-bold">Chưa có ảnh đại diện chính!</span>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Chọn một ảnh phụ bên dưới bấm "Đặt làm ảnh bìa" hoặc tải lên ảnh mới.</p>
+                        </div>
+                    `;
+                }
+            }
+
+            // 2. Render Danh sách ảnh phụ
+            if (!dsAnhPhu || dsAnhPhu.length === 0) {
+                if (grid) { grid.innerHTML = ''; grid.classList.add('hidden'); }
+                if (empty) empty.classList.remove('hidden');
+                return;
+            }
+
+            if (empty) empty.classList.add('hidden');
+            if (grid) {
+                grid.classList.remove('hidden');
+                grid.innerHTML = '';
+            }
+
+            dsAnhPhu.forEach((ha, idx) => {
+                const card = document.createElement('div');
+                card.className = 'relative rounded-2xl overflow-hidden border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md transition flex flex-col group';
+
+                card.innerHTML = `
+                    <div class="absolute top-2 left-2 z-10">
+                        <span class="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">Ảnh phụ #${idx + 1}</span>
+                    </div>
+
+                    <div class="aspect-square w-full overflow-hidden bg-slate-100 flex items-center justify-center cursor-pointer" onclick="xemPhongToModal('${ha.duongDanAnh}')">
+                        <img src="${ha.duongDanAnh}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    </div>
+
+                    <div class="p-2 bg-white border-t border-slate-100 flex flex-col gap-1.5 flex-grow justify-between">
+                        <button type="button" onclick="datAnhDaiDienModal(${ha.id})" class="w-full py-1 px-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-bold text-center transition flex items-center justify-center gap-1 border border-amber-200/80 cursor-pointer" title="Đặt ảnh này làm ảnh bìa">
+                            <i class="fa-solid fa-star text-amber-500 text-[9px]"></i>
+                            <span>Đặt làm ảnh bìa</span>
+                        </button>
+
+                        <div class="flex items-center justify-between gap-1 pt-1 border-t border-slate-100 text-slate-500">
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="doiThuTuAnhModal(${ha.id}, 'trai')" class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] cursor-pointer" title="Di chuyển sang trái">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </button>
+                                <button type="button" onclick="doiThuTuAnhModal(${ha.id}, 'phai')" class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] cursor-pointer" title="Di chuyển sang phải">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="xemPhongToModal('${ha.duongDanAnh}')" class="w-6 h-6 rounded-md bg-slate-100 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center text-[10px] cursor-pointer" title="Xem lớn">
+                                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                                </button>
+                                <button type="button" onclick="xoaAnhModal(${ha.id})" class="w-6 h-6 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] cursor-pointer" title="Xóa ảnh">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function datAnhDaiDienModal(hinhAnhId) {
+            const formData = new FormData();
+            formData.append('sanPhamId', currentModalSpId);
+            formData.append('hinhAnhId', hinhAnhId);
+
+            fetch('/admin/san-pham/api/chon-anh-dai-dien', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    hienThiThongBaoModal(data.message, false);
+                    renderDanhSachAnhModal(data.danhSachHinhAnh || []);
+                    if (data.anhDaiDienUrl) capNhatThumbBang(currentModalSpId, data.anhDaiDienUrl);
+                } else {
+                    hienThiThongBaoModal(data.message || 'Lỗi đổi ảnh bìa', true);
+                }
+            })
+            .catch(err => hienThiThongBaoModal('Lỗi kết nối: ' + err.message, true));
+        }
+
+        function xoaAnhModal(hinhAnhId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa hình ảnh này không?')) return;
+
+            const formData = new FormData();
+            formData.append('sanPhamId', currentModalSpId);
+            formData.append('hinhAnhId', hinhAnhId);
+
+            fetch('/admin/san-pham/api/xoa-anh', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    hienThiThongBaoModal(data.message, false);
+                    renderDanhSachAnhModal(data.danhSachHinhAnh || []);
+                    if (data.anhDaiDienUrl) capNhatThumbBang(currentModalSpId, data.anhDaiDienUrl);
+                } else {
+                    hienThiThongBaoModal(data.message || 'Lỗi xóa ảnh', true);
+                }
+            })
+            .catch(err => hienThiThongBaoModal('Lỗi kết nối: ' + err.message, true));
+        }
+
+        function doiThuTuAnhModal(hinhAnhId, huongDi) {
+            const formData = new FormData();
+            formData.append('sanPhamId', currentModalSpId);
+            formData.append('hinhAnhId', hinhAnhId);
+            formData.append('huongDi', huongDi);
+
+            fetch('/admin/san-pham/api/doi-thu-tu-anh', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    renderDanhSachAnhModal(data.danhSachHinhAnh || []);
+                    if (data.anhDaiDienUrl) capNhatThumbBang(currentModalSpId, data.anhDaiDienUrl);
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function xuLyChonFileModal(input) {
+            if (!input || !input.files) return;
+            modalSelectedFiles = Array.from(input.files);
+            renderFilePreviewModal();
+        }
+
+        function renderFilePreviewModal() {
+            const container = document.getElementById('albumModalFilePreview');
+            if (!container) return;
+
+            if (modalSelectedFiles.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="w-full flex items-center justify-between pb-1 border-b border-slate-100 text-[11px] font-bold text-slate-700">
+                    <span>Đã chọn <strong class="text-blue-600">${modalSelectedFiles.length}</strong> file ảnh</span>
+                    <button type="button" onclick="xoaTatCaFilesModal()" class="text-rose-600 hover:underline">Bỏ chọn</button>
+                </div>
+            `;
+
+            modalSelectedFiles.forEach((file, idx) => {
+                const reader = new FileReader();
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'relative w-14 h-14 rounded-lg overflow-hidden border border-slate-300 bg-white group shadow-2xs';
+                reader.onload = function(e) {
+                    itemDiv.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <button type="button" onclick="xoaMotFileModal(${idx})" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[9px] opacity-90 hover:opacity-100 transition shadow">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                };
+                reader.readAsDataURL(file);
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function xoaMotFileModal(idx) {
+            modalSelectedFiles.splice(idx, 1);
+            capNhatInputFileModal();
+            renderFilePreviewModal();
+        }
+
+        function xoaTatCaFilesModal() {
+            modalSelectedFiles = [];
+            capNhatInputFileModal();
+            renderFilePreviewModal();
+        }
+
+        function capNhatInputFileModal() {
+            const input = document.getElementById('albumModalFileInput');
+            if (!input) return;
+            const dt = new DataTransfer();
+            modalSelectedFiles.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+        }
+
+        function xuLyDragOverModal(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('albumModalDropzone');
+            if (dz) dz.classList.add('border-blue-500', 'bg-blue-50/50');
+        }
+
+        function xuLyDragLeaveModal(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('albumModalDropzone');
+            if (dz) dz.classList.remove('border-blue-500', 'bg-blue-50/50');
+        }
+
+        function xuLyDropModal(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            xuLyDragLeaveModal(e);
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const newFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                modalSelectedFiles = modalSelectedFiles.concat(newFiles);
+                capNhatInputFileModal();
+                renderFilePreviewModal();
+            }
+        }
+
+        function thucHienUploadModal() {
+            const urlInput = document.getElementById('albumModalUrlInput');
+            const urlText = urlInput ? urlInput.value.trim() : '';
+
+            if (modalSelectedFiles.length === 0 && !urlText) {
+                alert('Vui lòng chọn ít nhất 1 file ảnh từ máy hoặc nhập link URL ảnh online!');
+                return;
+            }
+
+            const btn = document.getElementById('btnUploadModalAlbum');
+            const oldHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải lên...';
+            }
+
+            const formData = new FormData();
+            formData.append('sanPhamId', currentModalSpId);
+            modalSelectedFiles.forEach(file => formData.append('filesAnh', file));
+            if (urlText) formData.append('duongDanAnhUrl', urlText);
+
+            const laDaiDien = document.getElementById('uploadTypeDaiDien') && document.getElementById('uploadTypeDaiDien').checked;
+            formData.append('laAnhDaiDien', laDaiDien ? 'true' : 'false');
+
+            fetch('/admin/san-pham/api/upload-anh', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    hienThiThongBaoModal(data.message, false);
+                    xoaTatCaFilesModal();
+                    if (urlInput) urlInput.value = '';
+                    renderDanhSachAnhModal(data.danhSachHinhAnh || []);
+                    if (data.anhDaiDienUrl) capNhatThumbBang(currentModalSpId, data.anhDaiDienUrl);
+                } else {
+                    hienThiThongBaoModal(data.message || 'Lỗi khi tải ảnh', true);
+                }
+            })
+            .catch(err => {
+                hienThiThongBaoModal('Lỗi kết nối: ' + err.message, true);
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                }
+            });
+        }
+    </script>
+
+    <!-- Tự động mở Modal nếu form có lỗi validate từ server -->
+    <script th:if="${thongBaoLoi != null}">
+        window.addEventListener('DOMContentLoaded', function() {
+            moModal('modalThemSanPham');
+        });
+    </script>
+
+</body>
+</html>

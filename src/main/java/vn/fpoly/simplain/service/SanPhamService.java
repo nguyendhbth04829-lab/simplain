@@ -234,8 +234,10 @@ public class SanPhamService {
                     .filter(bt -> Boolean.TRUE.equals(bt.getKichHoat()))
                     .toList();
 
+            // Tổng hiển thị chỉ để tham khảo; vẫn clamp số âm từ dữ liệu cũ.
+            // Trang chi tiết và POS dùng policy phân bổ riêng cho từng kênh.
             int tongTon = bienTheKichHoat.stream()
-                    .mapToInt(bt -> bt.getSoLuong() != null ? bt.getSoLuong() : 0)
+                    .mapToInt(bt -> bt.getSoLuong() != null ? Math.max(0, bt.getSoLuong()) : 0)
                     .sum();
             sp.setTongTonKho(tongTon);
 

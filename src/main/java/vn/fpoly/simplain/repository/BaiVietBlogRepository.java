@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US30: Quan ly Bai viet Blog va Banner QC
 package vn.fpoly.simplain.repository;
 
 import org.springframework.data.domain.Page;
@@ -26,7 +27,7 @@ public interface BaiVietBlogRepository extends JpaRepository<BaiVietBlog, Long> 
     @Query("SELECT b FROM BaiVietBlog b " +
            "WHERE (:tuKhoa IS NULL OR :tuKhoa = '' OR LOWER(b.tieuDe) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR LOWER(b.chuyenMuc) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) " +
            "AND (:chuyenMuc IS NULL OR :chuyenMuc = '' OR b.chuyenMuc = :chuyenMuc) " +
-           "ORDER BY b.id DESC, b.ngayXuatBan DESC")
+           "ORDER BY b.ngayXuatBan DESC")
     Page<BaiVietBlog> timKiemBaiViet(@Param("tuKhoa") String tuKhoa,
                                      @Param("chuyenMuc") String chuyenMuc,
                                      Pageable pageable);

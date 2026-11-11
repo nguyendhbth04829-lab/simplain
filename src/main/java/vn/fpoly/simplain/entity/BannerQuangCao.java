@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US30: Quan ly Bai viet Blog va Banner QC
 package vn.fpoly.simplain.entity;
 
 import jakarta.persistence.*;

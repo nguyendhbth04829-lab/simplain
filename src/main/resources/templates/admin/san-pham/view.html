@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật Thông tin Sản phẩm | SIMPLAIN STORE CMS</title>
+    <script th:src="@{/js/tailwind.js}" src="/js/tailwind.js"></script>
+    <link th:href="@{/vendor/fontawesome/css/all.min.css}" href="/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .error { color: #ef4444; font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-800 flex flex-col min-h-screen">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-black text-white text-xs py-2 text-center font-medium tracking-wide">
+        Hệ thống Quản trị SIMPLAIN STORE &bull; Cập nhật Thông tin chung Sản phẩm (US08)
+    </div>
+
+    <!-- Thanh Menu Điều hướng Đa Chức năng dùng chung -->
+    <div th:replace="~{admin/fragments/menu-quan-tri :: menuQuanTri('san-pham')}"></div>
+
+    <main class="lg:pl-64 flex-grow w-full p-4 sm:p-6 lg:p-8 bg-[#f8fafc]">
+        <div class="w-full space-y-6">
+
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-base">
+                    <i class="fa-solid fa-shirt"></i>
+                </div>
+                <div>
+                    <span class="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">US08 &bull; Chỉnh sửa Sản phẩm</span>
+                    <h2 class="text-xl font-black text-slate-900 uppercase tracking-wide mt-1">Cập nhật Thông tin Sản phẩm</h2>
+                </div>
+            </div>
+            <a href="/admin/san-pham/hien-thi" class="btn-outline px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-arrow-left mr-1.5"></i>Quay lại danh sách
+            </a>
+        </div>
+
+        <!-- Thông báo Thành công & Lỗi -->
+        <div th:if="${thongBaoThanhCong}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                <span th:text="${thongBaoThanhCong}">Thành công!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div th:if="${thongBaoLoi}" class="bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-2xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                <i class="fa-solid fa-triangle-exclamation text-red-600 text-base"></i>
+                <span th:text="${thongBaoLoi}">Có lỗi xảy ra!</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- =========================================================================
+             1. QUẢN LÝ HÌNH ẢNH: ẢNH ĐẠI DIỆN CHÍNH & ALBUM ẢNH PHỤ RIÊNG BIỆT
+             ========================================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- KHỐI 1: ẢNH ĐẠI DIỆN CHÍNH (ẢNH BÌA) -->
+            <div class="lg:col-span-4 bg-white p-6 rounded-3xl shadow-sm border border-amber-200/90 space-y-4">
+                <div class="flex items-center justify-between border-b border-amber-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm font-bold shadow-xs">
+                            <i class="fa-solid fa-star"></i>
+                        </span>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Ảnh đại diện chính</h3>
+                            <p class="text-[10px] text-amber-700 font-bold">Hiển thị ở trang chủ & danh mục</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Tỉ lệ 1:1</span>
+                </div>
+
+                <!-- Hiển thị ảnh đại diện hiện tại -->
+                <div class="flex flex-col items-center">
+                    <div class="aspect-square w-full max-w-[240px] rounded-2xl overflow-hidden border-2 border-amber-400 bg-amber-50/30 relative shadow-sm group">
+                        <img th:if="${anhDaiDien != null}"
+                             th:src="${anhDaiDien.duongDanAnh}"
+                             th:alt="${sanPham.tenSanPham}"
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <div th:unless="${anhDaiDien != null}" class="w-full h-full flex flex-col items-center justify-center text-amber-400">
+                            <i class="fa-regular fa-image text-3xl mb-1"></i>
+                            <span class="text-xs font-bold text-slate-500">Chưa có ảnh bìa</span>
+                        </div>
+                        <span th:if="${anhDaiDien != null}" class="absolute top-2 left-2 bg-amber-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                            <i class="fa-solid fa-crown text-[9px]"></i>Ảnh bìa chính
+                        </span>
+                        <button th:if="${anhDaiDien != null}" type="button"
+                                th:data-url="${anhDaiDien.duongDanAnh}"
+                                onclick="xemPhongToAnhBtn(this)"
+                                class="absolute bottom-2 right-2 w-7 h-7 rounded-lg bg-black/60 hover:bg-black text-white text-xs flex items-center justify-center transition cursor-pointer"
+                                title="Xem phóng to">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form cập nhật riêng ảnh đại diện -->
+                <form action="/admin/san-pham/cap-nhat-anh-dai-dien" method="post" enctype="multipart/form-data" class="pt-3 border-t border-amber-100 space-y-3">
+                    <input type="hidden" name="sanPhamId" th:value="${sanPham.id}">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                            <i class="fa-solid fa-upload text-amber-600 mr-1"></i>Chọn file ảnh bìa mới từ máy:
+                        </label>
+                        <input type="file" name="fileAnhDaiDien" accept="image/*"
+                               class="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                            <i class="fa-solid fa-link text-amber-600 mr-1"></i>Hoặc dán link URL ảnh online:
+                        </label>
+                        <input type="text" name="urlAnhDaiDien" placeholder="/images/placeholder.jpg"
+                               class="w-full px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs outline-none focus:border-amber-500 transition font-mono">
+                    </div>
+                    <button type="submit" class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Lưu ảnh đại diện</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- KHỐI 2: ALBUM ẢNH PHỤ CHI TIẾT (GALLERY) -->
+            <div class="lg:col-span-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-200/90 space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-xs">
+                            <i class="fa-solid fa-images"></i>
+                        </span>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wide">Album Ảnh phụ chi tiết</h3>
+                                <span class="bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full"
+                                      th:text="${(danhSachAnhPhu != null ? danhSachAnhPhu.size() : 0) + ' ảnh phụ'}">0 ảnh phụ</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Các góc chụp khác, chất liệu vải cận cảnh, hướng dẫn chọn size</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh sách ảnh phụ hiện có -->
+                <div>
+                    <div th:if="${danhSachAnhPhu == null or danhSachAnhPhu.isEmpty()}" class="py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-lg mb-1.5">
+                            <i class="fa-regular fa-image"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-600">Chưa có ảnh phụ nào cho sản phẩm</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Tải thêm các ảnh chi tiết ở khung bên dưới.</p>
+                    </div>
+
+                    <div th:if="${danhSachAnhPhu != null and not danhSachAnhPhu.isEmpty()}" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                        <div th:each="ha, haStat : ${danhSachAnhPhu}"
+                             class="relative rounded-2xl overflow-hidden border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md transition flex flex-col group">
+                            
+                            <!-- Badge thứ tự ảnh phụ -->
+                            <div class="absolute top-2 left-2 z-10">
+                                <span class="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                      th:text="${'Ảnh phụ #' + haStat.count}">
+                                    Ảnh phụ #1
+                                </span>
+                            </div>
+
+                            <!-- Khung ảnh tỷ lệ 1:1 -->
+                            <div class="aspect-square w-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                                <img th:src="${ha.duongDanAnh}"
+                                     th:alt="${sanPham.tenSanPham}"
+                                     class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            </div>
+
+                            <!-- Dải thao tác điều khiển ảnh -->
+                            <div class="p-2 bg-white border-t border-slate-100 flex flex-col gap-1.5">
+                                <a th:href="@{/admin/san-pham/chon-anh-dai-dien(sanPhamId=${sanPham.id},hinhAnhId=${ha.id})}"
+                                   class="w-full py-1 px-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-bold text-center transition flex items-center justify-center gap-1 border border-amber-200/80"
+                                   title="Đặt ảnh này làm ảnh bìa đại diện cho sản phẩm">
+                                    <i class="fa-solid fa-star text-amber-500 text-[9px]"></i>
+                                    <span>Đặt làm ảnh bìa</span>
+                                </a>
+
+                                <div class="flex items-center justify-between gap-1 pt-1 border-t border-slate-100 text-slate-500">
+                                    <div class="flex items-center gap-1">
+                                        <a th:href="@{/admin/san-pham/doi-thu-tu-anh(sanPhamId=${sanPham.id},hinhAnhId=${ha.id},huongDi='trai')}"
+                                           class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] transition"
+                                           title="Chuyển sang trái">
+                                            <i class="fa-solid fa-arrow-left"></i>
+                                        </a>
+                                        <a th:href="@{/admin/san-pham/doi-thu-tu-anh(sanPhamId=${sanPham.id},hinhAnhId=${ha.id},huongDi='phai')}"
+                                           class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] transition"
+                                           title="Chuyển sang phải">
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </a>
+                                    </div>
+
+                                    <div class="flex items-center gap-1">
+                                        <button type="button"
+                                                th:data-url="${ha.duongDanAnh}"
+                                                onclick="xemPhongToAnhBtn(this)"
+                                                class="w-6 h-6 rounded-md bg-slate-100 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center text-[10px] transition cursor-pointer"
+                                                title="Xem phóng to">
+                                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                                        </button>
+                                        <a th:href="@{/admin/san-pham/xoa-anh(sanPhamId=${sanPham.id},hinhAnhId=${ha.id})}"
+                                           onclick="return confirm('Bạn có chắc chắn muốn xóa ảnh phụ này không?')"
+                                           class="w-6 h-6 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-[10px] transition"
+                                           title="Xóa ảnh phụ này">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form tải lên thêm ảnh phụ mới -->
+                <form action="/admin/san-pham/them-anh-phu" method="post" enctype="multipart/form-data" class="pt-4 border-t border-slate-100 space-y-3.5">
+                    <input type="hidden" name="sanPhamId" th:value="${sanPham.id}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">
+                        <!-- Dropzone tải nhiều ảnh phụ -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-1"></i>Tải nhiều ảnh phụ từ máy tính:
+                            </label>
+                            <div id="dropzoneView"
+                                 onclick="document.getElementById('inputFilesView').click()"
+                                 ondragover="xuLyDragOver(event)"
+                                 ondragleave="xuLyDragLeave(event)"
+                                 ondrop="xuLyDropView(event)"
+                                 class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50/60 hover:bg-blue-50/20 rounded-2xl p-4 text-center cursor-pointer transition select-none">
+                                <input type="file" id="inputFilesView" name="filesAnhPhu" multiple accept="image/*" class="hidden" onchange="hienThiPreviewFilesView(this)">
+                                <div class="w-8 h-8 mx-auto rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm mb-1.5">
+                                    <i class="fa-solid fa-camera"></i>
+                                </div>
+                                <div class="text-xs font-bold text-slate-800">Nhấp hoặc kéo thả nhiều ảnh vào đây</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">JPG, PNG, WEBP, GIF (Tối đa 10MB/ảnh)</div>
+                            </div>
+                            <div id="previewContainerView" class="hidden flex flex-wrap gap-2 mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            </div>
+                        </div>
+
+                        <!-- Nhập link URL ảnh phụ -->
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                    <i class="fa-solid fa-link text-blue-600 mr-1"></i>Hoặc nhập nhiều link URL ảnh online:
+                                </label>
+                                <textarea name="urlsAnhPhu" rows="3"
+                                          placeholder="https://... (nhiều link cách nhau bằng dấu phẩy hoặc xuống dòng)"
+                                          class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs outline-none focus:border-blue-600 transition font-mono"></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>Thêm vào Album ảnh phụ</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- =========================================================================
+             2. FORM THÔNG TIN CHUNG & THUỘC TÍNH SẢN PHẨM (US08)
+             ========================================================================= -->
+
+        <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200/90">
+            <form th:object="${sanPham}" action="/admin/san-pham/update" method="post" class="space-y-5" novalidate>
+                <input type="hidden" th:field="*{id}">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">ID Hệ thống</label>
+                        <input type="text" th:value="${sanPham.id}" disabled
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 text-xs font-mono cursor-not-allowed">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mã sản phẩm <span class="text-rose-500 font-bold">*</span></label>
+                        <input type="text" id="maSanPhamInput" th:field="*{maSanPham}"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono uppercase outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="error" th:if="${#fields.hasErrors('maSanPham')}" th:errors="*{maSanPham}"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Giá bán cơ bản (VNĐ) <span class="text-rose-500 font-bold">*</span></label>
+                        <input type="number" th:field="*{giaCoBan}" min="0" step="1000"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="error" th:if="${#fields.hasErrors('giaCoBan')}" th:errors="*{giaCoBan}"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Tên sản phẩm <span class="text-rose-500 font-bold">*</span></label>
+                        <input type="text" th:field="*{tenSanPham}" oninput="tuDongTaoSlugSanPham(this.value)"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="error" th:if="${#fields.hasErrors('tenSanPham')}" th:errors="*{tenSanPham}"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Đường dẫn Slug (SEO URL) <span class="text-rose-500 font-bold">*</span></label>
+                        <input type="text" id="duongDanSlugInput" th:field="*{duongDanSlug}"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs font-mono outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                        <span class="error" th:if="${#fields.hasErrors('duongDanSlug')}" th:errors="*{duongDanSlug}"></span>
+                    </div>
+                </div>
+
+                <!-- Danh mục & Bộ sưu tập -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Danh mục Sản phẩm <span class="text-rose-500 font-bold">*</span></label>
+                        <select th:field="*{maDanhMucId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="">-- Chọn danh mục --</option>
+                            <option th:each="dm : ${listDanhMuc}"
+                                    th:value="${dm.id}"
+                                    th:text="${(dm.maDanhMucCha != null ? '↳ ' : '• ') + dm.tenDanhMuc}"></option>
+                        </select>
+                        <span class="error" th:if="${#fields.hasErrors('maDanhMucId')}" th:errors="*{maDanhMucId}"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Bộ sưu tập (Tùy chọn)</label>
+                        <select th:field="*{maBoSuuTapId}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/60 focus:bg-white text-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-800 transition font-medium">
+                            <option value="">-- Không thuộc BST --</option>
+                            <option th:each="bst : ${listBoSuuTap}"
+                                    th:value="${bst.id}"
+                                    th:text="${bst.tenBoSuuTap}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Chất liệu & Form dáng (Combobox liên kết CSDL) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                                <i class="fa-solid fa-scroll text-[#2563eb] mr-1"></i>Chất liệu vải <span class="text-red-500">*</span>
+                            </label>
+                            <select id="chatLieuInput" th:field="*{chatLieu}"
+                                    class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-[#2563eb] outline-none text-xs transition text-slate-800 font-medium">
+                                <option value="">-- Chọn chất liệu vải từ CSDL --</option>
+                                <option th:each="cl : ${listChatLieu}"
+                                        th:value="${cl.tenChatLieu}"
+                                        th:text="${cl.tenChatLieu + (cl.moTa != null ? ' - ' + cl.moTa : '')}"
+                                        th:selected="${sanPham.chatLieu == cl.tenChatLieu}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('chatLieu')}" th:errors="*{chatLieu}"></span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                                <i class="fa-solid fa-person-rays text-[#2563eb] mr-1"></i>Form dáng (Fit) <span class="text-red-500">*</span>
+                            </label>
+                            <select id="formDangInput" th:field="*{formDang}"
+                                    class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-[#2563eb] outline-none text-xs transition text-slate-800 font-medium">
+                                <option value="">-- Chọn form dáng từ CSDL --</option>
+                                <option th:each="fd : ${listFormDang}"
+                                        th:value="${fd.tenFormDang}"
+                                        th:text="${fd.tenFormDang + (fd.moTa != null ? ' (' + fd.moTa + ')' : '')}"
+                                        th:selected="${sanPham.formDang == fd.tenFormDang}"></option>
+                            </select>
+                            <span class="error" th:if="${#fields.hasErrors('formDang')}" th:errors="*{formDang}"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mô tả chi tiết & Hướng dẫn chọn size -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Mô tả chi tiết sản phẩm <span class="text-red-500">*</span></label>
+                    <textarea th:field="*{moTaChiTiet}" rows="4"
+                              class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs transition"></textarea>
+                    <span class="error" th:if="${#fields.hasErrors('moTaChiTiet')}" th:errors="*{moTaChiTiet}"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1">Hướng dẫn chọn Size (Tùy chọn)</label>
+                    <textarea th:field="*{huongDanChonSize}" rows="2"
+                              class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus:border-black focus:ring-1 focus:ring-black outline-none text-xs transition"></textarea>
+                    <span class="error" th:if="${#fields.hasErrors('huongDanChonSize')}" th:errors="*{huongDanChonSize}"></span>
+                </div>
+
+                <!-- Trạng thái -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-3.5 rounded-xl border border-neutral-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-neutral-800">Đánh dấu Sản phẩm Nổi bật</div>
+                            <div class="text-[11px] text-neutral-400">Hiển thị tại mục Best Seller trang chủ</div>
+                        </div>
+                        <input type="checkbox" th:field="*{noiBat}" class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer">
+                    </div>
+
+                    <div class="p-3.5 rounded-xl border border-neutral-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-neutral-800">Trạng thái Kinh doanh</div>
+                            <div class="text-[11px] text-neutral-400">Bật để mở bán sản phẩm trên website</div>
+                        </div>
+                        <input type="checkbox" th:field="*{kichHoat}" class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 pt-5 border-t border-slate-100">
+                    <button type="submit" class="flex-1 btn-navy font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Lưu Cập nhật Sản phẩm</span>
+                    </button>
+                    <a href="/admin/san-pham/hien-thi" class="flex-1 text-center btn-outline font-semibold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Quay lại</span>
+                    </a>
+                </div>
+            </form>
+        </div>
+        </div>
+    </main>
+
+    <!-- Modal Xem phóng to hình ảnh (Lightbox) -->
+    <div id="modalZoomAnh" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="dongZoomAnh()">
+        <div class="relative max-w-4xl max-h-[90vh] bg-transparent rounded-2xl overflow-hidden flex flex-col items-center" onclick="event.stopPropagation()">
+            <button type="button" onclick="dongZoomAnh()" class="absolute top-3 right-3 text-white bg-black/60 hover:bg-black p-2.5 rounded-full transition cursor-pointer z-10">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <img id="imgZoomTarget" src="" alt="Ảnh sản phẩm phóng to" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl">
+        </div>
+    </div>
+
+    <script>
+        function xemPhongToAnhBtn(el) {
+            if (!el) return;
+            const url = el.getAttribute('data-url');
+            xemPhongToAnh(url);
+        }
+
+        function xemPhongToAnh(url) {
+            if (!url) return;
+            const img = document.getElementById('imgZoomTarget');
+            const modal = document.getElementById('modalZoomAnh');
+            if (img && modal) {
+                img.src = url;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dongZoomAnh() {
+            const modal = document.getElementById('modalZoomAnh');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        let selectedFilesView = [];
+
+        function hienThiPreviewFilesView(input) {
+            if (!input || !input.files) return;
+            selectedFilesView = Array.from(input.files);
+            renderPreviewView();
+        }
+
+        function renderPreviewView() {
+            const container = document.getElementById('previewContainerView');
+            if (!container) return;
+
+            if (selectedFilesView.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="w-full flex items-center justify-between pb-1.5 border-b border-slate-200 text-xs font-bold text-slate-700">
+                    <span>Đã chọn <strong class="text-blue-600">${selectedFilesView.length}</strong> file ảnh mới</span>
+                    <button type="button" onclick="xoaTatCaPreviewView()" class="text-rose-600 hover:underline text-[11px]">Bỏ chọn tất cả</button>
+                </div>
+            `;
+
+            selectedFilesView.forEach((file, idx) => {
+                const reader = new FileReader();
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 bg-white group shadow-xs';
+                
+                reader.onload = function(e) {
+                    itemDiv.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <button type="button" onclick="xoaMotPreviewView(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] opacity-90 hover:opacity-100 transition shadow">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                };
+                reader.readAsDataURL(file);
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function xoaMotPreviewView(index) {
+            selectedFilesView.splice(index, 1);
+            capNhatInputFilesView();
+            renderPreviewView();
+        }
+
+        function xoaTatCaPreviewView() {
+            selectedFilesView = [];
+            capNhatInputFilesView();
+            renderPreviewView();
+        }
+
+        function capNhatInputFilesView() {
+            const input = document.getElementById('inputFilesView');
+            if (!input) return;
+            const dataTransfer = new DataTransfer();
+            selectedFilesView.forEach(file => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        }
+
+        function xuLyDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropzone = document.getElementById('dropzoneView');
+            if (dropzone) dropzone.classList.add('border-blue-500', 'bg-blue-50/40');
+        }
+
+        function xuLyDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropzone = document.getElementById('dropzoneView');
+            if (dropzone) dropzone.classList.remove('border-blue-500', 'bg-blue-50/40');
+        }
+
+        function xuLyDropView(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            xuLyDragLeave(e);
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const newFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                selectedFilesView = selectedFilesView.concat(newFiles);
+                capNhatInputFilesView();
+                renderPreviewView();
+            }
+        }
+
+        function tuDongTaoSlugSanPham(str) {
+            const slug = str.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+            const slugInput = document.getElementById('duongDanSlugInput');
+            if (slugInput) slugInput.value = slug;
+        }
+
+        function chonChatLieuNhanh(chatLieu) {
+            const input = document.getElementById('chatLieuInput');
+            if (input) input.value = chatLieu;
+        }
+
+        function chonFormDangNhanh(formDang) {
+            const input = document.getElementById('formDangInput');
+            if (input) input.value = formDang;
+        }
+    </script>
+</body>
+</html>
+

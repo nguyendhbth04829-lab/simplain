@@ -108,7 +108,16 @@ public class MauSacService {
         if (duLieuMoi.getKichHoat() != null) {
             hienTai.setKichHoat(duLieuMoi.getKichHoat());
         }
-        return mauSacRepository.save(hienTai);
+        MauSac updated = mauSacRepository.save(hienTai);
+        jdbcTemplate.update("""
+                UPDATE giaTri
+                SET gia_tri = ?
+                FROM dbo.bien_the_san_pham_thuoc_tinh giaTri
+                JOIN dbo.thuoc_tinh_bien_the thuocTinh ON thuocTinh.id = giaTri.ma_thuoc_tinh_id
+                JOIN dbo.bien_the_san_pham bienThe ON bienThe.id = giaTri.ma_bien_the_id
+                WHERE thuocTinh.ma_thuoc_tinh = 'mauSac' AND bienThe.ma_mau_sac_id = ?
+                """, updated.getTenMau(), id);
+        return updated;
     }
 
     /**

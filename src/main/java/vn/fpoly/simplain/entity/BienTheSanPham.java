@@ -2,6 +2,7 @@ package vn.fpoly.simplain.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,7 +10,9 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Thực thể Biến thể sản phẩm (SKU) [bien_the_san_pham] kết hợp Sản phẩm + Màu sắc + Kích thước,
@@ -120,4 +123,9 @@ public class BienTheSanPham {
     @Transient
     @Builder.Default
     private List<HinhAnh> danhSachHinhAnh = new ArrayList<>();
+
+    @JsonIgnore
+    @Transient
+    @Builder.Default
+    private Map<String, String> giaTriThuocTinh = new LinkedHashMap<>();
 }

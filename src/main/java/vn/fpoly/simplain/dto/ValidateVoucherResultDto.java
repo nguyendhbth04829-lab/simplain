@@ -1,3 +1,4 @@
+// Khoa - Mod 6 - US27: Thu thap va Ap dung Ma giam gia
 package vn.fpoly.simplain.dto;
 
 import lombok.AllArgsConstructor;

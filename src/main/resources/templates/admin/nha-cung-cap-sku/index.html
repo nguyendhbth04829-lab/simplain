@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân công NCC – SKU — Simplain Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{admin/fragments/admin-centre-shell :: styles}"></th:block>
+    <th:block th:replace="~{admin/nha-cung-cap-sku/content :: styles}"></th:block>
+    <style>
+        #cfToast{position:fixed;right:20px;bottom:20px;z-index:1000;display:none;padding:9px 15px;border-radius:6px;background:#0f172a;color:#fff;font-size:12.5px;font-weight:500;box-shadow:0 8px 20px rgba(0,0,0,.2)}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{admin/fragments/admin-centre-shell :: layout(~{admin/nha-cung-cap-sku/content :: content}, 'ncc-sku')}"></th:block>
+<div id="cfToast" role="status" aria-live="polite"></div>
+<script>
+    function hienToast(message){
+        const element=document.getElementById('cfToast');
+        element.textContent=message;
+        element.style.display='block';
+        clearTimeout(window.cfToastTimer);
+        window.cfToastTimer=setTimeout(()=>element.style.display='none',3200);
+    }
+</script>
+<th:block th:replace="~{admin/nha-cung-cap-sku/content :: scripts}"></th:block>
+</body>
+</html>

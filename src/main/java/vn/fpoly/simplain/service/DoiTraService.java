@@ -14,7 +14,6 @@ import vn.fpoly.simplain.repository.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 /**
  * Service xử lý nghiệp vụ Quản lý Đổi/Trả hàng (RMA) Online (US24 - Mod 5 - Hưng).
@@ -49,7 +47,6 @@ public class DoiTraService {
     private final HinhAnhRepository hinhAnhRepository;
     private final LichSuTrangThaiDonHangRepository lichSuTrangThaiDonHangRepository;
     private final TrangThaiDonHangRepository trangThaiDonHangRepository;
-    private final ChiTietFlashSaleRepository chiTietFlashSaleRepository;
 
     private static final List<String> TRANG_THAI_DANG_XU_LY = List.of("CHO_XU_LY", "DA_TIEP_NHAN", "DANG_XU_LY");
 
@@ -77,27 +74,6 @@ public class DoiTraService {
         List<ChiTietDonHang> danhSachChiTiet = chiTietDonHangRepository.findByMaDonHangId(dh.getId());
         List<ItemDoiTraFormDto> items = new ArrayList<>();
 
-        // 1. Phân tích trước các nhóm Combo để phân bổ giá hoàn tiền chính xác và xác định thông tin gói
-        Map<String, List<ChiTietDonHang>> mapCombo = new HashMap<>();
-        Map<String, BigDecimal> mapGiaCombo = new HashMap<>();
-        Map<String, String> mapTenCombo = new HashMap<>();
-
-        for (ChiTietDonHang ct : danhSachChiTiet) {
-            if (ct.getNhomComboToken() != null && !ct.getNhomComboToken().isBlank()) {
-                String token = ct.getNhomComboToken().trim();
-                mapCombo.computeIfAbsent(token, k -> new ArrayList<>()).add(ct);
-                if (ct.getDonGia() != null && ct.getDonGia().compareTo(BigDecimal.ZERO) > 0) {
-                    mapGiaCombo.put(token, ct.getDonGia());
-                }
-                if (ct.getTenSanPham() != null && ct.getTenSanPham().contains("[") && ct.getTenSanPham().contains("]")) {
-                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\[(?:Gói Combo|Thành phần Combo|Combo):\\s*([^\\]]+)\\]", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(ct.getTenSanPham());
-                    if (m.find()) {
-                        mapTenCombo.put(token, m.group(1).trim());
-                    }
-                }
-            }
-        }
-
         for (ChiTietDonHang ct : danhSachChiTiet) {
             BienTheSanPham bt = ct.getBienThe();
             if (bt == null && ct.getMaBienTheId() != null) {
@@ -108,32 +84,6 @@ public class DoiTraService {
             String tenMau = bt != null ? layTenMau(bt.getMaMauSacId()) : "";
             String tenKichThuoc = bt != null ? layTenKichThuoc(bt.getMaKichThuocId()) : "";
             String imgUrl = layHinhAnhDaiDien(ct.getMaBienTheId(), spId);
-
-            // Xác định loại hàng & giá trị hoàn tiền ước tính (US24)
-            String loaiHang = "LE";
-            String tenCombo = null;
-            Integer soLuongMonTrongCombo = null;
-            BigDecimal giaTriHoanTien = ct.getDonGia() != null ? ct.getDonGia() : BigDecimal.ZERO;
-
-            if (ct.getNhomComboToken() != null && !ct.getNhomComboToken().isBlank()) {
-                String token = ct.getNhomComboToken().trim();
-                loaiHang = "COMBO";
-                tenCombo = mapTenCombo.getOrDefault(token, "Gói Combo Ưu Đãi");
-                List<ChiTietDonHang> monCungCombo = mapCombo.getOrDefault(token, Collections.emptyList());
-                int soMonTrongCombo = Math.max(1, monCungCombo.size());
-                soLuongMonTrongCombo = soMonTrongCombo;
-                BigDecimal tongGiaGoi = mapGiaCombo.getOrDefault(token, ct.getDonGia() != null ? ct.getDonGia() : BigDecimal.ZERO);
-                // Phân bổ đều giá trị hoàn tiền cho từng món con trong gói combo
-                giaTriHoanTien = tongGiaGoi.divide(BigDecimal.valueOf(soMonTrongCombo), 0, RoundingMode.HALF_UP);
-            } else if ((ct.getNhomComboToken() == null || ct.getNhomComboToken().isBlank()) &&
-                    ((ct.getTenSanPham() != null && ct.getTenSanPham().toLowerCase().contains("flash sale"))
-                            || (bt != null && bt.getGiaBan() != null && ct.getDonGia() != null
-                            && ct.getDonGia().compareTo(bt.getGiaBan()) < 0
-                            && chiTietFlashSaleRepository != null && ct.getMaBienTheId() != null
-                            && chiTietFlashSaleRepository.findByMaBienTheId(ct.getMaBienTheId()).stream()
-                            .anyMatch(fs -> fs.getGiaFlashSale() != null && fs.getGiaFlashSale().compareTo(ct.getDonGia()) == 0)))) {
-                loaiHang = "FLASH_SALE";
-            }
 
             // Tìm danh sách các biến thể khả dụng của cùng sản phẩm để khách chọn đổi (soLuong > 0 và kichHoat == true)
             List<BienTheDoiTraDto> dsBienTheKhaDung = new ArrayList<>();
@@ -156,24 +106,6 @@ public class DoiTraService {
                 }
             }
 
-            boolean coBienTheFlashSaleKhaDung = true;
-            // Nếu là sản phẩm Flash Sale: chỉ cho phép đổi sang biến thể khác đang cùng áp dụng Flash Sale!
-            if ("FLASH_SALE".equals(loaiHang)) {
-                List<ChiTietFlashSale> dsActiveFs = (chiTietFlashSaleRepository != null)
-                        ? chiTietFlashSaleRepository.timTatCaChiTietFlashSaleDangApDung(LocalDateTime.now())
-                        : Collections.emptyList();
-                Set<Long> activeFsBienTheIds = dsActiveFs.stream()
-                        .map(ChiTietFlashSale::getMaBienTheId)
-                        .collect(Collectors.toSet());
-
-                // Chỉ giữ lại các biến thể đang Flash Sale và khác biến thể đã mua (để đổi sang phân loại khác)
-                dsBienTheKhaDung = dsBienTheKhaDung.stream()
-                        .filter(b -> activeFsBienTheIds.contains(b.getId()) && !Objects.equals(b.getId(), ct.getMaBienTheId()))
-                        .toList();
-
-                coBienTheFlashSaleKhaDung = !dsBienTheKhaDung.isEmpty();
-            }
-
             items.add(ItemDoiTraFormDto.builder()
                     .chiTietDonHangId(ct.getId())
                     .maBienTheId(ct.getMaBienTheId())
@@ -186,13 +118,6 @@ public class DoiTraService {
                     .soLuongMua(ct.getSoLuong())
                     .thanhTien(ct.getThanhTien())
                     .hinhAnhUrl(imgUrl)
-                    .maComboId(ct.getMaComboId())
-                    .nhomComboToken(ct.getNhomComboToken())
-                    .tenCombo(tenCombo)
-                    .loaiHang(loaiHang)
-                    .giaTriHoanTien(giaTriHoanTien)
-                    .coBienTheFlashSaleKhaDung(coBienTheFlashSaleKhaDung)
-                    .soLuongMonTrongCombo(soLuongMonTrongCombo)
                     .danhSachBienTheDoi(dsBienTheKhaDung)
                     .build());
         }
@@ -357,42 +282,6 @@ public class DoiTraService {
             mapChiTiet.put(ct.getId(), ct);
         }
 
-        // 2.1. VALIDATE GÓI COMBO: Mua Combo bắt buộc phải đổi/trả trọn bộ tất cả các món trong Combo
-        Map<String, List<ChiTietDonHang>> comboGroupMap = new HashMap<>();
-        for (ChiTietDonHang ct : danhSachChiTiet) {
-            if (ct.getNhomComboToken() != null && !ct.getNhomComboToken().isBlank()) {
-                comboGroupMap.computeIfAbsent(ct.getNhomComboToken().trim(), k -> new ArrayList<>()).add(ct);
-            }
-        }
-
-        Map<Long, ChiTietDoiTraItemRequest> selectedItemMap = selectedItems.stream()
-                .filter(it -> it.getChiTietDonHangId() != null)
-                .collect(Collectors.toMap(ChiTietDoiTraItemRequest::getChiTietDonHangId, it -> it, (a, b) -> a));
-
-        for (Map.Entry<String, List<ChiTietDonHang>> entry : comboGroupMap.entrySet()) {
-            List<ChiTietDonHang> monInCombo = entry.getValue();
-            List<ChiTietDonHang> selectedInCombo = monInCombo.stream()
-                    .filter(c -> selectedItemMap.containsKey(c.getId()))
-                    .toList();
-
-            if (!selectedInCombo.isEmpty() && selectedInCombo.size() < monInCombo.size()) {
-                throw new IllegalArgumentException("Sản phẩm thuộc gói Combo bắt buộc phải đổi/trả trọn bộ tất cả các món trong Combo ("
-                        + monInCombo.size() + " món, bạn mới chọn " + selectedInCombo.size() + " món). Vui lòng tick chọn đầy đủ tất cả sản phẩm của gói Combo này!");
-            }
-
-            if (selectedInCombo.size() == monInCombo.size()) {
-                ChiTietDoiTraItemRequest firstReq = selectedItemMap.get(monInCombo.get(0).getId());
-                Integer firstQty = firstReq != null ? firstReq.getSoLuongTra() : null;
-                boolean soLuongDongNhat = monInCombo.stream().allMatch(c -> {
-                    ChiTietDoiTraItemRequest r = selectedItemMap.get(c.getId());
-                    return r != null && Objects.equals(r.getSoLuongTra(), firstQty);
-                });
-                if (!soLuongDongNhat) {
-                    throw new IllegalArgumentException("Các món trong cùng gói Combo bắt buộc phải có số lượng đổi/trả bằng nhau!");
-                }
-            }
-        }
-
         BigDecimal tongTienHoanUocTinh = BigDecimal.ZERO;
         boolean laDoiHang = "DOI_HANG".equalsIgnoreCase(req.getLoaiDoiTra());
         boolean laHoanTien = "TRA_HANG_HOAN_TIEN".equalsIgnoreCase(req.getLoaiDoiTra());
@@ -425,19 +314,6 @@ public class DoiTraService {
                 throw new IllegalArgumentException("Vui lòng nhập rõ tình trạng lỗi của sản phẩm: " + ct.getTenSanPham());
             }
 
-            // Xác định xem sản phẩm này có phải Flash Sale không
-            BienTheSanPham btCu = ct.getBienThe();
-            if (btCu == null && ct.getMaBienTheId() != null) {
-                btCu = bienTheSanPhamRepository.findById(ct.getMaBienTheId()).orElse(null);
-            }
-            boolean laMonFlashSale = (ct.getNhomComboToken() == null || ct.getNhomComboToken().isBlank()) &&
-                    ((ct.getTenSanPham() != null && ct.getTenSanPham().toLowerCase().contains("flash sale"))
-                            || (btCu != null && btCu.getGiaBan() != null && ct.getDonGia() != null
-                            && ct.getDonGia().compareTo(btCu.getGiaBan()) < 0
-                            && chiTietFlashSaleRepository != null && ct.getMaBienTheId() != null
-                            && chiTietFlashSaleRepository.findByMaBienTheId(ct.getMaBienTheId()).stream()
-                            .anyMatch(fs -> fs.getGiaFlashSale() != null && fs.getGiaFlashSale().compareTo(ct.getDonGia()) == 0)));
-
             // Nếu là ĐỔI HÀNG: Phải chọn SKU mới và kiểm tra tồn kho
             if (laDoiHang) {
                 if (itemReq.getMaBienTheMoiId() == null) {
@@ -454,36 +330,11 @@ public class DoiTraService {
                     throw new IllegalArgumentException("Biến thể mới được chọn (SKU: " + btMoi.getMaSku() +
                             ") không đủ số lượng tồn kho (còn: " + (btMoi.getSoLuong() != null ? btMoi.getSoLuong() : 0) + ").");
                 }
-
-                // Tiêu chí Flash Sale: Sản phẩm mua Flash Sale chỉ cho phép đổi sang biến thể khác ĐANG TRONG FLASH SALE
-                if (laMonFlashSale) {
-                    List<ChiTietFlashSale> fsDangApDung = (chiTietFlashSaleRepository != null)
-                            ? chiTietFlashSaleRepository.timChiTietFlashSaleDangApDung(itemReq.getMaBienTheMoiId(), LocalDateTime.now())
-                            : Collections.emptyList();
-                    if (fsDangApDung.isEmpty()) {
-                        throw new IllegalArgumentException("Sản phẩm '" + ct.getTenSanPham() + "' được mua trong chương trình Flash Sale. Theo chính sách, sản phẩm chỉ được đổi sang biến thể khác đang cùng diễn ra Flash Sale. Hiện không có biến thể Flash Sale khả dụng để đổi, vui lòng chọn hình thức 'Trả hàng & Hoàn tiền'!");
-                    }
-                }
             }
 
             // Nếu là HOÀN TIỀN: Cộng dồn tiền hoàn
             if (laHoanTien) {
-                BigDecimal giaTriHoan = (ct.getDonGia() != null) ? ct.getDonGia() : BigDecimal.ZERO;
-                // Nếu là sản phẩm thuộc gói combo, phân bổ giá trị theo tổng giá gói chia số món
-                if (ct.getNhomComboToken() != null && !ct.getNhomComboToken().isBlank()) {
-                    List<ChiTietDonHang> monCungCombo = danhSachChiTiet.stream()
-                            .filter(c -> Objects.equals(c.getNhomComboToken(), ct.getNhomComboToken()))
-                            .toList();
-                    if (!monCungCombo.isEmpty()) {
-                        BigDecimal giaGoi = monCungCombo.stream()
-                                .map(ChiTietDonHang::getDonGia)
-                                .filter(Objects::nonNull)
-                                .max(BigDecimal::compareTo)
-                                .orElse(BigDecimal.ZERO);
-                        giaTriHoan = giaGoi.divide(BigDecimal.valueOf(monCungCombo.size()), 0, RoundingMode.HALF_UP);
-                    }
-                }
-                BigDecimal tienMon = giaTriHoan.multiply(BigDecimal.valueOf(itemReq.getSoLuongTra()));
+                BigDecimal tienMon = ct.getDonGia().multiply(BigDecimal.valueOf(itemReq.getSoLuongTra()));
                 tongTienHoanUocTinh = tongTienHoanUocTinh.add(tienMon);
             }
         }

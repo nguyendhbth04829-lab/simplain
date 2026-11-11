@@ -29,12 +29,10 @@ public interface PhuongThucThanhToanRepository extends JpaRepository<PhuongThucT
 
     @Query("SELECT p FROM PhuongThucThanhToan p WHERE " +
            "(:tuKhoa IS NULL OR LOWER(p.maPhuongThuc) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR LOWER(p.tenPhuongThuc) LIKE LOWER(CONCAT('%', :tuKhoa, '%')) OR LOWER(p.moTa) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))) AND " +
-           "(:loaiCong IS NULL OR :loaiCong = '' OR p.loaiCong = :loaiCong) AND " +
            "(:laTrucTuyen IS NULL OR p.laTrucTuyen = :laTrucTuyen) AND " +
            "(:kichHoat IS NULL OR p.kichHoat = :kichHoat)")
     Page<PhuongThucThanhToan> timKiemPhanTrang(
             @Param("tuKhoa") String tuKhoa,
-            @Param("loaiCong") String loaiCong,
             @Param("laTrucTuyen") Boolean laTrucTuyen,
             @Param("kichHoat") Boolean kichHoat,
             Pageable pageable);
